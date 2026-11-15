@@ -4,8 +4,11 @@ import 'dart:io';
 
 import 'package:crypto/crypto.dart';
 import 'package:zero_player/features/books/domain/book.dart';
+import 'package:zero_player/features/books/domain/legado_source_fingerprint.dart';
 
 import 'audit_book_source_ledger.dart' as ledger;
+import 'book_source_ledger_recent_evidence.dart' as recent;
+import 'book_source_ledger_nov16_evidence.dart' as nov16;
 
 void check(bool condition, String message) {
   if (!condition) throw StateError(message);
@@ -347,6 +350,301 @@ void checkInputFingerprints() {
   );
 }
 
+recent.RecentLedgerEvidence loadRecentEvidence() {
+  final data = <String, Map>{};
+  for (final name in [
+    'legado-rdap-net-sample-20261115.json',
+    'legado-amsi-redirect-recheck-20261115.json',
+    'legado-adult-category-recheck-20261115.json',
+    'legado-560xs-recheck-20261115.json',
+  ]) {
+    data[name] =
+        jsonDecode(File('docs/implementation/$name').readAsStringSync()) as Map;
+  }
+  return recent.readRecentEvidence(data, ledger.networkObservation);
+}
+
+void checkRecentRegistry(recent.RecentLedgerEvidence evidence) {
+  const id = 'ca828313e6ceaa40c92460bc887e80428500586838f387e9dee325a104768804';
+  final records = recent.selectRecentEvidence(
+    evidence.registry,
+    id,
+    'www.feiyuefw.net',
+    466,
+  );
+  final rdap = records
+      .where((item) => item['observation_kind'] == 'rdap_registered_domain')
+      .toList();
+  check(
+    rdap.where((item) => item['http_status'] == 404).length == 2,
+    'both registry 404 observations must remain visible',
+  );
+  check(
+    rdap
+            .where(
+              (item) =>
+                  item['http_status'] == null &&
+                  item['error_type'] == 'URLError',
+            )
+            .length ==
+        2,
+    'registry request errors must remain unknown',
+  );
+  check(
+    records.every(
+      (item) => item['matches_current_selected_raw_record'] == true,
+    ),
+    'expected current source index association',
+  );
+  check(
+    recent
+        .selectRecentEvidence(evidence.registry, id, 'feiyuefw.net', 466)
+        .isEmpty,
+    'registry evidence cannot cross exact endpoint hosts',
+  );
+  final stale = recent.selectRecentEvidence(
+    evidence.registry,
+    id,
+    'www.feiyuefw.net',
+    467,
+  );
+  check(
+    stale.every((item) => item['matches_current_selected_raw_record'] == false),
+    'historical source-version mismatch must remain explicit',
+  );
+  const counterexample =
+      '955dc0ed76b43c148ce8afdfdb54faf7f6ee4a8ac3d51081184b43c2697e935e';
+  final registered = recent.selectRecentEvidence(
+    evidence.registry,
+    counterexample,
+    'afdian.net',
+    3252,
+  );
+  check(
+    registered
+            .where((item) => item['classification'] == 'matching_domain_object')
+            .length ==
+        2,
+    'registered-domain counterexample missing',
+  );
+}
+
+void checkRecentRedirects(recent.RecentLedgerEvidence evidence) {
+  const id = '99dec828e154116574529a7c8013e0e1d08c12ccb01ffa57a1da3ee7aebb8654';
+  final events = recent
+      .selectRecentEvidence(evidence.network, id, 'bbs.fanfanu.com', 168)
+      .where(
+        (item) =>
+            item['evidence'] == 'legado-amsi-redirect-recheck-20261115.json',
+      )
+      .toList();
+  check(
+    events.length == 1 && events.single['http_status'] == 302,
+    'later redirect observation missing',
+  );
+  check(
+    events.single['additional_amsi_scan_performed'] == false,
+    'redirect must not be represented as a new AMSI scan',
+  );
+  check(
+    recent
+        .selectRecentEvidence(evidence.network, id, 'www.fanfanu.com', 168)
+        .isEmpty,
+    'redirect evidence cannot cross sibling hosts',
+  );
+}
+
+void checkRecentAdultCategories(recent.RecentLedgerEvidence evidence) {
+  const adultId =
+      '1f9aaa829a5d0312520cbcce9a4b9b84c7c12cd1d9f0adc6faecb042a9b15c17';
+  const mixedId =
+      '68051e1286ea64cd9e4dd6d05fd5f3ed286ade6837c4fff648aeb9b016e735cd';
+  final adult = recent
+      .selectRecentEvidence(evidence.network, adultId, 'zhanvxs.net', 4653)
+      .single;
+  final mixed = recent
+      .selectRecentEvidence(evidence.network, mixedId, '123xiaoqiang.me', 4464)
+      .single;
+  check(
+    adult['adult_text_clue_recorded'] == true &&
+        mixed['adult_text_clue_recorded'] == false,
+    'two reviewed homepage descriptions must remain distinct',
+  );
+  final mixedCategories = recent
+      .selectRecentEvidence(
+        evidence.categories,
+        mixedId,
+        '123xiaoqiang.me',
+        4464,
+      )
+      .single;
+  check(
+    mixedCategories['explicit_unique_path_count'] == 4 &&
+        mixedCategories['current_normalized_categories_may_differ'] == true,
+    'mixed historical category evidence missing',
+  );
+  check(
+    !jsonEncode(adult).contains('description_excerpt'),
+    'homepage description must not be copied',
+  );
+  check(
+    recent
+        .selectRecentEvidence(
+          evidence.categories,
+          adultId,
+          'www.zhanvxs.net',
+          4653,
+        )
+        .isEmpty,
+    'adult evidence cannot cross hosts even if an ID collides',
+  );
+}
+
+void checkRecent560Review(recent.RecentLedgerEvidence evidence) {
+  const id = 'bca6e55770d00d422fc5ca90194c062433fd5955601b573c28cc5533a22f4bf4';
+  final review = recent
+      .selectRecentEvidence(evidence.reading, id, 'www.560xs.com', 282)
+      .single;
+  check(
+    review['experimental_post_books'] == 1 &&
+        review['post_result_detail_fetched'] == false,
+    'POST result must remain separate from other book samples',
+  );
+  check(
+    review['toc_http_status'] == 200 &&
+        review['toc_body_state'] == 'timeout_unknown' &&
+        review['toc_chapters_verified'] == null &&
+        review['complete_reading_chain_verified'] == null,
+    'response headers cannot imply a verified table of contents or reading chain',
+  );
+  check(
+    review['old_parsed_content_characters'] == 0 &&
+        review['page_scripts_executed'] == false &&
+        review['content_safety_verified'] == null,
+    'content sample must not imply reading or safety',
+  );
+  final events = recent.selectRecentEvidence(
+    evidence.network,
+    id,
+    'www.560xs.com',
+    282,
+  );
+  check(
+    events.any(
+      (item) =>
+          item['path'] == '/xs/isookbj/mulu_1.html' &&
+          item['http_status'] == 200 &&
+          item['failure_category'] == 'timeout',
+    ),
+    'body timeout following HTTP headers must be retained',
+  );
+  check(
+    recent
+        .selectRecentEvidence(evidence.reading, '0' * 64, 'www.560xs.com', 282)
+        .isEmpty,
+    'same host with different ID cannot inherit the specialized review',
+  );
+}
+
+void checkNov16ExactAssociation() {
+  final current = source('https://www.example.com/');
+  final sibling = source('https://example.com/');
+  check(current.id == sibling.id, 'fixture must exercise legacy ID collision');
+  final evidence = nov16.Nov16LedgerEvidence();
+  evidence.add(evidence.adultReview, current.id, current.endpoint.host, 17, {
+    'historical_normalized_legado_sha256': legadoSourceFingerprint(
+      current.legado!,
+    ),
+  });
+  final matching = nov16.selectNov16Evidence(evidence.adultReview, current, 17);
+  check(
+    matching.length == 1 &&
+        matching.single['matches_current_normalized_legado_rule'] == true,
+    'exact ID, host, index and normalized rule must match',
+  );
+  check(
+    nov16.selectNov16Evidence(evidence.adultReview, sibling, 17).isEmpty,
+    'same ID must not transfer evidence to another endpoint host',
+  );
+  check(
+    nov16.selectNov16Evidence(evidence.adultReview, current, 18).isEmpty,
+    'evidence must not transfer to another selected raw record',
+  );
+  final sameHostOtherId = BookSource.fromJson({
+    ...current.toJson(),
+    'sourceKey': 'independent-source',
+  });
+  check(
+    sameHostOtherId.id != current.id &&
+        nov16
+            .selectNov16Evidence(evidence.adultReview, sameHostOtherId, 17)
+            .isEmpty,
+    'same host and index must not transfer evidence to another ID',
+  );
+  final revised = BookSource.fromJson({
+    ...current.toJson(),
+    'legado': {...current.legado!.toJson(), 'search': '/new?q={{key}}'},
+  });
+  check(revised.id == current.id, 'fixture must keep source identity');
+  check(
+    nov16
+            .selectNov16Evidence(evidence.adultReview, revised, 17)
+            .single['matches_current_normalized_legado_rule'] ==
+        false,
+    'same-ID changed rule must remain explicitly historical',
+  );
+  evidence.add(evidence.reading, current.id, current.endpoint.host, 17, {
+    'historical_search_rule_sha256': sha256
+        .convert(utf8.encode(current.legado!.search))
+        .toString(),
+    'historical_rule_sha256': <String, String>{},
+  });
+  check(
+    nov16
+                .selectNov16Evidence(evidence.reading, current, 17)
+                .single['matches_current_normalized_pilot_rules'] ==
+            true &&
+        nov16
+                .selectNov16Evidence(evidence.reading, revised, 17)
+                .single['matches_current_normalized_pilot_rules'] ==
+            false,
+    'pilot observations must report later source-rule changes',
+  );
+  var rejected = false;
+  try {
+    nov16.verifiedHistoricalGitObject({
+      'git_commit': '6c18b625ee81176c130aef6c33bd6dd3ee5159f1',
+      'path': 'docs/implementation/legado-source-ledger-20261115.json',
+      'sha256': '0' * 64,
+    }, 'docs/implementation/legado-source-ledger-20261115.json');
+  } on FormatException {
+    rejected = true;
+  }
+  check(rejected, 'historical Git digest mismatch must be rejected');
+  final data = <String, Map>{};
+  for (final file in [
+    nov16.uaaEvidenceFile,
+    nov16.equivalentEvidenceFile,
+    nov16.twoChainEvidenceFile,
+  ]) {
+    data[file] =
+        jsonDecode(File('docs/implementation/$file').readAsStringSync()) as Map;
+  }
+  rejected = false;
+  try {
+    nov16.readNov16Evidence(
+      data,
+      [],
+      '0' * 64,
+      '0' * 64,
+      ledger.networkObservation,
+    );
+  } on FormatException {
+    rejected = true;
+  }
+  check(rejected, 'historical evidence must reject a different source archive');
+}
+
 void checkNoPageContent(Object? value) {
   const forbidden = {
     'body',
@@ -397,6 +695,8 @@ void checkActualReplay() {
     checkReplayClues(rows);
     checkReplayPilot(rows);
     checkReplayNetwork(rows, document);
+    checkReplayRecent(rows, document);
+    checkReplayNov16(rows, document);
   } finally {
     for (final output in outputs) {
       if (output.existsSync()) output.deleteSync();
@@ -612,12 +912,230 @@ void checkReplayNetwork(List<Map> rows, Map document) {
     'lib/features/books/data/legado/legado_discovery.dart',
     'lib/features/books/data/legado/legado_request.dart',
     'lib/features/books/data/legado/legado_rule_tokens.dart',
+    'lib/features/books/domain/fanfanu_legacy_source_fix.dart',
+    'lib/features/books/domain/net_rdap_legacy_quarantine.dart',
+    'tool/book_source_ledger_recent_evidence.dart',
+    'tool/book_source_ledger_nov16_evidence.dart',
   ]) {
     check(
       (document['normalized_source_code_sha256'] as Map).containsKey(path),
       'missing transitive source digest',
     );
   }
+  for (final path in [
+    'lib/features/books/application/book_category_policy.dart',
+    'lib/features/books/application/book_site_checks.dart',
+    'lib/features/books/data/book_discovery_paging.dart',
+    'lib/features/books/data/book_repository_discovery.dart',
+    'lib/features/books/data/book_repository_site_checks.dart',
+    'lib/features/books/data/books_repository.dart',
+    'lib/features/supervision/application/content_policy.dart',
+  ]) {
+    check(
+      (document['runtime_policy_reference_only_normalized_sha256'] as Map)
+          .containsKey(path),
+      'missing runtime-only policy reference',
+    );
+  }
+  check(
+    (document['limitations'] as List).any(
+      (item) => (item as String).contains(
+        'Runtime discovery-category filtering is not simulated',
+      ),
+    ),
+    'runtime-only category policy must not be represented as simulated',
+  );
+  check(
+    (document['limitations'] as List).any(
+      (item) => (item as String).contains(
+        'historical working-tree book_source_risk.dart digest',
+      ),
+    ),
+    'unretained historical .net policy snapshot must be disclosed',
+  );
+}
+
+void checkReplayNov16(List<Map> rows, Map document) {
+  Map find(String id) => rows.singleWhere((row) => row['source_id'] == id);
+  const uaa =
+      'f55889c694e46c91b0cb834eb5a36c861eb49963e8f86c042f164732dbdb6f06';
+  const unresolved =
+      'f44c7e7d83ca20312dd48786f9bb53448cbbf8bfd737f5bff7108798d7c97ddd';
+  const firstEquivalent =
+      '5c917c26905991075f4d33ffdc650a6f525e5e80f10837da497af751686cab1a';
+  const secondEquivalent =
+      'f13fda5de688afbafbe3ac0e5f3d0b6cbeb858fc022c42b44f25a734e0e51374';
+  const sameHostDifferentRule =
+      'b62b1166d3a5c9736ff5c4ca16427a9485f9de33dc401bfed8d144595b00fc9f';
+  for (final id in [uaa, firstEquivalent, secondEquivalent]) {
+    final row = find(id);
+    final review = (row['historical_adult_source_review_observations'] as List)
+        .cast<Map>()
+        .single;
+    check(
+      (row['static_policy'] as Map)['adult_source_classified'] == true &&
+          review['historical_source_adult_business_evidence'] == true &&
+          review['matches_current_selected_raw_record'] == true &&
+          review['matches_current_normalized_legado_rule'] == true &&
+          review['current_webpage_verified'] == null,
+      'new precise adult source evidence must remain linked and time scoped',
+    );
+  }
+  for (final id in [unresolved, sameHostDifferentRule]) {
+    final row = find(id);
+    final review = (row['historical_adult_source_review_observations'] as List)
+        .cast<Map>()
+        .single;
+    check(
+      (row['static_policy'] as Map)['adult_source_classified'] == false &&
+          review['historical_source_adult_business_evidence'] == null,
+      'same-host and dynamic-category candidates must stay unresolved',
+    );
+  }
+  final references = document['adult_source_historical_references'] as Map;
+  check(
+    (references['ledger'] as Map)['verified_from_git_object'] == true &&
+        (references['label_evidence'] as Map)['verified_from_git_object'] ==
+            true,
+    'historical ledger and labels must be verified Git objects',
+  );
+  check(
+    (document['overlapping_summary']
+            as Map)['sources_with_historical_adult_source_review_observations'] ==
+        10,
+    'adult review must associate exactly the ten documented source identities',
+  );
+  checkReplayTwoChain(rows);
+}
+
+void checkReplayTwoChain(List<Map> rows) {
+  Map find(String id) => rows.singleWhere((row) => row['source_id'] == id);
+  final zhulang = find(
+    'b1fe65efa82c23d08fddb9948d5ec920801618ad35e2a722cc798d6f7508d376',
+  );
+  final zhuishu = find(
+    '59d5b907db94c9109b3b45f2fb1033e562e4c196b1c1a1d7f1f00d6bc4ba8aeb',
+  );
+  Map reading(Map row) => (row['specialized_reading_observations'] as List)
+      .cast<Map>()
+      .singleWhere((item) => item['evidence'] == nov16.twoChainEvidenceFile);
+  final first = reading(zhulang);
+  final second = reading(zhuishu);
+  check(
+    first['content_sample_parsed'] == true &&
+        first['prior_one_sample_reading_chain_reported'] == true &&
+        first['toc_chapters_observed'] == 50 &&
+        first['toc_pagination_fetched'] == false &&
+        first['full_book_reading_verified'] == null,
+    'one chapter must not imply full-book or pagination verification',
+  );
+  check(
+    second['content_sample_parsed'] == false &&
+        second['prior_one_sample_reading_chain_reported'] == null &&
+        second['full_book_reading_verified'] == null &&
+        jsonEncode(second['content_limit_rechecks_bytes']) ==
+            '[524288,2097152]',
+    'oversized 追书神器 content must not become a successful reading chain',
+  );
+  final events = (zhuishu['network_observations'] as List)
+      .cast<Map>()
+      .where((item) => item['evidence'] == nov16.twoChainEvidenceFile)
+      .toList();
+  final truncated = events
+      .where((item) => item['sample_truncated'] == true)
+      .toList();
+  check(
+    events.length == 4 &&
+        truncated.length == 2 &&
+        truncated.every(
+          (item) =>
+              item['truncated_sample_parsed'] == false &&
+              item['sample_sha256'] == null &&
+              item['observed_at'] != null &&
+              item['historical_response_body_retained'] == false &&
+              item['historical_intermediate_snapshots_version_controlled'] ==
+                  false,
+        ),
+    'sample caps, timestamps and unretained bodies must remain visible',
+  );
+  check(
+    first['historical_page_parsing_independently_recomputed'] == false &&
+        first['historical_workspace_policy_snapshots_retained'] == null &&
+        first['historical_workspace_policy_sha256_initial'] !=
+            first['historical_workspace_policy_sha256_followup'],
+    'unavailable intermediate snapshots must not be represented as replayed',
+  );
+  check(
+    first['matches_current_normalized_pilot_rules'] == true &&
+        second['matches_current_normalized_pilot_rules'] == true,
+    'pilot rule fingerprints must be compared to the current source',
+  );
+}
+
+void checkReplayRecent(List<Map> rows, Map document) {
+  Map find(String id) => rows.singleWhere((row) => row['source_id'] == id);
+  final dushu = find(
+    'b269ecd1a1c9ce6693119d5e20fc3ae82998662478c507ba7b4a1604be981ff8',
+  );
+  check(
+    (dushu['static_policy'] as Map)['fixed_unavailable_rule'] == true,
+    'the selected .net old rule must reflect current fixed policy',
+  );
+  check(
+    (dushu['registry_and_doh_observations'] as List).cast<Map>().any(
+      (item) =>
+          item['evidence'] == 'legado-rdap-net-sample-20261115.json' &&
+          item['http_status'] == 404,
+    ),
+    '.net RDAP evidence missing',
+  );
+  final bbs = find(
+    '99dec828e154116574529a7c8013e0e1d08c12ccb01ffa57a1da3ee7aebb8654',
+  );
+  check(
+    (bbs['network_observations'] as List).cast<Map>().any(
+      (item) =>
+          item['evidence'] == 'legado-amsi-redirect-recheck-20261115.json' &&
+          item['http_status'] == 302 &&
+          item['additional_amsi_scan_performed'] == false,
+    ),
+    'redirect recheck must not be represented as a new AMSI scan',
+  );
+  final adult = find(
+    '1f9aaa829a5d0312520cbcce9a4b9b84c7c12cd1d9f0adc6faecb042a9b15c17',
+  );
+  final mixed = find(
+    '68051e1286ea64cd9e4dd6d05fd5f3ed286ade6837c4fff648aeb9b016e735cd',
+  );
+  check(
+    (adult['static_policy'] as Map)['adult_source_classified'] == true &&
+        (mixed['static_policy'] as Map)['adult_source_classified'] == false,
+    'mixed categories alone must not label the entire source adult',
+  );
+  check(
+    (mixed['historical_category_observations'] as List)
+            .cast<Map>()
+            .single['explicit_unique_path_count'] ==
+        4,
+    'mixed historical category metadata missing',
+  );
+  final source560 = find(
+    'bca6e55770d00d422fc5ca90194c062433fd5955601b573c28cc5533a22f4bf4',
+  );
+  final review = (source560['specialized_reading_observations'] as List)
+      .cast<Map>()
+      .single;
+  check(
+    review['toc_body_state'] == 'timeout_unknown' &&
+        review['complete_reading_chain_verified'] == null,
+    '560 full reading must remain unverified',
+  );
+  final history = document['adult_category_historical_ledger_reference'] as Map;
+  check(
+    history['git_commit'] == '6c18b625ee81176c130aef6c33bd6dd3ee5159f1' &&
+        history['verified_from_git_object'] == true,
+    'adult category evidence must use the historical Git snapshot',
+  );
 }
 
 void main() {
@@ -627,6 +1145,12 @@ void main() {
   checkExactCurrentDoh();
   checkInputFingerprints();
   checkSelectedVersionComparison();
+  final recentEvidence = loadRecentEvidence();
+  checkRecentRegistry(recentEvidence);
+  checkRecentRedirects(recentEvidence);
+  checkRecentAdultCategories(recentEvidence);
+  checkRecent560Review(recentEvidence);
+  checkNov16ExactAssociation();
   checkActualReplay();
   stdout.writeln('book source ledger offline checks passed');
 }

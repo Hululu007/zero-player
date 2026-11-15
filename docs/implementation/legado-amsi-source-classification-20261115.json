@@ -1,7 +1,7 @@
 {
-  "generated_at": "2026-11-15T14:48:48.974638Z",
+  "generated_at": "2026-11-15T17:54:42.499006Z",
   "archive_sha256": "012a0e0d6e6adc8d303c32b578510e14b562088b3e965cb01a1a647b5e7e034d",
-  "audit_script_sha256": "c7911d08a229d908a61d91cb052269e7d0ce7be3a248c685e8d9f0918ad5558d",
+  "audit_script_sha256": "fa88c47511f07f66292ad2c434a1556dfeab0e8221ee60f1b526345b2467c1c9",
   "amsi_summary_sha256": "b8a93e7b8fb78ca3bcf57f5748a7b50f67e32e14c8298776726f7779f81ecf67",
   "amsi_clusters_sha256": "0aaff7d86529327f67ea09f741d62a00a0cf47a03a90175b982619beeed9de3e",
   "scope": "Only static current application importer, fixed domain/rule policy and adult metadata; no rule execution, web request, stored user settings, user blacklist or risk database inspected.",
@@ -10,14 +10,25 @@
   "current_policy_code_sha256": {
     "lib/features/books/data/book_import.dart": "5c27a8cac7806ca8854672f89fcc90d0d98e5ab25b92ec4fc13f094bfe93a629",
     "lib/features/books/data/legado/legado_import.dart": "3d4f0f1fb848c26bf65a0eec25373bc993403576634c60524dc17c5a6e217b69",
-    "lib/features/books/data/books_repository.dart": "e97fc96df1781885d4bb12398e9b9bfe35a00e755bf7f45e88fdaed69f7c7e64",
+    "lib/features/books/data/books_repository.dart": "5476d4734ee33a14e502ade70b8ee4b84e57194e07c995b3ea0c0775d9a1f1e3",
+    "lib/features/books/data/book_client.dart": "3db8ea72b1b0e33b6bbc6d03d9cc6591989f84dc4f4212993336b3c088ed2908",
+    "lib/features/books/data/bookan_audio_client.dart": "7531cf3950432ea2aab6fd9edb831867d5939a0a0a612b1a96c6263e17070406",
     "lib/features/books/data/book_comic_download.dart": "db84655835da2778c206d70b34babdd584e026ef41f2dccf386d92369b84ec28",
-    "lib/features/books/data/book_repository_mutations.dart": "d0baf32ec258dc863367be6bd48fb98c6f78d23a73ad367516b685cd02237179",
+    "lib/features/books/data/book_discovery_paging.dart": "13b88b2baf828b10b1934d4dc80bf55b176ed8f25e67ad16fdb4a4ed22255550",
+    "lib/features/books/data/book_repository_discovery.dart": "0fd92b6765d9d95d06cb3c6529fb237d90a5df424a83ab30d871922092daffee",
+    "lib/features/books/data/book_repository_mutations.dart": "322b6efb89afaafbe3299baa0386fe902075e34f65d56b78ca873d5e61d00628",
+    "lib/features/books/data/book_repository_site_checks.dart": "c425040a53703e894ae2f6581baf304385dfca6985ef4e7ab41c5239c5d84f49",
     "lib/features/books/data/book_site_check.dart": "c43b454ee5421cd55fb5c15c43d2babd8099c21b004dbf14dc53200f3a2d64f0",
     "lib/features/books/data/book_supervised_site_scan.dart": "cee1d96f407228053d50e3ecd0f4950d885551f5f7b39cb1777441c6d3457d4a",
     "lib/features/books/data/book_store.dart": "ae65ae01859fea1bf8865a13b07ea3ef823a2607c63f06e4a56ca88fd7e314e1",
-    "lib/features/books/domain/book.dart": "62618f439fdb054b7cf3693dfef266ec5acd4eb76611e0e03b455cccbf7d5959",
-    "lib/features/books/domain/book_source_risk.dart": "1c76896b4fc8d061e9a6fe248638f8593453175e806f640645a1dae1adefa7c2",
+    "lib/features/books/data/legado/legado_client.dart": "82c20d99f72acdc43950eabfd4ab69f7d5468bc4ee40e8ad47027476cbf854a6",
+    "lib/features/books/data/lit2go_audio_client.dart": "ddd2c5d7da1605101f3ef95995e916616480a0a7272e46798b916387d01228bf",
+    "lib/features/books/data/shuyin_audio_client.dart": "5fb71abd8f78ac7e512f02e84a502efbc513b47129e82545cf28a6f213dddfe5",
+    "lib/features/books/data/ximalaya_audio_client.dart": "8fcaed8c4a8441910ab0544a8ef789c0eb93b90f49e5e01db2382162fd475d13",
+    "lib/features/books/domain/book.dart": "1cb4a72bdbc5358d60837b90858f2cc4ce2ae47005bf5114e1b49897b5a59e3c",
+    "lib/features/books/domain/book_source_risk.dart": "471306be4fc0abda04f0e4541f597f3c6dd927f60c2f465bacca79f331de1481",
+    "lib/features/books/domain/fanfanu_legacy_source_fix.dart": "0c3801d4380b8d5c5bab58f0f548725d55699bdf599585156d5894be415c5827",
+    "lib/features/books/domain/net_rdap_legacy_quarantine.dart": "a04eaaad9fe536c20552c8349d6ade7675b5826fa4cfb069df8233665d932913",
     "lib/features/books/domain/iqiyi_legacy_quarantine.dart": "e87cff1c42533bed307dfd419ccea31acdcbd23b78a708dff91dfd3d861876d0",
     "lib/features/books/domain/taotaoshu_legacy_quarantine.dart": "201afe93945d4c0d6f5b3fd1da0ed658e54e755577160e5748140db1fa8e3e61",
     "lib/features/books/domain/legado_source_fingerprint.dart": "46bb8cd624ba136bd3dcea983bd80278b849a46fa340522ac7ac81788249a41a",
@@ -32,6 +43,8 @@
     "lib/features/books/domain/shubang_legacy_source_fix.dart": "1e9e7f8a3db66c470cb00ceba46ebedb0c4b24e3a29a70fbe5174e73afe26f5b",
     "lib/features/books/domain/yingyu_legacy_source_fix.dart": "a979ed63e5b91a6ff5d992a959e4fc5bcffdf23141ff5586e77da0017c82bb8a",
     "lib/features/books/domain/book_site_audit_clues.dart": "1a68d394987d2db11e5798109763145faad62516b0f14e869875137faee462cd",
+    "lib/features/books/application/book_category_policy.dart": "9518058dd340443eccfe1617143c8ef41813d371e818a05adf92453b21afb21c",
+    "lib/features/books/application/book_site_checks.dart": "35462306ec92675dabc5bccc5d75b4a7cd0cd772534b876ba9bedac849936055",
     "lib/features/supervision/domain/content_classification.dart": "0f22950b5a1e5696fa1e60bb353c53a24f9b4546314290abab0081ed08e6146a",
     "lib/features/supervision/domain/adult_source_evidence.dart": "7dd20620b923e14687f8a7c58aafa923ece02172cd38aa260ac9bfe107795206",
     "lib/features/supervision/application/content_policy.dart": "5c2c7d8e198d6973da44da47abdc2ec610205f29600b28d5de190b00c62c7807"
@@ -526,7 +539,7 @@
         "legado_present": true,
         "search_present": true,
         "explore_enabled": true,
-        "explore_category_count": 1,
+        "explore_category_count": 0,
         "library_present": false,
         "normalized_rule_keys": [
           "chapterTitle",
@@ -544,7 +557,7 @@
           "searchTitle",
           "toc"
         ],
-        "normalized_legado_sha256": "51d6be3c41da25f1a2d5e68b57acda0f30c07446b3ea52c4eb0aa9e28daf1fef"
+        "normalized_legado_sha256": "bd61f6e43254d5019fdd2c1ac8163cbae3d483fa6bdcc714ccfa8ec68fa33725"
       }
     },
     {

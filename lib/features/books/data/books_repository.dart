@@ -18,6 +18,7 @@ import '../../../media/gateway/offline_server.dart';
 import '../../supervision/application/content_policy.dart';
 import '../../supervision/domain/adult_source_evidence.dart';
 import '../../supervision/domain/supervision_rules.dart';
+import '../application/book_category_policy.dart';
 import '../domain/book.dart';
 import '../domain/book_search.dart';
 import '../domain/book_source_risk.dart';
@@ -28,6 +29,7 @@ import 'book_client.dart';
 import 'book_cover_cache.dart';
 import 'book_download_evidence.dart';
 import 'book_download_guard.dart';
+import 'book_discovery_paging.dart';
 import 'book_import.dart';
 import 'book_image_payload.dart';
 import 'book_mixed_content.dart';
@@ -41,7 +43,9 @@ import 'qidian_catalog.dart';
 import 'rich_book.dart';
 
 part 'book_comic_download.dart';
+part 'book_repository_discovery.dart';
 part 'book_repository_mutations.dart';
+part 'book_repository_site_checks.dart';
 part 'book_supervised_site_scan.dart';
 
 typedef BookEdition = ({Book book, List<BookChapter> chapters});
@@ -107,6 +111,9 @@ final class BooksRepository {
         policy.supervision.enabled || policy.supervision.corrupted;
     _coverAdultRestricted = policy.filterAdult;
     policy.addListener(_coverPolicyChanged);
+    _discoveryPolicySnapshot = bookSitePolicySnapshot(policy);
+    policy.addListener(_discoveryPolicyChanged);
+    _sourceRiskChanges.addListener(_discoveryRiskChanged);
   }
 
   late final Directory documents;
@@ -115,6 +122,10 @@ final class BooksRepository {
   final BookStore store;
   final BookSourceRiskStore riskStore;
   final _sourceRiskChanges = ValueNotifier<int>(0);
+  final _discoveryTokens = <CancellationToken>{};
+  final _discoveryCursors = <String, _DiscoveryCursor>{};
+  late String _discoveryPolicySnapshot;
+  int _discoveryRevision = 0;
   Listenable get sourceRiskChanges => _sourceRiskChanges;
   bool get sourceRisksReady => _riskLoaded && !_riskSuspended;
   bool get sourceRisksSuspended => _riskSuspended;
@@ -176,6 +187,10 @@ final class BooksRepository {
   final _supervisedScanDone = <Completer<void>>{};
   @visibleForTesting
   Future<void> Function()? beforeEvidenceMutationForTesting;
+  @visibleForTesting
+  Future<void> Function()? afterSiteRiskWriteForTesting;
+  @visibleForTesting
+  Future<void> Function()? afterSiteRiskCommitForTesting;
 
   BookDownloadGuard? _downloadGuard;
   BookDownloadGuard get downloadGuard => _downloadGuard ??= BookDownloadGuard(
@@ -537,80 +552,12 @@ final class BooksRepository {
   /// finding, and a bundled fixed quarantine cannot be cleared here.
   Future<void> clearSourceRisk(BookSourceRiskEntry entry) async {
     _requireSubscriptionAccess();
-    await ensureSourceRiskLoaded();
-    late BookSourceAssessment cleared;
-    await store.db.atomic(() async {
-      _requireSubscriptionAccess();
-      final current = await riskStore.getRecord(
-        entry.recordKey ?? entry.sourceId,
-      );
-      if (current == null ||
-          current.sourceId != entry.sourceId ||
-          current.host != entry.host ||
-          current.version != entry.version ||
-          (!current.adult && !current.quarantined)) {
-        throw const FormatException('风险记录已变化，请刷新后复核');
-      }
-      if (current.key != current.sourceId &&
-          current.key !=
-              BookSourceRiskStore.hostKey(current.sourceId, current.host)) {
-        // The host of a damaged secondary record cannot be reconstructed from
-        // its hash. Do not report a successful clear that would reappear after
-        // restart or discard evidence for an unknown host.
-        throw const FormatException(
-          '风险记录已损坏，相关来源暂不可用；普通备份不包含书源风险记录，请保留数据并从完整数据库备份恢复',
-        );
-      }
-      final sourceEntry = await store.source(
-        _verifiedSources[entry.sourceId],
-        entry.sourceId,
-      );
-      final assessments = await riskStore.all();
-      void requireReviewAllowed() {
-        _requireSubscriptionAccess();
-        final source = sourceEntry?.source;
-        final hosts = [current.host, if (source != null) ...source.mediaHosts];
-        if (source != null) hosts.add(source.endpoint.host);
-        final adultRestricted =
-            current.adult ||
-            (source != null &&
-                (adultBookSource(source) ||
-                    adultBookLabels(source.name, sourceEntry!.group))) ||
-            hosts.any((host) => adultBookHost(host) || knownAdultHost(host)) ||
-            assessments.values.any(
-              (risk) =>
-                  (risk.sourceId == entry.sourceId && risk.adult) ||
-                  (risk.adultHost && hosts.contains(risk.host)),
-            );
-        if (_fixedSourceRisk(entry.sourceId, current.host, source) ||
-            (policy.filterAdult && adultRestricted) ||
-            !policy.textAllowed(
-              '${source?.name ?? current.name} ${current.host}',
-              category: sourceEntry?.group ?? '',
-            )) {
-          throw const ContentBlocked();
-        }
-      }
-
-      requireReviewAllowed();
-      // Retain a revision tombstone so an old review cannot clear a finding
-      // that was later rediscovered after an earlier assessment was cleared.
-      cleared = BookSourceAssessment(
-        sourceId: current.sourceId,
-        name: current.name,
-        host: current.host,
-        adult: false,
-        quarantined: false,
-        adultHost: false,
-        quarantinedHost: false,
-        version: current.version + 1,
-        recordKey: current.key,
-      );
-      await riskStore.write(cleared);
-      requireReviewAllowed();
-    }, tables: {'app_meta'});
-    _rememberAssessment(cleared);
-    policy.refresh();
+    // A review invalidates every older homepage sample, including results
+    // shared by several source IDs for the same host.
+    await _withEvidenceMutation(
+      () => _clearSourceRisk(entry),
+      sourceConfiguration: true,
+    );
   }
 
   bool kindAllowed(BookKind kind) =>
@@ -658,7 +605,20 @@ final class BooksRepository {
     if (!_riskLoaded && book.sourceId != 'local') return false;
     final verified = _verifiedSources[book.sourceId];
     final sourceEntry = _riskSourceEntries[book.sourceId];
+    final ruleSource = sourceEntry?.source ?? verified;
+    final restrictedBookAddress =
+        policy.filterAdult &&
+        ruleSource != null &&
+        bookDiscoveryStaticBookDenied(
+          ruleSource,
+          book,
+          [
+            ...?ruleSource.legado?.categories,
+            ...ruleSource.discoveryCategories,
+          ].where((category) => !bookCategoryAllowed(policy, category)),
+        );
     return kindAllowed(book.kind) &&
+        !restrictedBookAddress &&
         !_blockedSourceIds.contains(book.sourceId) &&
         !(sourceEntry == null && quarantinedBookSourceId(book.sourceId)) &&
         !(sourceEntry != null &&
@@ -681,6 +641,7 @@ final class BooksRepository {
                 adultBookHost(book.uri.host) ||
                 adultBundledSourceId(book.sourceId) ||
                 _assessedAdult(book.sourceId, book.uri.host))) &&
+        bookCategoryTextAllowed(policy, book.category) &&
         policy.textAllowed(
           '${book.title} ${book.author} ${book.description} ${book.category} '
           '${book.latestChapter} ${book.updatedLabel} ${book.rankLabel} ${book.uri.host}',
@@ -739,15 +700,7 @@ final class BooksRepository {
     BookKind kind,
     String sourceId,
     CancellationToken token,
-  ) async {
-    final source = await _enabledSource(kind, sourceId);
-    final categories = await client.categories(source, token);
-    token.check();
-    if (!sourceAllowed(source)) throw const ContentBlocked();
-    return categories
-        .where((category) => policy.textAllowed(category.title))
-        .toList();
-  }
+  ) => _discoveryCategories(kind, sourceId, token);
 
   Future<BookDiscoveryPage> discover(
     BookKind kind,
@@ -756,21 +709,14 @@ final class BooksRepository {
     LegadoCategory? category,
     int page = 1,
     String? cursor,
-  }) async {
-    final source = await _enabledSource(kind, sourceId);
-    final result = await client.discover(
-      source,
-      token,
-      category: category,
-      page: page,
-      cursor: cursor,
-    );
-    if (!sourceAllowed(source) || await _blocked(sourceId)) {
-      throw const ContentBlocked();
-    }
-    token.check();
-    return (books: result.books.where(bookAllowed).toList(), next: result.next);
-  }
+  }) => _discoverPage(
+    kind,
+    sourceId,
+    token,
+    category: category,
+    page: page,
+    cursor: cursor,
+  );
 
   Future<void> restoreDefaultSources(BookKind kind) => _withEvidenceMutation(
     () => _restoreDefaultSources(kind),
@@ -1345,11 +1291,12 @@ final class BooksRepository {
     var status = '';
     var stage = '搜索';
     try {
-      final books = await client.books(
+      final books = await _booksWithDiscoveryPolicy(
         source,
         query,
         token,
         bookAddress: _bookAddress(query),
+        allowDisabled: true,
       );
       final book = books.where(bookAllowed).firstOrNull;
       if (book == null) throw const FormatException('没有匹配作品，试试该源中已知的书名');
@@ -1540,7 +1487,7 @@ final class BooksRepository {
               !await _blocked(source.id) &&
               _currentSearchEntry(entry)) {
             final watch = Stopwatch()..start();
-            final found = await client.books(
+            final found = await _booksWithDiscoveryPolicy(
               source,
               query,
               token,
@@ -2478,6 +2425,8 @@ final class BooksRepository {
       _pendingEvidenceMutations.map((done) => done.future).toList(),
     );
     policy.removeListener(_coverPolicyChanged);
+    policy.removeListener(_discoveryPolicyChanged);
+    _sourceRiskChanges.removeListener(_discoveryRiskChanged);
     _downloadGuard?.dispose();
     _sourceRiskChanges.dispose();
     _http.close();

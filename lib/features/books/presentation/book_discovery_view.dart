@@ -8,6 +8,8 @@ import '../../../core/network/document_client.dart';
 import '../data/book_store.dart';
 import '../data/books_repository.dart';
 import '../data/qidian_catalog.dart';
+import '../data/book_site_check.dart';
+import '../application/book_category_policy.dart';
 import '../domain/book.dart';
 import '../domain/legado_source.dart';
 import 'book_category_picker.dart';
@@ -76,6 +78,7 @@ final class _BookDiscoveryViewState extends State<BookDiscoveryView> {
   final _seenBooks = <String>{};
   List<LegadoCategory> _categories = [];
   LegadoCategory? _category;
+  late String _policySnapshot;
 
   List<BookSourceEntry> _enabled = const [];
   BookSourceEntry? get _source =>
@@ -84,6 +87,8 @@ final class _BookDiscoveryViewState extends State<BookDiscoveryView> {
   @override
   void initState() {
     super.initState();
+    _policySnapshot = bookSitePolicySnapshot(widget.repository.policy);
+    widget.repository.policy.addListener(_discoveryPolicyChanged);
     _scroll.addListener(_nearEnd);
     _updateSources();
     unawaited(_readPreferences());
@@ -111,6 +116,11 @@ final class _BookDiscoveryViewState extends State<BookDiscoveryView> {
   @override
   void didUpdateWidget(BookDiscoveryView oldWidget) {
     super.didUpdateWidget(oldWidget);
+    if (!identical(widget.repository, oldWidget.repository)) {
+      oldWidget.repository.policy.removeListener(_discoveryPolicyChanged);
+      _policySnapshot = bookSitePolicySnapshot(widget.repository.policy);
+      widget.repository.policy.addListener(_discoveryPolicyChanged);
+    }
     if (!identical(widget.sources, oldWidget.sources)) {
       final before = _source?.source;
       final showedQidian = _showQidian;
@@ -173,6 +183,24 @@ final class _BookDiscoveryViewState extends State<BookDiscoveryView> {
     _categories = [];
     _category = null;
     _page = 1;
+  }
+
+  void _discoveryPolicyChanged() {
+    final snapshot = bookSitePolicySnapshot(widget.repository.policy);
+    if (_policySnapshot == snapshot || !mounted) return;
+    _policySnapshot = snapshot;
+    _token?.cancel();
+    setState(() {
+      _busy = false;
+      _resetCategories();
+      _resetPaging();
+      _results.clear();
+      _resultOrder.clear();
+      _recommended.clear();
+      _qidianSections.clear();
+      _needsLoad = true;
+    });
+    _loadIfReady();
   }
 
   Future<void> _load() async {
@@ -254,7 +282,7 @@ final class _BookDiscoveryViewState extends State<BookDiscoveryView> {
 
   void _addQidianSections(Iterable<LegadoCategory> sections) {
     _qidianSections.removeWhere(
-      (_, section) => !widget.repository.policy.textAllowed(section.title),
+      (_, section) => !bookCategoryAllowed(widget.repository.policy, section),
     );
     if (_qidianAddress != '/' &&
         !_qidianSections.containsKey(
@@ -263,7 +291,7 @@ final class _BookDiscoveryViewState extends State<BookDiscoveryView> {
       _qidianAddress = '/';
     }
     for (final section in sections) {
-      if (widget.repository.policy.textAllowed(section.title)) {
+      if (bookCategoryAllowed(widget.repository.policy, section)) {
         final address = qidianHome.resolve(section.address).toString();
         _qidianSections[address] = section;
       }
@@ -645,6 +673,7 @@ final class _BookDiscoveryViewState extends State<BookDiscoveryView> {
 
   @override
   void dispose() {
+    widget.repository.policy.removeListener(_discoveryPolicyChanged);
     _token?.cancel();
     _search.dispose();
     _scroll.dispose();
@@ -837,7 +866,10 @@ final class _BookDiscoveryViewState extends State<BookDiscoveryView> {
               padding: const EdgeInsets.only(top: 6, left: 2),
               child: Text(status, style: theme.textTheme.bodySmall),
             ),
-          if (_categories.isNotEmpty) _categoryBar(),
+          if (_categories.any(
+            (item) => bookCategoryAllowed(widget.repository.policy, item),
+          ))
+            _categoryBar(),
           if (source == null && widget.kind == BookKind.text && !_channelsOnly)
             _recommendationControls(),
         ],
@@ -879,7 +911,7 @@ final class _BookDiscoveryViewState extends State<BookDiscoveryView> {
   ];
 
   Widget _categoryBar() {
-    final category = _category!;
+    final category = _category;
     return Padding(
       padding: const EdgeInsets.only(top: 8),
       child: Wrap(
@@ -888,7 +920,8 @@ final class _BookDiscoveryViewState extends State<BookDiscoveryView> {
         crossAxisAlignment: WrapCrossAlignment.center,
         children: [
           for (final item in _categories)
-            if (item.address.isNotEmpty)
+            if (item.address.isNotEmpty &&
+                bookCategoryAllowed(widget.repository.policy, item))
               ChoiceChip(
                 label: Text(
                   bookCategoryLabel(item, _categories.indexOf(item)),
@@ -933,7 +966,7 @@ final class _BookDiscoveryViewState extends State<BookDiscoveryView> {
             scrollDirection: Axis.horizontal,
             children: [
               for (final section in _qidianSections.values)
-                if (widget.repository.policy.textAllowed(section.title))
+                if (bookCategoryAllowed(widget.repository.policy, section))
                   Padding(
                     padding: const EdgeInsets.only(right: 6),
                     child: ChoiceChip(

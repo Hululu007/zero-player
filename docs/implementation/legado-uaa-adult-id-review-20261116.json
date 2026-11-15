@@ -1,0 +1,112 @@
+{
+  "schema_version": 1,
+  "scope": "Offline static comparison of exact bundled source records and a historical import snapshot; no source rule, webpage script, network request, or user data is executed or accessed.",
+  "catalog_archive_sha256": "012a0e0d6e6adc8d303c32b578510e14b562088b3e965cb01a1a647b5e7e034d",
+  "historical_ledger": {
+    "git_commit": "6c18b625ee81176c130aef6c33bd6dd3ee5159f1",
+    "path": "docs/implementation/legado-source-ledger-20261115.json",
+    "sha256": "81ceb0f074c5abe38f45d67148ddee195a9878ec533c8124ec9ab5bbf3aa121b",
+    "note": "Historical pre-change snapshot, not the current regenerated ledger."
+  },
+  "historical_normalized_source_code_sha256": {
+    "lib/features/books/data/book_import.dart": "5c27a8cac7806ca8854672f89fcc90d0d98e5ab25b92ec4fc13f094bfe93a629",
+    "lib/features/books/data/legado/legado_import.dart": "3d4f0f1fb848c26bf65a0eec25373bc993403576634c60524dc17c5a6e217b69",
+    "lib/features/books/domain/book.dart": "62618f439fdb054b7cf3693dfef266ec5acd4eb76611e0e03b455cccbf7d5959",
+    "lib/features/books/domain/legado_source.dart": "5b907923968332090760ecc9f4d6f7e652aa06501ac7981b5f477ef7c0d954d1",
+    "lib/features/books/domain/book_source_risk.dart": "1c76896b4fc8d061e9a6fe248638f8593453175e806f640645a1dae1adefa7c2"
+  },
+  "verification_tool_sha256_lf": "3dc7c940bb51e49dbd679bc28cc441a8d8da87dfcbaf9f25a01fad0d337c872b",
+  "candidate": {
+    "selected_record_index": 3903,
+    "source_id": "f55889c694e46c91b0cb834eb5a36c861eb49963e8f86c042f164732dbdb6f06",
+    "name": "友爱",
+    "kind": "text",
+    "endpoint_host": "api.uaa.com",
+    "normalized_legado_canonical_sha256": "e6d1159a514de0632c908c4cd193792650737094125b0df0e487987fe1bec1c9",
+    "raw_explore_sha256_utf8": "9280e679342ba60023ee3a22684408c9c1b91165595a7a5d32c8d6d98f4aeb01",
+    "raw_search_sha256_utf8": "b1059aeef34d1c8f041d00eb7b40a1fc7206c37964454a8020dec58cd6558688",
+    "adult_source_classified_at_historical_snapshot": false,
+    "search_host": "api.uaa.com",
+    "search_path": "/novel/app/novel/search",
+    "literal_discovery_title_url_pairs": 50,
+    "all_literal_discovery_pairs_use_search_endpoint": true,
+    "explicit_adult_category_labels": [
+      "家庭乱伦",
+      "调教虐待",
+      "群体换伴",
+      "强奸轮奸"
+    ],
+    "global_intensity_label": "肉量·全部",
+    "global_intensity_porn_values": {
+      "少肉": "1",
+      "中肉": "2",
+      "多肉": "3",
+      "超多": "4"
+    },
+    "common_unique_title_url_pairs_with_989": 49
+  },
+  "already_classified_comparison": {
+    "selected_record_index": 989,
+    "source_id": "08b828adf2d0154db83894b6b77db3defa9dfae30de8a832fc26a5f7c72cbe07",
+    "name": "📓UAA·小说",
+    "kind": "text",
+    "endpoint_host": "api.uaa.com",
+    "normalized_legado_canonical_sha256": "7eb06f876c96aa18574dec23902cf46d5aa6c567f2365ff5ec333ed094e61149",
+    "raw_explore_sha256_utf8": "7c8dfc898783d6067314d0e89f98742ef4383c48ea22fa4da9d005a58698ded1",
+    "raw_search_sha256_utf8": "8981e994920e8f981b484bd482e40560fcbe25fcf024e92d66933920ffe354fb",
+    "adult_source_classified_at_historical_snapshot": true,
+    "literal_discovery_title_url_pairs": 50,
+    "empty_address_pairs_ignored_by_importer": 1,
+    "global_intensity_label": "肉量·全部",
+    "global_intensity_porn_values": {
+      "少肉": "1",
+      "中肉": "2",
+      "多肉": "3",
+      "超多": "4"
+    }
+  },
+  "separate_dynamic_candidate": {
+    "selected_record_index": 1860,
+    "source_id": "f44c7e7d83ca20312dd48786f9bb53448cbbf8bfd737f5bff7108798d7c97ddd",
+    "name": "友文",
+    "kind": "text",
+    "endpoint_host": "api.uaa.com",
+    "normalized_legado_canonical_sha256": "824daf7b2c8b519e22958e1926ddf6c7ca53e6176d7bf9f9d86e3994906b4740",
+    "raw_explore_sha256_utf8": "9287922b98ccd7a5f2f7fc83590a98a79765782efdd086078b0ac919b1c80723",
+    "raw_search_sha256_utf8": "8981e994920e8f981b484bd482e40560fcbe25fcf024e92d66933920ffe354fb",
+    "adult_source_classified_at_historical_snapshot": false,
+    "search_host": "api.uaa.com",
+    "search_path": "/novel/app/novel/search",
+    "dynamic_category_endpoint_path": "/novel/app/novel/categories",
+    "global_intensity_porn_values": {
+      "少肉": "1",
+      "中肉": "2",
+      "多肉": "3",
+      "超多": "4"
+    },
+    "dynamic_category_response_observed": false,
+    "whole_source_adult_classification_proven": null,
+    "recommendation": "Review separately; dynamic category response and complete source content were not observed."
+  },
+  "same_host_comic_counterexample": {
+    "selected_record_index": 3352,
+    "source_id": "e7830aff2d331cabbbe123bd8d94cfe614181793ee4f8fbe0e02327effb376db",
+    "name": "友漫",
+    "kind": "comic",
+    "endpoint_host": "api.uaa.com",
+    "normalized_legado_canonical_sha256": "391b27b25bb05e0fe9bd3abb704ed7a0614210227d0dcdd252500d8621f52268",
+    "raw_explore_sha256_utf8": "41304f84432fcc146f1a956e729e8c608d552331098dc3082a6f301945d94dbb",
+    "raw_search_sha256_utf8": "eef12f9dc895f29771120ecd928f7e8db4e6722bc3a0b4eff15c94b2efe06f29",
+    "adult_source_classified_at_historical_snapshot": false,
+    "search_path": "/comic/app/comic/search",
+    "note": "Different source ID and comic endpoint; no host-wide classification follows."
+  },
+  "limitations": [
+    "Historical catalog metadata and shared search targets do not verify current webpages, current responses, safety, or the content of every work.",
+    "Dynamic JavaScript and remote category data were inspected as text only and were neither executed nor fetched.",
+    "The exact historical source policy snapshot requires local Git and the cited commit; missing Git history causes verification to fail."
+  ],
+  "reproduction": "python tool/audit_uaa_adult_id.py --verify docs/implementation/legado-uaa-adult-id-review-20261116.json",
+  "generated_at": "2026-11-16T00:54:54.387976+08:00",
+  "time_zone": "Asia/Shanghai (UTC+08:00)"
+}

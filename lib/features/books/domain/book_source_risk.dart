@@ -2,6 +2,7 @@ import '../../supervision/domain/content_classification.dart';
 import 'book.dart';
 import 'iqiyi_legacy_quarantine.dart';
 import 'known_untrusted_book_rules.dart';
+import 'net_rdap_legacy_quarantine.dart';
 import 'taotaoshu_legacy_quarantine.dart';
 
 // These hosts have specifically adult-labelled entries in the bundled Legado
@@ -36,6 +37,7 @@ const _adultExactBookHosts = {
 const _adultBundledSourceIds = {
   'f670f04810ccca4af8ffc8321a4b177747dac12a1a98a3d8162387a48413016c', // 绿竹
   'fd43c18e3b6b2020f3f7823c48ae7691362f156e2c3b3a1523d5a7fb5c1bbfbf', // 肉书屋
+  '5c917c26905991075f4d33ffdc650a6f525e5e80f10837da497af751686cab1a', // 肉书屋：同规则独立 ID
   '11880289e42a01f4c52b6dcbea27624ec633b4bea97347d3340bba4b3ac439b7', // 逆鳞
   'fe3bbae11dcbc603cd90368e1e4b21465143215a56b8b70a92def6d7c281fcad', // 龙腾
   '1de6d8be1459bb1df6991b86d63e4dd782ff8bb1806fd6c6f09a5e569bc722cc', // 老王
@@ -46,6 +48,9 @@ const _adultBundledSourceIds = {
   '0c6317e420614be60b383b06e99c8967ed905eb88a604a5c82baf1b25e0d078f', // 鄱阳镇庭
   '9dd98d18033be16ecf6ff1d248abe671b0d0925e8544e8aa67b4ac63e823cc6e', // 丽图：全部黄漫
   '08b828adf2d0154db83894b6b77db3defa9dfae30de8a832fc26a5f7c72cbe07', // UAA：成人小说分类
+  'f55889c694e46c91b0cb834eb5a36c861eb49963e8f86c042f164732dbdb6f06', // 友爱：同一成人小说入口及筛选
+  'f13fda5de688afbafbe3ac0e5f3d0b6cbeb858fc022c42b44f25a734e0e51374', // BL书阁：同规则独立 ID
+  '1f9aaa829a5d0312520cbcce9a4b9b84c7c12cd1d9f0adc6faecb042a9b15c17', // 渣女：成人分类及首页说明
 };
 
 bool adultBundledSourceId(String id) => _adultBundledSourceIds.contains(id);
@@ -182,7 +187,8 @@ bool knownUnavailableBookRule(BookSource source) =>
           (item) => item.address.contains('/xuanhuan/'),
         )) ||
     unavailableIqiyiLegacySource(source) ||
-    unavailableTaotaoshuLegacySource(source);
+    unavailableTaotaoshuLegacySource(source) ||
+    unavailableNetRdapLegacySource(source);
 
 bool _hasKnownRemoteCodeRule(BookSource source) {
   final legado = source.legado;

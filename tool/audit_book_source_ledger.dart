@@ -12,6 +12,9 @@ import 'package:zero_player/features/books/domain/legado_source_fingerprint.dart
 import 'package:zero_player/features/supervision/domain/adult_source_evidence.dart';
 import 'package:zero_player/features/supervision/domain/content_classification.dart';
 
+import 'book_source_ledger_recent_evidence.dart';
+import 'book_source_ledger_nov16_evidence.dart';
+
 const _catalogFolder = 'assets/catalogs/books/legado';
 const _evidenceFolder = 'docs/implementation';
 const _head = 'legado-host-audit-20261115.json';
@@ -32,6 +35,14 @@ const _searchPilot = 'legado-static-search-pilot-20261115.json';
 const _amsiClusters = 'legado-amsi-template-clusters-20261115.json';
 const _amsi4qo = 'legado-amsi-recheck-4qo-20261115.json';
 const _amsi4qoDecoded = 'legado-amsi-recheck-4qo-decoded-20261115.json';
+const _netRdap = 'legado-rdap-net-sample-20261115.json';
+const _recentRedirect = 'legado-amsi-redirect-recheck-20261115.json';
+const _categoryReview = 'legado-adult-category-recheck-20261115.json';
+const _reading560 = 'legado-560xs-recheck-20261115.json';
+const _amsiBefore =
+    'legado-amsi-source-classification-before-fanfanu-20261115.json';
+const _dohReviewed = 'legado-doh-reviewed-20261115.json';
+const _importInventory = 'legado-import-inventory-20261115.json';
 const _amsiFiles = [
   'legado-amsi-pilot-20261115.json',
   'legado-amsi-prior-html-20261115.json',
@@ -56,6 +67,16 @@ const _evidenceFiles = [
   _amsiClusters,
   _amsi4qo,
   _amsi4qoDecoded,
+  _netRdap,
+  _recentRedirect,
+  _categoryReview,
+  _reading560,
+  uaaEvidenceFile,
+  equivalentEvidenceFile,
+  twoChainEvidenceFile,
+  _amsiBefore,
+  _dohReviewed,
+  _importInventory,
   ..._amsiFiles,
 ];
 const _codePaths = [
@@ -81,6 +102,8 @@ const _codePaths = [
   'lib/features/books/data/legado/legado_rule_tokens.dart',
   'lib/features/books/domain/book.dart',
   'lib/features/books/domain/book_source_risk.dart',
+  'lib/features/books/domain/fanfanu_legacy_source_fix.dart',
+  'lib/features/books/domain/net_rdap_legacy_quarantine.dart',
   'lib/features/books/domain/iqiyi_legacy_quarantine.dart',
   'lib/features/books/domain/taotaoshu_legacy_quarantine.dart',
   'lib/features/books/domain/legado_source_fingerprint.dart',
@@ -97,6 +120,24 @@ const _codePaths = [
   'lib/features/supervision/domain/content_classification.dart',
   'lib/features/supervision/domain/adult_source_evidence.dart',
   'tool/audit_book_source_ledger.dart',
+  'tool/book_source_ledger_recent_evidence.dart',
+  'tool/book_source_ledger_nov16_evidence.dart',
+];
+const _runtimePolicyReferencePaths = [
+  'lib/features/books/application/book_category_policy.dart',
+  'lib/features/books/application/book_site_checks.dart',
+  'lib/features/books/data/book_client.dart',
+  'lib/features/books/data/bookan_audio_client.dart',
+  'lib/features/books/data/book_discovery_paging.dart',
+  'lib/features/books/data/book_repository_discovery.dart',
+  'lib/features/books/data/book_repository_mutations.dart',
+  'lib/features/books/data/book_repository_site_checks.dart',
+  'lib/features/books/data/books_repository.dart',
+  'lib/features/books/data/legado/legado_client.dart',
+  'lib/features/books/data/lit2go_audio_client.dart',
+  'lib/features/books/data/shuyin_audio_client.dart',
+  'lib/features/books/data/ximalaya_audio_client.dart',
+  'lib/features/supervision/application/content_policy.dart',
 ];
 
 String _sha(List<int> bytes) => sha256.convert(bytes).toString();
@@ -946,6 +987,21 @@ bool? _recordedTextClue(List<Map<String, Object?>> observations, String key) {
   return checks.isEmpty ? null : checks.any((value) => value);
 }
 
+bool? _categoryClue(
+  List<Map<String, Object?>> observations, {
+  required bool currentOnly,
+}) {
+  final counts = observations
+      .where(
+        (row) =>
+            !currentOnly || row['matches_current_selected_raw_record'] == true,
+      )
+      .map((row) => row['explicit_unique_path_count'])
+      .whereType<int>()
+      .toList();
+  return counts.isEmpty ? null : counts.any((count) => count > 0);
+}
+
 Map<String, Object?> _staticPolicy(BookSource source) {
   final hosts = [source.endpoint.host, ...source.mediaHosts];
   final fixedHost = quarantinedBookHost(source.endpoint.host);
@@ -980,10 +1036,45 @@ Map<String, Object?> _staticPolicy(BookSource source) {
   };
 }
 
+Map<String, Object?> _reviewClues({
+  required List<Map<String, Object?>> network,
+  required List<Map<String, Object?>> amsi,
+  required Map<String, List<Map<String, Object?>>> community,
+  required List<Map<String, Object?>> categories,
+  required List<Map<String, Object?>> ruleReview,
+}) => {
+  'amsi_detection_recorded': amsiDetectionRecorded(amsi),
+  ...communityReviewFlags(community),
+  'adult_text_clue_recorded': _recordedTextClue(
+    network,
+    'adult_text_clue_recorded',
+  ),
+  'gambling_text_clue_recorded': _recordedTextClue(
+    network,
+    'gambling_text_clue_recorded',
+  ),
+  'photography_or_sexy_text_clue_recorded': _recordedTextClue(
+    network,
+    'photography_or_sexy_text_clue_recorded',
+  ),
+  'current_selected_raw_has_explicit_adult_categories': _categoryClue(
+    categories,
+    currentOnly: true,
+  ),
+  'historical_selected_raw_network_eval_evidence': ruleReview.any(
+    (row) =>
+        row['matches_current_selected_raw_record'] == true &&
+        row['classification'] == 'network_data_to_eval' &&
+        row['selected_record_has_evidence'] != false,
+  ),
+};
+
 Map<String, Object?> _row(
   BookSource source,
   _Catalog catalog,
   _EvidenceIndex evidence,
+  RecentLedgerEvidence recent,
+  Nov16LedgerEvidence nov16,
   Map<String, Map> data,
 ) {
   final index = catalog.selectedIndex[source.id]!;
@@ -996,8 +1087,37 @@ Map<String, Object?> _row(
     indices,
     addPathRelation: true,
   );
+  final recentNetwork = selectRecentEvidence(
+    recent.network,
+    source.id,
+    source.endpoint.host,
+    index,
+  );
+  for (final observation in recentNetwork) {
+    observation['path_relation'] = _pathScope(
+      source.endpoint,
+      observation['path'] as String,
+    );
+  }
+  network.addAll(recentNetwork);
+  final nov16Network = selectNov16Evidence(nov16.network, source, index);
+  for (final observation in nov16Network) {
+    observation['path_relation'] = _pathScope(
+      source.endpoint,
+      observation['path'] as String,
+    );
+  }
+  network.addAll(nov16Network);
   final amsi = _matching(evidence.amsi, source, indices);
   final registry = _matching(evidence.registry, source, indices);
+  registry.addAll(
+    selectRecentEvidence(
+      recent.registry,
+      source.id,
+      source.endpoint.host,
+      index,
+    ),
+  );
   final community = communityClues(data[_blocklist]!, source, index);
   final ruleReview = ruleReviewEvidence(data, source, index);
   final searchPilot = searchPilotObservations(
@@ -1005,6 +1125,20 @@ Map<String, Object?> _row(
     source,
     index,
   );
+  final categories = selectRecentEvidence(
+    recent.categories,
+    source.id,
+    source.endpoint.host,
+    index,
+  );
+  final reading = selectRecentEvidence(
+    recent.reading,
+    source.id,
+    source.endpoint.host,
+    index,
+  );
+  reading.addAll(selectNov16Evidence(nov16.reading, source, index));
+  final adultReview = selectNov16Evidence(nov16.adultReview, source, index);
   return {
     'source_id': source.id,
     'name': source.name,
@@ -1029,28 +1163,16 @@ Map<String, Object?> _row(
     'community_list_clues': community,
     'historical_raw_rule_review': ruleReview,
     'search_and_discovery_observations': searchPilot,
-    'review_clues': {
-      'amsi_detection_recorded': amsiDetectionRecorded(amsi),
-      ...communityReviewFlags(community),
-      'adult_text_clue_recorded': _recordedTextClue(
-        network,
-        'adult_text_clue_recorded',
-      ),
-      'gambling_text_clue_recorded': _recordedTextClue(
-        network,
-        'gambling_text_clue_recorded',
-      ),
-      'photography_or_sexy_text_clue_recorded': _recordedTextClue(
-        network,
-        'photography_or_sexy_text_clue_recorded',
-      ),
-      'historical_selected_raw_network_eval_evidence': ruleReview.any(
-        (row) =>
-            row['matches_current_selected_raw_record'] == true &&
-            row['classification'] == 'network_data_to_eval' &&
-            row['selected_record_has_evidence'] != false,
-      ),
-    },
+    'historical_category_observations': categories,
+    'historical_adult_source_review_observations': adultReview,
+    'specialized_reading_observations': reading,
+    'review_clues': _reviewClues(
+      network: network,
+      amsi: amsi,
+      community: community,
+      categories: categories,
+      ruleReview: ruleReview,
+    ),
   };
 }
 
@@ -1060,6 +1182,43 @@ void _verifyArchiveAssociation(
   String digest,
   Map<String, String> inputHashes,
 ) {
+  if (file == _recentRedirect) {
+    final sources = evidence['inputs'] as Map;
+    if (sources.isEmpty ||
+        sources.entries.any((entry) => inputHashes[entry.key] != entry.value)) {
+      throw const FormatException(
+        'redirect recheck input association mismatch',
+      );
+    }
+    return;
+  }
+  if (file == _netRdap) {
+    final sources = evidence['input_evidence_sha256'] as Map;
+    if (sources.isEmpty ||
+        sources.entries.any(
+          (entry) =>
+              inputHashes['$_evidenceFolder/${entry.key}'] != entry.value,
+        )) {
+      throw const FormatException('net RDAP input association mismatch');
+    }
+  }
+  if (file == _reading560) {
+    final inputs = evidence['inputs'] as Map;
+    if (inputHashes[inputs['initial_pilot_evidence_path']] !=
+        inputs['initial_pilot_evidence_sha256']) {
+      throw const FormatException('560 search pilot association mismatch');
+    }
+  }
+  if (file == _categoryReview) {
+    final inputs = evidence['inputs'] as Map;
+    if (inputHashes[inputs['first_host_audit_path']] !=
+        inputs['first_host_audit_sha256']) {
+      throw const FormatException(
+        'adult category host audit association mismatch',
+      );
+    }
+    _verifyHistoricalLedger(inputs);
+  }
   if (file == _amsiClusters) {
     final scans = (evidence['source_scans'] as List).cast<Map>();
     if (scans.isEmpty ||
@@ -1087,10 +1246,42 @@ void _verifyArchiveAssociation(
     _blocklist => (evidence['catalog'] as Map)['archive_sha256'],
     _certpl => (evidence['catalog'] as Map)['archive_sha256'],
     _searchPilot => (evidence['inputs'] as Map)['catalog_archive_sha256'],
+    _netRdap => evidence['catalog_archive_sha256'],
+    _categoryReview ||
+    _reading560 => (evidence['inputs'] as Map)['catalog_archive_sha256'],
+    uaaEvidenceFile ||
+    equivalentEvidenceFile => evidence['catalog_archive_sha256'],
+    twoChainEvidenceFile =>
+      (evidence['source_file_sha256_at_initial']
+          as Map)['$_catalogFolder/catalog.json.bz2'],
     _ => evidence['archive_sha256'],
   };
   if (associated != digest) {
     throw FormatException('evidence archive mismatch: $file');
+  }
+}
+
+void _verifyHistoricalLedger(Map inputs) {
+  final commit = inputs['source_ledger_git_commit'];
+  final path = inputs['source_ledger_path'];
+  final digest = inputs['source_ledger_sha256'];
+  if (commit is! String ||
+      !RegExp(r'^[0-9a-f]{40}$').hasMatch(commit) ||
+      path != 'docs/implementation/legado-source-ledger-20261115.json' ||
+      digest is! String ||
+      !RegExp(r'^[0-9a-f]{64}$').hasMatch(digest)) {
+    throw const FormatException('invalid historical ledger reference');
+  }
+  final result = Process.runSync(
+    'git',
+    ['show', '$commit:$path'],
+    stdoutEncoding: null,
+    stderrEncoding: null,
+  );
+  if (result.exitCode != 0 || _sha(result.stdout as List<int>) != digest) {
+    throw const FormatException(
+      'historical ledger Git object SHA-256 mismatch',
+    );
   }
 }
 
@@ -1143,6 +1334,26 @@ Map<String, int> _summary(List<Map<String, Object?>> sources) {
     'sources_with_search_or_discovery_observation': count(
       (row) => (row['search_and_discovery_observations'] as List).isNotEmpty,
     ),
+    'sources_with_net_rdap_observations': count(
+      (row) => (row['registry_and_doh_observations'] as List)
+          .whereType<Map>()
+          .any((observation) => observation['evidence'] == _netRdap),
+    ),
+    'sources_with_recent_redirect_observations': count(
+      (row) => (row['network_observations'] as List).whereType<Map>().any(
+        (observation) => observation['evidence'] == _recentRedirect,
+      ),
+    ),
+    'sources_with_historical_category_observations': count(
+      (row) => (row['historical_category_observations'] as List).isNotEmpty,
+    ),
+    'sources_with_historical_adult_source_review_observations': count(
+      (row) => (row['historical_adult_source_review_observations'] as List)
+          .isNotEmpty,
+    ),
+    'sources_with_specialized_reading_observations': count(
+      (row) => (row['specialized_reading_observations'] as List).isNotEmpty,
+    ),
     for (final state in [
       'no_observation',
       'no_response_recorded',
@@ -1163,6 +1374,9 @@ void main(List<String> args) {
   final output = File(args.single);
   if (output.existsSync()) throw const FormatException('output already exists');
   final codeHashes = {for (final path in _codePaths) path: _sourceSha(path)};
+  final runtimePolicyHashes = {
+    for (final path in _runtimePolicyReferencePaths) path: _sourceSha(path),
+  };
   final inputBytes = <String, List<int>>{
     '$_catalogFolder/manifest.json': File(
       '$_catalogFolder/manifest.json',
@@ -1198,9 +1412,17 @@ void main(List<String> args) {
     );
   }
   final evidence = _readEvidence(data);
+  final recent = readRecentEvidence(data, networkObservation);
+  final nov16 = readNov16Evidence(
+    data,
+    catalog.rows,
+    _sha(compressed),
+    hashes['$_catalogFolder/manifest.json']!,
+    networkObservation,
+  );
   final rows = [
     for (final source in catalog.imported.sources)
-      _row(source, catalog, evidence, data),
+      _row(source, catalog, evidence, recent, nov16, data),
   ];
   rows.sort(
     (a, b) => (a['source_id'] as String).compareTo(b['source_id'] as String),
@@ -1208,6 +1430,13 @@ void main(List<String> args) {
   for (final entry in codeHashes.entries) {
     if (_sourceSha(entry.key) != entry.value) {
       throw FormatException('source changed during audit: ${entry.key}');
+    }
+  }
+  for (final entry in runtimePolicyHashes.entries) {
+    if (_sourceSha(entry.key) != entry.value) {
+      throw FormatException(
+        'runtime policy reference changed during audit: ${entry.key}',
+      );
     }
   }
   for (final entry in hashes.entries) {
@@ -1222,6 +1451,7 @@ void main(List<String> args) {
     data,
     hashes,
     codeHashes,
+    runtimePolicyHashes,
     rows,
     summary,
   );
@@ -1237,6 +1467,7 @@ Map<String, Object?> _ledgerDocument(
   Map<String, Map> data,
   Map<String, String> hashes,
   Map<String, String> codeHashes,
+  Map<String, String> runtimePolicyHashes,
   List<Map<String, Object?>> rows,
   Map<String, int> summary,
 ) => {
@@ -1254,13 +1485,39 @@ Map<String, Object?> _ledgerDocument(
     'Community list relation groups describe each signal, so a source with an endpoint hit may also have a separate other-field-only signal.',
     'Rule triage describes historical raw record fields; import-time repairs can change the normalized rules, so it is not a current execution verdict.',
     'Synthetic-query search and discovery results are separate observations and do not establish a working reading chain or security.',
+    'The 560 POST sample and the separately tested book are different works; the table-of-contents response body timed out, scripts were not executed, and full reading remains unverified.',
+    'The two-chain pilot contains one synthetic search and one book per source; one free chapter parsed for one source, while the other chapter exceeded both byte caps and was not parsed. Neither proves complete-book reading, current availability, or safety.',
+    'Two-chain response bodies and temporary intermediate files were not version-controlled; the historical parsing observations cannot be independently recreated without matching bytes, and intermediate working-tree policy snapshots may not be retained.',
+    'The two later HTTP redirects did not include a new AMSI scan; earlier detections are retained only as dated sample observations.',
+    'Historical category counts are evidence about the selected raw record, not a site-wide adult-content verdict.',
+    'Runtime discovery-category filtering is not simulated; static source flags and historical categories do not report its filtering outcome.',
+    'Historical category and adult-source evidence requires local Git, the referenced ledger and label objects, and historical code objects; a shallow clone or missing .git causes verification to fail.',
+    'The .net RDAP evidence records a historical working-tree book_source_risk.dart digest whose exact snapshot was not retained, so that historical policy state cannot be fully reconstructed from these inputs.',
     'Static flags do not include personal settings, enabled state, mutable assessments, user blacklists, supervision, or every private repository policy.',
     'Same-ID historical cache can lack the rule fingerprint needed to attribute old content to a specific source version.',
-    'No search-detail-chapter-content chain is verified by this ledger.',
+    'The ledger reports bounded prior pilot observations, but does not itself perform a new live search-detail-chapter-content check.',
     'Only the listed formal evidence inputs are included; other local or untracked rechecks are not incorporated.',
   ],
   'input_sha256': hashes,
   'normalized_source_code_sha256': codeHashes,
+  'runtime_policy_reference_only_normalized_sha256': runtimePolicyHashes,
+  'adult_category_historical_ledger_reference': {
+    'git_commit':
+        (data[_categoryReview]!['inputs'] as Map)['source_ledger_git_commit'],
+    'path': (data[_categoryReview]!['inputs'] as Map)['source_ledger_path'],
+    'sha256': (data[_categoryReview]!['inputs'] as Map)['source_ledger_sha256'],
+    'verified_from_git_object': true,
+  },
+  'adult_source_historical_references': {
+    'ledger': {
+      ...(data[uaaEvidenceFile]!['historical_ledger'] as Map),
+      'verified_from_git_object': true,
+    },
+    'label_evidence': {
+      ...(data[equivalentEvidenceFile]!['historical_label_evidence'] as Map),
+      'verified_from_git_object': true,
+    },
+  },
   'community_inputs': {
     'block_list_project_revision':
         (data[_blocklist]!['source'] as Map)['revision'],

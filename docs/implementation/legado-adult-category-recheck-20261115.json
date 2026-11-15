@@ -1,0 +1,517 @@
+{
+  "schema_version": 1,
+  "created_at": "2026-11-15T16:01:04.235964+00:00",
+  "time_zone": "UTC; Asia/Shanghai is UTC+08:00",
+  "scope": "Two exact selected catalog IDs; static legacy categories and one anonymous HTTPS root observation per host.",
+  "inputs": {
+    "catalog_archive_sha256": "012a0e0d6e6adc8d303c32b578510e14b562088b3e965cb01a1a647b5e7e034d",
+    "source_ledger_path": "docs/implementation/legado-source-ledger-20261115.json",
+    "source_ledger_sha256": "81ceb0f074c5abe38f45d67148ddee195a9878ec533c8124ec9ab5bbf3aa121b",
+    "source_ledger_git_commit": "6c18b625ee81176c130aef6c33bd6dd3ee5159f1",
+    "source_ledger_note": "The referenced ledger is the historical snapshot at this commit; the current ledger may be regenerated after policy changes.",
+    "first_host_audit_path": "docs/implementation/legado-host-audit-20261115.json",
+    "first_host_audit_sha256": "dd8a118c91a1a13dd17a1dd1f32689b55fa3cc4363ec08884d832bbe379aa4b4",
+    "ledger_source_code_sha256": {
+      "lib/core/network/cancellation_token.dart": "77ef7b8f4fcce3e8e3fabbb5ce77bda157912ecce2c73b766e2e35297fa34e46",
+      "lib/core/network/document_client.dart": "074f37eea9e5ca8c44f63ca4d216c39f59dbd2cf40be5d1244f0e3ab38155b47",
+      "lib/core/network/document_encoding.dart": "172e2da9ab62964439b147ba9d570e215e44c39ded113de40ba8ec68f022fa28",
+      "lib/core/network/header_policy.dart": "80c21afe38a4ac83a095f2665d7fe2e78eed8039cf45ec4128e315a00c7a10d6",
+      "lib/core/network/lan_access_policy.dart": "9ab4f5a8b67c17e7431ed7ba5dfd35b7de9ac7cb35506c370708a8b1f5c30518",
+      "lib/core/network/media_http_client.dart": "696795c08d2ffad763aad053913b247896decd7bb3ba9a766200b8043d27cb02",
+      "lib/core/network/network_budget.dart": "5748f4ebc67d9a3aeba081ece1139417c0f06e8399297fb9da27596a06cd4080",
+      "lib/core/network/network_target_policy.dart": "b79b7fb7376cc832b956f48cdca7bdc0980b9ba4458a95c363c01904128a01ba",
+      "lib/core/network/request_scheduler.dart": "36e127a9a8bcecdc08325520c0f54eda6e0c8f22d4d55147791662221fd621d0",
+      "lib/core/network/request_trace.dart": "a849a412f365c9bd9c686bd29987baae6167d9cc7c806c6362b3c7c002ab1467",
+      "lib/features/sources/data/jsonc_decoder.dart": "d23e04e11080f67d0cbe3d296e8369dc86537ed6200b93a69ca948f1142df1c4",
+      "lib/features/sources/domain/source_diagnostics.dart": "b700ff6be86517a5b70a2c7d9649989cb5b6a93fbb378ccd8ed971facc744474",
+      "lib/features/sources/domain/source_name.dart": "d3293f836ab57a67d01197fe36c738f9c5332689f197e39092d0472909dddedc",
+      "lib/features/sources/domain/video_source.dart": "90a730cb267792218b6f1911c1e5a88b7bbeccc8b735fef446de47f84458af41",
+      "lib/features/books/data/book_import.dart": "5c27a8cac7806ca8854672f89fcc90d0d98e5ab25b92ec4fc13f094bfe93a629",
+      "lib/features/books/data/book_source_links.dart": "4ba0b45a4138bfb7ea6e66c11986bbfd8ef2e9ed2797bb8531789b8e83408a88",
+      "lib/features/books/data/legado/legado_import.dart": "3d4f0f1fb848c26bf65a0eec25373bc993403576634c60524dc17c5a6e217b69",
+      "lib/features/books/data/legado/legado_discovery.dart": "c4c8039a58e66522547a4d71991be415a8c5ad571bf105c891bace70f2c77c7e",
+      "lib/features/books/data/legado/legado_request.dart": "da65df24e85c72e12e9b6305407612084bd8ea2f6d9197ce66fc96e0bd717914",
+      "lib/features/books/data/legado/legado_rule_tokens.dart": "4833544f325c73292eebf09e9d82d0573a97cf9e5ba16971cc4b3d3576c30333",
+      "lib/features/books/domain/book.dart": "62618f439fdb054b7cf3693dfef266ec5acd4eb76611e0e03b455cccbf7d5959",
+      "lib/features/books/domain/book_source_risk.dart": "1c76896b4fc8d061e9a6fe248638f8593453175e806f640645a1dae1adefa7c2",
+      "lib/features/books/domain/iqiyi_legacy_quarantine.dart": "e87cff1c42533bed307dfd419ccea31acdcbd23b78a708dff91dfd3d861876d0",
+      "lib/features/books/domain/taotaoshu_legacy_quarantine.dart": "201afe93945d4c0d6f5b3fd1da0ed658e54e755577160e5748140db1fa8e3e61",
+      "lib/features/books/domain/legado_source_fingerprint.dart": "46bb8cd624ba136bd3dcea983bd80278b849a46fa340522ac7ac81788249a41a",
+      "lib/features/books/domain/known_untrusted_book_rules.dart": "8caf6f3b50868d858a0bbb461c0f680c70dc60c8673c5a8c24639676f28a8c89",
+      "lib/features/books/domain/legado_source.dart": "5b907923968332090760ecc9f4d6f7e652aa06501ac7981b5f477ef7c0d954d1",
+      "lib/features/books/domain/legado_source_fixes.dart": "5861cc4c175989a116074165f9aa0500cf56e5e82ebe8399833dc84470330f25",
+      "lib/features/books/domain/kuwo_legacy_source_fix.dart": "dfdcad7cced36e68c4f3ac8db7a3697a6b71c84f43787acb0e8ba54a1d55f7e2",
+      "lib/features/books/domain/qq_reading_legacy_source_fix.dart": "8b536b19cb6d220ee745a02604a6205e8e072300c2a0a8fa8fcea3f0eb67ef00",
+      "lib/features/books/domain/yuque_legacy_source_fix.dart": "bc1f1d63d64010d8b281740a168c9ccf7744ba51ed29d44dae97d44668111f88",
+      "lib/features/books/domain/zhongyi_legacy_source_fix.dart": "86922a9b696b173b00efd4831a9acfc126b10bfd918b94e81222c9055716e164",
+      "lib/features/books/domain/jingzhi_legacy_source_fix.dart": "e6035921a1ac0c5c29835c0c70e8acc340af1363cb613b312fdc4227e71aa925",
+      "lib/features/books/domain/shubang_legacy_source_fix.dart": "1e9e7f8a3db66c470cb00ceba46ebedb0c4b24e3a29a70fbe5174e73afe26f5b",
+      "lib/features/books/domain/yingyu_legacy_source_fix.dart": "a979ed63e5b91a6ff5d992a959e4fc5bcffdf23141ff5586e77da0017c82bb8a",
+      "lib/features/supervision/domain/content_classification.dart": "0f22950b5a1e5696fa1e60bb353c53a24f9b4546314290abab0081ed08e6146a",
+      "lib/features/supervision/domain/adult_source_evidence.dart": "7dd20620b923e14687f8a7c58aafa923ece02172cd38aa260ac9bfe107795206",
+      "tool/audit_book_source_ledger.dart": "cd2a574a5c474b3697f2f3d782d4560951210c42c77708056ae43eed361ed1c1"
+    },
+    "current_code_mismatches": {
+      "lib/features/books/domain/book.dart": {
+        "ledger_sha256": "62618f439fdb054b7cf3693dfef266ec5acd4eb76611e0e03b455cccbf7d5959",
+        "current_sha256": "1cb4a72bdbc5358d60837b90858f2cc4ce2ae47005bf5114e1b49897b5a59e3c"
+      },
+      "lib/features/books/domain/book_source_risk.dart": {
+        "ledger_sha256": "1c76896b4fc8d061e9a6fe248638f8593453175e806f640645a1dae1adefa7c2",
+        "current_sha256": "ca959b12a1078e0cbf4d366d3b3da1a0ca93e9b607eb21d6d24d8c323d26a4ec"
+      }
+    }
+  },
+  "method": {
+    "static": "Read archived source records and selected-ID/static-policy ledger snapshot. Ignore group headings and non-category separators; deduplicate menu aliases by exact same-host path template.",
+    "network": "One anonymous HTTPS root GET per host; DNS answers validated as public and a numeric IP pinned, TLS hostname verified, no redirects, JS execution, subresource requests or credentials.",
+    "limits": "Eight-second configured request limit; sample <=32768 decoded HTML bytes. For gzip, <=65536 compressed bytes were read and <=32769 bytes decompressed in memory; no page body saved."
+  },
+  "sources": [
+    {
+      "selected_record_index": 4653,
+      "source_id": "1f9aaa829a5d0312520cbcce9a4b9b84c7c12cd1d9f0adc6faecb042a9b15c17",
+      "name": "渣女小说",
+      "host": "zhanvxs.net",
+      "raw_same_host_record_indices": [
+        4653
+      ],
+      "related_same_id_record_indices": [
+        4653
+      ],
+      "explore_enabled": true,
+      "raw_explore_sha256_utf8": "4b0709e9b00936c631ab4b283cd7ae846f4527fedcd12064e7511aae78a8abbb",
+      "category_method": "Exact labels containing 肉文 or 情欲 only; no other ambiguous label counts as explicit. Group aliases by same-host path template.",
+      "menu_entry_count": 19,
+      "explicit_menu_entry_count": 6,
+      "unique_path_count": 11,
+      "explicit_unique_path_count": 5,
+      "categories": [
+        {
+          "path_template": "/sort/1_{{page}}/",
+          "aliases": [
+            {
+              "label": "耽美小说",
+              "source_position": {
+                "line_1based": 1
+              },
+              "explicit_adult_marker": false
+            },
+            {
+              "label": "耽美小说",
+              "source_position": {
+                "line_1based": 10
+              },
+              "explicit_adult_marker": false
+            }
+          ],
+          "explicit_adult_marker": false
+        },
+        {
+          "path_template": "/sort/2_{{page}}/",
+          "aliases": [
+            {
+              "label": "海棠耽美",
+              "source_position": {
+                "line_1based": 2
+              },
+              "explicit_adult_marker": false
+            },
+            {
+              "label": "耽美肉文",
+              "source_position": {
+                "line_1based": 11
+              },
+              "explicit_adult_marker": true
+            }
+          ],
+          "explicit_adult_marker": true
+        },
+        {
+          "path_template": "/sort/3_{{page}}/",
+          "aliases": [
+            {
+              "label": "言情小说",
+              "source_position": {
+                "line_1based": 3
+              },
+              "explicit_adult_marker": false
+            },
+            {
+              "label": "言情小说",
+              "source_position": {
+                "line_1based": 12
+              },
+              "explicit_adult_marker": false
+            }
+          ],
+          "explicit_adult_marker": false
+        },
+        {
+          "path_template": "/sort/4_{{page}}/",
+          "aliases": [
+            {
+              "label": "海棠言情",
+              "source_position": {
+                "line_1based": 4
+              },
+              "explicit_adult_marker": false
+            },
+            {
+              "label": "言情肉文",
+              "source_position": {
+                "line_1based": 13
+              },
+              "explicit_adult_marker": true
+            }
+          ],
+          "explicit_adult_marker": true
+        },
+        {
+          "path_template": "/sort/5_{{page}}/",
+          "aliases": [
+            {
+              "label": "百合小说",
+              "source_position": {
+                "line_1based": 5
+              },
+              "explicit_adult_marker": false
+            },
+            {
+              "label": "百合小说",
+              "source_position": {
+                "line_1based": 14
+              },
+              "explicit_adult_marker": false
+            }
+          ],
+          "explicit_adult_marker": false
+        },
+        {
+          "path_template": "/sort/6_{{page}}/",
+          "aliases": [
+            {
+              "label": "情欲小说",
+              "source_position": {
+                "line_1based": 6
+              },
+              "explicit_adult_marker": true
+            },
+            {
+              "label": "超爽肉文",
+              "source_position": {
+                "line_1based": 15
+              },
+              "explicit_adult_marker": true
+            }
+          ],
+          "explicit_adult_marker": true
+        },
+        {
+          "path_template": "/sort/7_{{page}}/",
+          "aliases": [
+            {
+              "label": "长佩小说",
+              "source_position": {
+                "line_1based": 7
+              },
+              "explicit_adult_marker": false
+            },
+            {
+              "label": "男男肉文",
+              "source_position": {
+                "line_1based": 16
+              },
+              "explicit_adult_marker": true
+            }
+          ],
+          "explicit_adult_marker": true
+        },
+        {
+          "path_template": "/sort/8_{{page}}/",
+          "aliases": [
+            {
+              "label": "连城小说",
+              "source_position": {
+                "line_1based": 8
+              },
+              "explicit_adult_marker": false
+            },
+            {
+              "label": "浓情肉文",
+              "source_position": {
+                "line_1based": 17
+              },
+              "explicit_adult_marker": true
+            }
+          ],
+          "explicit_adult_marker": true
+        },
+        {
+          "path_template": "/sort/9_{{page}}/",
+          "aliases": [
+            {
+              "label": "私密趣事",
+              "source_position": {
+                "line_1based": 18
+              },
+              "explicit_adult_marker": false
+            }
+          ],
+          "explicit_adult_marker": false
+        },
+        {
+          "path_template": "/sort/10_{{page}}/",
+          "aliases": [
+            {
+              "label": "评书品书",
+              "source_position": {
+                "line_1based": 19
+              },
+              "explicit_adult_marker": false
+            }
+          ],
+          "explicit_adult_marker": false
+        },
+        {
+          "path_template": "/sort/11_{{page}}/",
+          "aliases": [
+            {
+              "label": "高辣完结",
+              "source_position": {
+                "line_1based": 20
+              },
+              "explicit_adult_marker": false
+            }
+          ],
+          "explicit_adult_marker": false
+        }
+      ],
+      "ignored_positions": [
+        {
+          "source_position": {
+            "line_1based": 9
+          },
+          "reason": "separator_without_label_address_pair"
+        }
+      ],
+      "static_policy_at_ledger_snapshot": {
+        "adult_source_classified": false,
+        "adult_by_label": false,
+        "adult_by_bundled_id": false,
+        "adult_evidence_merged": false,
+        "adult_by_text_policy": false,
+        "known_adult_hosts": [],
+        "fixed_endpoint_host_quarantine": false,
+        "fixed_media_host_quarantines": [],
+        "fixed_untrusted_rule": false,
+        "fixed_unavailable_rule": false,
+        "fixed_other_exact_source_quarantine": false,
+        "fixed_orphan_history_id": false
+      },
+      "prior_homepage_observation": {
+        "observed_at": "2026-11-15T02:27:48.983904+00:00",
+        "status": 200,
+        "sample": {
+          "error": "TimeoutError: The read operation timed out"
+        }
+      },
+      "current_homepage_observation": {
+        "host": "zhanvxs.net",
+        "started_at": "2026-11-15T15:54:57.497024+00:00",
+        "observed_at": "2026-11-15T15:54:59.777390+00:00",
+        "http_status": 200,
+        "content_type": "text/html; charset=utf-8",
+        "content_encoding": "identity",
+        "wire_bytes": 27536,
+        "sample_bytes": 27536,
+        "sample_sha256": "c56aea79f8482970bf5e452dffcfb9871d83d22c786897b660b13b8fe5448610",
+        "truncated": false,
+        "title": "私密趣事_激情小说_耽美言情_渣女小说",
+        "description_excerpt": "辣文,肉文,耽美H文",
+        "description_explicit_adult_business": true
+      },
+      "scope_recommendation": "Source-ID adult evidence supported by multiple explicit legacy category paths and current homepage description; do not generalize to other sources or each item."
+    },
+    {
+      "selected_record_index": 4464,
+      "source_id": "68051e1286ea64cd9e4dd6d05fd5f3ed286ade6837c4fff648aeb9b016e735cd",
+      "name": "🎃小强小说🎃",
+      "host": "123xiaoqiang.me",
+      "raw_same_host_record_indices": [
+        4464
+      ],
+      "related_same_id_record_indices": [
+        4464
+      ],
+      "explore_enabled": true,
+      "raw_explore_sha256_utf8": "505aeeee2fdcfbacb323dbbb869c1cb943d7170de80202e705d2cb65bd54a67d",
+      "category_method": "Exact labels containing 肉文 or 情欲 only; no other ambiguous label counts as explicit. Group aliases by same-host path template.",
+      "menu_entry_count": 8,
+      "explicit_menu_entry_count": 4,
+      "unique_path_count": 8,
+      "explicit_unique_path_count": 4,
+      "categories": [
+        {
+          "path_template": "/sort/1/{{page}}/",
+          "aliases": [
+            {
+              "label": "耽美小说",
+              "source_position": {
+                "json_index": 1
+              },
+              "explicit_adult_marker": false
+            }
+          ],
+          "explicit_adult_marker": false
+        },
+        {
+          "path_template": "/sort/2/{{page}}/",
+          "aliases": [
+            {
+              "label": "耽美肉文",
+              "source_position": {
+                "json_index": 2
+              },
+              "explicit_adult_marker": true
+            }
+          ],
+          "explicit_adult_marker": true
+        },
+        {
+          "path_template": "/sort/3/{{page}}/",
+          "aliases": [
+            {
+              "label": "言情小说",
+              "source_position": {
+                "json_index": 3
+              },
+              "explicit_adult_marker": false
+            }
+          ],
+          "explicit_adult_marker": false
+        },
+        {
+          "path_template": "/sort/4/{{page}}/",
+          "aliases": [
+            {
+              "label": "言情肉文",
+              "source_position": {
+                "json_index": 4
+              },
+              "explicit_adult_marker": true
+            }
+          ],
+          "explicit_adult_marker": true
+        },
+        {
+          "path_template": "/sort/5/{{page}}/",
+          "aliases": [
+            {
+              "label": "百合小说",
+              "source_position": {
+                "json_index": 5
+              },
+              "explicit_adult_marker": false
+            }
+          ],
+          "explicit_adult_marker": false
+        },
+        {
+          "path_template": "/sort/6/{{page}}/",
+          "aliases": [
+            {
+              "label": "超爽肉文",
+              "source_position": {
+                "json_index": 6
+              },
+              "explicit_adult_marker": true
+            }
+          ],
+          "explicit_adult_marker": true
+        },
+        {
+          "path_template": "/sort/7/{{page}}/",
+          "aliases": [
+            {
+              "label": "浓情肉文",
+              "source_position": {
+                "json_index": 7
+              },
+              "explicit_adult_marker": true
+            }
+          ],
+          "explicit_adult_marker": true
+        },
+        {
+          "path_template": "/sort/8/{{page}}/",
+          "aliases": [
+            {
+              "label": "其他类型",
+              "source_position": {
+                "json_index": 8
+              },
+              "explicit_adult_marker": false
+            }
+          ],
+          "explicit_adult_marker": false
+        }
+      ],
+      "ignored_positions": [
+        {
+          "source_position": {
+            "json_index": 0
+          },
+          "reason": "group_heading_without_address"
+        }
+      ],
+      "static_policy_at_ledger_snapshot": {
+        "adult_source_classified": false,
+        "adult_by_label": false,
+        "adult_by_bundled_id": false,
+        "adult_evidence_merged": false,
+        "adult_by_text_policy": false,
+        "known_adult_hosts": [],
+        "fixed_endpoint_host_quarantine": false,
+        "fixed_media_host_quarantines": [],
+        "fixed_untrusted_rule": false,
+        "fixed_unavailable_rule": false,
+        "fixed_other_exact_source_quarantine": false,
+        "fixed_orphan_history_id": false
+      },
+      "prior_homepage_observation": {
+        "observed_at": "2026-11-15T02:26:16.337810+00:00",
+        "status": 200,
+        "sample": {
+          "status": 200,
+          "sample_skipped": "non-html or encoded response"
+        }
+      },
+      "current_homepage_observation": {
+        "host": "123xiaoqiang.me",
+        "started_at": "2026-11-15T15:55:00.777847+00:00",
+        "observed_at": "2026-11-15T15:55:01.698852+00:00",
+        "http_status": 200,
+        "content_type": "text/html; charset=utf-8",
+        "content_encoding": "gzip",
+        "wire_bytes": 6428,
+        "sample_bytes": 25487,
+        "sample_sha256": "861fd508068e0b5d217a614be71ab53cd60daf263f58b5d933adccd0bff9a5d5",
+        "truncated": false,
+        "title": "小强小说网_书友最值得收藏的网络小说阅读网",
+        "description_excerpt": "小说,小说网,最新章节免费阅读小说网,小强小说网阅读网",
+        "description_explicit_adult_business": false
+      },
+      "scope_recommendation": "Source-ID historical category evidence supported by four of eight explicit legacy categories; the current homepage did not explicitly describe an adult business. Do not generalize to the current site or other sources."
+    }
+  ],
+  "limitations": [
+    "The first source homepage description is current observation evidence; the second homepage description is generic, and its explicit categories are historical bundled-rule evidence.",
+    "Source-specific adult evidence does not prove that every item is adult or establish the classification of every source and path on a host.",
+    "Category aliases and paths are static data; the category endpoints and the actual items in them were not requested or validated.",
+    "A plain title or single ambiguous category is not used as a site-wide conclusion. High-spice, romance and BL labels are not counted as explicit by this narrow method.",
+    "Selected IDs and static policy come from the referenced ledger snapshot. Some current source-code digests changed since the ledger, as recorded; current import and policy state need fresh verification.",
+    "User settings, dynamic risk records and existing installations were not read.",
+    "Historical and current observations are time-bound and do not prove safety or lasting availability. No original page body was retained, so the sample digest alone cannot reconstruct its contents."
+  ]
+}

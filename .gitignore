@@ -83,6 +83,13 @@ migrate_working_dir/
 !/docs/implementation/legado-static-search-pilot-20261115.json
 !/docs/implementation/legado-source-ledger-20261115.json
 !/docs/implementation/legado-560xs-recheck-20261115.json
+!/docs/implementation/legado-amsi-redirect-recheck-20261115.json
+!/docs/implementation/legado-amsi-source-classification-before-fanfanu-20261115.json
+!/docs/implementation/legado-rdap-net-sample-20261115.json
+!/docs/implementation/legado-adult-category-recheck-20261115.json
+!/docs/implementation/legado-uaa-adult-id-review-20261116.json
+!/docs/implementation/legado-equivalent-adult-ids-20261116.json
+!/docs/implementation/legado-two-chain-pilot-20261116.json
 !/docs/implementation/legado-import-inventory-20261115.json
 !/docs/implementation/legado-adult-label-evidence-20261115.json
 !/docs/implementation/legado-targeted-rechecks-20261115.json

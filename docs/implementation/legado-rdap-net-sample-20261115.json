@@ -1,0 +1,607 @@
+{
+  "schema_version": 1,
+  "created_at_utc": "2026-11-15T15:54:17.115547+00:00",
+  "catalog_archive_sha256": "012a0e0d6e6adc8d303c32b578510e14b562088b3e965cb01a1a647b5e7e034d",
+  "input_evidence_sha256": {
+    "legado-doh-reviewed-20261115.json": "4729489824e1f653d5e18872789a75e9f0ebe919286add025e738606f4243059",
+    "legado-host-recheck-20261115.json": "fcb543ff2a41e7e4960d2a0112af9c311d8e55148b8716d8854c09360b1080af",
+    "legado-import-inventory-20261115.json": "ad4e347888cad71812ee7da9477f027baf0bee5bceb1d4247fc69d6c4df8764c"
+  },
+  "sources": {
+    "iana_bootstrap_url": "https://data.iana.org/rdap/dns.json",
+    "iana_bootstrap_publication_utc": "2026-10-28T22:00:04Z",
+    "registry_endpoint": "https://rdap.verisign.com/net/v1/",
+    "rdap_query_format_reference": "https://www.rfc-editor.org/rfc/rfc9082.html"
+  },
+  "method": "Two rounds plus selective retries, anonymous GET only to the official registry, verified HTTPS, no redirect or proxy, at least one second between request starts, six-second socket timeout, 64 KiB response cap. Domain responses were parsed in memory only to compare object class, name and RDAP conformance; response bodies and registrant data were not retained.",
+  "controls": [
+    {
+      "domain": "google.net",
+      "role": "registered_positive",
+      "official_registry_rdap": [
+        {
+          "attempt": 1,
+          "observed_at_utc": "2026-11-15T15:47:59.337793Z",
+          "http_status": 200,
+          "classification": "matching_domain_object",
+          "domain_object_name_match": true,
+          "rdap_conformance_present": true
+        },
+        {
+          "attempt": 2,
+          "observed_at_utc": "2026-11-15T15:50:03.240973Z",
+          "http_status": 200,
+          "classification": "matching_domain_object",
+          "domain_object_name_match": true,
+          "rdap_conformance_present": true
+        }
+      ]
+    },
+    {
+      "domain": "zp-rdap-control-48dc2a5f44bd4253.net",
+      "role": "synthetic_negative",
+      "official_registry_rdap": [
+        {
+          "attempt": 1,
+          "observed_at_utc": "2026-11-15T15:48:00.189549Z",
+          "http_status": 404,
+          "classification": "registry_http_404"
+        },
+        {
+          "attempt": 2,
+          "observed_at_utc": "2026-11-15T15:50:14.332288Z",
+          "http_status": 404,
+          "classification": "registry_http_404"
+        }
+      ]
+    }
+  ],
+  "results": [
+    {
+      "registry_domain": "afdian.net",
+      "old_endpoint_host": "afdian.net",
+      "record_indices": [
+        3252,
+        3556
+      ],
+      "selected_sources": [
+        {
+          "id": "955dc0ed76b43c148ce8afdfdb54faf7f6ee4a8ac3d51081184b43c2697e935e",
+          "name": "爱发电网",
+          "record_index": 3252,
+          "normalized_legado_canonical_sha256": "f679b2881135806a7dedc69e7fd296a8b23684d7bdd29360b5bd8ad8668a848c",
+          "endpoint_sha256": "c53c9918dde89cba4cb01541de48fa6f48b6f0ed196d8e049cc57859fdbfcb51"
+        }
+      ],
+      "prior_native_dns": [
+        {
+          "observed_at": "2026-11-15T02:26:16.341503+00:00",
+          "classification": "dns_host_not_found"
+        },
+        {
+          "observed_at": "2026-11-15T04:01:33.259830+00:00",
+          "classification": "dns_host_not_found"
+        }
+      ],
+      "prior_public_doh": [
+        {
+          "provider": "aliyun",
+          "query_type": "A",
+          "observed_at": "2026-11-15T13:00:07.557230+00:00",
+          "http_status": 200,
+          "dns_rcode": 3,
+          "dnssec_authenticated": false,
+          "classification": "nxdomain"
+        },
+        {
+          "provider": "aliyun",
+          "query_type": "AAAA",
+          "observed_at": "2026-11-15T13:00:07.650572+00:00",
+          "http_status": 200,
+          "dns_rcode": 3,
+          "dnssec_authenticated": false,
+          "classification": "nxdomain"
+        },
+        {
+          "provider": "tencent",
+          "query_type": "A",
+          "observed_at": "2026-11-15T13:00:08.258847+00:00",
+          "http_status": 200,
+          "dns_rcode": 3,
+          "dnssec_authenticated": false,
+          "classification": "nxdomain"
+        },
+        {
+          "provider": "tencent",
+          "query_type": "AAAA",
+          "observed_at": "2026-11-15T13:00:09.456644+00:00",
+          "http_status": 200,
+          "dns_rcode": 3,
+          "dnssec_authenticated": false,
+          "classification": "nxdomain"
+        }
+      ],
+      "official_registry_rdap": [
+        {
+          "attempt": 1,
+          "observed_at_utc": "2026-11-15T15:48:01.140939Z",
+          "http_status": 200,
+          "classification": "matching_domain_object",
+          "domain_object_name_match": true,
+          "rdap_conformance_present": true
+        },
+        {
+          "attempt": 2,
+          "observed_at_utc": "2026-11-15T15:48:27.910944Z",
+          "http_status": 200,
+          "classification": "matching_domain_object",
+          "domain_object_name_match": true,
+          "rdap_conformance_present": true
+        }
+      ],
+      "observation": "matching_domain_object_counterexample"
+    },
+    {
+      "registry_domain": "22biqu.net",
+      "old_endpoint_host": "m.22biqu.net",
+      "record_indices": [
+        3920,
+        4567
+      ],
+      "selected_sources": [
+        {
+          "id": "dda40fb8b8b9de71a897ddc4d424ada2786e887ef5850c8d6995bdb66d7c7c69",
+          "name": "22笔趣阁",
+          "record_index": 3920,
+          "normalized_legado_canonical_sha256": "0348583f9812065b796aeec8960a68717e773a326ddd94f358cc5b861d3f8ebf",
+          "endpoint_sha256": "8a5187954fa35ef6190d05dbc9ca83e6b44e47a9708551591e391e4117700445"
+        }
+      ],
+      "prior_native_dns": [
+        {
+          "observed_at": "2026-11-15T02:26:21.767820+00:00",
+          "classification": "dns_host_not_found"
+        },
+        {
+          "observed_at": "2026-11-15T04:01:40.896881+00:00",
+          "classification": "dns_host_not_found"
+        }
+      ],
+      "prior_public_doh": [
+        {
+          "provider": "aliyun",
+          "query_type": "A",
+          "observed_at": "2026-11-15T12:55:08.685990+00:00",
+          "http_status": 200,
+          "dns_rcode": 3,
+          "dnssec_authenticated": false,
+          "classification": "nxdomain"
+        },
+        {
+          "provider": "aliyun",
+          "query_type": "AAAA",
+          "observed_at": "2026-11-15T12:55:08.992231+00:00",
+          "http_status": 200,
+          "dns_rcode": 3,
+          "dnssec_authenticated": false,
+          "classification": "nxdomain"
+        },
+        {
+          "provider": "tencent",
+          "query_type": "A",
+          "observed_at": "2026-11-15T12:55:09.403040+00:00",
+          "http_status": 200,
+          "dns_rcode": 3,
+          "dnssec_authenticated": false,
+          "classification": "nxdomain"
+        },
+        {
+          "provider": "tencent",
+          "query_type": "AAAA",
+          "observed_at": "2026-11-15T12:55:09.922356+00:00",
+          "http_status": 200,
+          "dns_rcode": 3,
+          "dnssec_authenticated": false,
+          "classification": "nxdomain"
+        }
+      ],
+      "official_registry_rdap": [
+        {
+          "attempt": 1,
+          "observed_at_utc": "2026-11-15T15:48:08.567588Z",
+          "http_status": 200,
+          "classification": "matching_domain_object",
+          "domain_object_name_match": true,
+          "rdap_conformance_present": true
+        },
+        {
+          "attempt": 2,
+          "observed_at_utc": "2026-11-15T15:48:35.356623Z",
+          "http_status": null,
+          "classification": "request_error",
+          "error_type": "URLError"
+        },
+        {
+          "attempt": 3,
+          "observed_at_utc": "2026-11-15T15:50:10.395252Z",
+          "http_status": 200,
+          "classification": "matching_domain_object",
+          "domain_object_name_match": true,
+          "rdap_conformance_present": true
+        }
+      ],
+      "observation": "matching_domain_object_counterexample"
+    },
+    {
+      "registry_domain": "dushuapp.net",
+      "old_endpoint_host": "m.dushuapp.net",
+      "record_indices": [
+        43,
+        1091,
+        2336
+      ],
+      "selected_sources": [
+        {
+          "id": "b269ecd1a1c9ce6693119d5e20fc3ae82998662478c507ba7b4a1604be981ff8",
+          "name": "笔书阁❷",
+          "record_index": 43,
+          "normalized_legado_canonical_sha256": "f45eb9e161496525811883e848ab49a5a191486b4786a264191396aad2cc008d",
+          "endpoint_sha256": "3b750b2437cf2b38fe6ce72e99dbed7e2776aed5494278db20147f5643e734a0"
+        }
+      ],
+      "prior_native_dns": [
+        {
+          "observed_at": "2026-11-15T02:26:27.598104+00:00",
+          "classification": "dns_host_not_found"
+        },
+        {
+          "observed_at": "2026-11-15T04:01:49.529983+00:00",
+          "classification": "dns_host_not_found"
+        }
+      ],
+      "prior_public_doh": [
+        {
+          "provider": "aliyun",
+          "query_type": "A",
+          "observed_at": "2026-11-15T13:01:13.250087+00:00",
+          "http_status": 200,
+          "dns_rcode": 3,
+          "dnssec_authenticated": false,
+          "classification": "nxdomain"
+        },
+        {
+          "provider": "aliyun",
+          "query_type": "AAAA",
+          "observed_at": "2026-11-15T13:01:13.224615+00:00",
+          "http_status": 200,
+          "dns_rcode": 3,
+          "dnssec_authenticated": false,
+          "classification": "nxdomain"
+        },
+        {
+          "provider": "tencent",
+          "query_type": "A",
+          "observed_at": "2026-11-15T13:01:14.388045+00:00",
+          "http_status": 200,
+          "dns_rcode": 3,
+          "dnssec_authenticated": false,
+          "classification": "nxdomain"
+        },
+        {
+          "provider": "tencent",
+          "query_type": "AAAA",
+          "observed_at": "2026-11-15T13:01:14.332688+00:00",
+          "http_status": 200,
+          "dns_rcode": 3,
+          "dnssec_authenticated": false,
+          "classification": "nxdomain"
+        }
+      ],
+      "official_registry_rdap": [
+        {
+          "attempt": 1,
+          "observed_at_utc": "2026-11-15T15:48:13.113302Z",
+          "http_status": 404,
+          "classification": "registry_http_404"
+        },
+        {
+          "attempt": 2,
+          "observed_at_utc": "2026-11-15T15:48:36.183183Z",
+          "http_status": 404,
+          "classification": "registry_http_404"
+        }
+      ],
+      "observation": "repeated_registry_404_review_candidate"
+    },
+    {
+      "registry_domain": "feiyuefw.net",
+      "old_endpoint_host": "www.feiyuefw.net",
+      "record_indices": [
+        466
+      ],
+      "selected_sources": [
+        {
+          "id": "ca828313e6ceaa40c92460bc887e80428500586838f387e9dee325a104768804",
+          "name": "飞悦凡文网",
+          "record_index": 466,
+          "normalized_legado_canonical_sha256": "ae15c4095ae919b8fd53da14f1ce45c51b8f2de3b46cc758bedfabc8bf9e6d9a",
+          "endpoint_sha256": "bcb655c28dfe8ac7fc112b7f585f24db864925f6137c6ed2e53616b01a8438d9"
+        }
+      ],
+      "prior_native_dns": [
+        {
+          "observed_at": "2026-11-15T02:27:09.540186+00:00",
+          "classification": "dns_host_not_found"
+        },
+        {
+          "observed_at": "2026-11-15T04:02:47.750011+00:00",
+          "classification": "dns_host_not_found"
+        }
+      ],
+      "prior_public_doh": [
+        {
+          "provider": "aliyun",
+          "query_type": "A",
+          "observed_at": "2026-11-15T13:03:59.286566+00:00",
+          "http_status": 200,
+          "dns_rcode": 3,
+          "dnssec_authenticated": false,
+          "classification": "nxdomain"
+        },
+        {
+          "provider": "aliyun",
+          "query_type": "AAAA",
+          "observed_at": "2026-11-15T13:03:58.863666+00:00",
+          "http_status": 200,
+          "dns_rcode": 3,
+          "dnssec_authenticated": false,
+          "classification": "nxdomain"
+        },
+        {
+          "provider": "tencent",
+          "query_type": "A",
+          "observed_at": "2026-11-15T13:03:59.620141+00:00",
+          "http_status": 200,
+          "dns_rcode": 3,
+          "dnssec_authenticated": false,
+          "classification": "nxdomain"
+        },
+        {
+          "provider": "tencent",
+          "query_type": "AAAA",
+          "observed_at": "2026-11-15T13:04:00.053881+00:00",
+          "http_status": 200,
+          "dns_rcode": 3,
+          "dnssec_authenticated": false,
+          "classification": "nxdomain"
+        }
+      ],
+      "official_registry_rdap": [
+        {
+          "attempt": 1,
+          "observed_at_utc": "2026-11-15T15:48:19.430179Z",
+          "http_status": null,
+          "classification": "request_error",
+          "error_type": "URLError"
+        },
+        {
+          "attempt": 2,
+          "observed_at_utc": "2026-11-15T15:48:37.232596Z",
+          "http_status": 404,
+          "classification": "registry_http_404"
+        },
+        {
+          "attempt": 3,
+          "observed_at_utc": "2026-11-15T15:50:09.561776Z",
+          "http_status": null,
+          "classification": "request_error",
+          "error_type": "URLError"
+        },
+        {
+          "attempt": 4,
+          "observed_at_utc": "2026-11-15T15:50:12.421606Z",
+          "http_status": 404,
+          "classification": "registry_http_404"
+        }
+      ],
+      "observation": "repeated_registry_404_review_candidate"
+    },
+    {
+      "registry_domain": "uuxsw8.net",
+      "old_endpoint_host": "www.uuxsw8.net",
+      "record_indices": [
+        1436,
+        3175
+      ],
+      "selected_sources": [
+        {
+          "id": "5299201973e85433e65095b4b25dfe24e3a3eaff8948a354e4303ec7436a5d9f",
+          "name": "UU小说③",
+          "record_index": 3175,
+          "normalized_legado_canonical_sha256": "70989803614c7b3f4877cd25fe6aaacfeac3618c3b767d194c5717c2dfcd71fe",
+          "endpoint_sha256": "a379dac0135eac31a776ca4fd61115c9d32c4ecb7afc0131edfa5055c44b2e3c"
+        }
+      ],
+      "prior_native_dns": [
+        {
+          "observed_at": "2026-11-15T02:27:35.978222+00:00",
+          "classification": "dns_host_not_found"
+        },
+        {
+          "observed_at": "2026-11-15T04:03:24.789119+00:00",
+          "classification": "dns_host_not_found"
+        }
+      ],
+      "prior_public_doh": [
+        {
+          "provider": "aliyun",
+          "query_type": "A",
+          "observed_at": "2026-11-15T13:05:28.237703+00:00",
+          "http_status": 200,
+          "dns_rcode": 3,
+          "dnssec_authenticated": false,
+          "classification": "nxdomain"
+        },
+        {
+          "provider": "aliyun",
+          "query_type": "AAAA",
+          "observed_at": "2026-11-15T13:05:30.017370+00:00",
+          "http_status": 200,
+          "dns_rcode": 3,
+          "dnssec_authenticated": false,
+          "classification": "nxdomain"
+        },
+        {
+          "provider": "tencent",
+          "query_type": "A",
+          "observed_at": "2026-11-15T13:05:31.259312+00:00",
+          "http_status": 200,
+          "dns_rcode": 3,
+          "dnssec_authenticated": false,
+          "classification": "nxdomain"
+        },
+        {
+          "provider": "tencent",
+          "query_type": "AAAA",
+          "observed_at": "2026-11-15T13:05:31.283464+00:00",
+          "http_status": 200,
+          "dns_rcode": 3,
+          "dnssec_authenticated": false,
+          "classification": "nxdomain"
+        }
+      ],
+      "official_registry_rdap": [
+        {
+          "attempt": 1,
+          "observed_at_utc": "2026-11-15T15:48:26.049505Z",
+          "http_status": null,
+          "classification": "request_error",
+          "error_type": "TimeoutError"
+        },
+        {
+          "attempt": 2,
+          "observed_at_utc": "2026-11-15T15:48:40.117889Z",
+          "http_status": 200,
+          "classification": "matching_domain_object",
+          "domain_object_name_match": true,
+          "rdap_conformance_present": true
+        },
+        {
+          "attempt": 3,
+          "observed_at_utc": "2026-11-15T15:50:11.433187Z",
+          "http_status": 200,
+          "classification": "matching_domain_object",
+          "domain_object_name_match": true,
+          "rdap_conformance_present": true
+        }
+      ],
+      "observation": "matching_domain_object_counterexample"
+    },
+    {
+      "registry_domain": "zhijiandoukou.net",
+      "old_endpoint_host": "www.zhijiandoukou.net",
+      "record_indices": [
+        1750,
+        2847,
+        3785,
+        3807
+      ],
+      "selected_sources": [
+        {
+          "id": "d572a214fd5921004a53bee151be495ec9a6419b911e6f3fcb792fc05de1491e",
+          "name": "♜指尖豆蔻 #破冰",
+          "record_index": 1750,
+          "normalized_legado_canonical_sha256": "afc6d6407f26f9bcaf33c2d908589fe2d7bae7d843e631695b51ac487329e89e",
+          "endpoint_sha256": "7634cf1bd1c499fa2e048165efddba904a61fb9dad52f6167e184bf0d30e3718"
+        },
+        {
+          "id": "ebf204ebcbb379cd42b4e3e8ed69b9b648152bca96be6dbd6501b89db12300a5",
+          "name": "♜指尖豆蔻 #破冰1101",
+          "record_index": 3807,
+          "normalized_legado_canonical_sha256": "afc6d6407f26f9bcaf33c2d908589fe2d7bae7d843e631695b51ac487329e89e",
+          "endpoint_sha256": "7634cf1bd1c499fa2e048165efddba904a61fb9dad52f6167e184bf0d30e3718"
+        }
+      ],
+      "prior_native_dns": [
+        {
+          "observed_at": "2026-11-15T02:27:46.508833+00:00",
+          "classification": "dns_host_not_found"
+        },
+        {
+          "observed_at": "2026-11-15T04:03:41.321979+00:00",
+          "classification": "dns_host_not_found"
+        }
+      ],
+      "prior_public_doh": [
+        {
+          "provider": "aliyun",
+          "query_type": "A",
+          "observed_at": "2026-11-15T13:05:52.293958+00:00",
+          "http_status": 200,
+          "dns_rcode": 3,
+          "dnssec_authenticated": false,
+          "classification": "nxdomain"
+        },
+        {
+          "provider": "aliyun",
+          "query_type": "AAAA",
+          "observed_at": "2026-11-15T13:05:52.390487+00:00",
+          "http_status": 200,
+          "dns_rcode": 3,
+          "dnssec_authenticated": false,
+          "classification": "nxdomain"
+        },
+        {
+          "provider": "tencent",
+          "query_type": "A",
+          "observed_at": "2026-11-15T13:05:53.541427+00:00",
+          "http_status": 200,
+          "dns_rcode": 3,
+          "dnssec_authenticated": false,
+          "classification": "nxdomain"
+        },
+        {
+          "provider": "tencent",
+          "query_type": "AAAA",
+          "observed_at": "2026-11-15T13:05:54.731545+00:00",
+          "http_status": 200,
+          "dns_rcode": 3,
+          "dnssec_authenticated": false,
+          "classification": "nxdomain"
+        }
+      ],
+      "official_registry_rdap": [
+        {
+          "attempt": 1,
+          "observed_at_utc": "2026-11-15T15:48:26.872043Z",
+          "http_status": 404,
+          "classification": "registry_http_404"
+        },
+        {
+          "attempt": 2,
+          "observed_at_utc": "2026-11-15T15:48:41.992375Z",
+          "http_status": 404,
+          "classification": "registry_http_404"
+        }
+      ],
+      "observation": "repeated_registry_404_review_candidate"
+    }
+  ],
+  "limitations": [
+    "404 is an observed registry HTTP status, not proof of past deletion, permanent closure, or maliciousness.",
+    "Registered domain objects do not establish that an old subdomain or rule works; DNS NXDOMAIN does not imply no registration.",
+    "Two public DoH providers shared one client network; DNSSEC was not authenticated.",
+    "A six-second socket timeout is not a whole-request hard deadline. No source site, scripts, or user data were accessed. RDAP response bodies were processed only in memory; registrant details were not extracted, displayed, or saved.",
+    "Legado fingerprints apply only to the precise selected source and endpoint; they do not classify whole domains or historical orphan caches."
+  ],
+  "normalized_source_code_sha256": {
+    "lib/features/books/data/book_import.dart": "5c27a8cac7806ca8854672f89fcc90d0d98e5ab25b92ec4fc13f094bfe93a629",
+    "lib/features/books/data/legado/legado_import.dart": "3d4f0f1fb848c26bf65a0eec25373bc993403576634c60524dc17c5a6e217b69",
+    "lib/features/books/domain/book.dart": "1cb4a72bdbc5358d60837b90858f2cc4ce2ae47005bf5114e1b49897b5a59e3c",
+    "lib/features/books/domain/legado_source.dart": "5b907923968332090760ecc9f4d6f7e652aa06501ac7981b5f477ef7c0d954d1",
+    "lib/features/books/domain/legado_source_fingerprint.dart": "46bb8cd624ba136bd3dcea983bd80278b849a46fa340522ac7ac81788249a41a",
+    "lib/features/books/domain/book_source_risk.dart": "ca959b12a1078e0cbf4d366d3b3da1a0ca93e9b607eb21d6d24d8c323d26a4ec",
+    "lib/features/books/domain/net_rdap_legacy_quarantine.dart": "a04eaaad9fe536c20552c8349d6ade7675b5826fa4cfb069df8233665d932913"
+  },
+  "source_digest_convention": "Selected IDs and full normalized Legado SHA-256 were rechecked with the current Dart importer. Source-code SHA-256 uses UTF-8 bytes with CRLF normalized to LF."
+}

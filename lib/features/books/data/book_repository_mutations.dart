@@ -37,4 +37,82 @@ extension _BookRepositoryMutations on BooksRepository {
       _sourceRiskChanges.value++;
     }
   }
+
+  Future<void> _clearSourceRisk(BookSourceRiskEntry entry) async {
+    _requireSubscriptionAccess();
+    await ensureSourceRiskLoaded();
+    late BookSourceAssessment cleared;
+    await store.db.atomic(() async {
+      _requireSubscriptionAccess();
+      final current = await riskStore.getRecord(
+        entry.recordKey ?? entry.sourceId,
+      );
+      if (current == null ||
+          current.sourceId != entry.sourceId ||
+          current.host != entry.host ||
+          current.version != entry.version ||
+          (!current.adult && !current.quarantined)) {
+        throw const FormatException('风险记录已变化，请刷新后复核');
+      }
+      if (current.key != current.sourceId &&
+          current.key !=
+              BookSourceRiskStore.hostKey(current.sourceId, current.host)) {
+        // The host of a damaged secondary record cannot be reconstructed from
+        // its hash. Do not report a successful clear that would reappear after
+        // restart or discard evidence for an unknown host.
+        throw const FormatException(
+          '风险记录已损坏，相关来源暂不可用；普通备份不包含书源风险记录，请保留数据并从完整数据库备份恢复',
+        );
+      }
+      final sourceEntry = await store.source(
+        _verifiedSources[entry.sourceId],
+        entry.sourceId,
+      );
+      final assessments = await riskStore.all();
+      void requireReviewAllowed() {
+        _requireSubscriptionAccess();
+        final source = sourceEntry?.source;
+        final hosts = [current.host, if (source != null) ...source.mediaHosts];
+        if (source != null) hosts.add(source.endpoint.host);
+        final adultRestricted =
+            current.adult ||
+            (source != null &&
+                (adultBookSource(source) ||
+                    adultBookLabels(source.name, sourceEntry!.group))) ||
+            hosts.any((host) => adultBookHost(host) || knownAdultHost(host)) ||
+            assessments.values.any(
+              (risk) =>
+                  (risk.sourceId == entry.sourceId && risk.adult) ||
+                  (risk.adultHost && hosts.contains(risk.host)),
+            );
+        if (_fixedSourceRisk(entry.sourceId, current.host, source) ||
+            (policy.filterAdult && adultRestricted) ||
+            !policy.textAllowed(
+              '${source?.name ?? current.name} ${current.host}',
+              category: sourceEntry?.group ?? '',
+            )) {
+          throw const ContentBlocked();
+        }
+      }
+
+      requireReviewAllowed();
+      // Retain a revision tombstone so an old review cannot clear a finding
+      // that was later rediscovered after an earlier assessment was cleared.
+      cleared = BookSourceAssessment(
+        sourceId: current.sourceId,
+        name: current.name,
+        host: current.host,
+        adult: false,
+        quarantined: false,
+        adultHost: false,
+        quarantinedHost: false,
+        version: current.version + 1,
+        recordKey: current.key,
+      );
+      await riskStore.write(cleared);
+      requireReviewAllowed();
+    }, tables: {'app_meta'});
+    _rememberAssessment(cleared);
+    policy.refresh();
+  }
 }

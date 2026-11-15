@@ -17,12 +17,20 @@ final class XimalayaAudioClient {
     LegadoCategory('历史', '9'),
   ];
 
-  Future<Map> _get(Uri uri, String host, CancellationToken token) async {
+  Future<Map> _get(
+    Uri uri,
+    String host,
+    CancellationToken token, {
+    bool allowRedirects = true,
+  }) async {
     final target = publicBookUri(uri);
     if (target.host != host) throw const FormatException('喜马拉雅接口域名无效');
     final response = await network.get(
       target,
       cancellation: token,
+      mapRedirect: allowRedirects
+          ? null
+          : (_) => throw const FormatException('成人过滤期间不跟随发现页面重定向'),
       headers: const {'User-Agent': 'Mozilla/5.0'},
       validateTarget: (redirect) {
         if (publicBookUri(redirect).host != host) {
@@ -41,6 +49,7 @@ final class XimalayaAudioClient {
     CancellationToken token, {
     LegadoCategory? category,
     int page = 1,
+    bool allowRedirects = true,
   }) async {
     final id = category?.address ?? categories.first.address;
     if (!categories.any((entry) => entry.address == id)) {
@@ -56,6 +65,7 @@ final class XimalayaAudioClient {
       }),
       'www.ximalaya.com',
       token,
+      allowRedirects: allowRedirects,
     );
     if (data['ret'] != 200 || data['data'] is! Map) {
       throw const FormatException('喜马拉雅分类数据无效');

@@ -31,12 +31,20 @@ final class BookanAudioClient {
     LegadoCategory('相声评书', '1319'),
   ];
 
-  Future<Map> _get(Uri uri, String host, CancellationToken token) async {
+  Future<Map> _get(
+    Uri uri,
+    String host,
+    CancellationToken token, {
+    bool allowRedirects = true,
+  }) async {
     final target = publicBookUri(uri);
     if (target.host != host) throw const FormatException('博看接口域名无效');
     final response = await network.get(
       target,
       cancellation: token,
+      mapRedirect: allowRedirects
+          ? null
+          : (_) => throw const FormatException('成人过滤期间不跟随发现页面重定向'),
       validateTarget: (redirect) {
         if (publicBookUri(redirect).host != host) {
           throw const FormatException('博看接口跳转超出域名范围');
@@ -56,6 +64,7 @@ final class BookanAudioClient {
     CancellationToken token, {
     LegadoCategory? category,
     int page = 1,
+    bool allowRedirects = true,
   }) async {
     final id = category?.address ?? categories.first.address;
     if (!categories.any((item) => item.address == id)) {
@@ -70,7 +79,12 @@ final class BookanAudioClient {
         'num': '24',
       },
     );
-    final data = await _get(uri, source.endpoint.host, token);
+    final data = await _get(
+      uri,
+      source.endpoint.host,
+      token,
+      allowRedirects: allowRedirects,
+    );
     final books = _books(source, data['list'], 24);
     final total = int.tryParse('${data['total']}') ?? 0;
     return (

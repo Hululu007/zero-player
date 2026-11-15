@@ -138,9 +138,18 @@ final class BookClient {
 
   Future<List<LegadoCategory>> categories(
     BookSource source,
-    CancellationToken token,
-  ) => _hasLegadoRules(source)
-      ? _legado.categories(source, token)
+    CancellationToken token, {
+    bool Function(LegadoCategory)? allowCategory,
+    void Function(LegadoCategory)? onDenied,
+    bool allowDiscoveryNetworkExpansion = true,
+  }) => _hasLegadoRules(source)
+      ? _legado.categories(
+          source,
+          token,
+          allowCategory: allowCategory,
+          onDenied: onDenied,
+          allowDiscoveryNetworkExpansion: allowDiscoveryNetworkExpansion,
+        )
       : source.format == BookFormat.shuyin
       ? _shuyin.categories(source, token)
       : source.format == BookFormat.bookan
@@ -157,6 +166,7 @@ final class BookClient {
     CancellationToken token, {
     bool media = false,
     int maxBytes = 2 * 1024 * 1024,
+    bool allowRedirects = true,
   }) {
     return network.get(
       uri,
@@ -164,6 +174,9 @@ final class BookClient {
       maxBytes: maxBytes,
       networkTimeout: Duration(seconds: media ? 90 : 12),
       validateTarget: (target) => source.requestTarget(target, media: media),
+      mapRedirect: allowRedirects
+          ? null
+          : (_) => throw const FormatException('成人过滤期间不跟随发现页面重定向'),
     );
   }
 
@@ -173,19 +186,37 @@ final class BookClient {
     LegadoCategory? category,
     int page = 1,
     String? cursor,
+    bool allowDiscoveryNetworkExpansion = true,
   }) async {
     _requireNovelSource(source);
     if (source.format == BookFormat.shuyin) {
       return _shuyin.discover(source, token, category: category, page: page);
     }
     if (source.format == BookFormat.bookan) {
-      return _bookan.discover(source, token, category: category, page: page);
+      return _bookan.discover(
+        source,
+        token,
+        category: category,
+        page: page,
+        allowRedirects: allowDiscoveryNetworkExpansion,
+      );
     }
     if (source.format == BookFormat.ximalaya) {
-      return _ximalaya.discover(source, token, category: category, page: page);
+      return _ximalaya.discover(
+        source,
+        token,
+        category: category,
+        page: page,
+        allowRedirects: allowDiscoveryNetworkExpansion,
+      );
     }
     if (source.format == BookFormat.lit2go) {
-      return _lit2go.discover(source, token, page: page);
+      return _lit2go.discover(
+        source,
+        token,
+        page: page,
+        allowRedirects: allowDiscoveryNetworkExpansion,
+      );
     }
     if (_hasLegadoRules(source) && source.format == BookFormat.html) {
       return _legado.discover(
@@ -194,6 +225,7 @@ final class BookClient {
         category: category,
         page: page,
         cursor: cursor,
+        allowDiscoveryNetworkExpansion: allowDiscoveryNetworkExpansion,
       );
     }
     if (source.format != BookFormat.html) {
@@ -206,7 +238,12 @@ final class BookClient {
         source.discover;
     if (path.isEmpty) return (books: <Book>[], next: null);
     final target = source.resolve(source.endpoint, path);
-    final response = await fetch(source, target, token);
+    final response = await fetch(
+      source,
+      target,
+      token,
+      allowRedirects: allowDiscoveryNetworkExpansion,
+    );
     return _parseHtmlBooks(source, response, token, discovery: true);
   }
 
@@ -217,6 +254,7 @@ final class BookClient {
     LegadoCategory? category,
     int page = 1,
     Uri? bookAddress,
+    bool allowDiscoveryNetworkExpansion = true,
   }) async {
     _requireNovelSource(source);
     if (source.format == BookFormat.shuyin) {
@@ -239,6 +277,7 @@ final class BookClient {
         token,
         category: category,
         page: page,
+        allowDiscoveryNetworkExpansion: allowDiscoveryNetworkExpansion,
       )).books;
     }
     if (_hasLegadoRules(source)) {
@@ -249,6 +288,7 @@ final class BookClient {
         category: category,
         page: page,
         bookAddress: bookAddress,
+        allowDiscoveryNetworkExpansion: allowDiscoveryNetworkExpansion,
       );
     }
     if (bookAddress != null) return [];

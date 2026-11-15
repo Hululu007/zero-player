@@ -13,20 +13,30 @@ final class Lit2GoAudioClient {
     LegadoCategory('全部作品', '/lit2go/books/'),
   ];
 
-  Future<Document> _get(BookSource source, Uri uri, CancellationToken token) =>
-      network.get(
-        source.requestTarget(uri),
-        cancellation: token,
-        networkTimeout: const Duration(seconds: 30),
-        validateTarget: source.requestTarget,
-      );
+  Future<Document> _get(
+    BookSource source,
+    Uri uri,
+    CancellationToken token, {
+    bool allowRedirects = true,
+  }) => network.get(
+    source.requestTarget(uri),
+    cancellation: token,
+    networkTimeout: const Duration(seconds: 30),
+    validateTarget: source.requestTarget,
+    mapRedirect: allowRedirects
+        ? null
+        : (_) => throw const FormatException('成人过滤期间不跟随发现页面重定向'),
+  );
 
   Future<BookDiscoveryPage> discover(
     BookSource source,
     CancellationToken token, {
     int page = 1,
+    bool allowRedirects = true,
   }) async => (
-    books: page == 1 ? await books(source, '', token) : <Book>[],
+    books: page == 1
+        ? await books(source, '', token, allowRedirects: allowRedirects)
+        : <Book>[],
     next: null,
   );
 
@@ -35,9 +45,15 @@ final class Lit2GoAudioClient {
     String query,
     CancellationToken token, {
     int page = 1,
+    bool allowRedirects = true,
   }) async {
     if (page != 1) return const [];
-    final response = await _get(source, source.endpoint, token);
+    final response = await _get(
+      source,
+      source.endpoint,
+      token,
+      allowRedirects: allowRedirects,
+    );
     final document = parseBookHtml(response.text);
     final needle = bookIdentity(query);
     final books = <Book>[];

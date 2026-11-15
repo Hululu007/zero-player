@@ -7,6 +7,8 @@ to today's tools; the current ledger's recorded source snapshot is checked.
 
 import hashlib
 import json
+import re
+import subprocess
 from pathlib import Path, PurePosixPath
 
 
@@ -28,6 +30,8 @@ DIRECT_LINKS = (
     ('legado-amsi-recheck-4qo-decoded', 'prior_result_file_sha256', 'legado-amsi-prior-html'),
     ('legado-amsi-source-classification', 'amsi_summary_sha256', 'legado-amsi-summary'),
     ('legado-amsi-source-classification', 'amsi_clusters_sha256', 'legado-amsi-template-clusters'),
+    ('legado-amsi-source-classification-before-fanfanu', 'amsi_summary_sha256', 'legado-amsi-summary'),
+    ('legado-amsi-source-classification-before-fanfanu', 'amsi_clusters_sha256', 'legado-amsi-template-clusters'),
     ('legado-blocklistproject-policy', 'grouped_evidence_sha256', 'legado-blocklistproject-evidence'),
 )
 STAGES = ('legado-amsi-pilot', 'legado-amsi-prior-html', 'legado-amsi-other-hosts')
@@ -106,6 +110,87 @@ class EvidenceVerifier:
         for name, digest in code.items():
             path = self.ledger_path(name, ('lib', 'tool'))
             self.check_digest(path, digest, normalize_lf=True)
+        for name, digest in ledger['runtime_policy_reference_only_normalized_sha256'].items():
+            path = self.ledger_path(name, ('lib',))
+            self.check_digest(path, digest, normalize_lf=True)
+
+    def git_snapshot(self, commit, path, digest, expected_path):
+        if path != expected_path or not isinstance(commit, str) or not re.fullmatch(r'[0-9a-f]{40}', commit):
+            raise ValueError('invalid historical Git reference')
+        content = subprocess.run(
+            ['git', 'show', f'{commit}:{path}'], cwd=self.root, check=True,
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+        ).stdout
+        if hashlib.sha256(content).hexdigest() != digest:
+            raise ValueError('historical Git object SHA-256 mismatch')
+        self.checked += 1
+        return content
+
+    def verify_historical_ledger(self, inputs):
+        path = 'docs/implementation/' + filename('legado-source-ledger')
+        content = self.git_snapshot(
+            inputs['source_ledger_git_commit'], inputs['source_ledger_path'],
+            inputs['source_ledger_sha256'], path,
+        )
+        if json.loads(content)['normalized_source_code_sha256'] != inputs['ledger_source_code_sha256']:
+            raise ValueError('historical ledger source snapshot mismatch')
+
+    def verify_static_adult_review(self, name, tool, archive):
+        report = json.loads(self.read(self.docs / name))
+        self.check_digest(archive, report['catalog_archive_sha256'])
+        self.check_digest(self.root / 'tool' / tool, report['verification_tool_sha256_lf'], normalize_lf=True)
+        reference = report['historical_ledger']
+        path = 'docs/implementation/' + filename('legado-source-ledger')
+        ledger = json.loads(self.git_snapshot(
+            reference['git_commit'], reference['path'], reference['sha256'], path,
+        ))
+        historical_code = ledger['normalized_source_code_sha256']
+        for source, digest in report['historical_normalized_source_code_sha256'].items():
+            if historical_code.get(source) != digest:
+                raise ValueError('historical adult review source snapshot mismatch')
+        if 'historical_label_evidence' in report:
+            reference = report['historical_label_evidence']
+            path = 'docs/implementation/' + filename('legado-adult-label-evidence')
+            self.git_snapshot(reference['git_commit'], reference['path'], reference['sha256'], path)
+
+    def verify_recent_evidence(self, archive):
+        redirect = self.report('legado-amsi-redirect-recheck')['inputs']
+        names = (
+            'legado-amsi-source-classification-before-fanfanu',
+            'legado-amsi-template-clusters',
+            'legado-host-audit',
+        )
+        expected = {'docs/implementation/' + filename(name) for name in names}
+        if set(redirect) != expected:
+            raise ValueError('unexpected redirect evidence inputs')
+        for path, digest in redirect.items():
+            self.check_digest(self.root / path, digest)
+        rdap = self.report('legado-rdap-net-sample')
+        self.check_digest(archive, rdap['catalog_archive_sha256'])
+        names = ('legado-doh-reviewed', 'legado-host-recheck', 'legado-import-inventory')
+        inputs = rdap['input_evidence_sha256']
+        if set(inputs) != {filename(name) for name in names}:
+            raise ValueError('unexpected .net RDAP evidence inputs')
+        for name, digest in inputs.items():
+            self.check_digest(self.docs / name, digest)
+        adult = self.report('legado-adult-category-recheck')['inputs']
+        self.check_digest(archive, adult['catalog_archive_sha256'])
+        host_audit = 'docs/implementation/' + filename('legado-host-audit')
+        if adult['first_host_audit_path'] != host_audit:
+            raise ValueError('unexpected adult category host evidence')
+        self.check_digest(self.root / host_audit, adult['first_host_audit_sha256'])
+        self.verify_historical_ledger(adult)
+        for name, tool in (
+            ('legado-uaa-adult-id-review-20261116.json', 'audit_uaa_adult_id.py'),
+            ('legado-equivalent-adult-ids-20261116.json', 'audit_equivalent_adult_ids.py'),
+        ):
+            self.verify_static_adult_review(name, tool, archive)
+        chain = json.loads(self.read(self.docs / 'legado-two-chain-pilot-20261116.json'))
+        archive_key = 'assets/catalogs/books/legado/catalog.json.bz2'
+        manifest_key = 'assets/catalogs/books/legado/manifest.json'
+        for snapshot in ('source_file_sha256_at_initial', 'source_file_sha256_at_followup'):
+            self.check_digest(archive, chain[snapshot][archive_key])
+            self.check_digest(self.root / manifest_key, chain[snapshot][manifest_key])
 
     def verify(self):
         for source, key, target in DIRECT_LINKS:
@@ -158,6 +243,7 @@ class EvidenceVerifier:
             raise ValueError('unexpected 560 search pilot path')
         self.check_digest(self.root / pilot_path, recheck_560['initial_pilot_evidence_sha256'])
         self.check_digest(archive, recheck_560['catalog_archive_sha256'])
+        self.verify_recent_evidence(archive)
         self.verify_ledger()
         return self.checked
 

@@ -1,0 +1,124 @@
+{
+  "schema_version": 1,
+  "scope": "Offline comparison of selected bundled records and historical importer results; no source rule, webpage script, network request, or user data is executed or accessed.",
+  "catalog_archive_sha256": "012a0e0d6e6adc8d303c32b578510e14b562088b3e965cb01a1a647b5e7e034d",
+  "historical_ledger": {
+    "git_commit": "6c18b625ee81176c130aef6c33bd6dd3ee5159f1",
+    "path": "docs/implementation/legado-source-ledger-20261115.json",
+    "sha256": "81ceb0f074c5abe38f45d67148ddee195a9878ec533c8124ec9ab5bbf3aa121b",
+    "note": "Historical pre-change snapshot, not the current regenerated ledger."
+  },
+  "historical_label_evidence": {
+    "git_commit": "6c18b625ee81176c130aef6c33bd6dd3ee5159f1",
+    "path": "docs/implementation/legado-adult-label-evidence-20261115.json",
+    "sha256": "973a875d05062b414c4af3ab588e4e14442bd8f255f9e5996373a5789fe85c91"
+  },
+  "historical_normalized_source_code_sha256": {
+    "lib/features/books/data/book_import.dart": "5c27a8cac7806ca8854672f89fcc90d0d98e5ab25b92ec4fc13f094bfe93a629",
+    "lib/features/books/data/legado/legado_import.dart": "3d4f0f1fb848c26bf65a0eec25373bc993403576634c60524dc17c5a6e217b69",
+    "lib/features/books/domain/book.dart": "62618f439fdb054b7cf3693dfef266ec5acd4eb76611e0e03b455cccbf7d5959",
+    "lib/features/books/domain/legado_source.dart": "5b907923968332090760ecc9f4d6f7e652aa06501ac7981b5f477ef7c0d954d1",
+    "lib/features/books/domain/book_source_risk.dart": "1c76896b4fc8d061e9a6fe248638f8593453175e806f640645a1dae1adefa7c2"
+  },
+  "verification_tool_sha256_lf": "096aeda2a3c4da4d36875a3c6a0557483c2707dd5fa78e9d4678781c64971b92",
+  "pairs": [
+    {
+      "labelled_source": {
+        "selected_record_index": 4715,
+        "source_id": "fd43c18e3b6b2020f3f7823c48ae7691362f156e2c3b3a1523d5a7fb5c1bbfbf",
+        "name": "🔰 肉书屋",
+        "kind": "text",
+        "format": "html",
+        "endpoint_host": "m.roushuwu.com",
+        "endpoint_sha256": "1f520341cef553f53929aa39563a6d62fb97e30a97c9dfe1f6190334032c1ff6",
+        "normalized_legado_canonical_sha256": "3362f0d0995def1ce468318bff5d6e9427b53005878fe251bee1b442366779ac",
+        "adult_source_classified_at_historical_snapshot": true
+      },
+      "candidate_source": {
+        "selected_record_index": 4730,
+        "source_id": "5c917c26905991075f4d33ffdc650a6f525e5e80f10837da497af751686cab1a",
+        "name": "肉书屋 #一程",
+        "kind": "text",
+        "format": "html",
+        "endpoint_host": "m.roushuwu.com",
+        "endpoint_sha256": "1f520341cef553f53929aa39563a6d62fb97e30a97c9dfe1f6190334032c1ff6",
+        "normalized_legado_canonical_sha256": "3362f0d0995def1ce468318bff5d6e9427b53005878fe251bee1b442366779ac",
+        "adult_source_classified_at_historical_snapshot": false
+      },
+      "matched_fields": [
+        "kind",
+        "format",
+        "complete normalized endpoint SHA-256",
+        "complete normalized Legado rule SHA-256"
+      ],
+      "explicit_label": {
+        "record_index": 484,
+        "name": "🔞 肉书屋"
+      },
+      "same_host_different_rule_counterexample": {
+        "selected_record_index": 4704,
+        "source_id": "b62b1166d3a5c9736ff5c4ca16427a9485f9de33dc401bfed8d144595b00fc9f",
+        "name": "㊕ 肉书屋 #一程1101",
+        "kind": "text",
+        "format": "html",
+        "endpoint_host": "m.roushuwu.com",
+        "endpoint_sha256": "1f520341cef553f53929aa39563a6d62fb97e30a97c9dfe1f6190334032c1ff6",
+        "normalized_legado_canonical_sha256": "80c2eff181ae3aa030c4960bd8a6ab0d9639475ee55f3667de01d234cf533c8b",
+        "adult_source_classified_at_historical_snapshot": false
+      }
+    },
+    {
+      "labelled_source": {
+        "selected_record_index": 788,
+        "source_id": "db5de6085b56eafa7738c7515a7c18a4111f1cf9f46c76df6640e46b681e48fa",
+        "name": "☘️🔞BL书阁🔞☘️",
+        "kind": "text",
+        "format": "html",
+        "endpoint_host": "www.blshuge.com",
+        "endpoint_sha256": "b893fc7f28cdd04fe581450dc0bce683c1f2602c6778b558620b5370111f35e2",
+        "normalized_legado_canonical_sha256": "9a895fce740a4da47c3077073cf9bf59fb80ace3fc11d3623152a982c990e522",
+        "adult_source_classified_at_historical_snapshot": true
+      },
+      "candidate_source": {
+        "selected_record_index": 4564,
+        "source_id": "f13fda5de688afbafbe3ac0e5f3d0b6cbeb858fc022c42b44f25a734e0e51374",
+        "name": "💗 B L 书阁",
+        "kind": "text",
+        "format": "html",
+        "endpoint_host": "www.blshuge.com",
+        "endpoint_sha256": "b893fc7f28cdd04fe581450dc0bce683c1f2602c6778b558620b5370111f35e2",
+        "normalized_legado_canonical_sha256": "9a895fce740a4da47c3077073cf9bf59fb80ace3fc11d3623152a982c990e522",
+        "adult_source_classified_at_historical_snapshot": false
+      },
+      "matched_fields": [
+        "kind",
+        "format",
+        "complete normalized endpoint SHA-256",
+        "complete normalized Legado rule SHA-256"
+      ],
+      "explicit_label": {
+        "record_index": 788,
+        "name": "☘️🔞BL书阁🔞☘️"
+      },
+      "same_host_different_rule_counterexample": {
+        "selected_record_index": 4583,
+        "source_id": "3bded8f2ed0492577d9726fda2151acc6146a65bf410bd7eab6f637b6898e831",
+        "name": "bl书阁🎃",
+        "kind": "text",
+        "format": "html",
+        "endpoint_host": "www.blshuge.com",
+        "endpoint_sha256": "b893fc7f28cdd04fe581450dc0bce683c1f2602c6778b558620b5370111f35e2",
+        "normalized_legado_canonical_sha256": "386de5cba747eb3321a6a7d2e9944283afbe72d45e5d8ae8ac24c5777c9102c1",
+        "adult_source_classified_at_historical_snapshot": false
+      }
+    }
+  ],
+  "limitations": [
+    "The rule equivalence concerns only the selected historical versions; no current webpage, response, complete content, or safety was verified.",
+    "The two newly classified source IDs follow the existing persistent ID policy, including later rule revisions and historical books; other IDs and whole domains are not automatically classified.",
+    "The cited historical ledger and label evidence require local Git and the specified commit; missing Git history causes verification to fail."
+  ],
+  "reproduction": "python tool/audit_equivalent_adult_ids.py --verify docs/implementation/legado-equivalent-adult-ids-20261116.json",
+  "generated_at": "2026-11-16T01:06:00.629640+08:00",
+  "time_zone": "Asia/Shanghai (UTC+08:00)"
+}

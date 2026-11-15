@@ -16,11 +16,24 @@ final class LegadoBookClient {
 
   Future<List<LegadoCategory>> categories(
     BookSource source,
-    CancellationToken token,
-  ) async {
+    CancellationToken token, {
+    bool Function(LegadoCategory)? allowCategory,
+    void Function(LegadoCategory)? onDenied,
+    bool allowDiscoveryNetworkExpansion = true,
+  }) async {
     final spec = source.legado!;
     if (!spec.enabledExplore || source.format == BookFormat.feed) return [];
+    final denied = <String>{};
+    if (allowCategory != null) {
+      for (final category in spec.categories) {
+        if (!allowCategory(category)) {
+          denied.add(category.address);
+          onDenied?.call(category);
+        }
+      }
+    }
     if (isKuwoAuditedDiscovery(source)) {
+      if (denied.contains(spec.categories.single.address)) return [];
       final request = LegadoRequest.parse(
         source,
         source.endpoint,
@@ -31,13 +44,15 @@ final class LegadoBookClient {
         request,
         token,
         maxBytes: 512 * 1024,
+        allowRedirects: allowDiscoveryNetworkExpansion,
       );
       token.check();
       return parseKuwoCategories(document.text);
     }
-    final categories = <(String, String), LegadoCategory>{};
+    final categories = <(String, String, String), LegadoCategory>{};
     Exception? failure;
     for (final category in spec.categories) {
+      if (denied.contains(category.address)) continue;
       try {
         final entries =
             legadoScriptMarker.matchAsPrefix(category.address) == null
@@ -50,6 +65,7 @@ final class LegadoBookClient {
                   address: category.address,
                 ),
                 token,
+                allowDiscoveryNetworkExpansion: allowDiscoveryNetworkExpansion,
               )).categories;
         for (final item in entries) {
           final grouped = category.group.isEmpty || item.group.isNotEmpty
@@ -57,6 +73,7 @@ final class LegadoBookClient {
               : LegadoCategory(item.title, item.address, group: category.group);
           categories.putIfAbsent((
             grouped.group,
+            grouped.title,
             grouped.address,
           ), () => grouped);
         }
@@ -75,12 +92,23 @@ final class LegadoBookClient {
     LegadoCategory? category,
     int page = 1,
     String? cursor,
+    bool allowDiscoveryNetworkExpansion = true,
   }) async {
     final options = category != null
         ? [category.address]
-        : (await categories(source, token)).map((item) => item.address);
+        : (await categories(
+            source,
+            token,
+            allowDiscoveryNetworkExpansion: allowDiscoveryNetworkExpansion,
+          )).map((item) => item.address);
     final request = cursor == null
-        ? await _firstAddress(source, options, token, page: page)
+        ? await _firstAddress(
+            source,
+            options,
+            token,
+            page: page,
+            allowDiscoveryNetworkExpansion: allowDiscoveryNetworkExpansion,
+          )
         : LegadoRequest.parse(source, source.endpoint, cursor, page: page);
     if (request == null) return (books: <Book>[], next: null);
     final parsed = await _list(
@@ -89,6 +117,7 @@ final class LegadoBookClient {
       token,
       page: page,
       discovery: true,
+      allowDiscoveryNetworkExpansion: allowDiscoveryNetworkExpansion,
     );
     String? next;
     if (parsed.books.isNotEmpty) {
@@ -97,7 +126,13 @@ final class LegadoBookClient {
           ? _link(source, parsed.uri, link, page + 1)
           : (source.legado!.rules['nextExplore'] ?? '').isEmpty &&
                 category?.paginated == true
-          ? await _firstAddress(source, options, token, page: page + 1)
+          ? await _firstAddress(
+              source,
+              options,
+              token,
+              page: page + 1,
+              allowDiscoveryNetworkExpansion: allowDiscoveryNetworkExpansion,
+            )
           : null;
       if (nextRequest?.targetKey != request.targetKey) {
         next = nextRequest?.targetKey;
@@ -123,6 +158,7 @@ final class LegadoBookClient {
     LegadoCategory? category,
     int page = 1,
     Uri? bookAddress,
+    bool allowDiscoveryNetworkExpansion = true,
   }) async {
     final spec = source.legado!;
     if (source.format == BookFormat.feed) {
@@ -140,19 +176,32 @@ final class LegadoBookClient {
           ? [book]
           : [];
     }
-    if (bookAddress != null) return _openAddress(source, bookAddress, token);
+    if (bookAddress != null) {
+      return _openAddress(
+        source,
+        bookAddress,
+        token,
+        allowNetworkExpansion: allowDiscoveryNetworkExpansion,
+      );
+    }
     final discovery = query.isEmpty || spec.search.isEmpty;
     final addresses = !discovery
         ? [spec.search]
         : category != null
         ? [category.address]
-        : (await categories(source, token)).map((item) => item.address);
+        : (await categories(
+            source,
+            token,
+            allowDiscoveryNetworkExpansion: allowDiscoveryNetworkExpansion,
+          )).map((item) => item.address);
     final request = await _firstAddress(
       source,
       addresses,
       token,
       query: query,
       page: page,
+      allowDiscoveryNetworkExpansion:
+          !discovery || allowDiscoveryNetworkExpansion,
     );
     if (request == null) return [];
     final parsed = await _list(
@@ -162,6 +211,8 @@ final class LegadoBookClient {
       query: query,
       page: page,
       discovery: discovery,
+      allowDiscoveryNetworkExpansion:
+          !discovery || allowDiscoveryNetworkExpansion,
     );
     if (discovery && query.trim().isNotEmpty) {
       final match = BookSearchQuery(query, BookSearchField.all);
@@ -177,8 +228,14 @@ final class LegadoBookClient {
     String query = '',
     required int page,
     required bool discovery,
+    bool allowDiscoveryNetworkExpansion = true,
   }) async {
-    final document = await _fetch(source, request, token);
+    final document = await _fetch(
+      source,
+      request,
+      token,
+      allowRedirects: !discovery || allowDiscoveryNetworkExpansion,
+    );
     final parsed = await _run(
       LegadoJob(
         source,
@@ -191,6 +248,7 @@ final class LegadoBookClient {
         discovery: discovery,
       ),
       token,
+      allowDiscoveryNetworkExpansion: allowDiscoveryNetworkExpansion,
     );
     return (uri: document.uri, books: parsed.books, links: parsed.links);
   }
@@ -198,8 +256,9 @@ final class LegadoBookClient {
   Future<List<Book>> _openAddress(
     BookSource source,
     Uri address,
-    CancellationToken token,
-  ) async {
+    CancellationToken token, {
+    bool allowNetworkExpansion = true,
+  }) async {
     if (!source.acceptsBookAddress(address)) return [];
     final safe = source.requestTarget(address);
     final match = await _run(
@@ -208,7 +267,12 @@ final class LegadoBookClient {
     );
     if (!match.matches) return [];
     final request = LegadoRequest.parse(source, source.endpoint, '$safe');
-    final document = await _fetch(source, request, token);
+    final document = await _fetch(
+      source,
+      request,
+      token,
+      allowRedirects: allowNetworkExpansion,
+    );
     return (await _run(
       LegadoJob(
         source,
@@ -217,6 +281,7 @@ final class LegadoBookClient {
         input: document.text,
       ),
       token,
+      allowDiscoveryNetworkExpansion: allowNetworkExpansion,
     )).books;
   }
 
@@ -435,6 +500,7 @@ final class LegadoBookClient {
     CancellationToken token, {
     String query = '',
     int page = 1,
+    bool allowDiscoveryNetworkExpansion = true,
   }) async {
     FormatException? invalid;
     for (final address in options.where((address) => address.isNotEmpty)) {
@@ -451,6 +517,7 @@ final class LegadoBookClient {
                   page: page,
                 ),
                 token,
+                allowDiscoveryNetworkExpansion: allowDiscoveryNetworkExpansion,
               )).links
             : [address];
         for (final value in links) {
@@ -474,7 +541,11 @@ final class LegadoBookClient {
     return null;
   }
 
-  Future<LegadoPage> _run(LegadoJob job, CancellationToken token) async {
+  Future<LegadoPage> _run(
+    LegadoJob job,
+    CancellationToken token, {
+    bool allowDiscoveryNetworkExpansion = true,
+  }) async {
     if (isRepairedYuqueBookList(job.source) &&
         const {
           LegadoOperation.books,
@@ -502,6 +573,9 @@ final class LegadoBookClient {
       try {
         return await runLegadoJob(job.withDocuments(documents), token);
       } on LegadoNeedsDocument catch (pending) {
+        if (!allowDiscoveryNetworkExpansion) {
+          throw const FormatException('成人过滤期间发现规则不支持脚本辅助网络请求');
+        }
         if (attempt >= 3 || documents.containsKey(pending.address)) {
           throw const FormatException('Legado 脚本请求超过限制');
         }
@@ -527,6 +601,7 @@ final class LegadoBookClient {
     LegadoRequest request,
     CancellationToken token, {
     int maxBytes = 2 * 1024 * 1024,
+    bool allowRedirects = true,
   }) {
     final uri = source.requestTarget(request.uri);
     if (request.json case final Map<String, Object?> body) {
@@ -555,6 +630,9 @@ final class LegadoBookClient {
       networkTimeout: const Duration(seconds: 12),
       cancellation: token,
       validateTarget: source.requestTarget,
+      mapRedirect: allowRedirects
+          ? null
+          : (_) => throw const FormatException('成人过滤期间不跟随发现页面重定向'),
     );
   }
 }

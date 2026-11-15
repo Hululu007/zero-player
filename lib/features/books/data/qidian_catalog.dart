@@ -10,6 +10,7 @@ import '../../../core/network/document_client.dart';
 import '../../../core/persistence/app_database.dart';
 import '../../supervision/application/content_policy.dart';
 import '../../supervision/domain/supervision_rules.dart';
+import '../application/book_category_policy.dart';
 import '../domain/book.dart';
 import '../domain/legado_source.dart';
 import 'aoaostar_book_catalog.dart';
@@ -89,6 +90,7 @@ final class QidianCatalog {
 
   bool allows(Book book) =>
       allowed &&
+      bookCategoryTextAllowed(policy, book.category) &&
       policy.textAllowed(
         '${book.title} ${book.author} ${book.description} ${book.latestChapter}',
         category: book.category,
@@ -192,7 +194,7 @@ final class QidianCatalog {
     return (
       books: page.books.where(allows).toList(),
       sections: page.sections
-          .where((item) => policy.textAllowed(item.title))
+          .where((item) => bookCategoryAllowed(policy, item))
           .toList(),
       next: page.next,
     );

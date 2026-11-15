@@ -42,6 +42,19 @@ class EvidenceIntegrityTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 EvidenceVerifier(directory).check_digest(target, digest)
 
+    def test_historical_ledger_reference_rejects_changes(self):
+        verifier = EvidenceVerifier(ROOT)
+        inputs = verifier.report('legado-adult-category-recheck')['inputs']
+        verifier.verify_historical_ledger(inputs)
+        for key, value in (
+            ('source_ledger_git_commit', '../invalid'),
+            ('source_ledger_path', '../outside'),
+            ('source_ledger_sha256', '0' * 64),
+            ('ledger_source_code_sha256', {}),
+        ):
+            with self.subTest(key=key), self.assertRaises(ValueError):
+                verifier.verify_historical_ledger({**inputs, key: value})
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -1,0 +1,159 @@
+{
+  "schema_version": 1,
+  "created_at": "2026-11-15T15:50:27.008515+00:00",
+  "time_zone": "UTC; Asia/Shanghai is UTC+08:00",
+  "scope": "Two previously AMSI-detected catalog hosts; root-only anonymous GET. No selected legacy search was requested.",
+  "method": "Validate public DNS, use a fixed numeric IP and TLS hostname verification, eight-second configured deadline, no redirects followed, scripts executed, external resources loaded, credentials used or response body saved.",
+  "inputs": {
+    "docs/implementation/legado-amsi-source-classification-before-fanfanu-20261115.json": "7a51be97a5d961e8c0277ec794a9c3d7756d278a44ee0fd8a5a351c859f5ac8b",
+    "docs/implementation/legado-amsi-template-clusters-20261115.json": "0aaff7d86529327f67ea09f741d62a00a0cf47a03a90175b982619beeed9de3e",
+    "docs/implementation/legado-host-audit-20261115.json": "dd8a118c91a1a13dd17a1dd1f32689b55fa3cc4363ec08884d832bbe379aa4b4"
+  },
+  "historical_input_note": "The classification input was originally read from legado-amsi-source-classification-20261115.json at commit 6c18b62; its exact bytes were retained under the before-fanfanu filename before current-policy reclassification.",
+  "results": [
+    {
+      "host": "bbs.fanfanu.com",
+      "selected_record_index": 168,
+      "selected_source_id": "99dec828e154116574529a7c8013e0e1d08c12ccb01ffa57a1da3ee7aebb8654",
+      "name": "🌸饭饭论坛",
+      "old_search_method": "POST",
+      "prior_head": {
+        "observed_at": "2026-11-15T02:26:16.957392+00:00",
+        "status": 429,
+        "redirect": null,
+        "redirect_scheme": null,
+        "redirect_host": null
+      },
+      "prior_initial_amsi": {
+        "initial_sample_observed_at": "2026-11-15T05:48:43.910732+00:00",
+        "initial_sample_bytes": 477,
+        "initial_sample_sha256": "b046d879f5b102c98e1e8b6db8057a27eea273bec663016228d7443fb4742216",
+        "initial_amsi": {
+          "phase": "scan",
+          "hresult": "0x00000000",
+          "amsi_result": 32768,
+          "classification": "detected"
+        }
+      },
+      "prior_cluster": {
+        "started_at": "2026-11-15T05:58:54.067390+00:00",
+        "sample_observed_at": "2026-11-15T05:58:55.032106+00:00",
+        "http_status": 200,
+        "sample_bytes": 477,
+        "sample_sha256": "fe607bbfb03d784e8cdff5aa454f1b98b1b8239eeb787979d8ae45b4e47f5a52",
+        "shape_sha256": "05e7d863aefa066d521304faf1ecf18b31791a0f55502474dc1d646e4a8bf6b6",
+        "amsi": {
+          "phase": "scan",
+          "hresult": "0x00000000",
+          "amsi_result": 32768,
+          "classification": "detected"
+        },
+        "literal_navigation": {
+          "location_mentions": 1,
+          "direct_constant_targets": [
+            {
+              "script_ordinal": 1,
+              "category": "http_or_protocol_relative",
+              "target_host_defanged": "bbs[.]fanfanu[.]com",
+              "target_host_sha256": "7bd828c5e4f9116e22b16088dfc7b58c90ee415e0d6241bd73f96be1a683b43f",
+              "target_host_is_source": true,
+              "scheme": "https",
+              "path_kind": "root_or_empty",
+              "has_query": true
+            }
+          ],
+          "limitation": "Only direct unescaped quoted assignments and assign/replace calls in scanned script prefixes; concatenated or computed values remain unconfirmed and no target is requested."
+        }
+      },
+      "current_observation": {
+        "host": "bbs.fanfanu.com",
+        "method": "GET",
+        "path": "/",
+        "started_at": "2026-11-15T15:47:21.920384+00:00",
+        "observed_at": "2026-11-15T15:47:23.141893+00:00",
+        "http_status": 302,
+        "resolved_target_scheme": "http",
+        "resolved_target_host": "ww80.fanfanu.com",
+        "target_category": "other_host",
+        "target_path": null,
+        "target_query": null
+      }
+    },
+    {
+      "host": "m.nshkedu.com",
+      "selected_record_index": 28,
+      "selected_source_id": "09ef9895c10c575590ed8152e239031f32890758849aaecdca8b03a74538d76d",
+      "name": "文趣阁",
+      "old_search_method": "POST",
+      "prior_head": {
+        "observed_at": "2026-11-15T02:26:32.936945+00:00",
+        "status": 302,
+        "redirect": "other_host",
+        "redirect_scheme": "http",
+        "redirect_host": "survey-matt.com"
+      },
+      "prior_initial_amsi": {
+        "initial_sample_observed_at": "2026-11-15T05:50:18.208258+00:00",
+        "initial_sample_bytes": 475,
+        "initial_sample_sha256": "6ab80b3001d8bdeac2e4877586ee78bbda3f2182c04ba15f24dff25e5c140094",
+        "initial_amsi": {
+          "phase": "scan",
+          "hresult": "0x00000000",
+          "amsi_result": 32768,
+          "classification": "detected"
+        }
+      },
+      "prior_cluster": {
+        "started_at": "2026-11-15T05:59:04.034340+00:00",
+        "sample_observed_at": "2026-11-15T05:59:05.817161+00:00",
+        "http_status": 200,
+        "sample_bytes": 475,
+        "sample_sha256": "f82c846ba941d73b01de8fe8f275616ce6c1c99b437c36193ff5b96ecba31b6c",
+        "shape_sha256": "05e7d863aefa066d521304faf1ecf18b31791a0f55502474dc1d646e4a8bf6b6",
+        "amsi": {
+          "phase": "scan",
+          "hresult": "0x00000000",
+          "amsi_result": 32768,
+          "classification": "detected"
+        },
+        "literal_navigation": {
+          "location_mentions": 1,
+          "direct_constant_targets": [
+            {
+              "script_ordinal": 1,
+              "category": "http_or_protocol_relative",
+              "target_host_defanged": "m[.]nshkedu[.]com",
+              "target_host_sha256": "818d9013fdba3be0605c42cac05c38b75f6e7aeefd7a20f9ca487450ba729cc9",
+              "target_host_is_source": true,
+              "scheme": "https",
+              "path_kind": "root_or_empty",
+              "has_query": true
+            }
+          ],
+          "limitation": "Only direct unescaped quoted assignments and assign/replace calls in scanned script prefixes; concatenated or computed values remain unconfirmed and no target is requested."
+        }
+      },
+      "current_observation": {
+        "host": "m.nshkedu.com",
+        "method": "GET",
+        "path": "/",
+        "started_at": "2026-11-15T15:47:24.142321+00:00",
+        "observed_at": "2026-11-15T15:47:25.911924+00:00",
+        "http_status": 302,
+        "resolved_target_scheme": "https",
+        "resolved_target_host": "zairuc.com",
+        "target_category": "other_host",
+        "target_path": null,
+        "target_query": null
+      }
+    }
+  ],
+  "limitations": [
+    "Current observations are HTTP redirects, not page samples. No new AMSI scan or content examination was performed.",
+    "Only target scheme and host were recorded; raw Location, path and query are unknown. Redirect targets were not requested.",
+    "The past shape digest groups superficially similar normalized pages; common shape or shared network does not establish site operator, malware, safety, or content.",
+    "The old search rules require POST and one source declares login; neither was attempted, so root redirects do not establish whether the searches still work.",
+    "No user-specific policy, source-risk database, or local installation was inspected; selected IDs refer to the import snapshot.",
+    "No direct evidence of gambling, permanent closure or malicious payload was obtained in these new observations."
+  ]
+}

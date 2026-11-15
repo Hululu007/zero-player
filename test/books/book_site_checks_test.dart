@@ -9,8 +9,10 @@ import 'package:zero_player/core/persistence/installation_metadata.dart';
 import 'package:zero_player/features/books/application/book_site_checks.dart';
 import 'package:zero_player/features/books/application/book_site_monitor.dart';
 import 'package:zero_player/features/books/data/book_site_inspection.dart';
+import 'package:zero_player/features/books/data/book_source_risk_store.dart';
 import 'package:zero_player/features/books/data/book_store.dart';
 import 'package:zero_player/features/books/domain/book.dart';
+import 'package:zero_player/features/supervision/domain/supervision_rules.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -18,9 +20,507 @@ void main() {
   _batchRiskTests();
   _batchFailureTests();
   _inFlightInvalidationTests();
+  _riskCommitRaceTests();
   _riskRetentionTests();
   _monitorLifecycleTests();
   _monitorPolicyTests();
+}
+
+void _riskCommitRaceTests() {
+  for (final afterWrite in [false, true]) {
+    test(
+      'cancellation ${afterWrite ? 'after insert but before the final transaction check' : 'before the transaction'} rolls back the risk',
+      () async {
+        final fixture = await _Fixture.create();
+        addTearDown(fixture.close);
+        final source = _source('one', 'cancel-risk.example');
+        final entry = (await fixture.add([source])).single;
+        final repo = fixture.services.books;
+        var policyNotifications = 0;
+        void changed() => policyNotifications++;
+        fixture.services.contentPolicy.addListener(changed);
+        addTearDown(
+          () => fixture.services.contentPolicy.removeListener(changed),
+        );
+        final entered = Completer<void>();
+        final release = Completer<void>();
+        Future<void> hold() async {
+          if (!entered.isCompleted) entered.complete();
+          await release.future;
+        }
+
+        if (afterWrite) {
+          repo.afterSiteRiskWriteForTesting = hold;
+        } else {
+          repo.beforeEvidenceMutationForTesting = hold;
+        }
+        addTearDown(() {
+          if (!release.isCompleted) release.complete();
+          repo.beforeEvidenceMutationForTesting = null;
+          repo.afterSiteRiskWriteForTesting = null;
+        });
+        final token = CancellationToken();
+        final checks = BookSiteChecks(
+          repo,
+          inspect: (_, _) async => const BookSiteInspection(
+            BookSiteFinding.gamblingClue,
+            gamblingRisk: true,
+          ),
+        );
+        final running = expectLater(
+          checks.run([entry], token, enabledOnly: true),
+          throwsA(isA<RequestCancelled>()),
+        );
+        await entered.future.timeout(const Duration(seconds: 5));
+        token.cancel();
+        release.complete();
+        await running.timeout(const Duration(seconds: 5));
+        expect(await repo.riskStore.get(source.id), isNull);
+        expect(await repo.store.read('books_site_check:${source.id}'), isNull);
+        expect(policyNotifications, 0);
+        expect(
+          (await repo.sourceEntry(BookKind.text, source.id))!.enabled,
+          isTrue,
+        );
+      },
+    );
+  }
+
+  test(
+    'cancellation after commit still publishes the committed restriction',
+    () async {
+      final fixture = await _Fixture.create();
+      addTearDown(fixture.close);
+      final source = _source('one', 'committed-risk.example');
+      final entry = (await fixture.add([source])).single;
+      final repo = fixture.services.books;
+      final entered = Completer<void>();
+      final release = Completer<void>();
+      repo.afterSiteRiskCommitForTesting = () async {
+        entered.complete();
+        await release.future;
+      };
+      addTearDown(() {
+        if (!release.isCompleted) release.complete();
+        repo.afterSiteRiskCommitForTesting = null;
+      });
+      var notifications = 0;
+      void changed() => notifications++;
+      fixture.services.contentPolicy.addListener(changed);
+      addTearDown(() => fixture.services.contentPolicy.removeListener(changed));
+      final token = CancellationToken();
+      final checks = BookSiteChecks(
+        repo,
+        inspect: (_, _) async => const BookSiteInspection(
+          BookSiteFinding.gamblingClue,
+          gamblingRisk: true,
+        ),
+      );
+      final running = expectLater(
+        checks.run([entry], token, enabledOnly: true),
+        throwsA(isA<RequestCancelled>()),
+      );
+      await entered.future.timeout(const Duration(seconds: 5));
+      token.cancel();
+      release.complete();
+      await running.timeout(const Duration(seconds: 5));
+      expect((await repo.riskStore.get(source.id))!.quarantined, isTrue);
+      expect(repo.sourceAllowed(source), isFalse);
+      expect(notifications, greaterThan(0));
+      expect(await repo.store.read('books_site_check:${source.id}'), isNull);
+    },
+  );
+
+  test(
+    'filter change before commit discards the old homepage result',
+    () async {
+      final fixture = await _Fixture.create(adultVerified: true);
+      addTearDown(fixture.close);
+      await fixture.services.settings.update({'filterAdult': false});
+      final source = _source('one', 'filter-commit.example');
+      final entry = (await fixture.add([source])).single;
+      final repo = fixture.services.books;
+      final entered = Completer<void>();
+      final release = Completer<void>();
+      repo.beforeEvidenceMutationForTesting = () async {
+        entered.complete();
+        await release.future;
+      };
+      addTearDown(() {
+        if (!release.isCompleted) release.complete();
+        repo.beforeEvidenceMutationForTesting = null;
+      });
+      final checks = BookSiteChecks(
+        repo,
+        inspect: (_, _) async => const BookSiteInspection(
+          BookSiteFinding.gamblingClue,
+          gamblingRisk: true,
+        ),
+      );
+      final running = expectLater(
+        checks.run([entry], CancellationToken(), enabledOnly: true),
+        throwsA(isA<RequestCancelled>()),
+      );
+      await entered.future.timeout(const Duration(seconds: 5));
+      await fixture.services.settings.update({'filterAdult': true});
+      release.complete();
+      await running.timeout(const Duration(seconds: 5));
+      expect(await repo.riskStore.get(source.id), isNull);
+      expect(await repo.store.read('books_site_check:${source.id}'), isNull);
+    },
+  );
+
+  test(
+    'supervision enabled before commit cannot accept a supplied finding',
+    () async {
+      final fixture = await _Fixture.create();
+      addTearDown(fixture.close);
+      final source = _source('one', 'supervision-commit.example');
+      final entry = (await fixture.add([source])).single;
+      final repo = fixture.services.books;
+      final draft = await fixture.services.supervision.prepareCredentials(
+        'test-password-123',
+      );
+      final entered = Completer<void>();
+      final release = Completer<void>();
+      repo.beforeEvidenceMutationForTesting = () async {
+        entered.complete();
+        await release.future;
+      };
+      addTearDown(() {
+        if (!release.isCompleted) release.complete();
+        repo.beforeEvidenceMutationForTesting = null;
+      });
+      final checks = BookSiteChecks(
+        repo,
+        inspect: (_, _) async => const BookSiteInspection(
+          BookSiteFinding.gamblingClue,
+          gamblingRisk: true,
+        ),
+      );
+      final running = expectLater(
+        checks.run([entry], CancellationToken(), enabledOnly: true),
+        throwsA(isA<RequestCancelled>()),
+      );
+      await entered.future.timeout(const Duration(seconds: 5));
+      await fixture.services.supervision.saveCredentials(draft);
+      release.complete();
+      await running.timeout(const Duration(seconds: 5));
+      expect(await repo.riskStore.get(source.id), isNull);
+      expect(await repo.store.read('books_site_check:${source.id}'), isNull);
+    },
+  );
+
+  test(
+    'manual check can still mark an otherwise allowed disabled source',
+    () async {
+      final fixture = await _Fixture.create();
+      addTearDown(fixture.close);
+      final source = _source('one', 'manual-disabled.example');
+      await fixture.add([source]);
+      final repo = fixture.services.books;
+      await repo.saveSource(source, {'enabled': false});
+      final entry = (await repo.sourceEntry(BookKind.text, source.id))!;
+      final checks = BookSiteChecks(
+        repo,
+        inspect: (_, _) async => const BookSiteInspection(
+          BookSiteFinding.gamblingClue,
+          gamblingRisk: true,
+        ),
+      );
+      final result = await checks.run([entry], CancellationToken());
+      expect(result.quarantined, 1);
+      expect((await repo.riskStore.get(source.id))!.quarantined, isTrue);
+    },
+  );
+
+  test(
+    'disabling an enabled-only source before commit skips its old result',
+    () async {
+      final fixture = await _Fixture.create();
+      addTearDown(fixture.close);
+      final source = _source('one', 'disabled-commit.example');
+      final entry = (await fixture.add([source])).single;
+      final repo = fixture.services.books;
+      final entered = Completer<void>();
+      final release = Completer<void>();
+      repo.beforeEvidenceMutationForTesting = () async {
+        entered.complete();
+        await release.future;
+      };
+      addTearDown(() {
+        if (!release.isCompleted) release.complete();
+        repo.beforeEvidenceMutationForTesting = null;
+      });
+      final checks = BookSiteChecks(
+        repo,
+        inspect: (_, _) async => const BookSiteInspection(
+          BookSiteFinding.gamblingClue,
+          gamblingRisk: true,
+        ),
+      );
+      final running = checks.run(
+        [entry],
+        CancellationToken(),
+        enabledOnly: true,
+      );
+      await entered.future.timeout(const Duration(seconds: 5));
+      repo.beforeEvidenceMutationForTesting = null;
+      await repo.saveSource(source, {'enabled': false});
+      release.complete();
+      final result = await running.timeout(const Duration(seconds: 5));
+      expect(result.checked, 0);
+      expect(await repo.riskStore.get(source.id), isNull);
+      expect(await repo.store.read('books_site_check:${source.id}'), isNull);
+      expect(
+        (await repo.sourceEntry(BookKind.text, source.id))!.enabled,
+        isFalse,
+      );
+    },
+  );
+
+  test(
+    'same host retries a stale mark with the other eligible source',
+    () async {
+      final fixture = await _Fixture.create();
+      addTearDown(fixture.close);
+      final one = _source('one', 'shared-stale.example');
+      final two = _source('two', 'shared-stale.example');
+      final entries = await fixture.add([one, two]);
+      final repo = fixture.services.books;
+      final entered = Completer<void>();
+      final release = Completer<void>();
+      final sampleStarted = Completer<void>();
+      final sample = Completer<BookSiteInspection>();
+      BookSource? sampled;
+      var held = false;
+      repo.beforeEvidenceMutationForTesting = () async {
+        if (held) return;
+        held = true;
+        entered.complete();
+        await release.future;
+      };
+      addTearDown(() {
+        if (!release.isCompleted) release.complete();
+        if (!sample.isCompleted) {
+          sample.complete(const BookSiteInspection(BookSiteFinding.sampled));
+        }
+        repo.beforeEvidenceMutationForTesting = null;
+      });
+      final checks = BookSiteChecks(
+        repo,
+        inspect: (source, _) {
+          sampled = source;
+          sampleStarted.complete();
+          return sample.future;
+        },
+      );
+      final running = checks.run(
+        entries,
+        CancellationToken(),
+        enabledOnly: true,
+      );
+      await sampleStarted.future.timeout(const Duration(seconds: 5));
+      await Future<void>.delayed(Duration.zero);
+      sample.complete(
+        const BookSiteInspection(
+          BookSiteFinding.gamblingClue,
+          gamblingRisk: true,
+        ),
+      );
+      await entered.future.timeout(const Duration(seconds: 5));
+      final stale = sampled!;
+      final eligible = stale.id == one.id ? two : one;
+      final changed = BookSource.fromJson({...stale.toJson(), 'name': '更新的来源'});
+      // Bypass the repository on purpose to simulate a restored DB snapshot with
+      // no in-memory revision notification while the first marker waits.
+      await repo.store.saveSource(stale, {'source': changed.toJson()});
+      release.complete();
+      await running.timeout(const Duration(seconds: 5));
+      expect(await repo.riskStore.get(stale.id), isNull);
+      expect((await repo.riskStore.get(eligible.id))!.quarantined, isTrue);
+    },
+  );
+
+  test(
+    'manual review invalidates both pending checks for the same host',
+    () async {
+      final fixture = await _Fixture.create();
+      addTearDown(fixture.close);
+      final one = _source('one', 'reviewed-shared.example');
+      final two = _source('two', 'reviewed-shared.example');
+      final entries = await fixture.add([one, two]);
+      final repo = fixture.services.books;
+      final committed = Completer<void>();
+      final publish = Completer<void>();
+      final sampleStarted = Completer<void>();
+      final sample = Completer<BookSiteInspection>();
+      BookSource? sampled;
+      repo.afterSiteRiskCommitForTesting = () async {
+        committed.complete();
+        await publish.future;
+      };
+      addTearDown(() {
+        if (!publish.isCompleted) publish.complete();
+        if (!sample.isCompleted) {
+          sample.complete(const BookSiteInspection(BookSiteFinding.sampled));
+        }
+        repo.afterSiteRiskCommitForTesting = null;
+      });
+      final checks = BookSiteChecks(
+        repo,
+        inspect: (source, _) {
+          sampled = source;
+          sampleStarted.complete();
+          return sample.future;
+        },
+      );
+      final running = checks.run(
+        entries,
+        CancellationToken(),
+        enabledOnly: true,
+      );
+      await sampleStarted.future.timeout(const Duration(seconds: 5));
+      await Future<void>.delayed(Duration.zero);
+      sample.complete(
+        const BookSiteInspection(
+          BookSiteFinding.gamblingClue,
+          gamblingRisk: true,
+        ),
+      );
+      await committed.future.timeout(const Duration(seconds: 5));
+      final assessment = (await repo.riskStore.get(sampled!.id))!;
+      final review = BookSourceRiskEntry(
+        sourceId: assessment.sourceId,
+        name: assessment.name,
+        host: assessment.host,
+        adult: assessment.adult,
+        quarantined: assessment.quarantined,
+        fixedQuarantine: false,
+        version: assessment.version,
+        recordKey: assessment.key,
+      );
+      final reviewStarted = Completer<void>();
+      late Future<void> reviewFuture;
+      void reviewAfterPublication() {
+        if (reviewStarted.isCompleted) return;
+        reviewFuture = repo.clearSourceRisk(review);
+        reviewStarted.complete();
+      }
+
+      // Begin review exactly when the committed risk is published, before the
+      // other worker can reuse the shared host mark or persist its check.
+      fixture.services.contentPolicy.addListener(reviewAfterPublication);
+      addTearDown(
+        () => fixture.services.contentPolicy.removeListener(
+          reviewAfterPublication,
+        ),
+      );
+      publish.complete();
+      await reviewStarted.future.timeout(const Duration(seconds: 5));
+      await reviewFuture.timeout(const Duration(seconds: 5));
+      final result = await running.timeout(const Duration(seconds: 5));
+      expect(result.checked, 0);
+      expect(result.skipped, 2);
+      expect((await repo.riskStore.get(sampled!.id))!.quarantined, isFalse);
+      expect(await repo.store.read('books_site_check:${one.id}'), isNull);
+      expect(await repo.store.read('books_site_check:${two.id}'), isNull);
+      expect(await repo.sourceEntry(BookKind.text, one.id), isNotNull);
+      expect(await repo.sourceEntry(BookKind.text, two.id), isNotNull);
+    },
+  );
+
+  test(
+    'a failed review preserves evidence and invalidates an older sample',
+    () async {
+      final fixture = await _Fixture.create();
+      addTearDown(fixture.close);
+      final assessed = _source('assessed', 'prior-review.example');
+      final pending = _source('pending', 'pending-review.example');
+      final entries = await fixture.add([assessed, pending]);
+      final repo = fixture.services.books;
+      await repo.markSourceRisk(assessed, quarantine: true);
+      final review = (await repo.sourceRiskEntries()).firstWhere(
+        (entry) => entry.sourceId == assessed.id && entry.version > 0,
+      );
+      final stale = BookSourceRiskEntry(
+        sourceId: review.sourceId,
+        name: review.name,
+        host: review.host,
+        adult: review.adult,
+        quarantined: review.quarantined,
+        fixedQuarantine: review.fixedQuarantine,
+        version: review.version + 1,
+        recordKey: review.recordKey,
+      );
+      final started = Completer<void>();
+      final response = Completer<BookSiteInspection>();
+      addTearDown(() {
+        if (!response.isCompleted) {
+          response.complete(const BookSiteInspection(BookSiteFinding.sampled));
+        }
+      });
+      final checks = BookSiteChecks(
+        repo,
+        inspect: (_, _) {
+          started.complete();
+          return response.future;
+        },
+      );
+      final running = checks.run([
+        entries.singleWhere((entry) => entry.source.id == pending.id),
+      ], CancellationToken());
+      await started.future.timeout(const Duration(seconds: 5));
+      await expectLater(
+        repo.clearSourceRisk(stale),
+        throwsA(isA<FormatException>()),
+      );
+      response.complete(
+        const BookSiteInspection(
+          BookSiteFinding.gamblingClue,
+          gamblingRisk: true,
+        ),
+      );
+      final result = await running.timeout(const Duration(seconds: 5));
+      expect(result.checked, 0);
+      expect((await repo.riskStore.get(assessed.id))!.quarantined, isTrue);
+      expect(await repo.riskStore.get(pending.id), isNull);
+      expect(await repo.store.read('books_site_check:${pending.id}'), isNull);
+    },
+  );
+
+  test('repository close waits for an already-started review', () async {
+    final fixture = await _Fixture.create();
+    addTearDown(fixture.close);
+    final source = _source('closing', 'closing-review.example');
+    await fixture.add([source]);
+    final repo = fixture.services.books;
+    await repo.markSourceRisk(source, quarantine: true);
+    final review = (await repo.sourceRiskEntries()).firstWhere(
+      (entry) => entry.sourceId == source.id && entry.version > 0,
+    );
+    final entered = Completer<void>();
+    final release = Completer<void>();
+    repo.beforeEvidenceMutationForTesting = () async {
+      entered.complete();
+      await release.future;
+    };
+    addTearDown(() {
+      if (!release.isCompleted) release.complete();
+      repo.beforeEvidenceMutationForTesting = null;
+    });
+    final operation = repo.clearSourceRisk(review);
+    await entered.future.timeout(const Duration(seconds: 5));
+    var closed = false;
+    final closing = repo.close().then((_) => closed = true);
+    await Future<void>.delayed(Duration.zero);
+    expect(closed, isFalse);
+    release.complete();
+    await operation.timeout(const Duration(seconds: 5));
+    await closing.timeout(const Duration(seconds: 5));
+    expect(closed, isTrue);
+    expect((await repo.riskStore.get(source.id))!.quarantined, isFalse);
+  });
 }
 
 void _storedCheckTests() {
@@ -81,21 +581,15 @@ void _batchRiskTests() {
   );
 
   test('a risk notification does not cancel checking another host', () async {
-    final fixture = await _Fixture.create();
+    final fixture = await _Fixture.create(adultVerified: true);
     addTearDown(fixture.close);
     final one = _source('one', 'first-risk.example');
     final two = _source('two', 'second-risk.example');
     final entries = await fixture.add([one, two]);
     final token = CancellationToken();
     final policy = fixture.services.contentPolicy;
-    var snapshot = bookSitePolicySnapshot(policy);
     var notifications = 0;
-    void onPolicyChange() {
-      notifications++;
-      final next = bookSitePolicySnapshot(policy);
-      if (next != snapshot) token.cancel();
-      snapshot = next;
-    }
+    void onPolicyChange() => notifications++;
 
     policy.addListener(onPolicyChange);
     addTearDown(() => policy.removeListener(onPolicyChange));
@@ -118,6 +612,9 @@ void _batchRiskTests() {
       await fixture.services.books.sourceEntry(BookKind.text, two.id),
       isNull,
     );
+    // The run must remove its listener rather than cancel a completed token.
+    await fixture.services.settings.update({'filterAdult': false});
+    expect(token.isCancelled, isFalse);
   });
 }
 
@@ -159,6 +656,41 @@ void _batchFailureTests() {
 }
 
 void _inFlightInvalidationTests() {
+  test('an adult-filter round trip still cancels a direct check', () async {
+    final fixture = await _Fixture.create(adultVerified: true);
+    addTearDown(fixture.close);
+    await _expectPolicyRoundTripCancels(
+      fixture,
+      () => fixture.services.settings.update({'filterAdult': false}),
+      () => fixture.services.settings.update({'filterAdult': true}),
+    );
+  });
+
+  test('a disabled supervision rule round trip still cancels', () async {
+    final fixture = await _Fixture.create();
+    addTearDown(fixture.close);
+    final supervision = fixture.services.supervision;
+    final credentials = await supervision.prepareCredentials(
+      'test-password-123',
+    );
+    await supervision.saveCredentials(credentials);
+    Future<void> authorize(Future<void> Function() action) =>
+        supervision.execute(
+          SensitiveOperation.supervision,
+          action,
+          password: 'test-password-123',
+        );
+    await authorize(() => supervision.setEnabled(false));
+    expect(supervision.enabled, isFalse);
+    await _expectPolicyRoundTripCancels(
+      fixture,
+      () => authorize(
+        () => supervision.updateRules(SupervisionRules(keywords: ['屏蔽词'])),
+      ),
+      () => authorize(() => supervision.updateRules(SupervisionRules())),
+    );
+  });
+
   for (final remove in [false, true]) {
     test(
       'stale result is discarded if a source is ${remove ? 'deleted' : 'updated'}',
@@ -240,7 +772,7 @@ void _inFlightInvalidationTests() {
           gamblingRisk: true,
         ),
       );
-      await expectLater(run, throwsA(isA<FormatException>()));
+      await expectLater(run, throwsA(isA<RequestCancelled>()));
       expect(
         await fixture.services.books.store.read(
           'books_site_check:${source.id}',
@@ -249,6 +781,53 @@ void _inFlightInvalidationTests() {
       );
       expect(await fixture.services.books.riskStore.get(source.id), isNull);
     },
+  );
+}
+
+Future<void> _expectPolicyRoundTripCancels(
+  _Fixture fixture,
+  Future<void> Function() change,
+  Future<void> Function() restore,
+) async {
+  final source = _source('round-trip', 'policy-round-trip.example');
+  final entry = (await fixture.add([source])).single;
+  final started = Completer<void>();
+  final response = Completer<BookSiteInspection>();
+  addTearDown(() {
+    if (!response.isCompleted) {
+      response.complete(const BookSiteInspection(BookSiteFinding.sampled));
+    }
+  });
+  final token = CancellationToken();
+  final checks = BookSiteChecks(
+    fixture.services.books,
+    inspect: (_, _) {
+      started.complete();
+      return response.future;
+    },
+  );
+  final originalPolicy = bookSitePolicySnapshot(fixture.services.contentPolicy);
+  final running = expectLater(
+    checks.run([entry], token, enabledOnly: true),
+    throwsA(isA<RequestCancelled>()),
+  );
+  await started.future.timeout(const Duration(seconds: 5));
+  await change().timeout(const Duration(seconds: 15));
+  expect(token.isCancelled, isTrue);
+  await restore().timeout(const Duration(seconds: 15));
+  expect(
+    bookSitePolicySnapshot(fixture.services.contentPolicy),
+    originalPolicy,
+  );
+  expect(token.isCancelled, isTrue);
+  response.complete(
+    const BookSiteInspection(BookSiteFinding.gamblingClue, gamblingRisk: true),
+  );
+  await running.timeout(const Duration(seconds: 5));
+  expect(await fixture.services.books.riskStore.get(source.id), isNull);
+  expect(
+    await fixture.services.books.store.read('books_site_check:${source.id}'),
+    isNull,
   );
 }
 
