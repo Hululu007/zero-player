@@ -1,0 +1,740 @@
+{
+  "method": "Offline join by exact host: initial HEAD no recorded status, second HEAD no recorded status, then independent root GET. Inputs and source-ID associations are validated; no network or scripts executed.",
+  "limitations": [
+    "GET and HEAD are different methods and times; one GET status does not retroactively establish a HEAD status.",
+    "An HTTP response, even 200 or HTML, does not establish usable rules, current availability or safety.",
+    "No recorded GET status includes DNS, network, TLS, timeout or incomplete-response errors; none proves permanent failure.",
+    "AMSI not-detected is not a malware clearance; the local HTML-wrapped test control was missed.",
+    "Source IDs refer to the historical deduplicated import inventory, not installed or enabled user sources."
+  ],
+  "archive_sha256": "012a0e0d6e6adc8d303c32b578510e14b562088b3e965cb01a1a647b5e7e034d",
+  "import_inventory_generated_at": "2026-11-15T02:32:19.183484Z",
+  "import_code_sha256": {
+    "lib/features/books/data/book_import.dart": "5c27a8cac7806ca8854672f89fcc90d0d98e5ab25b92ec4fc13f094bfe93a629",
+    "lib/features/books/data/legado/legado_import.dart": "3d4f0f1fb848c26bf65a0eec25373bc993403576634c60524dc17c5a6e217b69",
+    "lib/features/books/domain/book.dart": "c0aec8fc6c82eef58dba4047654e8c75a8ef45e6bcfb5e9e185880609b09583f",
+    "lib/features/books/domain/legado_source.dart": "5b907923968332090760ecc9f4d6f7e652aa06501ac7981b5f477ef7c0d954d1"
+  },
+  "first_head_no_status": {
+    "hosts": 1134,
+    "selected_ids": 1095
+  },
+  "both_heads_no_status": {
+    "hosts": 1046,
+    "selected_ids": 1009,
+    "first_head_classifications": {
+      "connection_error": {
+        "hosts": 205,
+        "selected_ids": 217
+      },
+      "connection_or_read_timeout": {
+        "hosts": 346,
+        "selected_ids": 349
+      },
+      "dns_host_not_found": {
+        "hosts": 149,
+        "selected_ids": 114
+      },
+      "dns_no_data": {
+        "hosts": 110,
+        "selected_ids": 100
+      },
+      "dns_timeout": {
+        "hosts": 30,
+        "selected_ids": 38
+      },
+      "non_public_dns_rejected": {
+        "hosts": 44,
+        "selected_ids": 16
+      },
+      "tls_error": {
+        "hosts": 162,
+        "selected_ids": 175
+      }
+    },
+    "second_head_classifications": {
+      "connection_error": {
+        "hosts": 213,
+        "selected_ids": 227
+      },
+      "connection_or_read_timeout": {
+        "hosts": 334,
+        "selected_ids": 331
+      },
+      "dns_host_not_found": {
+        "hosts": 151,
+        "selected_ids": 120
+      },
+      "dns_no_data": {
+        "hosts": 110,
+        "selected_ids": 100
+      },
+      "dns_timeout": {
+        "hosts": 30,
+        "selected_ids": 38
+      },
+      "non_public_dns_rejected": {
+        "hosts": 47,
+        "selected_ids": 17
+      },
+      "tls_error": {
+        "hosts": 161,
+        "selected_ids": 176
+      }
+    }
+  },
+  "later_get_status": {
+    "hosts": 23,
+    "selected_ids": 19,
+    "by_status": {
+      "200": {
+        "hosts": 6,
+        "selected_ids": 6
+      },
+      "301": {
+        "hosts": 4,
+        "selected_ids": 2
+      },
+      "302": {
+        "hosts": 7,
+        "selected_ids": 6
+      },
+      "403": {
+        "hosts": 3,
+        "selected_ids": 2
+      },
+      "502": {
+        "hosts": 3,
+        "selected_ids": 3
+      }
+    },
+    "by_category": {
+      "nonempty_html_scanned": {
+        "hosts": 6,
+        "selected_ids": 6
+      },
+      "other_http_status": {
+        "hosts": 6,
+        "selected_ids": 5
+      },
+      "redirect_not_followed": {
+        "hosts": 11,
+        "selected_ids": 8
+      }
+    }
+  },
+  "later_get_no_status": {
+    "hosts": 1023,
+    "selected_ids": 990,
+    "by_failure": {
+      "connection_error": {
+        "hosts": 137,
+        "selected_ids": 141
+      },
+      "dns_error": {
+        "hosts": 258,
+        "selected_ids": 214
+      },
+      "http_transport_error": {
+        "hosts": 38,
+        "selected_ids": 39
+      },
+      "invalid_host_or_non_public_address": {
+        "hosts": 44,
+        "selected_ids": 16
+      },
+      "timeout": {
+        "hosts": 390,
+        "selected_ids": 410
+      },
+      "tls_error": {
+        "hosts": 156,
+        "selected_ids": 170
+      }
+    }
+  },
+  "time_ranges_utc": {
+    "first_head": [
+      "2026-11-15T02:26:16.336946+00:00",
+      "2026-11-15T02:27:49.174084+00:00"
+    ],
+    "second_head": [
+      "2026-11-15T04:01:33.257214+00:00",
+      "2026-11-15T04:03:45.041084+00:00"
+    ],
+    "later_get": [
+      "2026-11-15T05:48:20.558692+00:00",
+      "2026-11-15T05:58:11.110393+00:00"
+    ]
+  },
+  "responded_hosts": [
+    {
+      "host": "99csw.com",
+      "record_indices": [
+        816
+      ],
+      "selected_source_ids": [],
+      "first_head_observed_at": "2026-11-15T02:26:16.339408+00:00",
+      "first_head_classification": "connection_or_read_timeout",
+      "second_head_observed_at": "2026-11-15T04:01:33.258497+00:00",
+      "second_head_classification": "connection_or_read_timeout",
+      "get_started_at": "2026-11-15T05:48:23.882998+00:00",
+      "get_observed_at": "2026-11-15T05:48:27.490242+00:00",
+      "get_status": 403,
+      "get_category": "other_http_status",
+      "get_failure": "http_status",
+      "html_bytes": null,
+      "html_truncated": null,
+      "html_sha256": null,
+      "amsi": null
+    },
+    {
+      "host": "aaread.space",
+      "record_indices": [
+        477,
+        2446
+      ],
+      "selected_source_ids": [
+        "9d9d71c13e2779b88515538a6b8df95bdb14b84f86b72e98e27701c22f917cc0"
+      ],
+      "first_head_observed_at": "2026-11-15T02:26:16.340535+00:00",
+      "first_head_classification": "connection_or_read_timeout",
+      "second_head_observed_at": "2026-11-15T04:01:33.259368+00:00",
+      "second_head_classification": "connection_or_read_timeout",
+      "get_started_at": "2026-11-15T05:48:25.816650+00:00",
+      "get_observed_at": "2026-11-15T05:48:27.442959+00:00",
+      "get_status": 403,
+      "get_category": "other_http_status",
+      "get_failure": "http_status",
+      "html_bytes": null,
+      "html_truncated": null,
+      "html_sha256": null,
+      "amsi": null
+    },
+    {
+      "host": "blnovelhub.com",
+      "record_indices": [
+        488,
+        2459
+      ],
+      "selected_source_ids": [
+        "ba76da82e82fe6453f0e4ef9cac4c96a90a3eaa352fb4072bc1aa690f2d47cd5"
+      ],
+      "first_head_observed_at": "2026-11-15T02:26:17.008595+00:00",
+      "first_head_classification": "connection_or_read_timeout",
+      "second_head_observed_at": "2026-11-15T04:01:33.688121+00:00",
+      "second_head_classification": "connection_or_read_timeout",
+      "get_started_at": "2026-11-15T05:48:42.734751+00:00",
+      "get_observed_at": "2026-11-15T05:48:44.404880+00:00",
+      "get_status": 301,
+      "get_category": "redirect_not_followed",
+      "get_failure": "redirect_not_followed",
+      "html_bytes": null,
+      "html_truncated": null,
+      "html_sha256": null,
+      "amsi": null
+    },
+    {
+      "host": "m.bimoks.com",
+      "record_indices": [
+        604
+      ],
+      "selected_source_ids": [
+        "2eb90bf59ea519b1611311f0c9cd5bd691eead3377ef739ac926f85876ed4b5c"
+      ],
+      "first_head_observed_at": "2026-11-15T02:26:25.092455+00:00",
+      "first_head_classification": "connection_or_read_timeout",
+      "second_head_observed_at": "2026-11-15T04:01:45.494903+00:00",
+      "second_head_classification": "connection_or_read_timeout",
+      "get_started_at": "2026-11-15T05:49:27.082442+00:00",
+      "get_observed_at": "2026-11-15T05:49:28.625401+00:00",
+      "get_status": 502,
+      "get_category": "other_http_status",
+      "get_failure": "http_status",
+      "html_bytes": null,
+      "html_truncated": null,
+      "html_sha256": null,
+      "amsi": null
+    },
+    {
+      "host": "m.bqg222.com",
+      "record_indices": [
+        1625,
+        3610
+      ],
+      "selected_source_ids": [
+        "b8f965c322e0e6071fd5e25eafab6be6290d6b5f8a3fceb0854e2ea4288ccf49"
+      ],
+      "first_head_observed_at": "2026-11-15T02:26:26.350061+00:00",
+      "first_head_classification": "connection_or_read_timeout",
+      "second_head_observed_at": "2026-11-15T04:01:46.885846+00:00",
+      "second_head_classification": "connection_or_read_timeout",
+      "get_started_at": "2026-11-15T05:49:35.844922+00:00",
+      "get_observed_at": "2026-11-15T05:49:36.798777+00:00",
+      "get_status": 302,
+      "get_category": "redirect_not_followed",
+      "get_failure": "redirect_not_followed",
+      "html_bytes": null,
+      "html_truncated": null,
+      "html_sha256": null,
+      "amsi": null
+    },
+    {
+      "host": "m.chiyou.cc",
+      "record_indices": [
+        2245
+      ],
+      "selected_source_ids": [],
+      "first_head_observed_at": "2026-11-15T02:26:26.667658+00:00",
+      "first_head_classification": "connection_or_read_timeout",
+      "second_head_observed_at": "2026-11-15T04:01:47.277149+00:00",
+      "second_head_classification": "connection_or_read_timeout",
+      "get_started_at": "2026-11-15T05:49:40.353385+00:00",
+      "get_observed_at": "2026-11-15T05:49:41.427798+00:00",
+      "get_status": 302,
+      "get_category": "redirect_not_followed",
+      "get_failure": "redirect_not_followed",
+      "html_bytes": null,
+      "html_truncated": null,
+      "html_sha256": null,
+      "amsi": null
+    },
+    {
+      "host": "m.douxsw.com",
+      "record_indices": [
+        4686,
+        4713
+      ],
+      "selected_source_ids": [
+        "1bc39206d98985624ee33c7afcb3bb4861d741161450863a38ae308384f64844",
+        "e2fc3fd4f9915c9173d218bd3a712df3be9e15ed5b4aaecbb1cbee8c7c8e20ef"
+      ],
+      "first_head_observed_at": "2026-11-15T02:26:27.408899+00:00",
+      "first_head_classification": "connection_or_read_timeout",
+      "second_head_observed_at": "2026-11-15T04:01:49.124872+00:00",
+      "second_head_classification": "connection_or_read_timeout",
+      "get_started_at": "2026-11-15T05:49:44.372417+00:00",
+      "get_observed_at": "2026-11-15T05:49:47.815949+00:00",
+      "get_status": 200,
+      "get_category": "nonempty_html_scanned",
+      "get_failure": null,
+      "html_bytes": 10462,
+      "html_truncated": false,
+      "html_sha256": "0fe2dd54ca6bb446ee6593efc3fa67f34ed49649f75673b0b5f0aba97661de34",
+      "amsi": {
+        "phase": "scan",
+        "hresult": "0x00000000",
+        "amsi_result": 1,
+        "classification": "not_detected"
+      }
+    },
+    {
+      "host": "m.wenzhug.com",
+      "record_indices": [
+        232
+      ],
+      "selected_source_ids": [
+        "c4c7efa3aba609ceb0405f97ef18104f5469fd0aa93045e9422f787fd16f118f"
+      ],
+      "first_head_observed_at": "2026-11-15T02:26:39.044596+00:00",
+      "first_head_classification": "connection_or_read_timeout",
+      "second_head_observed_at": "2026-11-15T04:02:05.486353+00:00",
+      "second_head_classification": "connection_or_read_timeout",
+      "get_started_at": "2026-11-15T05:50:53.516268+00:00",
+      "get_observed_at": "2026-11-15T05:50:56.766059+00:00",
+      "get_status": 502,
+      "get_category": "other_http_status",
+      "get_failure": "http_status",
+      "html_bytes": null,
+      "html_truncated": null,
+      "html_sha256": null,
+      "amsi": null
+    },
+    {
+      "host": "www.123wenxue.com",
+      "record_indices": [
+        2973
+      ],
+      "selected_source_ids": [],
+      "first_head_observed_at": "2026-11-15T02:26:51.502046+00:00",
+      "first_head_classification": "connection_or_read_timeout",
+      "second_head_observed_at": "2026-11-15T04:02:19.949815+00:00",
+      "second_head_classification": "connection_or_read_timeout",
+      "get_started_at": "2026-11-15T05:52:06.582403+00:00",
+      "get_observed_at": "2026-11-15T05:52:08.527335+00:00",
+      "get_status": 200,
+      "get_category": "nonempty_html_scanned",
+      "get_failure": null,
+      "html_bytes": 1786,
+      "html_truncated": false,
+      "html_sha256": "e7a911c36c0af1b2df0eba9b8063271a3307d5fe075d311463ac3408bd7dc43c",
+      "amsi": {
+        "phase": "scan",
+        "hresult": "0x00000000",
+        "amsi_result": 1,
+        "classification": "not_detected"
+      }
+    },
+    {
+      "host": "www.81zw.tv",
+      "record_indices": [
+        743,
+        2519
+      ],
+      "selected_source_ids": [
+        "769416354c6ea598abdeb6390f95aa06052a5cf6698047a5e3c09a84edd4fa32"
+      ],
+      "first_head_observed_at": "2026-11-15T02:26:57.140036+00:00",
+      "first_head_classification": "connection_or_read_timeout",
+      "second_head_observed_at": "2026-11-15T04:02:27.963783+00:00",
+      "second_head_classification": "connection_or_read_timeout",
+      "get_started_at": "2026-11-15T05:52:44.423369+00:00",
+      "get_observed_at": "2026-11-15T05:52:45.833981+00:00",
+      "get_status": 200,
+      "get_category": "nonempty_html_scanned",
+      "get_failure": null,
+      "html_bytes": 32768,
+      "html_truncated": true,
+      "html_sha256": "94509049f3cfb08f10f9496d87c91c1639055f5dbe2d6e8a2280816b548e4c66",
+      "amsi": {
+        "phase": "scan",
+        "hresult": "0x00000000",
+        "amsi_result": 1,
+        "classification": "not_detected"
+      }
+    },
+    {
+      "host": "www.bimoks.com",
+      "record_indices": [
+        337,
+        619
+      ],
+      "selected_source_ids": [
+        "1bb7b5de766a681189e536dc20ed90b9fc0a61af9329d481516d8bc565d24ab1"
+      ],
+      "first_head_observed_at": "2026-11-15T02:27:01.903061+00:00",
+      "first_head_classification": "connection_or_read_timeout",
+      "second_head_observed_at": "2026-11-15T04:02:36.599462+00:00",
+      "second_head_classification": "connection_or_read_timeout",
+      "get_started_at": "2026-11-15T05:53:14.214249+00:00",
+      "get_observed_at": "2026-11-15T05:53:17.676257+00:00",
+      "get_status": 502,
+      "get_category": "other_http_status",
+      "get_failure": "http_status",
+      "html_bytes": null,
+      "html_truncated": null,
+      "html_sha256": null,
+      "amsi": null
+    },
+    {
+      "host": "www.guowx.com",
+      "record_indices": [
+        395,
+        2109,
+        4792,
+        4835
+      ],
+      "selected_source_ids": [
+        "04512886e7462bb6f6336f3e6686c2f0ffe05abd05d989b978fa43b0d0ca723f"
+      ],
+      "first_head_observed_at": "2026-11-15T02:27:11.945226+00:00",
+      "first_head_classification": "connection_or_read_timeout",
+      "second_head_observed_at": "2026-11-15T04:02:51.111035+00:00",
+      "second_head_classification": "connection_or_read_timeout",
+      "get_started_at": "2026-11-15T05:54:22.973157+00:00",
+      "get_observed_at": "2026-11-15T05:54:25.123807+00:00",
+      "get_status": 200,
+      "get_category": "nonempty_html_scanned",
+      "get_failure": null,
+      "html_bytes": 32768,
+      "html_truncated": true,
+      "html_sha256": "9ae1c4e4a91ed11d033013a2f5953a2d69cb6de682637c905e53e08f5ceb5001",
+      "amsi": {
+        "phase": "scan",
+        "hresult": "0x00000000",
+        "amsi_result": 1,
+        "classification": "not_detected"
+      }
+    },
+    {
+      "host": "www.kukk.net",
+      "record_indices": [
+        2797,
+        3223
+      ],
+      "selected_source_ids": [
+        "7196162ee639a06fcaad7f5e23ed9b3c6e46d8cbd536b39f5b803bea09418507"
+      ],
+      "first_head_observed_at": "2026-11-15T02:27:18.058281+00:00",
+      "first_head_classification": "connection_or_read_timeout",
+      "second_head_observed_at": "2026-11-15T04:02:59.325789+00:00",
+      "second_head_classification": "connection_or_read_timeout",
+      "get_started_at": "2026-11-15T05:55:01.492019+00:00",
+      "get_observed_at": "2026-11-15T05:55:02.668037+00:00",
+      "get_status": 301,
+      "get_category": "redirect_not_followed",
+      "get_failure": "redirect_not_followed",
+      "html_bytes": null,
+      "html_truncated": null,
+      "html_sha256": null,
+      "amsi": null
+    },
+    {
+      "host": "www.mifengxs.com",
+      "record_indices": [
+        2860
+      ],
+      "selected_source_ids": [
+        "c8b6fb9897db5529e8d770226d85b7c6f9c6e1f10f8b754dc06ddd7f271afc08"
+      ],
+      "first_head_observed_at": "2026-11-15T02:27:22.029754+00:00",
+      "first_head_classification": "connection_or_read_timeout",
+      "second_head_observed_at": "2026-11-15T04:03:04.817222+00:00",
+      "second_head_classification": "connection_or_read_timeout",
+      "get_started_at": "2026-11-15T05:55:22.737974+00:00",
+      "get_observed_at": "2026-11-15T05:55:26.379240+00:00",
+      "get_status": 200,
+      "get_category": "nonempty_html_scanned",
+      "get_failure": null,
+      "html_bytes": 26322,
+      "html_truncated": false,
+      "html_sha256": "0d5a9b3001b084f19a7d317ac20b1299a5dcb8d214a2d37d88df1329e6be0941",
+      "amsi": {
+        "phase": "scan",
+        "hresult": "0x00000000",
+        "amsi_result": 1,
+        "classification": "not_detected"
+      }
+    },
+    {
+      "host": "www.paper027.com",
+      "record_indices": [
+        827,
+        3054
+      ],
+      "selected_source_ids": [
+        "350b49ddbad98b9dbab6fd72722eafcb6827fee88de11e722247a06f6577e7e1"
+      ],
+      "first_head_observed_at": "2026-11-15T02:27:23.991320+00:00",
+      "first_head_classification": "connection_or_read_timeout",
+      "second_head_observed_at": "2026-11-15T04:03:08.119227+00:00",
+      "second_head_classification": "connection_or_read_timeout",
+      "get_started_at": "2026-11-15T05:55:38.108603+00:00",
+      "get_observed_at": "2026-11-15T05:55:41.806382+00:00",
+      "get_status": 200,
+      "get_category": "nonempty_html_scanned",
+      "get_failure": null,
+      "html_bytes": 32768,
+      "html_truncated": true,
+      "html_sha256": "4a9b93073ded9006caa26fb164e58305f98cfbd7cf054c9f1ffd83a550db0561",
+      "amsi": {
+        "phase": "scan",
+        "hresult": "0x00000000",
+        "amsi_result": 1,
+        "classification": "not_detected"
+      }
+    },
+    {
+      "host": "www.qishu99.cc",
+      "record_indices": [
+        4023,
+        4825
+      ],
+      "selected_source_ids": [],
+      "first_head_observed_at": "2026-11-15T02:27:26.946845+00:00",
+      "first_head_classification": "connection_or_read_timeout",
+      "second_head_observed_at": "2026-11-15T04:03:11.996097+00:00",
+      "second_head_classification": "connection_or_read_timeout",
+      "get_started_at": "2026-11-15T05:55:50.511610+00:00",
+      "get_observed_at": "2026-11-15T05:55:52.926139+00:00",
+      "get_status": 301,
+      "get_category": "redirect_not_followed",
+      "get_failure": "redirect_not_followed",
+      "html_bytes": null,
+      "html_truncated": null,
+      "html_sha256": null,
+      "amsi": null
+    },
+    {
+      "host": "www.shenyebook.com",
+      "record_indices": [
+        1028,
+        3073
+      ],
+      "selected_source_ids": [
+        "33bd6bf3f052ed33d603f662ec4037fffec66eb70cc8859d0279e1c4f594c0ba"
+      ],
+      "first_head_observed_at": "2026-11-15T02:27:30.648952+00:00",
+      "first_head_classification": "connection_or_read_timeout",
+      "second_head_observed_at": "2026-11-15T04:03:17.068212+00:00",
+      "second_head_classification": "connection_or_read_timeout",
+      "get_started_at": "2026-11-15T05:56:10.840576+00:00",
+      "get_observed_at": "2026-11-15T05:56:12.748855+00:00",
+      "get_status": 302,
+      "get_category": "redirect_not_followed",
+      "get_failure": "redirect_not_followed",
+      "html_bytes": null,
+      "html_truncated": null,
+      "html_sha256": null,
+      "amsi": null
+    },
+    {
+      "host": "www.sosadfun.org",
+      "record_indices": [
+        627,
+        2199
+      ],
+      "selected_source_ids": [
+        "872cc5219ae17bfbc413644baa65b23c21507d7faa4238f269c6ea3ff9dbb179"
+      ],
+      "first_head_observed_at": "2026-11-15T02:27:32.735988+00:00",
+      "first_head_classification": "connection_or_read_timeout",
+      "second_head_observed_at": "2026-11-15T04:03:19.568824+00:00",
+      "second_head_classification": "connection_or_read_timeout",
+      "get_started_at": "2026-11-15T05:56:21.077186+00:00",
+      "get_observed_at": "2026-11-15T05:56:22.028320+00:00",
+      "get_status": 302,
+      "get_category": "redirect_not_followed",
+      "get_failure": "redirect_not_followed",
+      "html_bytes": null,
+      "html_truncated": null,
+      "html_sha256": null,
+      "amsi": null
+    },
+    {
+      "host": "www.tianlai01.com",
+      "record_indices": [
+        348,
+        1818
+      ],
+      "selected_source_ids": [
+        "9ec24a518595e5f25c635e6914083dd57017a7f3ddd104e96fa890e70f4ea560"
+      ],
+      "first_head_observed_at": "2026-11-15T02:27:34.108923+00:00",
+      "first_head_classification": "connection_or_read_timeout",
+      "second_head_observed_at": "2026-11-15T04:03:21.784232+00:00",
+      "second_head_classification": "connection_or_read_timeout",
+      "get_started_at": "2026-11-15T05:56:32.894313+00:00",
+      "get_observed_at": "2026-11-15T05:56:33.864465+00:00",
+      "get_status": 302,
+      "get_category": "redirect_not_followed",
+      "get_failure": "redirect_not_followed",
+      "html_bytes": null,
+      "html_truncated": null,
+      "html_sha256": null,
+      "amsi": null
+    },
+    {
+      "host": "www.ting13.com",
+      "record_indices": [
+        2805
+      ],
+      "selected_source_ids": [],
+      "first_head_observed_at": "2026-11-15T02:27:34.211353+00:00",
+      "first_head_classification": "connection_or_read_timeout",
+      "second_head_observed_at": "2026-11-15T04:03:21.966386+00:00",
+      "second_head_classification": "connection_or_read_timeout",
+      "get_started_at": "2026-11-15T05:56:34.147970+00:00",
+      "get_observed_at": "2026-11-15T05:56:36.688353+00:00",
+      "get_status": 301,
+      "get_category": "redirect_not_followed",
+      "get_failure": "redirect_not_followed",
+      "html_bytes": null,
+      "html_truncated": null,
+      "html_sha256": null,
+      "amsi": null
+    },
+    {
+      "host": "www.wcxsw.org",
+      "record_indices": [
+        13
+      ],
+      "selected_source_ids": [
+        "050f9c7d1fbc1d1229769fb6380920ff450a52fab78d49e7945fc653e878498d"
+      ],
+      "first_head_observed_at": "2026-11-15T02:27:36.311534+00:00",
+      "first_head_classification": "connection_or_read_timeout",
+      "second_head_observed_at": "2026-11-15T04:03:25.574133+00:00",
+      "second_head_classification": "connection_or_read_timeout",
+      "get_started_at": "2026-11-15T05:56:51.009065+00:00",
+      "get_observed_at": "2026-11-15T05:56:52.275279+00:00",
+      "get_status": 403,
+      "get_category": "other_http_status",
+      "get_failure": "http_status",
+      "html_bytes": null,
+      "html_truncated": null,
+      "html_sha256": null,
+      "amsi": null
+    },
+    {
+      "host": "www.yuanshuku.com",
+      "record_indices": [
+        1513
+      ],
+      "selected_source_ids": [
+        "afecd33c06f72c803e1ba8d252ce5837afb959827c102043173edfef446cc498"
+      ],
+      "first_head_observed_at": "2026-11-15T02:27:45.482751+00:00",
+      "first_head_classification": "connection_or_read_timeout",
+      "second_head_observed_at": "2026-11-15T04:03:39.240258+00:00",
+      "second_head_classification": "connection_or_read_timeout",
+      "get_started_at": "2026-11-15T05:57:46.717198+00:00",
+      "get_observed_at": "2026-11-15T05:57:47.752450+00:00",
+      "get_status": 302,
+      "get_category": "redirect_not_followed",
+      "get_failure": "redirect_not_followed",
+      "html_bytes": null,
+      "html_truncated": null,
+      "html_sha256": null,
+      "amsi": null
+    },
+    {
+      "host": "yqzw5.net",
+      "record_indices": [
+        2739
+      ],
+      "selected_source_ids": [
+        "c1c7ae96d97cc3d5ed77e208def6c0a9f2a4f8f37c6b39e2816c236e410646b5"
+      ],
+      "first_head_observed_at": "2026-11-15T02:27:48.594633+00:00",
+      "first_head_classification": "connection_or_read_timeout",
+      "second_head_observed_at": "2026-11-15T04:03:44.013321+00:00",
+      "second_head_classification": "connection_or_read_timeout",
+      "get_started_at": "2026-11-15T05:58:04.189731+00:00",
+      "get_observed_at": "2026-11-15T05:58:05.350991+00:00",
+      "get_status": 302,
+      "get_category": "redirect_not_followed",
+      "get_failure": "redirect_not_followed",
+      "html_bytes": null,
+      "html_truncated": null,
+      "html_sha256": null,
+      "amsi": null
+    }
+  ],
+  "inputs": [
+    {
+      "file": "legado-host-audit-20261115.json",
+      "sha256": "dd8a118c91a1a13dd17a1dd1f32689b55fa3cc4363ec08884d832bbe379aa4b4"
+    },
+    {
+      "file": "legado-host-recheck-20261115.json",
+      "sha256": "fcb543ff2a41e7e4960d2a0112af9c311d8e55148b8716d8854c09360b1080af"
+    },
+    {
+      "file": "legado-import-inventory-20261115.json",
+      "sha256": "ad4e347888cad71812ee7da9477f027baf0bee5bceb1d4247fc69d6c4df8764c"
+    },
+    {
+      "file": "legado-amsi-pilot-20261115.json",
+      "sha256": "09b2cdc14e2032814fd7d6b4615a8682ad4bf989f380ea8d4a22a949a216615f"
+    },
+    {
+      "file": "legado-amsi-prior-html-20261115.json",
+      "sha256": "04dd4ee143e9de7fc6d16ab649fbe9796bae40f7c045bfdb7632e6b4ad5061c8"
+    },
+    {
+      "file": "legado-amsi-other-hosts-20261115.json",
+      "sha256": "25180e804c1df15165af8bb20ae58c5b4dd6b2e24f6a0a092d50281ca5e25750"
+    }
+  ]
+}

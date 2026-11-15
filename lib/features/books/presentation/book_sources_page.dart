@@ -16,6 +16,8 @@ import '../data/book_source_risk_store.dart';
 import '../data/book_store.dart';
 import '../data/books_repository.dart';
 import '../domain/book.dart';
+import '../domain/book_rule_clues.dart';
+import '../domain/book_site_audit_clues.dart';
 import 'book_links.dart';
 
 enum _SourceAction { catalog, file, link, feed }
@@ -39,7 +41,8 @@ final class BookSourcesPage extends StatefulWidget {
 
 final class _BookSourcesPageState extends State<BookSourcesPage> {
   List<BookSourceEntry> _entries = [];
-  bool _busy = false, _favorites = false;
+  bool _busy = false, _favorites = false, _dynamicRules = false;
+  bool _historicalAmsi = false;
   bool? _enabled;
   String _query = '';
   bool _selecting = false;
@@ -730,8 +733,9 @@ final class _BookSourcesPageState extends State<BookSourcesPage> {
       const Padding(
         padding: EdgeInsets.symmetric(horizontal: 16),
         child: Text(
-          '未开启监管且启用后台检测时，应用运行期间每 30 分钟抽查最多 20 个超过 7 天未查的已启用源；手动可检查筛选结果。'
-          '只查首页部分静态文字和跳转，不验证解析、网页脚本、木马或安全性。',
+          '启用后台检测时，每 30 分钟抽查最多 20 个 7 天未查的已启用源；监管开启时暂停。'
+          '只查首页部分静态文字和跳转，不验证解析、网页脚本、木马或安全性。'
+          '“动态求值”和 2026-11-15 的历史检出仅是复核线索，不代表恶意或安全。',
         ),
       ),
     ],
@@ -744,6 +748,9 @@ final class _BookSourcesPageState extends State<BookSourcesPage> {
             .where(
               (entry) =>
                   (!_favorites || entry.favorite) &&
+                  (!_dynamicRules || bookSourceHasDynamicCode(entry.source)) &&
+                  (!_historicalAmsi ||
+                      bookSourceHasHistoricalAmsiClue(entry.source)) &&
                   (_enabled == null || entry.enabled == _enabled) &&
                   '${entry.source.name} ${entry.group} ${entry.source.endpoint.host}'
                       .toLowerCase()
@@ -882,6 +889,16 @@ final class _BookSourcesPageState extends State<BookSourcesPage> {
                 selected: _enabled == value,
                 onSelected: (_) => setState(() => _enabled = value),
               ),
+            FilterChip(
+              label: const Text('动态求值'),
+              selected: _dynamicRules,
+              onSelected: (value) => setState(() => _dynamicRules = value),
+            ),
+            FilterChip(
+              label: const Text('历史检出'),
+              selected: _historicalAmsi,
+              onSelected: (value) => setState(() => _historicalAmsi = value),
+            ),
           ],
         ),
       ],
@@ -972,6 +989,8 @@ final class _BookSourcesPageState extends State<BookSourcesPage> {
           if (source.builtin) '内置',
           if (entry.fromCatalog) 'aoaostar/legado',
           if (source.legado != null) 'Legado',
+          if (bookSourceHasDynamicCode(source)) '规则含动态求值，待复核',
+          if (bookSourceHasHistoricalAmsiClue(source)) '2026-11-15 首页防护检出，待复核',
           if (entry.group.isNotEmpty) entry.group,
           source.endpoint.host,
           if (entry.health.isNotEmpty) '解析：${entry.health}',

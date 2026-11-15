@@ -8,6 +8,7 @@ import '../../../core/platform/background_audio_session.dart';
 import '../../../media/gateway/offline_server.dart';
 import '../../playback/domain/player_engine.dart';
 import '../data/books_repository.dart';
+import '../data/book_download_evidence.dart';
 import '../domain/book.dart';
 
 /// Owns audiobook playback for the application lifetime, including page exits.
@@ -26,6 +27,7 @@ final class AudiobookController extends ChangeNotifier
   BookChapter? chapter;
   PlayerEngine? _engine;
   OfflineSession? _session;
+  BookDownloadEvidence? _evidence;
   CancellationToken? _token;
   StreamSubscription<PlaybackSnapshot>? _states;
   StreamSubscription<String>? _errors;
@@ -65,6 +67,7 @@ final class AudiobookController extends ChangeNotifier
       save();
       _session?.close();
       _session = null;
+      _evidence = null;
       _token?.cancel();
       _pending = null;
       book = work;
@@ -118,6 +121,7 @@ final class AudiobookController extends ChangeNotifier
         throw const RequestCancelled();
       }
       books.requireBook(work, next);
+      books.requireDownloadEvidence(_evidence);
     }
 
     try {
@@ -125,13 +129,12 @@ final class AudiobookController extends ChangeNotifier
       await _engine?.stop();
       _session?.close();
       _session = null;
+      _evidence = null;
       authorize();
       final old = await books.store.entry(work);
-      if (!await books.audioFiles.contains(work, next)) {
-        await books.download(work, next, token);
-      }
-      authorize();
-      _session = await books.audioFiles.open(work, next);
+      final openedAudio = await books.openOfflineAudio(work, next, token);
+      _session = openedAudio.session;
+      _evidence = openedAudio.evidence;
       authorize();
       await beforePlay();
       authorize();
@@ -253,6 +256,7 @@ final class AudiobookController extends ChangeNotifier
     final currentChapter = chapter!;
     final engine = _engine;
     books.requireBook(work, currentChapter);
+    books.requireDownloadEvidence(_evidence);
     if (!playing) await beforePlay();
     bool stillAllowed() =>
         active &&
@@ -263,6 +267,7 @@ final class AudiobookController extends ChangeNotifier
         identical(_engine, engine) &&
         books.kindAllowed(BookKind.audio) &&
         books.bookAllowed(work) &&
+        (_evidence == null || books.downloadGuard.allowed(_evidence!)) &&
         books.policy.textAllowed(currentChapter.title);
 
     if (!stillAllowed() || engine == null) return;
@@ -309,11 +314,14 @@ final class AudiobookController extends ChangeNotifier
     if (book == null || chapter == null) return;
     if (books.kindAllowed(BookKind.audio) &&
         books.bookAllowed(book!) &&
+        (_evidence == null || books.downloadGuard.allowed(_evidence!)) &&
         books.policy.textAllowed(chapter!.title)) {
       return;
     }
     _token?.cancel();
-    unawaited(pause());
+    _session?.close();
+    _session = null;
+    unawaited(_engine?.stop());
     error = '当前内容策略限制播放该章节';
     notifyListeners();
   }
@@ -327,6 +335,7 @@ final class AudiobookController extends ChangeNotifier
     await _engine?.stop();
     _session?.close();
     _session = null;
+    _evidence = null;
     _sleepTimer?.cancel();
     sleepUntil = null;
     book = null;

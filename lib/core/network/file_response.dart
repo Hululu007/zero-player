@@ -1,15 +1,21 @@
+import 'dart:async';
 import 'dart:io';
+
+import 'cancellation_token.dart';
 
 Future<void> serveLocalFile(
   HttpRequest request,
   File file, {
   String? contentType,
+  CancellationToken? cancellation,
 }) async {
+  cancellation?.check();
   if (!await file.exists()) {
     request.response.statusCode = 404;
     return;
   }
   final size = await file.length();
+  cancellation?.check();
   var start = 0;
   var end = size - 1;
   final range = request.headers.value('range');
@@ -40,8 +46,51 @@ Future<void> serveLocalFile(
   }
   request.response.contentLength = end - start + 1;
   if (request.method != 'HEAD') {
-    await request.response.addStream(file.openRead(start, end + 1));
+    final stream = file.openRead(start, end + 1);
+    await request.response.addStream(
+      cancellation == null ? stream : _untilCancelled(stream, cancellation),
+    );
   }
+}
+
+Stream<List<int>> _untilCancelled(
+  Stream<List<int>> source,
+  CancellationToken cancellation,
+) {
+  late StreamController<List<int>> controller;
+  StreamSubscription<List<int>>? subscription;
+  void Function()? unlink;
+  void finish() {
+    if (!controller.isClosed) unawaited(controller.close());
+  }
+
+  controller = StreamController<List<int>>(
+    sync: true,
+    onListen: () {
+      subscription = source.listen(
+        (bytes) {
+          if (!cancellation.isCancelled && !controller.isClosed) {
+            controller.add(bytes);
+          }
+        },
+        onError: (Object error, StackTrace stack) {
+          if (!controller.isClosed) controller.addError(error, stack);
+        },
+        onDone: finish,
+      );
+      unlink = cancellation.listen(() {
+        unawaited(subscription?.cancel());
+        finish();
+      });
+    },
+    onPause: () => subscription?.pause(),
+    onResume: () => subscription?.resume(),
+    onCancel: () async {
+      unlink?.call();
+      await subscription?.cancel();
+    },
+  );
+  return controller.stream;
 }
 
 int _boundedOffset(String digits, int limit) {

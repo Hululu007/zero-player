@@ -1,0 +1,313 @@
+{
+  "method": "Anonymous HTTPS GET /, all DNS answers must be public and TCP uses a validated IP; TLS hostname checked; no redirects, credentials, scripts or subresources.",
+  "scope": "All previously inventoried bundled Legado hosts, with previously sampled HTML hosts first. A fresh bounded root-page prefix and bounded inline script text are scanned; linked scripts and downloaded files are not fetched. No whole-site malware conclusion.",
+  "privacy": "Page bodies are held in memory only and are not saved by this tool; the installed AMSI antimalware provider may use cloud protection or sample submission under its existing settings. The tool does not submit bookcase data or credentials.",
+  "archive_sha256": "012a0e0d6e6adc8d303c32b578510e14b562088b3e965cb01a1a647b5e7e034d",
+  "prior_audit_sha256": "dd8a118c91a1a13dd17a1dd1f32689b55fa3cc4363ec08884d832bbe379aa4b4",
+  "import_inventory_sha256": "ad4e347888cad71812ee7da9477f027baf0bee5bceb1d4247fc69d6c4df8764c",
+  "total_hosts": 2010,
+  "prior_html_hosts": 416,
+  "offset": 0,
+  "requested_hosts": 6,
+  "workers": 2,
+  "minimum_request_start_interval_seconds": 0.5,
+  "network_deadline_seconds": 6.0,
+  "amsi_worker_deadline_seconds": 15,
+  "max_html_bytes": 32768,
+  "max_inline_scripts_per_page": 6,
+  "max_inline_script_bytes": 8192,
+  "inline_script_limitations": "ASCII-compatible HTML parser over the bounded prefix; no external script fetch. Empty tags are counted but not scanned, later scripts and excess bytes are omitted; partial tags/scripts and encodings such as UTF-16 may not be recognized.",
+  "started_at": "2026-11-15T05:43:37.478933+00:00",
+  "defender_status": {
+    "AMRunningMode": "Normal",
+    "AntivirusEnabled": true,
+    "AntivirusSignatureVersion": "1.463.304.0",
+    "AntivirusSignatureLastUpdated": "2026-11-14T18:57:15.0000000Z",
+    "AMProductVersion": "4.18.26100.4"
+  },
+  "controls": {
+    "observed_at": "2026-11-15T05:43:38.359347+00:00",
+    "negative": {
+      "phase": "scan",
+      "hresult": "0x00000000",
+      "amsi_result": 1,
+      "classification": "not_detected"
+    },
+    "eicar": {
+      "phase": "scan",
+      "hresult": "0x00000000",
+      "amsi_result": 32768,
+      "classification": "detected"
+    },
+    "html_wrapped_eicar": {
+      "phase": "scan",
+      "hresult": "0x00000000",
+      "amsi_result": 1,
+      "classification": "not_detected"
+    },
+    "inline_script_with_eicar": {
+      "phase": "scan",
+      "hresult": "0x00000000",
+      "amsi_result": 1,
+      "classification": "not_detected"
+    },
+    "passed": true
+  },
+  "results": [
+    {
+      "host": "3g.sbkk8.com",
+      "record_indices": [
+        3964
+      ],
+      "selected_source_ids": [],
+      "started_at": "2026-11-15T05:43:38.359522+00:00",
+      "failure": "timeout",
+      "sample_observed_at": "2026-11-15T05:43:44.361635+00:00"
+    },
+    {
+      "host": "5165.org",
+      "record_indices": [
+        248,
+        1808
+      ],
+      "selected_source_ids": [
+        "2293975b51fe3279548b0820cfff6fb83a1d694d3755f9edb8cf01bdc6937c7e"
+      ],
+      "started_at": "2026-11-15T05:43:38.860026+00:00",
+      "failure": "timeout",
+      "sample_observed_at": "2026-11-15T05:43:45.920664+00:00"
+    },
+    {
+      "host": "51xs.site",
+      "record_indices": [
+        323,
+        1948
+      ],
+      "selected_source_ids": [],
+      "started_at": "2026-11-15T05:43:44.361674+00:00",
+      "http_status": 200,
+      "content_type": "text/html",
+      "truncated": false,
+      "sample_bytes": 7733,
+      "sample_sha256": "b5a4948f483117afc0be28463972a43a6c2559e121e9759cef97033741ba232d",
+      "sample_observed_at": "2026-11-15T05:43:46.248126+00:00",
+      "amsi": {
+        "phase": "scan",
+        "hresult": "0x00000000",
+        "amsi_result": 1,
+        "classification": "not_detected"
+      },
+      "inline_scripts": {
+        "script_tags_observed": 0,
+        "nonempty_inline_scripts_observed": 0,
+        "inline_scripts_selected": 0,
+        "inline_scripts_omitted": 0,
+        "samples": []
+      }
+    },
+    {
+      "host": "7778877.com",
+      "record_indices": [
+        330
+      ],
+      "selected_source_ids": [],
+      "started_at": "2026-11-15T05:43:45.920715+00:00",
+      "http_status": 200,
+      "content_type": "text/html",
+      "truncated": false,
+      "sample_bytes": 296,
+      "sample_sha256": "18f619b4575da1ae19051e1ab430e8d94f0c6661282e20abe10a7ca7fcd9f553",
+      "sample_observed_at": "2026-11-15T05:43:46.792596+00:00",
+      "amsi": {
+        "phase": "scan",
+        "hresult": "0x00000000",
+        "amsi_result": 1,
+        "classification": "not_detected"
+      },
+      "inline_scripts": {
+        "script_tags_observed": 2,
+        "nonempty_inline_scripts_observed": 0,
+        "inline_scripts_selected": 0,
+        "inline_scripts_omitted": 0,
+        "samples": []
+      }
+    },
+    {
+      "host": "afdian.com",
+      "record_indices": [
+        4087,
+        4088
+      ],
+      "selected_source_ids": [
+        "468e3a4fddc7ed0a3242f957f3d6a3f0e3e505a528db5170f79f613fcd742d14",
+        "861c5dae954532cc4d69ca05daa8549a781e58764b6971bc607e238089a53491"
+      ],
+      "started_at": "2026-11-15T05:43:46.421144+00:00",
+      "http_status": 200,
+      "content_type": "text/html",
+      "truncated": false,
+      "sample_bytes": 18671,
+      "sample_sha256": "70d08c604269189792ff7bcd9e443ef283c6939284d03ba90aa07486ff611777",
+      "sample_observed_at": "2026-11-15T05:43:46.742784+00:00",
+      "amsi": {
+        "phase": "scan",
+        "hresult": "0x00000000",
+        "amsi_result": 1,
+        "classification": "not_detected"
+      },
+      "inline_scripts": {
+        "script_tags_observed": 10,
+        "nonempty_inline_scripts_observed": 6,
+        "inline_scripts_selected": 6,
+        "inline_scripts_omitted": 0,
+        "samples": [
+          {
+            "ordinal": 1,
+            "has_src_attribute": false,
+            "bytes_seen": 815,
+            "sample_bytes": 815,
+            "sample_sha256": "90c59c466afc4e8f5da8879aac78ea12ab3f53b8137cef97993664f4b1339ce6",
+            "truncated": false,
+            "closing_tag_observed": true,
+            "amsi": {
+              "phase": "scan",
+              "hresult": "0x00000000",
+              "amsi_result": 1,
+              "classification": "not_detected"
+            }
+          },
+          {
+            "ordinal": 2,
+            "has_src_attribute": false,
+            "bytes_seen": 1728,
+            "sample_bytes": 1728,
+            "sample_sha256": "f93c72118493aac8e7c9726dcc88e0668d3140009c65fc59b932650a9b82693e",
+            "truncated": false,
+            "closing_tag_observed": true,
+            "amsi": {
+              "phase": "scan",
+              "hresult": "0x00000000",
+              "amsi_result": 1,
+              "classification": "not_detected"
+            }
+          },
+          {
+            "ordinal": 3,
+            "has_src_attribute": false,
+            "bytes_seen": 2613,
+            "sample_bytes": 2613,
+            "sample_sha256": "4964e557335958b2e215a58a8094257cab9d5b0d3fb877c2fe7cdfce2ff9b335",
+            "truncated": false,
+            "closing_tag_observed": true,
+            "amsi": {
+              "phase": "scan",
+              "hresult": "0x00000000",
+              "amsi_result": 1,
+              "classification": "not_detected"
+            }
+          },
+          {
+            "ordinal": 4,
+            "has_src_attribute": false,
+            "bytes_seen": 2366,
+            "sample_bytes": 2366,
+            "sample_sha256": "b48fd0bd2d16435db866191ce06c4bab062f3aae270d64751f82dde4a4938de8",
+            "truncated": false,
+            "closing_tag_observed": true,
+            "amsi": {
+              "phase": "scan",
+              "hresult": "0x00000000",
+              "amsi_result": 1,
+              "classification": "not_detected"
+            }
+          },
+          {
+            "ordinal": 5,
+            "has_src_attribute": false,
+            "bytes_seen": 615,
+            "sample_bytes": 615,
+            "sample_sha256": "c7db7ab0f02c04709abdf6983ed932d855cd9e5855d6a03d15b1cd9d437a729c",
+            "truncated": false,
+            "closing_tag_observed": true,
+            "amsi": {
+              "phase": "scan",
+              "hresult": "0x00000000",
+              "amsi_result": 1,
+              "classification": "not_detected"
+            }
+          },
+          {
+            "ordinal": 10,
+            "has_src_attribute": false,
+            "bytes_seen": 137,
+            "sample_bytes": 137,
+            "sample_sha256": "6ace34ef06971b95e5845ba13f165ffae60fa8fa4cda141bcfc47397731fa54f",
+            "truncated": false,
+            "closing_tag_observed": true,
+            "amsi": {
+              "phase": "scan",
+              "hresult": "0x00000000",
+              "amsi_result": 1,
+              "classification": "not_detected"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "host": "androidv2.hongshu.com",
+      "record_indices": [
+        4492,
+        4493
+      ],
+      "selected_source_ids": [
+        "b5da9fc8927ac021739299be55c657cb594e1dd7f7d90f6d7e7f81fc5473fb6a",
+        "d696980e92c6d3d4134c52e21a1225c47c84bc1784a55b2fdf160a06164f459e"
+      ],
+      "started_at": "2026-11-15T05:43:46.946496+00:00",
+      "http_status": 200,
+      "content_type": "text/html",
+      "truncated": true,
+      "sample_bytes": 32768,
+      "sample_sha256": "995279b31a437c72bca4dc9613d3ece29ede1ab9fe04005e9e12f94a072d7e93",
+      "sample_observed_at": "2026-11-15T05:43:47.893272+00:00",
+      "amsi": {
+        "phase": "scan",
+        "hresult": "0x00000000",
+        "amsi_result": 1,
+        "classification": "not_detected"
+      },
+      "inline_scripts": {
+        "script_tags_observed": 4,
+        "nonempty_inline_scripts_observed": 1,
+        "inline_scripts_selected": 1,
+        "inline_scripts_omitted": 0,
+        "samples": [
+          {
+            "ordinal": 4,
+            "has_src_attribute": false,
+            "bytes_seen": 17224,
+            "sample_bytes": 8192,
+            "sample_sha256": "0e7f4aeb94b9668d2364a1421dd5fc8e25fab454c0bc5a7236332e2a2f37d653",
+            "truncated": true,
+            "closing_tag_observed": false,
+            "amsi": {
+              "phase": "scan",
+              "hresult": "0x00000000",
+              "amsi_result": 1,
+              "classification": "not_detected"
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "completed_at": "2026-11-15T05:43:48.061284+00:00",
+  "outcomes": {
+    "timeout": 2,
+    "not_detected": 4
+  },
+  "inline_script_outcomes": {
+    "not_detected": 7
+  }
+}

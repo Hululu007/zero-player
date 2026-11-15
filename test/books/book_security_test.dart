@@ -200,7 +200,7 @@ void _legadoFormTest() {
 
 void _fallbackTest() {
   test(
-    'downloads fall back only to a unique matching chapter and supervision blocks custom offline text',
+    'unknown orphan cache is not relabelled as a verified fallback',
     () async {
       TestWidgetsFlutterBinding.ensureInitialized();
       final root = await Directory.systemTemp.createTemp('book-fallback-');
@@ -244,15 +244,19 @@ void _fallbackTest() {
       );
       await repository.store.saveText(alternate, matching, '离线样本文字');
       expect(repository.matchingChapter([matching, ambiguous], part), isNull);
-      await repository.download(
-        original,
-        part,
-        CancellationToken(),
-        alternatives: [
-          (book: alternate, chapters: [matching]),
-        ],
+      await expectLater(
+        repository.download(
+          original,
+          part,
+          CancellationToken(),
+          alternatives: [
+            (book: alternate, chapters: [matching]),
+          ],
+        ),
+        throwsA(isA<ContentBlocked>()),
       );
-      expect(await repository.store.text(original, part), '离线样本文字');
+      expect(await repository.store.text(original, part), isNull);
+      expect(await repository.store.text(alternate, matching), '离线样本文字');
       final credentials = await services.supervision.prepareCredentials(
         'local-test-password',
       );

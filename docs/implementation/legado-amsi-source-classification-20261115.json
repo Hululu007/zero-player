@@ -1,0 +1,1161 @@
+{
+  "generated_at": "2026-11-15T13:54:54.854181Z",
+  "archive_sha256": "012a0e0d6e6adc8d303c32b578510e14b562088b3e965cb01a1a647b5e7e034d",
+  "audit_script_sha256": "f50b96f361eb85bcce8e75aac007dae6e00a9ffbea54a024c689320e80be5924",
+  "amsi_summary_sha256": "b8a93e7b8fb78ca3bcf57f5748a7b50f67e32e14c8298776726f7779f81ecf67",
+  "amsi_clusters_sha256": "0aaff7d86529327f67ea09f741d62a00a0cf47a03a90175b982619beeed9de3e",
+  "scope": "Only static current application importer, fixed domain/rule policy and adult metadata; no rule execution, web request, stored user settings, user blacklist or risk database inspected.",
+  "limitations": "Eligibility assumes supervision disabled, valid supervision state, risk loaded, no user-specific blocks or dynamic assessments, and normal-mode settings as labeled. Imported sources start disabled. It does not establish actual enabled state, parser usability, safety or a malware verdict.",
+  "source_digest_convention": "SHA-256 of UTF-8 source bytes with CRLF normalized to LF, matching tracked source line endings.",
+  "current_policy_code_sha256": {
+    "lib/features/books/data/book_import.dart": "5c27a8cac7806ca8854672f89fcc90d0d98e5ab25b92ec4fc13f094bfe93a629",
+    "lib/features/books/data/legado/legado_import.dart": "3d4f0f1fb848c26bf65a0eec25373bc993403576634c60524dc17c5a6e217b69",
+    "lib/features/books/data/books_repository.dart": "e63a264acbe03b8bfc411de7e0ba7166c57c0bcc1d6870edaa9ad60ec905289e",
+    "lib/features/books/data/book_comic_download.dart": "db84655835da2778c206d70b34babdd584e026ef41f2dccf386d92369b84ec28",
+    "lib/features/books/data/book_store.dart": "ae65ae01859fea1bf8865a13b07ea3ef823a2607c63f06e4a56ca88fd7e314e1",
+    "lib/features/books/domain/book.dart": "04058916b753e9b1bb320bb4d500f8f595c46dd6cb9d9320894523318c7604c2",
+    "lib/features/books/domain/book_source_risk.dart": "4e886dcc740c89406882da70dbc4b7bcca96042b6f12b3e101ee18acd8c0ea3b",
+    "lib/features/books/domain/known_untrusted_book_rules.dart": "8caf6f3b50868d858a0bbb461c0f680c70dc60c8673c5a8c24639676f28a8c89",
+    "lib/features/books/domain/legado_source.dart": "5b907923968332090760ecc9f4d6f7e652aa06501ac7981b5f477ef7c0d954d1",
+    "lib/features/books/domain/legado_source_fixes.dart": "5861cc4c175989a116074165f9aa0500cf56e5e82ebe8399833dc84470330f25",
+    "lib/features/books/domain/kuwo_legacy_source_fix.dart": "dfdcad7cced36e68c4f3ac8db7a3697a6b71c84f43787acb0e8ba54a1d55f7e2",
+    "lib/features/books/domain/yuque_legacy_source_fix.dart": "bc1f1d63d64010d8b281740a168c9ccf7744ba51ed29d44dae97d44668111f88",
+    "lib/features/books/domain/zhongyi_legacy_source_fix.dart": "86922a9b696b173b00efd4831a9acfc126b10bfd918b94e81222c9055716e164",
+    "lib/features/books/domain/jingzhi_legacy_source_fix.dart": "e6035921a1ac0c5c29835c0c70e8acc340af1363cb613b312fdc4227e71aa925",
+    "lib/features/books/domain/shubang_legacy_source_fix.dart": "1e9e7f8a3db66c470cb00ceba46ebedb0c4b24e3a29a70fbe5174e73afe26f5b",
+    "lib/features/books/domain/yingyu_legacy_source_fix.dart": "a979ed63e5b91a6ff5d992a959e4fc5bcffdf23141ff5586e77da0017c82bb8a",
+    "lib/features/books/domain/book_site_audit_clues.dart": "1a68d394987d2db11e5798109763145faad62516b0f14e869875137faee462cd",
+    "lib/features/supervision/domain/content_classification.dart": "0f22950b5a1e5696fa1e60bb353c53a24f9b4546314290abab0081ed08e6146a",
+    "lib/features/supervision/domain/adult_source_evidence.dart": "7dd20620b923e14687f8a7c58aafa923ece02172cd38aa260ac9bfe107795206",
+    "lib/features/supervision/application/content_policy.dart": "5c2c7d8e198d6973da44da47abdc2ec610205f29600b28d5de190b00c62c7807"
+  },
+  "old_selected_ids": 11,
+  "current_import_total_ids": 2139,
+  "sources": [
+    {
+      "id": "09ef9895c10c575590ed8152e239031f32890758849aaecdca8b03a74538d76d",
+      "name": "文趣阁",
+      "group": "API",
+      "kind": "text",
+      "endpoint_host": "m.nshkedu.com",
+      "media_hosts": [],
+      "current_selected_record_index": 28,
+      "fixed_host_quarantine": false,
+      "fixed_source_policy_quarantine": false,
+      "fixed_current_rule_quarantine": false,
+      "known_unsafe_current_rule": false,
+      "known_unavailable_current_rule": false,
+      "orphan_history_id_quarantine": false,
+      "adult_source_classified": false,
+      "adult_by_host": false,
+      "adult_by_bundled_id": false,
+      "adult_evidence_merged": false,
+      "adult_by_source_labels": false,
+      "adult_filter_applies_from_policy": false,
+      "retired_news_host": false,
+      "static_normal_mode_when_adult_filter_on": true,
+      "static_normal_mode_when_adult_filter_off": true,
+      "new_import_enabled_by_default": false,
+      "supervision_blocks_nonbuiltin_import": true,
+      "rule": {
+        "format": "html",
+        "legado_present": true,
+        "search_present": true,
+        "explore_enabled": true,
+        "explore_category_count": 34,
+        "library_present": false,
+        "normalized_rule_keys": [
+          "chapterTitle",
+          "chapterUrl",
+          "chapters",
+          "content",
+          "exploreAuthor",
+          "exploreCategory",
+          "exploreCover",
+          "exploreDescription",
+          "exploreLatest",
+          "exploreLink",
+          "exploreList",
+          "exploreTitle",
+          "exploreWordCount",
+          "infoAuthor",
+          "infoCategory",
+          "infoCover",
+          "infoDescription",
+          "infoInit",
+          "infoLatest",
+          "infoTitle",
+          "infoWordCount",
+          "searchAuthor",
+          "searchCategory",
+          "searchCover",
+          "searchDescription",
+          "searchLatest",
+          "searchLink",
+          "searchList",
+          "searchTitle",
+          "searchWordCount",
+          "toc"
+        ],
+        "normalized_legado_sha256": "aa10ff503740c6ba3d6fa7cb636c3be76ea5d7415b9736bf60ef051cc7644cf4"
+      }
+    },
+    {
+      "id": "1de6d8be1459bb1df6991b86d63e4dd782ff8bb1806fd6c6f09a5e569bc722cc",
+      "name": "老王小说",
+      "group": "校验可用",
+      "kind": "text",
+      "endpoint_host": "lwkk.xyz",
+      "media_hosts": [],
+      "current_selected_record_index": 1222,
+      "fixed_host_quarantine": false,
+      "fixed_source_policy_quarantine": false,
+      "fixed_current_rule_quarantine": false,
+      "known_unsafe_current_rule": false,
+      "known_unavailable_current_rule": false,
+      "orphan_history_id_quarantine": false,
+      "adult_source_classified": true,
+      "adult_by_host": false,
+      "adult_by_bundled_id": true,
+      "adult_evidence_merged": true,
+      "adult_by_source_labels": false,
+      "adult_filter_applies_from_policy": true,
+      "retired_news_host": false,
+      "static_normal_mode_when_adult_filter_on": false,
+      "static_normal_mode_when_adult_filter_off": true,
+      "new_import_enabled_by_default": false,
+      "supervision_blocks_nonbuiltin_import": true,
+      "rule": {
+        "format": "html",
+        "legado_present": true,
+        "search_present": true,
+        "explore_enabled": true,
+        "explore_category_count": 6,
+        "library_present": false,
+        "normalized_rule_keys": [
+          "chapterTitle",
+          "chapterUrl",
+          "chapters",
+          "content",
+          "searchDescription",
+          "searchLink",
+          "searchList",
+          "searchTitle"
+        ],
+        "normalized_legado_sha256": "2e422217d607459e2c7783616c9dd02de61bc244907fcdd4d933ab66919072a4"
+      }
+    },
+    {
+      "id": "1f08fd713aac15e302299bffa11eaed3964cb16a0d6c6024cbaf0cb2e2539c9f",
+      "name": "下书文学",
+      "group": "API",
+      "kind": "text",
+      "endpoint_host": "get.xiashuzhan.com",
+      "media_hosts": [],
+      "current_selected_record_index": 36,
+      "fixed_host_quarantine": false,
+      "fixed_source_policy_quarantine": false,
+      "fixed_current_rule_quarantine": false,
+      "known_unsafe_current_rule": false,
+      "known_unavailable_current_rule": false,
+      "orphan_history_id_quarantine": false,
+      "adult_source_classified": false,
+      "adult_by_host": false,
+      "adult_by_bundled_id": false,
+      "adult_evidence_merged": false,
+      "adult_by_source_labels": false,
+      "adult_filter_applies_from_policy": false,
+      "retired_news_host": false,
+      "static_normal_mode_when_adult_filter_on": true,
+      "static_normal_mode_when_adult_filter_off": true,
+      "new_import_enabled_by_default": false,
+      "supervision_blocks_nonbuiltin_import": true,
+      "rule": {
+        "format": "html",
+        "legado_present": true,
+        "search_present": true,
+        "explore_enabled": true,
+        "explore_category_count": 19,
+        "library_present": false,
+        "normalized_rule_keys": [
+          "chapterTitle",
+          "chapterUrl",
+          "chapters",
+          "content",
+          "exploreAuthor",
+          "exploreCategory",
+          "exploreCover",
+          "exploreDescription",
+          "exploreLatest",
+          "exploreLink",
+          "exploreList",
+          "exploreTitle",
+          "infoAuthor",
+          "infoCategory",
+          "infoCover",
+          "infoDescription",
+          "infoInit",
+          "infoLatest",
+          "infoTitle",
+          "searchAuthor",
+          "searchCategory",
+          "searchCover",
+          "searchDescription",
+          "searchLatest",
+          "searchLink",
+          "searchList",
+          "searchTitle",
+          "toc"
+        ],
+        "normalized_legado_sha256": "4350314d60ead9cc0a54af05f71ef126fe09687635c09ea5384f07801971bf2d"
+      }
+    },
+    {
+      "id": "47e709728d21b76a1156fd1a080dd45d8dc82c1a95f8e66359533ac4d336847e",
+      "name": "灵梦小说（修复：正文不全）",
+      "group": "",
+      "kind": "text",
+      "endpoint_host": "www.lengmen.org",
+      "media_hosts": [],
+      "current_selected_record_index": 1921,
+      "fixed_host_quarantine": false,
+      "fixed_source_policy_quarantine": false,
+      "fixed_current_rule_quarantine": false,
+      "known_unsafe_current_rule": false,
+      "known_unavailable_current_rule": false,
+      "orphan_history_id_quarantine": false,
+      "adult_source_classified": false,
+      "adult_by_host": false,
+      "adult_by_bundled_id": false,
+      "adult_evidence_merged": false,
+      "adult_by_source_labels": false,
+      "adult_filter_applies_from_policy": false,
+      "retired_news_host": false,
+      "static_normal_mode_when_adult_filter_on": true,
+      "static_normal_mode_when_adult_filter_off": true,
+      "new_import_enabled_by_default": false,
+      "supervision_blocks_nonbuiltin_import": true,
+      "rule": {
+        "format": "html",
+        "legado_present": true,
+        "search_present": true,
+        "explore_enabled": true,
+        "explore_category_count": 0,
+        "library_present": false,
+        "normalized_rule_keys": [
+          "chapterTitle",
+          "chapterUrl",
+          "chapters",
+          "content",
+          "nextToc",
+          "searchAuthor",
+          "searchCategory",
+          "searchLink",
+          "searchList",
+          "searchTitle",
+          "toc"
+        ],
+        "normalized_legado_sha256": "4700134546e88318b2dea002f72ca33ee1b99fd745a89c5771160c8af41fde6f"
+      }
+    },
+    {
+      "id": "49288d9a4a46a7b884896dab3a61500fb815269d48f710dbd640dfed9848bf1b",
+      "name": "🔖书枫迟诗",
+      "group": "校验可用",
+      "kind": "text",
+      "endpoint_host": "s.fjwhcbsh.com",
+      "media_hosts": [],
+      "current_selected_record_index": 1439,
+      "fixed_host_quarantine": false,
+      "fixed_source_policy_quarantine": false,
+      "fixed_current_rule_quarantine": false,
+      "known_unsafe_current_rule": false,
+      "known_unavailable_current_rule": false,
+      "orphan_history_id_quarantine": false,
+      "adult_source_classified": false,
+      "adult_by_host": false,
+      "adult_by_bundled_id": false,
+      "adult_evidence_merged": false,
+      "adult_by_source_labels": false,
+      "adult_filter_applies_from_policy": false,
+      "retired_news_host": false,
+      "static_normal_mode_when_adult_filter_on": true,
+      "static_normal_mode_when_adult_filter_off": true,
+      "new_import_enabled_by_default": false,
+      "supervision_blocks_nonbuiltin_import": true,
+      "rule": {
+        "format": "html",
+        "legado_present": true,
+        "search_present": true,
+        "explore_enabled": true,
+        "explore_category_count": 0,
+        "library_present": false,
+        "normalized_rule_keys": [
+          "chapterTitle",
+          "chapterUrl",
+          "chapters",
+          "content",
+          "infoAuthor",
+          "infoCategory",
+          "infoCover",
+          "infoDescription",
+          "infoInit",
+          "infoLatest",
+          "infoTitle",
+          "infoWordCount",
+          "replaceContent",
+          "searchAuthor",
+          "searchCategory",
+          "searchCover",
+          "searchDescription",
+          "searchLatest",
+          "searchLink",
+          "searchList",
+          "searchTitle",
+          "toc"
+        ],
+        "normalized_legado_sha256": "33dd78cc3e42de98bdb67bc1185826719807b35faf7e9abb0651029837ed1578"
+      }
+    },
+    {
+      "id": "5395fcb9dde14042bb1d7f37a878fe7400d5e87d0f96178b0e48561e386879e2",
+      "name": "笔趣小说",
+      "group": "笔趣阁0905",
+      "kind": "text",
+      "endpoint_host": "wap.18biquge.com",
+      "media_hosts": [],
+      "current_selected_record_index": 2098,
+      "fixed_host_quarantine": false,
+      "fixed_source_policy_quarantine": false,
+      "fixed_current_rule_quarantine": false,
+      "known_unsafe_current_rule": false,
+      "known_unavailable_current_rule": false,
+      "orphan_history_id_quarantine": false,
+      "adult_source_classified": false,
+      "adult_by_host": false,
+      "adult_by_bundled_id": false,
+      "adult_evidence_merged": false,
+      "adult_by_source_labels": false,
+      "adult_filter_applies_from_policy": false,
+      "retired_news_host": false,
+      "static_normal_mode_when_adult_filter_on": true,
+      "static_normal_mode_when_adult_filter_off": true,
+      "new_import_enabled_by_default": false,
+      "supervision_blocks_nonbuiltin_import": true,
+      "rule": {
+        "format": "html",
+        "legado_present": true,
+        "search_present": true,
+        "explore_enabled": true,
+        "explore_category_count": 9,
+        "library_present": false,
+        "normalized_rule_keys": [
+          "chapterTitle",
+          "chapterUrl",
+          "chapters",
+          "content",
+          "exploreAuthor",
+          "exploreCategory",
+          "exploreCover",
+          "exploreDescription",
+          "exploreLink",
+          "exploreList",
+          "exploreTitle",
+          "infoAuthor",
+          "infoCategory",
+          "infoCover",
+          "infoDescription",
+          "infoInit",
+          "infoLatest",
+          "infoTitle",
+          "nextContent",
+          "nextToc",
+          "searchAuthor",
+          "searchCategory",
+          "searchLink",
+          "searchList",
+          "searchTitle"
+        ],
+        "normalized_legado_sha256": "a4f9aa72d8a095ff032519c71e3f5b2b5d865a889a9fe1a18712d6fca49cc1a1"
+      }
+    },
+    {
+      "id": "5c5cc84bbd5019fd7fc40a5effcdf9adfddca60a2f4f6885b1eb034ad4da0a93",
+      "name": "灵梦小说（正文不全求修复）",
+      "group": "校验可用",
+      "kind": "text",
+      "endpoint_host": "www.lengmen.org",
+      "media_hosts": [],
+      "current_selected_record_index": 450,
+      "fixed_host_quarantine": false,
+      "fixed_source_policy_quarantine": false,
+      "fixed_current_rule_quarantine": false,
+      "known_unsafe_current_rule": false,
+      "known_unavailable_current_rule": false,
+      "orphan_history_id_quarantine": false,
+      "adult_source_classified": false,
+      "adult_by_host": false,
+      "adult_by_bundled_id": false,
+      "adult_evidence_merged": false,
+      "adult_by_source_labels": false,
+      "adult_filter_applies_from_policy": false,
+      "retired_news_host": false,
+      "static_normal_mode_when_adult_filter_on": true,
+      "static_normal_mode_when_adult_filter_off": true,
+      "new_import_enabled_by_default": false,
+      "supervision_blocks_nonbuiltin_import": true,
+      "rule": {
+        "format": "html",
+        "legado_present": true,
+        "search_present": true,
+        "explore_enabled": true,
+        "explore_category_count": 0,
+        "library_present": false,
+        "normalized_rule_keys": [
+          "chapterTitle",
+          "chapterUrl",
+          "chapters",
+          "content",
+          "nextToc",
+          "searchAuthor",
+          "searchCategory",
+          "searchLink",
+          "searchList",
+          "searchTitle",
+          "toc"
+        ],
+        "normalized_legado_sha256": "ff30fd07f6763f9e1802271c6e8f6efd5ecb0e3cda55be86ccb142639307b343"
+      }
+    },
+    {
+      "id": "825bca65b0ffd75ab89a26aafc8b0f956f0075f28ee56305201766c2c86b70d0",
+      "name": "kuronavi漫画raw",
+      "group": "Raw,日漫,漫画",
+      "kind": "text",
+      "endpoint_host": "kuronavi.blog",
+      "media_hosts": [],
+      "current_selected_record_index": 4838,
+      "fixed_host_quarantine": false,
+      "fixed_source_policy_quarantine": false,
+      "fixed_current_rule_quarantine": false,
+      "known_unsafe_current_rule": false,
+      "known_unavailable_current_rule": false,
+      "orphan_history_id_quarantine": false,
+      "adult_source_classified": false,
+      "adult_by_host": false,
+      "adult_by_bundled_id": false,
+      "adult_evidence_merged": false,
+      "adult_by_source_labels": false,
+      "adult_filter_applies_from_policy": false,
+      "retired_news_host": false,
+      "static_normal_mode_when_adult_filter_on": true,
+      "static_normal_mode_when_adult_filter_off": true,
+      "new_import_enabled_by_default": false,
+      "supervision_blocks_nonbuiltin_import": true,
+      "rule": {
+        "format": "html",
+        "legado_present": true,
+        "search_present": true,
+        "explore_enabled": true,
+        "explore_category_count": 4,
+        "library_present": false,
+        "normalized_rule_keys": [
+          "chapterTitle",
+          "chapterUrl",
+          "chapters",
+          "content",
+          "exploreAuthor",
+          "exploreCategory",
+          "exploreCover",
+          "exploreLatest",
+          "exploreLink",
+          "exploreList",
+          "exploreTitle",
+          "infoAuthor",
+          "infoCategory",
+          "infoCover",
+          "infoDescription",
+          "infoLatest",
+          "infoTitle",
+          "searchAuthor",
+          "searchCategory",
+          "searchCover",
+          "searchDescription",
+          "searchLatest",
+          "searchLink",
+          "searchList",
+          "searchTitle"
+        ],
+        "normalized_legado_sha256": "6c2486d179bad2e687d07f21903c1716e222d7825df4abb735e353a147f9baa5"
+      }
+    },
+    {
+      "id": "99dec828e154116574529a7c8013e0e1d08c12ccb01ffa57a1da3ee7aebb8654",
+      "name": "🌸饭饭论坛",
+      "group": "②🌸  常用",
+      "kind": "text",
+      "endpoint_host": "bbs.fanfanu.com",
+      "media_hosts": [],
+      "current_selected_record_index": 168,
+      "fixed_host_quarantine": false,
+      "fixed_source_policy_quarantine": false,
+      "fixed_current_rule_quarantine": false,
+      "known_unsafe_current_rule": false,
+      "known_unavailable_current_rule": false,
+      "orphan_history_id_quarantine": false,
+      "adult_source_classified": false,
+      "adult_by_host": false,
+      "adult_by_bundled_id": false,
+      "adult_evidence_merged": false,
+      "adult_by_source_labels": false,
+      "adult_filter_applies_from_policy": false,
+      "retired_news_host": false,
+      "static_normal_mode_when_adult_filter_on": true,
+      "static_normal_mode_when_adult_filter_off": true,
+      "new_import_enabled_by_default": false,
+      "supervision_blocks_nonbuiltin_import": true,
+      "rule": {
+        "format": "html",
+        "legado_present": true,
+        "search_present": true,
+        "explore_enabled": true,
+        "explore_category_count": 1,
+        "library_present": false,
+        "normalized_rule_keys": [
+          "chapterTitle",
+          "chapterUrl",
+          "chapters",
+          "content",
+          "exploreList",
+          "exploreTitle",
+          "infoCover",
+          "infoDescription",
+          "searchAuthor",
+          "searchCategory",
+          "searchLink",
+          "searchList",
+          "searchTitle",
+          "toc"
+        ],
+        "normalized_legado_sha256": "51d6be3c41da25f1a2d5e68b57acda0f30c07446b3ea52c4eb0aa9e28daf1fef"
+      }
+    },
+    {
+      "id": "b0764c15a1a2830da1600ae84b8ac459a73a8dcbabe968630e10a66c9618137b",
+      "name": "69书啦",
+      "group": "",
+      "kind": "text",
+      "endpoint_host": "m.69shu.la",
+      "media_hosts": [],
+      "current_selected_record_index": 3558,
+      "fixed_host_quarantine": false,
+      "fixed_source_policy_quarantine": false,
+      "fixed_current_rule_quarantine": false,
+      "known_unsafe_current_rule": false,
+      "known_unavailable_current_rule": false,
+      "orphan_history_id_quarantine": false,
+      "adult_source_classified": false,
+      "adult_by_host": false,
+      "adult_by_bundled_id": false,
+      "adult_evidence_merged": false,
+      "adult_by_source_labels": false,
+      "adult_filter_applies_from_policy": false,
+      "retired_news_host": false,
+      "static_normal_mode_when_adult_filter_on": true,
+      "static_normal_mode_when_adult_filter_off": true,
+      "new_import_enabled_by_default": false,
+      "supervision_blocks_nonbuiltin_import": true,
+      "rule": {
+        "format": "html",
+        "legado_present": true,
+        "search_present": true,
+        "explore_enabled": false,
+        "explore_category_count": 0,
+        "library_present": false,
+        "normalized_rule_keys": [
+          "chapterTitle",
+          "chapterUrl",
+          "chapters",
+          "content",
+          "infoAuthor",
+          "infoTitle",
+          "nextToc",
+          "searchAuthor",
+          "searchCategory",
+          "searchCover",
+          "searchDescription",
+          "searchLatest",
+          "searchLink",
+          "searchList",
+          "searchTitle",
+          "toc"
+        ],
+        "normalized_legado_sha256": "32d7734ddeeeec4c9084d1dca1bcacf497434afc811360f51693003575e22ccf"
+      }
+    },
+    {
+      "id": "cfbb36028127f6cc633eb8142da8ad160d68e37a53ff5160d0ff5e77b7973257",
+      "name": "🗒 性感美女",
+      "group": "校验可用",
+      "kind": "comic",
+      "endpoint_host": "www.jpxgyw.cc",
+      "media_hosts": [],
+      "current_selected_record_index": 734,
+      "fixed_host_quarantine": true,
+      "fixed_source_policy_quarantine": true,
+      "fixed_current_rule_quarantine": false,
+      "known_unsafe_current_rule": false,
+      "known_unavailable_current_rule": false,
+      "orphan_history_id_quarantine": false,
+      "adult_source_classified": true,
+      "adult_by_host": true,
+      "adult_by_bundled_id": false,
+      "adult_evidence_merged": true,
+      "adult_by_source_labels": true,
+      "adult_filter_applies_from_policy": true,
+      "retired_news_host": false,
+      "static_normal_mode_when_adult_filter_on": false,
+      "static_normal_mode_when_adult_filter_off": false,
+      "new_import_enabled_by_default": false,
+      "supervision_blocks_nonbuiltin_import": true,
+      "rule": {
+        "format": "html",
+        "legado_present": true,
+        "search_present": false,
+        "explore_enabled": true,
+        "explore_category_count": 12,
+        "library_present": false,
+        "normalized_rule_keys": [
+          "chapterTitle",
+          "chapters",
+          "content",
+          "exploreCover",
+          "exploreLink",
+          "exploreList",
+          "exploreTitle",
+          "infoTitle",
+          "nextContent"
+        ],
+        "normalized_legado_sha256": "8fce17dd578ee1501fd082988204715f3d1a38f7b1442507db5e6d828e0b4208"
+      }
+    }
+  ],
+  "detected_hosts": [
+    {
+      "host": "www.4qo.net",
+      "record_indices": [
+        2031
+      ],
+      "old_selected_source_ids": [],
+      "initial_sample_observed_at": "2026-11-15T05:45:17.212106+00:00",
+      "initial_sample_bytes": 636,
+      "initial_sample_truncated": false,
+      "initial_sample_sha256": "81aff21c048bae20338367499e4718a487077b9e926a55c2ba5ff02433734717",
+      "initial_amsi": {
+        "phase": "scan",
+        "hresult": "0x00000000",
+        "amsi_result": 32768,
+        "classification": "detected"
+      },
+      "initial_detected_inline_scripts": [],
+      "cluster_recheck_http_status": 200,
+      "cluster_recheck_failure": null,
+      "cluster_recheck_amsi": {
+        "phase": "scan",
+        "hresult": "0x00000000",
+        "amsi_result": 32768,
+        "classification": "detected"
+      },
+      "cluster_shape_sha256": "22b1348cc4b5c9a16eac7263fc819461823b95ec6ddebae9f1989daf1e863f8c"
+    },
+    {
+      "host": "api.jiaston.com",
+      "record_indices": [
+        1271
+      ],
+      "old_selected_source_ids": [],
+      "initial_sample_observed_at": "2026-11-15T05:48:34.655296+00:00",
+      "initial_sample_bytes": 477,
+      "initial_sample_truncated": false,
+      "initial_sample_sha256": "3003d45d629f7853190e754c3f130fe4548a6368d11cb435cc768bb562c856e5",
+      "initial_amsi": {
+        "phase": "scan",
+        "hresult": "0x00000000",
+        "amsi_result": 32768,
+        "classification": "detected"
+      },
+      "initial_detected_inline_scripts": [],
+      "cluster_recheck_http_status": 200,
+      "cluster_recheck_failure": null,
+      "cluster_recheck_amsi": {
+        "phase": "scan",
+        "hresult": "0x00000000",
+        "amsi_result": 32768,
+        "classification": "detected"
+      },
+      "cluster_shape_sha256": "05e7d863aefa066d521304faf1ecf18b31791a0f55502474dc1d646e4a8bf6b6"
+    },
+    {
+      "host": "bbs.fanfanu.com",
+      "record_indices": [
+        168
+      ],
+      "old_selected_source_ids": [
+        "99dec828e154116574529a7c8013e0e1d08c12ccb01ffa57a1da3ee7aebb8654"
+      ],
+      "initial_sample_observed_at": "2026-11-15T05:48:43.910732+00:00",
+      "initial_sample_bytes": 477,
+      "initial_sample_truncated": false,
+      "initial_sample_sha256": "b046d879f5b102c98e1e8b6db8057a27eea273bec663016228d7443fb4742216",
+      "initial_amsi": {
+        "phase": "scan",
+        "hresult": "0x00000000",
+        "amsi_result": 32768,
+        "classification": "detected"
+      },
+      "initial_detected_inline_scripts": [],
+      "cluster_recheck_http_status": 200,
+      "cluster_recheck_failure": null,
+      "cluster_recheck_amsi": {
+        "phase": "scan",
+        "hresult": "0x00000000",
+        "amsi_result": 32768,
+        "classification": "detected"
+      },
+      "cluster_shape_sha256": "05e7d863aefa066d521304faf1ecf18b31791a0f55502474dc1d646e4a8bf6b6"
+    },
+    {
+      "host": "cl.2790z.xyz",
+      "record_indices": [
+        1993
+      ],
+      "old_selected_source_ids": [],
+      "initial_sample_observed_at": "2026-11-15T05:48:46.863992+00:00",
+      "initial_sample_bytes": 474,
+      "initial_sample_truncated": false,
+      "initial_sample_sha256": "8c5a345696a7b63bd60f405c92a50dfcccfee8d286d61673120a11f8e83d0d07",
+      "initial_amsi": {
+        "phase": "scan",
+        "hresult": "0x00000000",
+        "amsi_result": 32768,
+        "classification": "detected"
+      },
+      "initial_detected_inline_scripts": [],
+      "cluster_recheck_http_status": 200,
+      "cluster_recheck_failure": null,
+      "cluster_recheck_amsi": {
+        "phase": "scan",
+        "hresult": "0x00000000",
+        "amsi_result": 32768,
+        "classification": "detected"
+      },
+      "cluster_shape_sha256": "05e7d863aefa066d521304faf1ecf18b31791a0f55502474dc1d646e4a8bf6b6"
+    },
+    {
+      "host": "get.xiashuzhan.com",
+      "record_indices": [
+        36
+      ],
+      "old_selected_source_ids": [
+        "1f08fd713aac15e302299bffa11eaed3964cb16a0d6c6024cbaf0cb2e2539c9f"
+      ],
+      "initial_sample_observed_at": "2026-11-15T05:48:55.517404+00:00",
+      "initial_sample_bytes": 480,
+      "initial_sample_truncated": false,
+      "initial_sample_sha256": "00120eec56ee22a5f5fa619d11cabc95375cfa07e4c754c3ac35cad3ae25d7e9",
+      "initial_amsi": {
+        "phase": "scan",
+        "hresult": "0x00000000",
+        "amsi_result": 32768,
+        "classification": "detected"
+      },
+      "initial_detected_inline_scripts": [],
+      "cluster_recheck_http_status": 200,
+      "cluster_recheck_failure": null,
+      "cluster_recheck_amsi": {
+        "phase": "scan",
+        "hresult": "0x00000000",
+        "amsi_result": 32768,
+        "classification": "detected"
+      },
+      "cluster_shape_sha256": "05e7d863aefa066d521304faf1ecf18b31791a0f55502474dc1d646e4a8bf6b6"
+    },
+    {
+      "host": "kuronavi.blog",
+      "record_indices": [
+        4838
+      ],
+      "old_selected_source_ids": [
+        "825bca65b0ffd75ab89a26aafc8b0f956f0075f28ee56305201766c2c86b70d0"
+      ],
+      "initial_sample_observed_at": "2026-11-15T05:49:05.200124+00:00",
+      "initial_sample_bytes": 475,
+      "initial_sample_truncated": false,
+      "initial_sample_sha256": "e4c4ab6c022443f05edf474af5882fd39a4ad097b287a074e60e551cbd23fc2c",
+      "initial_amsi": {
+        "phase": "scan",
+        "hresult": "0x00000000",
+        "amsi_result": 32768,
+        "classification": "detected"
+      },
+      "initial_detected_inline_scripts": [],
+      "cluster_recheck_http_status": 200,
+      "cluster_recheck_failure": null,
+      "cluster_recheck_amsi": {
+        "phase": "scan",
+        "hresult": "0x00000000",
+        "amsi_result": 32768,
+        "classification": "detected"
+      },
+      "cluster_shape_sha256": "05e7d863aefa066d521304faf1ecf18b31791a0f55502474dc1d646e4a8bf6b6"
+    },
+    {
+      "host": "lwkk.xyz",
+      "record_indices": [
+        1222,
+        1366,
+        1959,
+        3513
+      ],
+      "old_selected_source_ids": [
+        "1de6d8be1459bb1df6991b86d63e4dd782ff8bb1806fd6c6f09a5e569bc722cc"
+      ],
+      "initial_sample_observed_at": "2026-11-15T05:49:06.969485+00:00",
+      "initial_sample_bytes": 470,
+      "initial_sample_truncated": false,
+      "initial_sample_sha256": "f75374ad9173602d3e564b6ae7caf613f13b04c9cf1aebc75118322be6517677",
+      "initial_amsi": {
+        "phase": "scan",
+        "hresult": "0x00000000",
+        "amsi_result": 32768,
+        "classification": "detected"
+      },
+      "initial_detected_inline_scripts": [],
+      "cluster_recheck_http_status": 200,
+      "cluster_recheck_failure": null,
+      "cluster_recheck_amsi": {
+        "phase": "scan",
+        "hresult": "0x00000000",
+        "amsi_result": 32768,
+        "classification": "detected"
+      },
+      "cluster_shape_sha256": "05e7d863aefa066d521304faf1ecf18b31791a0f55502474dc1d646e4a8bf6b6"
+    },
+    {
+      "host": "m.69shu.la",
+      "record_indices": [
+        3012,
+        3558
+      ],
+      "old_selected_source_ids": [
+        "b0764c15a1a2830da1600ae84b8ac459a73a8dcbabe968630e10a66c9618137b"
+      ],
+      "initial_sample_observed_at": "2026-11-15T05:49:15.100840+00:00",
+      "initial_sample_bytes": 472,
+      "initial_sample_truncated": false,
+      "initial_sample_sha256": "827cd97c5e5419562f1fae0145c9418f9d5437b51bcca17dd085d611cad9f5f3",
+      "initial_amsi": {
+        "phase": "scan",
+        "hresult": "0x00000000",
+        "amsi_result": 32768,
+        "classification": "detected"
+      },
+      "initial_detected_inline_scripts": [],
+      "cluster_recheck_http_status": 200,
+      "cluster_recheck_failure": null,
+      "cluster_recheck_amsi": {
+        "phase": "scan",
+        "hresult": "0x00000000",
+        "amsi_result": 32768,
+        "classification": "detected"
+      },
+      "cluster_shape_sha256": "05e7d863aefa066d521304faf1ecf18b31791a0f55502474dc1d646e4a8bf6b6"
+    },
+    {
+      "host": "m.bz001.org",
+      "record_indices": [
+        2174
+      ],
+      "old_selected_source_ids": [],
+      "initial_sample_observed_at": "2026-11-15T05:49:40.959394+00:00",
+      "initial_sample_bytes": 473,
+      "initial_sample_truncated": false,
+      "initial_sample_sha256": "f1a9d76450a1e55dba9265c5ac7cb0079776165df49375bfbc49601cc4346e2f",
+      "initial_amsi": {
+        "phase": "scan",
+        "hresult": "0x00000000",
+        "amsi_result": 32768,
+        "classification": "detected"
+      },
+      "initial_detected_inline_scripts": [
+        {
+          "ordinal": 1,
+          "has_src_attribute": false,
+          "bytes_seen": 369,
+          "sample_bytes": 369,
+          "sample_sha256": "5ef48a12910e6f4684943b333f313b0fae7e1fe9abe4ab362613ab4b0078553b",
+          "truncated": false,
+          "closing_tag_observed": true,
+          "amsi": {
+            "phase": "scan",
+            "hresult": "0x00000000",
+            "amsi_result": 32768,
+            "classification": "detected"
+          }
+        }
+      ],
+      "cluster_recheck_http_status": 200,
+      "cluster_recheck_failure": null,
+      "cluster_recheck_amsi": {
+        "phase": "scan",
+        "hresult": "0x00000000",
+        "amsi_result": 32768,
+        "classification": "detected"
+      },
+      "cluster_shape_sha256": "05e7d863aefa066d521304faf1ecf18b31791a0f55502474dc1d646e4a8bf6b6"
+    },
+    {
+      "host": "m.nshkedu.com",
+      "record_indices": [
+        28,
+        1307
+      ],
+      "old_selected_source_ids": [
+        "09ef9895c10c575590ed8152e239031f32890758849aaecdca8b03a74538d76d"
+      ],
+      "initial_sample_observed_at": "2026-11-15T05:50:18.208258+00:00",
+      "initial_sample_bytes": 475,
+      "initial_sample_truncated": false,
+      "initial_sample_sha256": "6ab80b3001d8bdeac2e4877586ee78bbda3f2182c04ba15f24dff25e5c140094",
+      "initial_amsi": {
+        "phase": "scan",
+        "hresult": "0x00000000",
+        "amsi_result": 32768,
+        "classification": "detected"
+      },
+      "initial_detected_inline_scripts": [],
+      "cluster_recheck_http_status": 200,
+      "cluster_recheck_failure": null,
+      "cluster_recheck_amsi": {
+        "phase": "scan",
+        "hresult": "0x00000000",
+        "amsi_result": 32768,
+        "classification": "detected"
+      },
+      "cluster_shape_sha256": "05e7d863aefa066d521304faf1ecf18b31791a0f55502474dc1d646e4a8bf6b6"
+    },
+    {
+      "host": "s.fjwhcbsh.com",
+      "record_indices": [
+        1439,
+        2281
+      ],
+      "old_selected_source_ids": [
+        "49288d9a4a46a7b884896dab3a61500fb815269d48f710dbd640dfed9848bf1b"
+      ],
+      "initial_sample_observed_at": "2026-11-15T05:51:37.252894+00:00",
+      "initial_sample_bytes": 476,
+      "initial_sample_truncated": false,
+      "initial_sample_sha256": "8242ac08f09dbb7f64184f5a8aecf54b2b845a92cbc6d15705d4fc2c87f2210a",
+      "initial_amsi": {
+        "phase": "scan",
+        "hresult": "0x00000000",
+        "amsi_result": 32768,
+        "classification": "detected"
+      },
+      "initial_detected_inline_scripts": [],
+      "cluster_recheck_http_status": 200,
+      "cluster_recheck_failure": null,
+      "cluster_recheck_amsi": {
+        "phase": "scan",
+        "hresult": "0x00000000",
+        "amsi_result": 32768,
+        "classification": "detected"
+      },
+      "cluster_shape_sha256": "05e7d863aefa066d521304faf1ecf18b31791a0f55502474dc1d646e4a8bf6b6"
+    },
+    {
+      "host": "shuhuang.la",
+      "record_indices": [
+        3030
+      ],
+      "old_selected_source_ids": [],
+      "initial_sample_observed_at": "2026-11-15T05:51:42.064418+00:00",
+      "initial_sample_bytes": 473,
+      "initial_sample_truncated": false,
+      "initial_sample_sha256": "b34999bdeeb0ed8fcf8bb34cf0dcc80801ac5d0399df53913f7497ec5cdac445",
+      "initial_amsi": {
+        "phase": "scan",
+        "hresult": "0x00000000",
+        "amsi_result": 32768,
+        "classification": "detected"
+      },
+      "initial_detected_inline_scripts": [],
+      "cluster_recheck_http_status": 429,
+      "cluster_recheck_failure": "http_status",
+      "cluster_recheck_amsi": null,
+      "cluster_shape_sha256": null
+    },
+    {
+      "host": "wap.18biquge.com",
+      "record_indices": [
+        390,
+        2098
+      ],
+      "old_selected_source_ids": [
+        "5395fcb9dde14042bb1d7f37a878fe7400d5e87d0f96178b0e48561e386879e2"
+      ],
+      "initial_sample_observed_at": "2026-11-15T05:51:47.318782+00:00",
+      "initial_sample_bytes": 478,
+      "initial_sample_truncated": false,
+      "initial_sample_sha256": "e333c7f787e0c3c0c4c59c7039b21281e4d0b9eb33abe9606a19117cc68ce56a",
+      "initial_amsi": {
+        "phase": "scan",
+        "hresult": "0x00000000",
+        "amsi_result": 32768,
+        "classification": "detected"
+      },
+      "initial_detected_inline_scripts": [],
+      "cluster_recheck_http_status": 200,
+      "cluster_recheck_failure": null,
+      "cluster_recheck_amsi": {
+        "phase": "scan",
+        "hresult": "0x00000000",
+        "amsi_result": 32768,
+        "classification": "detected"
+      },
+      "cluster_shape_sha256": "05e7d863aefa066d521304faf1ecf18b31791a0f55502474dc1d646e4a8bf6b6"
+    },
+    {
+      "host": "www.230book.net",
+      "record_indices": [
+        863,
+        2790,
+        2865,
+        2892
+      ],
+      "old_selected_source_ids": [],
+      "initial_sample_observed_at": "2026-11-15T05:52:13.000204+00:00",
+      "initial_sample_bytes": 477,
+      "initial_sample_truncated": false,
+      "initial_sample_sha256": "e056cadc22a7dea3efc5299e7efe8ad3e710bedd864022ad486fc0552c071749",
+      "initial_amsi": {
+        "phase": "scan",
+        "hresult": "0x00000000",
+        "amsi_result": 32768,
+        "classification": "detected"
+      },
+      "initial_detected_inline_scripts": [],
+      "cluster_recheck_http_status": 200,
+      "cluster_recheck_failure": null,
+      "cluster_recheck_amsi": {
+        "phase": "scan",
+        "hresult": "0x00000000",
+        "amsi_result": 32768,
+        "classification": "detected"
+      },
+      "cluster_shape_sha256": "05e7d863aefa066d521304faf1ecf18b31791a0f55502474dc1d646e4a8bf6b6"
+    },
+    {
+      "host": "www.ffxs.info",
+      "record_indices": [
+        644,
+        2574
+      ],
+      "old_selected_source_ids": [],
+      "initial_sample_observed_at": "2026-11-15T05:54:08.465295+00:00",
+      "initial_sample_bytes": 475,
+      "initial_sample_truncated": false,
+      "initial_sample_sha256": "1682f7954b9c6f306997129f232ead7d6122a67cd6edd99ac548aa4e8854f3cd",
+      "initial_amsi": {
+        "phase": "scan",
+        "hresult": "0x00000000",
+        "amsi_result": 32768,
+        "classification": "detected"
+      },
+      "initial_detected_inline_scripts": [],
+      "cluster_recheck_http_status": 429,
+      "cluster_recheck_failure": "http_status",
+      "cluster_recheck_amsi": null,
+      "cluster_shape_sha256": null
+    },
+    {
+      "host": "www.jpxgyw.cc",
+      "record_indices": [
+        333,
+        734
+      ],
+      "old_selected_source_ids": [
+        "cfbb36028127f6cc633eb8142da8ad160d68e37a53ff5160d0ff5e77b7973257"
+      ],
+      "initial_sample_observed_at": "2026-11-15T05:54:52.155683+00:00",
+      "initial_sample_bytes": 475,
+      "initial_sample_truncated": false,
+      "initial_sample_sha256": "744234f586ba7d778554ceb904a6b9eb84e53e476d4c4e8a940f4c6141dcb7ae",
+      "initial_amsi": {
+        "phase": "scan",
+        "hresult": "0x00000000",
+        "amsi_result": 32768,
+        "classification": "detected"
+      },
+      "initial_detected_inline_scripts": [],
+      "cluster_recheck_http_status": 200,
+      "cluster_recheck_failure": null,
+      "cluster_recheck_amsi": {
+        "phase": "scan",
+        "hresult": "0x00000000",
+        "amsi_result": 32768,
+        "classification": "detected"
+      },
+      "cluster_shape_sha256": "05e7d863aefa066d521304faf1ecf18b31791a0f55502474dc1d646e4a8bf6b6"
+    },
+    {
+      "host": "www.lengmen.org",
+      "record_indices": [
+        450,
+        1921,
+        2318
+      ],
+      "old_selected_source_ids": [
+        "47e709728d21b76a1156fd1a080dd45d8dc82c1a95f8e66359533ac4d336847e",
+        "5c5cc84bbd5019fd7fc40a5effcdf9adfddca60a2f4f6885b1eb034ad4da0a93"
+      ],
+      "initial_sample_observed_at": "2026-11-15T05:55:07.617056+00:00",
+      "initial_sample_bytes": 477,
+      "initial_sample_truncated": false,
+      "initial_sample_sha256": "7ac2e9bb156f7bea815170de3c7d48c9df6031587555ccb7f6740dcaf358c0e7",
+      "initial_amsi": {
+        "phase": "scan",
+        "hresult": "0x00000000",
+        "amsi_result": 32768,
+        "classification": "detected"
+      },
+      "initial_detected_inline_scripts": [
+        {
+          "ordinal": 1,
+          "has_src_attribute": false,
+          "bytes_seen": 373,
+          "sample_bytes": 373,
+          "sample_sha256": "32928c432fdc791397aad53b74a569f20f2ddab7b0ee753b5568fcc5d5e5292b",
+          "truncated": false,
+          "closing_tag_observed": true,
+          "amsi": {
+            "phase": "scan",
+            "hresult": "0x00000000",
+            "amsi_result": 32768,
+            "classification": "detected"
+          }
+        }
+      ],
+      "cluster_recheck_http_status": 200,
+      "cluster_recheck_failure": null,
+      "cluster_recheck_amsi": {
+        "phase": "scan",
+        "hresult": "0x00000000",
+        "amsi_result": 32768,
+        "classification": "detected"
+      },
+      "cluster_shape_sha256": "05e7d863aefa066d521304faf1ecf18b31791a0f55502474dc1d646e4a8bf6b6"
+    }
+  ]
+}

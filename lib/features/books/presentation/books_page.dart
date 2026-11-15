@@ -171,7 +171,7 @@ final class _BooksPageState extends State<BooksPage> {
     final downloaded = <BookShelfEntry>[];
     for (final entry in shelf) {
       final saved = entry.book.kind == BookKind.audio
-          ? await _services.books.audioFiles.saved(entry.book)
+          ? await _services.books.savedAudio(entry.book)
           : await _services.books.store.savedText(entry.book);
       if (saved.isNotEmpty) downloaded.add(entry);
     }

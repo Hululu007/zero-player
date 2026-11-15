@@ -83,7 +83,7 @@ class _BookShelfViewState extends State<BookShelfView> {
       final saved = switch (book.kind) {
         BookKind.text => await widget.repository.store.savedText(book),
         BookKind.comic => await widget.repository.store.savedImages(book),
-        BookKind.audio => await widget.repository.audioFiles.saved(book),
+        BookKind.audio => await widget.repository.savedAudio(book),
       };
       if (saved.isNotEmpty) ids.add(book.id);
     }

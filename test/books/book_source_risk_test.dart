@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:archive/archive.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:zero_player/app/app_services.dart';
 import 'package:zero_player/core/persistence/app_database.dart';
@@ -127,6 +128,51 @@ void _sourceClassificationTests() {
     expect(quarantinedBookHost('m.60ks.com'), isTrue);
     expect(quarantinedBookHost('www.60ks.com'), isFalse);
     expect(quarantinedBookHost('www.shubang.net'), isFalse);
+  });
+
+  test(
+    'bundled Litu source retains adult evidence without blocking the host',
+    () async {
+      final bytes = await File(
+        'assets/catalogs/books/legado/catalog.json.bz2',
+      ).readAsBytes();
+      final catalog =
+          jsonDecode(utf8.decode(BZip2Decoder().decodeBytes(bytes))) as Map;
+      final rows = catalog['records'] as List;
+      final comicRecord = rows[1124] as Map;
+      final labelledRecord = rows[3309] as Map;
+      expect(comicRecord['exploreUrl'], contains('全部黄漫'));
+      expect(labelledRecord['bookSourceName'], contains('🔞'));
+      expect(comicRecord['searchUrl'], labelledRecord['searchUrl']);
+      final comic = parseBookSourceRecord(comicRecord);
+      final labelled = parseBookSourceRecord(labelledRecord);
+      expect(comic.kind, BookKind.comic);
+      expect(comic.endpoint.host, 'litu100.xyz');
+      expect(labelled.endpoint.host, comic.endpoint.host);
+      expect(adultBookSource(comic), isTrue);
+      expect(adultBookSource(labelled), isTrue);
+      expect(adultBookHost('litu100.xyz'), isFalse);
+      expect(adultBookHost('www.litu100.xyz'), isFalse);
+    },
+  );
+
+  test('bundled UAA source retains adult catalog evidence by ID', () async {
+    final bytes = await File(
+      'assets/catalogs/books/legado/catalog.json.bz2',
+    ).readAsBytes();
+    final catalog =
+        jsonDecode(utf8.decode(BZip2Decoder().decodeBytes(bytes))) as Map;
+    final record = (catalog['records'] as List)[989] as Map;
+    expect(record['exploreUrl'], contains('肉量·全部'));
+    expect(record['exploreUrl'], contains('都市激情'));
+    expect(record['exploreUrl'], contains('调教虐待'));
+    final source = parseBookSourceRecord(record);
+    expect(
+      source.id,
+      '08b828adf2d0154db83894b6b77db3defa9dfae30de8a832fc26a5f7c72cbe07',
+    );
+    expect(adultBookSource(source), isTrue);
+    expect(adultBookHost('api.uaa.com'), isFalse);
   });
 }
 

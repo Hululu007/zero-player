@@ -39,7 +39,7 @@ class VideoFilePicker(private val activity: Activity) {
                 addCategory(Intent.CATEGORY_OPENABLE)
                 type = "video/*"
                 addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-            }, 7203)
+            }, ActivityRequestCodes.VIDEO_FILE)
         } catch (_: Exception) {
             pending = null
             result.error("video_failed", "无法打开视频选择器", null)
@@ -53,7 +53,7 @@ class VideoFilePicker(private val activity: Activity) {
     }
 
     fun onResult(code: Int, resultCode: Int, data: Intent?): Boolean {
-        if (code != 7203) return false
+        if (code != ActivityRequestCodes.VIDEO_FILE) return false
         val result = pending ?: return true
         val uri = data?.data
         if (resultCode != Activity.RESULT_OK || uri == null || cancelled.get()) {

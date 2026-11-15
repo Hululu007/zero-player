@@ -2,10 +2,14 @@ import 'dart:io';
 
 import '../../../core/network/network_target_policy.dart';
 import '../../sources/domain/video_source.dart';
+import 'jingzhi_legacy_source_fix.dart';
 import 'legado_source.dart';
 import 'legado_source_fixes.dart';
 import 'kuwo_legacy_source_fix.dart';
+import 'shubang_legacy_source_fix.dart';
 import 'yuque_legacy_source_fix.dart';
+import 'yingyu_legacy_source_fix.dart';
+import 'zhongyi_legacy_source_fix.dart';
 
 enum BookKind { text, audio, comic }
 
@@ -72,15 +76,7 @@ final class BookSource {
       rules = _rules(data['rules']),
       legado = data['legado'] == null
           ? null
-          : LegadoSource.fromJson(
-              repairYuqueLegadoSource(
-                data,
-                repairKuwoLegadoSource(
-                  data,
-                  repairDushuLegadoSource(data, _comicLegadoRules(data)),
-                ),
-              ),
-            ),
+          : LegadoSource.fromJson(_repairedLegadoRules(data)),
       mediaHosts = _hosts(_comicMediaHosts(data)),
       originNote = bookLabel(data['originNote'], 240),
       sourceKey = _rule(data['sourceKey'], 2048),
@@ -371,6 +367,17 @@ bool _manmanComicRule(Map data) {
       rules['chapterUrl'] ==
           r'https://www.manmanapp.com/comic/detail-{{$.id}}.html' &&
       const {'class.man_img@html', '.man_img@html'}.contains(rules['content']);
+}
+
+Map _repairedLegadoRules(Map data) {
+  var legado = _comicLegadoRules(data);
+  legado = repairDushuLegadoSource(data, legado);
+  legado = repairKuwoLegadoSource(data, legado);
+  legado = repairYuqueLegadoSource(data, legado);
+  legado = repairJingzhiLegadoSource(data, legado);
+  legado = repairZhongyiLegadoSource(data, legado);
+  legado = repairShubangLegadoSource(data, legado);
+  return repairYingyuLegadoSource(data, legado);
 }
 
 Map _comicLegadoRules(Map data) {

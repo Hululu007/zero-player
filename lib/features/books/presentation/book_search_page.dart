@@ -51,6 +51,8 @@ class BookSearchPage extends StatefulWidget {
     this.excludedSource,
     this.skipQidian = false,
     this.onSourceFavorite,
+    this.onSearchStarted,
+    this.beforeSourceSnapshotForTesting,
   });
 
   final BooksRepository repository;
@@ -64,6 +66,10 @@ class BookSearchPage extends StatefulWidget {
   final bool skipQidian;
   final void Function(String id, bool favorite)? onSourceFavorite;
   final Future<void> Function(Book) onOpen;
+  @visibleForTesting
+  final VoidCallback? onSearchStarted;
+  @visibleForTesting
+  final VoidCallback? beforeSourceSnapshotForTesting;
 
   @override
   State<BookSearchPage> createState() => _BookSearchPageState();
@@ -83,6 +89,11 @@ class _BookSearchPageState extends State<BookSearchPage> {
   int _done = 0, _total = 0;
   bool _retrying = false;
   bool _cancelled = false;
+  bool _metadataStale = false;
+  bool _searchStarted = false;
+  bool _restartPending = false;
+  int _policyRevision = 0;
+  Set<String>? _runningRetry;
   String? _error;
   Book? get _preferred => _query == widget.query && _field == widget.field
       ? widget.preferred
@@ -93,20 +104,89 @@ class _BookSearchPageState extends State<BookSearchPage> {
     super.initState();
     widget.repository.policy.addListener(_policyChanged);
     widget.repository.sourceRiskChanges.addListener(_policyChanged);
+    if (!widget.repository.policy.textAllowed(_input.text)) _input.clear();
     unawaited(_load());
   }
 
-  void _policyChanged() => unawaited(_load());
+  void _policyChanged() {
+    if (!mounted) return;
+    final revision = ++_policyRevision;
+    final pendingStart = _busy && !_searchStarted;
+    _token?.cancel();
+    if (!widget.repository.policy.textAllowed(_input.text)) _input.clear();
+    setState(() {
+      _metadataStale = true;
+      _restartPending = pendingStart;
+      if (_busy && !pendingStart) {
+        _busy = false;
+        _retrying = false;
+        _cancelled = true;
+      }
+    });
+    _updates.value++;
+    unawaited(_refreshPolicySources(revision));
+  }
+
+  Future<void> _refreshPolicySources(int revision) async {
+    if (widget.repository.sourceRiskMutationPending) return;
+    final previous = Map<String, BookSourceEntry>.of(_sources);
+    try {
+      final current = await widget.repository.sources(
+        widget.kind,
+        enabledOnly: true,
+      );
+      if (!mounted ||
+          revision != _policyRevision ||
+          widget.repository.sourceRiskMutationPending) {
+        return;
+      }
+      final allowed = <String, BookSourceEntry>{};
+      for (final entry in current) {
+        final old = previous[entry.source.id];
+        if (old != null && sameBookDiscoverySources([old], [entry])) {
+          allowed[entry.source.id] = entry;
+        }
+      }
+      final restart = _restartPending;
+      final retry = _runningRetry == null
+          ? null
+          : Set<String>.of(_runningRetry!);
+      setState(() {
+        _sources
+          ..clear()
+          ..addAll(allowed);
+        _metadataStale = false;
+        if (restart &&
+            (!widget.repository.policy.textAllowed(_query) ||
+                !widget.repository.kindAllowed(widget.kind))) {
+          _restartPending = false;
+          _busy = false;
+          _retrying = false;
+          _cancelled = true;
+        }
+      });
+      _updates.value++;
+      if (restart && _restartPending) {
+        _restartPending = false;
+        unawaited(_load(retry: retry));
+      }
+    } on Exception {
+      // A suspended or unavailable policy snapshot stays hidden until the
+      // next notification; no stale source metadata is exposed meanwhile.
+    }
+  }
 
   void _submit() {
     final query = _input.text.trim();
     if (query.isEmpty) return;
     FocusManager.instance.primaryFocus?.unfocus();
     _query = query;
+    if (!widget.repository.policy.textAllowed(query)) _input.clear();
     unawaited(_load());
   }
 
   Future<void> _load({Set<String>? retry}) async {
+    _policyRevision++;
     _token?.cancel();
     final token = _token = CancellationToken();
     final repository = widget.repository;
@@ -122,14 +202,22 @@ class _BookSearchPageState extends State<BookSearchPage> {
       _busy = true;
       _retrying = retry != null;
       _cancelled = false;
+      _searchStarted = false;
+      _restartPending = false;
+      _runningRetry = retry == null ? null : Set.of(retry);
       _error = null;
     });
     _updates.value++;
+    if (repository.sourceRiskMutationPending) {
+      // Continue the explicit request only after the current mutation settles.
+      _restartPending = true;
+      return;
+    }
     try {
       final availableSources = await _loadSources(
         token,
         preferred,
-        retrying: retry != null,
+        retry: retry,
       );
       final retried = <String>{};
       await repository.find(
@@ -158,7 +246,7 @@ class _BookSearchPageState extends State<BookSearchPage> {
       if (mounted && !token.isCancelled) setState(() => _error = '搜索未完成，请重试');
     } finally {
       if (mounted && identical(token, _token)) {
-        setState(() => _busy = false);
+        if (!_restartPending) setState(() => _busy = false);
         _updates.value++;
       }
     }
@@ -167,21 +255,43 @@ class _BookSearchPageState extends State<BookSearchPage> {
   Future<List<BookSourceEntry>> _loadSources(
     CancellationToken token,
     Book? preferred, {
-    required bool retrying,
+    required Set<String>? retry,
   }) async {
     final repository = widget.repository;
+    widget.beforeSourceSnapshotForTesting?.call();
     final sources = await repository.sources(widget.kind, enabledOnly: true);
     token.check();
     if (!mounted) return sources;
     setState(() {
-      _sources
-        ..clear()
-        ..addEntries(sources.map((entry) => MapEntry(entry.source.id, entry)));
-      if (retrying) {
+      if (retry == null) {
+        _sources
+          ..clear()
+          ..addEntries(
+            sources.map((entry) => MapEntry(entry.source.id, entry)),
+          );
+      } else {
+        final previous = Map<String, BookSourceEntry>.of(_sources);
+        final retained = <String, BookSourceEntry>{};
+        for (final entry in sources) {
+          final id = entry.source.id;
+          final old = previous[id];
+          if (retry.contains(id)) {
+            if (old == null || !sameBookDiscoverySources([old], [entry])) {
+              _results.removeWhere((_, book) => book.sourceId == id);
+            }
+            retained[id] = entry;
+          } else if (old != null && sameBookDiscoverySources([old], [entry])) {
+            retained[id] = entry;
+          }
+        }
+        _sources
+          ..clear()
+          ..addAll(retained);
         _results.removeWhere((_, book) => !_sources.containsKey(book.sourceId));
         _latencies.removeWhere((id, _) => !_sources.containsKey(id));
       }
-      if (!retrying &&
+      _metadataStale = false;
+      if (retry == null &&
           preferred != null &&
           _sources.containsKey(preferred.sourceId) &&
           repository.bookAllowed(preferred)) {
@@ -199,6 +309,7 @@ class _BookSearchPageState extends State<BookSearchPage> {
   }) {
     if (!mounted || token.isCancelled) return;
     setState(() {
+      if (update.sourceId == null) _searchStarted = true;
       if (!retrying) {
         _done = update.completed;
         _total = update.total;
@@ -218,6 +329,7 @@ class _BookSearchPageState extends State<BookSearchPage> {
       }
     });
     _updates.value++;
+    if (update.sourceId == null) widget.onSearchStarted?.call();
   }
 
   void _retryFailed() {
@@ -230,6 +342,7 @@ class _BookSearchPageState extends State<BookSearchPage> {
     setState(() {
       _busy = false;
       _cancelled = true;
+      _restartPending = false;
     });
   }
 
@@ -256,7 +369,7 @@ class _BookSearchPageState extends State<BookSearchPage> {
     final groups = <String, List<Book>>{};
     final ranks = <String, int>{};
     final query = BookSearchQuery(_query, _field);
-    for (final book in _results.values.where(widget.repository.bookAllowed)) {
+    for (final book in _results.values.where(_visibleBook)) {
       final title = book.title.trim();
       (groups[title] ??= []).add(book);
       final rank = query.rank(book) ?? 99;
@@ -271,6 +384,19 @@ class _BookSearchPageState extends State<BookSearchPage> {
     return titles.map((title) => groups[title]!).toList();
   }
 
+  bool _visibleBook(Book book) {
+    final repository = widget.repository;
+    final entry = _sources[book.sourceId];
+    return !_metadataStale &&
+        repository.sourceRisksReady &&
+        !repository.sourceRiskMutationPending &&
+        repository.policy.textAllowed(_query) &&
+        entry != null &&
+        entry.enabled &&
+        repository.sourceEntryAllowed(entry) &&
+        repository.bookAllowed(book);
+  }
+
   Future<void> _choose(List<Book> group) async {
     final title = group.first.title.trim();
     final book = await showDialog<Book>(
@@ -281,9 +407,7 @@ class _BookSearchPageState extends State<BookSearchPage> {
           final choices =
               _results.values
                   .where(
-                    (book) =>
-                        book.title.trim() == title &&
-                        widget.repository.bookAllowed(book),
+                    (book) => book.title.trim() == title && _visibleBook(book),
                   )
                   .toList()
                 ..sort(_compareSources);
@@ -291,22 +415,15 @@ class _BookSearchPageState extends State<BookSearchPage> {
         },
       ),
     );
-    if (!mounted || book == null || !widget.repository.bookAllowed(book)) {
+    if (!mounted || book == null || !_visibleBook(book)) {
       return;
     }
     await widget.onOpen(book);
     if (!mounted) return;
-    final sources = await widget.repository.sources(
-      widget.kind,
-      enabledOnly: true,
-    );
-    if (mounted) {
-      setState(
-        () => _sources.addEntries(
-          sources.map((entry) => MapEntry(entry.source.id, entry)),
-        ),
-      );
-    }
+    final revision = ++_policyRevision;
+    setState(() => _metadataStale = true);
+    _updates.value++;
+    await _refreshPolicySources(revision);
   }
 
   final _updates = ValueNotifier<int>(0);
@@ -499,11 +616,7 @@ class _BookSearchPageState extends State<BookSearchPage> {
               ),
             if (_scoped)
               InputChip(
-                label: Text(
-                  widget.favoritesOnly
-                      ? '收藏渠道'
-                      : _sources[widget.sourceId]?.source.name ?? '当前渠道',
-                ),
+                label: Text(widget.favoritesOnly ? '收藏渠道' : _scopeName()),
                 onDeleted: () {
                   _scoped = false;
                   _submit();
@@ -514,4 +627,16 @@ class _BookSearchPageState extends State<BookSearchPage> {
       ],
     ),
   );
+
+  String _scopeName() {
+    final entry = _sources[widget.sourceId];
+    if (_metadataStale ||
+        widget.repository.sourceRiskMutationPending ||
+        entry == null ||
+        !widget.repository.policy.textAllowed(_query) ||
+        !widget.repository.sourceEntryAllowed(entry)) {
+      return '当前渠道';
+    }
+    return entry.source.name;
+  }
 }

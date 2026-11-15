@@ -161,6 +161,46 @@ void _contentSignalTests(Uri target) {
     );
     expect(keywords.adultRisk, isFalse);
   });
+
+  test(
+    'explicit adult site title and purpose can classify without an age gate',
+    () {
+      for (final html in [
+        '<title>免费成人黄色小说</title>'
+            '<meta name="description" content="免费的在线成人黄色小说站">',
+        '<title>高辣文小说网</title>'
+            '<meta name="description" content="主要提供耽美肉文、言情文">',
+        '<meta name="description" content="专属18禁情欲类小说，未满十八岁禁止浏览">',
+      ]) {
+        expect(
+          inspectBookSiteHtml(target, html).adultRisk,
+          isTrue,
+          reason: html,
+        );
+      }
+      for (final html in [
+        '<title>成人小说专题</title>'
+            '<meta name="description" content="提供玄幻小说及成人小说分类">',
+        '<title>抵制成人小说</title>'
+            '<meta name="description" content="本站坚决抵制成人小说网站">',
+        '<p>抵制成人小说，未满18岁尤其要注意。</p>',
+        '<p>远离色情小说。</p><p>未满18岁应由家长陪同浏览。</p>',
+      ]) {
+        expect(
+          inspectBookSiteHtml(target, html).adultRisk,
+          isFalse,
+          reason: html,
+        );
+      }
+      expect(
+        inspectBookSiteHtml(
+          target,
+          '<p>抵制色情小说。</p><p>成人小说专区，未满18岁禁止浏览。</p>',
+        ).adultRisk,
+        isTrue,
+      );
+    },
+  );
 }
 
 void _redirectInterpretationTests(Uri target) {

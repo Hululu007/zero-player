@@ -1,0 +1,445 @@
+{
+  "method": "Offline aggregation; each host appears in exactly one completed sampling stage. Root and inline results are reported independently.",
+  "limitations": "AMSI did not detect the HTML-wrapped or script-wrapped control in this environment. Results are limited to bounded samples, not whole-site malware verdicts; the antimalware provider may use cloud services.",
+  "archive_sha256": "012a0e0d6e6adc8d303c32b578510e14b562088b3e965cb01a1a647b5e7e034d",
+  "stages": [
+    {
+      "file": "legado-amsi-pilot-20261115.json",
+      "sha256": "09b2cdc14e2032814fd7d6b4615a8682ad4bf989f380ea8d4a22a949a216615f",
+      "offset": 0,
+      "requested_hosts": 6,
+      "started_at": "2026-11-15T05:43:37.478933+00:00",
+      "completed_at": "2026-11-15T05:43:48.061284+00:00",
+      "workers": 2,
+      "minimum_request_start_interval_seconds": 0.5,
+      "network_deadline_seconds": 6.0
+    },
+    {
+      "file": "legado-amsi-prior-html-20261115.json",
+      "sha256": "04dd4ee143e9de7fc6d16ab649fbe9796bae40f7c045bfdb7632e6b4ad5061c8",
+      "offset": 6,
+      "requested_hosts": 410,
+      "started_at": "2026-11-15T05:44:15.758347+00:00",
+      "completed_at": "2026-11-15T05:46:27.119918+00:00",
+      "workers": 6,
+      "minimum_request_start_interval_seconds": 0.25,
+      "network_deadline_seconds": 4.0
+    },
+    {
+      "file": "legado-amsi-other-hosts-20261115.json",
+      "sha256": "25180e804c1df15165af8bb20ae58c5b4dd6b2e24f6a0a092d50281ca5e25750",
+      "offset": 416,
+      "requested_hosts": 1594,
+      "started_at": "2026-11-15T05:48:19.632346+00:00",
+      "completed_at": "2026-11-15T05:58:11.111100+00:00",
+      "workers": 6,
+      "minimum_request_start_interval_seconds": 0.25,
+      "network_deadline_seconds": 4.0
+    }
+  ],
+  "total_unique_hosts": 2010,
+  "root_outcomes": {
+    "timeout": 589,
+    "not_detected": 415,
+    "http_status": 127,
+    "empty_html": 2,
+    "detected": 17,
+    "non_html_or_encoded": 40,
+    "dns_error": 258,
+    "redirect_not_followed": 182,
+    "invalid_host_or_non_public_address": 46,
+    "http_transport_error": 39,
+    "tls_error": 156,
+    "connection_error": 139
+  },
+  "html_nonempty_samples": 432,
+  "html_scanned_with_successful_hresult": 432,
+  "html_sampled_but_scan_error": 0,
+  "hosts_without_successful_html_scan": 1578,
+  "html_truncated_samples": 182,
+  "inline_script_samples": 1021,
+  "inline_script_outcomes": {
+    "not_detected": 1019,
+    "detected": 2
+  },
+  "inline_script_truncated_samples": 12,
+  "inline_script_omitted_count": 144,
+  "selected_source_ids_with_successful_html_scan": 511,
+  "detected_hosts_either_root_or_inline": 17,
+  "selected_source_ids_on_detected_hosts": 11,
+  "detection_observations": [
+    {
+      "host": "www.4qo.net",
+      "record_indices": [
+        2031
+      ],
+      "selected_source_ids": [],
+      "sample_observed_at": "2026-11-15T05:45:17.212106+00:00",
+      "sample_bytes": 636,
+      "sample_sha256": "81aff21c048bae20338367499e4718a487077b9e926a55c2ba5ff02433734717",
+      "truncated": false,
+      "amsi": {
+        "phase": "scan",
+        "hresult": "0x00000000",
+        "amsi_result": 32768,
+        "classification": "detected"
+      },
+      "detected_inline_scripts": []
+    },
+    {
+      "host": "api.jiaston.com",
+      "record_indices": [
+        1271
+      ],
+      "selected_source_ids": [],
+      "sample_observed_at": "2026-11-15T05:48:34.655296+00:00",
+      "sample_bytes": 477,
+      "sample_sha256": "3003d45d629f7853190e754c3f130fe4548a6368d11cb435cc768bb562c856e5",
+      "truncated": false,
+      "amsi": {
+        "phase": "scan",
+        "hresult": "0x00000000",
+        "amsi_result": 32768,
+        "classification": "detected"
+      },
+      "detected_inline_scripts": []
+    },
+    {
+      "host": "bbs.fanfanu.com",
+      "record_indices": [
+        168
+      ],
+      "selected_source_ids": [
+        "99dec828e154116574529a7c8013e0e1d08c12ccb01ffa57a1da3ee7aebb8654"
+      ],
+      "sample_observed_at": "2026-11-15T05:48:43.910732+00:00",
+      "sample_bytes": 477,
+      "sample_sha256": "b046d879f5b102c98e1e8b6db8057a27eea273bec663016228d7443fb4742216",
+      "truncated": false,
+      "amsi": {
+        "phase": "scan",
+        "hresult": "0x00000000",
+        "amsi_result": 32768,
+        "classification": "detected"
+      },
+      "detected_inline_scripts": []
+    },
+    {
+      "host": "cl.2790z.xyz",
+      "record_indices": [
+        1993
+      ],
+      "selected_source_ids": [],
+      "sample_observed_at": "2026-11-15T05:48:46.863992+00:00",
+      "sample_bytes": 474,
+      "sample_sha256": "8c5a345696a7b63bd60f405c92a50dfcccfee8d286d61673120a11f8e83d0d07",
+      "truncated": false,
+      "amsi": {
+        "phase": "scan",
+        "hresult": "0x00000000",
+        "amsi_result": 32768,
+        "classification": "detected"
+      },
+      "detected_inline_scripts": []
+    },
+    {
+      "host": "get.xiashuzhan.com",
+      "record_indices": [
+        36
+      ],
+      "selected_source_ids": [
+        "1f08fd713aac15e302299bffa11eaed3964cb16a0d6c6024cbaf0cb2e2539c9f"
+      ],
+      "sample_observed_at": "2026-11-15T05:48:55.517404+00:00",
+      "sample_bytes": 480,
+      "sample_sha256": "00120eec56ee22a5f5fa619d11cabc95375cfa07e4c754c3ac35cad3ae25d7e9",
+      "truncated": false,
+      "amsi": {
+        "phase": "scan",
+        "hresult": "0x00000000",
+        "amsi_result": 32768,
+        "classification": "detected"
+      },
+      "detected_inline_scripts": []
+    },
+    {
+      "host": "kuronavi.blog",
+      "record_indices": [
+        4838
+      ],
+      "selected_source_ids": [
+        "825bca65b0ffd75ab89a26aafc8b0f956f0075f28ee56305201766c2c86b70d0"
+      ],
+      "sample_observed_at": "2026-11-15T05:49:05.200124+00:00",
+      "sample_bytes": 475,
+      "sample_sha256": "e4c4ab6c022443f05edf474af5882fd39a4ad097b287a074e60e551cbd23fc2c",
+      "truncated": false,
+      "amsi": {
+        "phase": "scan",
+        "hresult": "0x00000000",
+        "amsi_result": 32768,
+        "classification": "detected"
+      },
+      "detected_inline_scripts": []
+    },
+    {
+      "host": "lwkk.xyz",
+      "record_indices": [
+        1222,
+        1366,
+        1959,
+        3513
+      ],
+      "selected_source_ids": [
+        "1de6d8be1459bb1df6991b86d63e4dd782ff8bb1806fd6c6f09a5e569bc722cc"
+      ],
+      "sample_observed_at": "2026-11-15T05:49:06.969485+00:00",
+      "sample_bytes": 470,
+      "sample_sha256": "f75374ad9173602d3e564b6ae7caf613f13b04c9cf1aebc75118322be6517677",
+      "truncated": false,
+      "amsi": {
+        "phase": "scan",
+        "hresult": "0x00000000",
+        "amsi_result": 32768,
+        "classification": "detected"
+      },
+      "detected_inline_scripts": []
+    },
+    {
+      "host": "m.69shu.la",
+      "record_indices": [
+        3012,
+        3558
+      ],
+      "selected_source_ids": [
+        "b0764c15a1a2830da1600ae84b8ac459a73a8dcbabe968630e10a66c9618137b"
+      ],
+      "sample_observed_at": "2026-11-15T05:49:15.100840+00:00",
+      "sample_bytes": 472,
+      "sample_sha256": "827cd97c5e5419562f1fae0145c9418f9d5437b51bcca17dd085d611cad9f5f3",
+      "truncated": false,
+      "amsi": {
+        "phase": "scan",
+        "hresult": "0x00000000",
+        "amsi_result": 32768,
+        "classification": "detected"
+      },
+      "detected_inline_scripts": []
+    },
+    {
+      "host": "m.bz001.org",
+      "record_indices": [
+        2174
+      ],
+      "selected_source_ids": [],
+      "sample_observed_at": "2026-11-15T05:49:40.959394+00:00",
+      "sample_bytes": 473,
+      "sample_sha256": "f1a9d76450a1e55dba9265c5ac7cb0079776165df49375bfbc49601cc4346e2f",
+      "truncated": false,
+      "amsi": {
+        "phase": "scan",
+        "hresult": "0x00000000",
+        "amsi_result": 32768,
+        "classification": "detected"
+      },
+      "detected_inline_scripts": [
+        {
+          "ordinal": 1,
+          "has_src_attribute": false,
+          "bytes_seen": 369,
+          "sample_bytes": 369,
+          "sample_sha256": "5ef48a12910e6f4684943b333f313b0fae7e1fe9abe4ab362613ab4b0078553b",
+          "truncated": false,
+          "closing_tag_observed": true,
+          "amsi": {
+            "phase": "scan",
+            "hresult": "0x00000000",
+            "amsi_result": 32768,
+            "classification": "detected"
+          }
+        }
+      ]
+    },
+    {
+      "host": "m.nshkedu.com",
+      "record_indices": [
+        28,
+        1307
+      ],
+      "selected_source_ids": [
+        "09ef9895c10c575590ed8152e239031f32890758849aaecdca8b03a74538d76d"
+      ],
+      "sample_observed_at": "2026-11-15T05:50:18.208258+00:00",
+      "sample_bytes": 475,
+      "sample_sha256": "6ab80b3001d8bdeac2e4877586ee78bbda3f2182c04ba15f24dff25e5c140094",
+      "truncated": false,
+      "amsi": {
+        "phase": "scan",
+        "hresult": "0x00000000",
+        "amsi_result": 32768,
+        "classification": "detected"
+      },
+      "detected_inline_scripts": []
+    },
+    {
+      "host": "s.fjwhcbsh.com",
+      "record_indices": [
+        1439,
+        2281
+      ],
+      "selected_source_ids": [
+        "49288d9a4a46a7b884896dab3a61500fb815269d48f710dbd640dfed9848bf1b"
+      ],
+      "sample_observed_at": "2026-11-15T05:51:37.252894+00:00",
+      "sample_bytes": 476,
+      "sample_sha256": "8242ac08f09dbb7f64184f5a8aecf54b2b845a92cbc6d15705d4fc2c87f2210a",
+      "truncated": false,
+      "amsi": {
+        "phase": "scan",
+        "hresult": "0x00000000",
+        "amsi_result": 32768,
+        "classification": "detected"
+      },
+      "detected_inline_scripts": []
+    },
+    {
+      "host": "shuhuang.la",
+      "record_indices": [
+        3030
+      ],
+      "selected_source_ids": [],
+      "sample_observed_at": "2026-11-15T05:51:42.064418+00:00",
+      "sample_bytes": 473,
+      "sample_sha256": "b34999bdeeb0ed8fcf8bb34cf0dcc80801ac5d0399df53913f7497ec5cdac445",
+      "truncated": false,
+      "amsi": {
+        "phase": "scan",
+        "hresult": "0x00000000",
+        "amsi_result": 32768,
+        "classification": "detected"
+      },
+      "detected_inline_scripts": []
+    },
+    {
+      "host": "wap.18biquge.com",
+      "record_indices": [
+        390,
+        2098
+      ],
+      "selected_source_ids": [
+        "5395fcb9dde14042bb1d7f37a878fe7400d5e87d0f96178b0e48561e386879e2"
+      ],
+      "sample_observed_at": "2026-11-15T05:51:47.318782+00:00",
+      "sample_bytes": 478,
+      "sample_sha256": "e333c7f787e0c3c0c4c59c7039b21281e4d0b9eb33abe9606a19117cc68ce56a",
+      "truncated": false,
+      "amsi": {
+        "phase": "scan",
+        "hresult": "0x00000000",
+        "amsi_result": 32768,
+        "classification": "detected"
+      },
+      "detected_inline_scripts": []
+    },
+    {
+      "host": "www.230book.net",
+      "record_indices": [
+        863,
+        2790,
+        2865,
+        2892
+      ],
+      "selected_source_ids": [],
+      "sample_observed_at": "2026-11-15T05:52:13.000204+00:00",
+      "sample_bytes": 477,
+      "sample_sha256": "e056cadc22a7dea3efc5299e7efe8ad3e710bedd864022ad486fc0552c071749",
+      "truncated": false,
+      "amsi": {
+        "phase": "scan",
+        "hresult": "0x00000000",
+        "amsi_result": 32768,
+        "classification": "detected"
+      },
+      "detected_inline_scripts": []
+    },
+    {
+      "host": "www.ffxs.info",
+      "record_indices": [
+        644,
+        2574
+      ],
+      "selected_source_ids": [],
+      "sample_observed_at": "2026-11-15T05:54:08.465295+00:00",
+      "sample_bytes": 475,
+      "sample_sha256": "1682f7954b9c6f306997129f232ead7d6122a67cd6edd99ac548aa4e8854f3cd",
+      "truncated": false,
+      "amsi": {
+        "phase": "scan",
+        "hresult": "0x00000000",
+        "amsi_result": 32768,
+        "classification": "detected"
+      },
+      "detected_inline_scripts": []
+    },
+    {
+      "host": "www.jpxgyw.cc",
+      "record_indices": [
+        333,
+        734
+      ],
+      "selected_source_ids": [
+        "cfbb36028127f6cc633eb8142da8ad160d68e37a53ff5160d0ff5e77b7973257"
+      ],
+      "sample_observed_at": "2026-11-15T05:54:52.155683+00:00",
+      "sample_bytes": 475,
+      "sample_sha256": "744234f586ba7d778554ceb904a6b9eb84e53e476d4c4e8a940f4c6141dcb7ae",
+      "truncated": false,
+      "amsi": {
+        "phase": "scan",
+        "hresult": "0x00000000",
+        "amsi_result": 32768,
+        "classification": "detected"
+      },
+      "detected_inline_scripts": []
+    },
+    {
+      "host": "www.lengmen.org",
+      "record_indices": [
+        450,
+        1921,
+        2318
+      ],
+      "selected_source_ids": [
+        "47e709728d21b76a1156fd1a080dd45d8dc82c1a95f8e66359533ac4d336847e",
+        "5c5cc84bbd5019fd7fc40a5effcdf9adfddca60a2f4f6885b1eb034ad4da0a93"
+      ],
+      "sample_observed_at": "2026-11-15T05:55:07.617056+00:00",
+      "sample_bytes": 477,
+      "sample_sha256": "7ac2e9bb156f7bea815170de3c7d48c9df6031587555ccb7f6740dcaf358c0e7",
+      "truncated": false,
+      "amsi": {
+        "phase": "scan",
+        "hresult": "0x00000000",
+        "amsi_result": 32768,
+        "classification": "detected"
+      },
+      "detected_inline_scripts": [
+        {
+          "ordinal": 1,
+          "has_src_attribute": false,
+          "bytes_seen": 373,
+          "sample_bytes": 373,
+          "sample_sha256": "32928c432fdc791397aad53b74a569f20f2ddab7b0ee753b5568fcc5d5e5292b",
+          "truncated": false,
+          "closing_tag_observed": true,
+          "amsi": {
+            "phase": "scan",
+            "hresult": "0x00000000",
+            "amsi_result": 32768,
+            "classification": "detected"
+          }
+        }
+      ]
+    }
+  ]
+}

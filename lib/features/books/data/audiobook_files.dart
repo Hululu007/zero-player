@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:path/path.dart' as p;
@@ -10,6 +11,7 @@ import '../../downloads/application/mp4_download.dart';
 import '../domain/book.dart';
 import 'audiobook_format.dart';
 import 'book_client.dart';
+import 'book_download_evidence.dart';
 
 export 'audiobook_format.dart';
 
@@ -53,12 +55,41 @@ final class AudiobookFiles {
     return result;
   }
 
-  Future<OfflineSession> open(Book book, BookChapter chapter) async {
-    final dir = _directory(book, chapter);
+  Future<OfflineSession> open(Book book, BookChapter chapter) =>
+      _enqueue(() async {
+        final dir = _directory(book, chapter);
+        final entry = await _entry(dir);
+        if (entry == null) throw const FormatException('该章节尚未下载');
+        return offline.open('books:${book.id}:${chapter.id}', dir, entry);
+      }, rejectIfClosedOnStart: true);
+
+  Future<OfflineSession> openProven(
+    Book book,
+    BookChapter chapter,
+    String directory,
+    BookDownloadEvidence evidence,
+  ) => _enqueue(() async {
+    final prefix = 'v2-${book.id}-${chapter.id}-';
+    if (!directory.startsWith(prefix) ||
+        !RegExp(
+          r'^v2-[a-f0-9]{64}-[a-f0-9]{64}-[a-zA-Z0-9_-]+$',
+        ).hasMatch(directory) ||
+        !evidence.describes(book, chapter)) {
+      throw const FormatException('离线音频来源记录无效');
+    }
+    final dir = Directory(p.join(root.path, directory));
+    final saved = BookDownloadEvidence.fromJson(
+      jsonDecode(
+        await File(p.join(dir.path, 'source-evidence.json')).readAsString(),
+      ),
+    );
+    if (jsonEncode(saved.toJson()) != jsonEncode(evidence.toJson())) {
+      throw const FormatException('离线音频来源记录不一致');
+    }
     final entry = await _entry(dir);
     if (entry == null) throw const FormatException('该章节尚未下载');
     return offline.open('books:${book.id}:${chapter.id}', dir, entry);
-  }
+  }, rejectIfClosedOnStart: true);
 
   Future<void> download(
     BookSource source,
@@ -67,6 +98,9 @@ final class AudiobookFiles {
     CancellationToken token,
     void Function() authorize, {
     BookChapter? targetChapter,
+    Book? originBook,
+    BookDownloadEvidence? evidence,
+    Future<void> Function(String directory)? publish,
   }) {
     if (_closed) throw StateError('音频存储已关闭');
     return _enqueue(
@@ -77,16 +111,29 @@ final class AudiobookFiles {
         targetChapter ?? chapter,
         token,
         authorize,
+        originBook ?? book,
+        evidence,
+        publish,
       ),
     );
   }
 
-  Future<void> _enqueue(Future<void> Function() action) {
+  Future<T> _enqueue<T>(
+    Future<T> Function() action, {
+    bool rejectIfClosedOnStart = false,
+  }) {
     if (_closed) throw StateError('音频存储已关闭');
+    Future<T> run() {
+      if (rejectIfClosedOnStart && _closed) {
+        throw StateError('音频存储已关闭');
+      }
+      return action();
+    }
+
     final previous = _writeQueue;
     final operation = previous == null
-        ? Future<void>.sync(action)
-        : previous.then((_) => action());
+        ? Future<T>.sync(run)
+        : previous.then((_) => run());
     _writeQueue = operation.then<void>(
       (_) {},
       onError: (Object _, StackTrace _) {},
@@ -101,11 +148,18 @@ final class AudiobookFiles {
     BookChapter targetChapter,
     CancellationToken token,
     void Function() authorize,
+    Book originBook,
+    BookDownloadEvidence? evidence,
+    Future<void> Function(String directory)? publish,
   ) async {
     if (_closed) throw StateError('音频存储已关闭');
     token.check();
     authorize();
-    if (await contains(book, targetChapter)) return;
+    if (evidence == null ||
+        publish == null ||
+        !evidence.describes(book, targetChapter)) {
+      throw const FormatException('离线音频缺少来源证据');
+    }
     // close() may run while the filesystem check is pending.
     if (_closed) throw StateError('音频存储已关闭');
     token.check();
@@ -113,7 +167,7 @@ final class AudiobookFiles {
     _running.add(token);
     Directory? staging;
     try {
-      final uri = await client.audio(source, chapter, token, book: book);
+      final uri = await client.audio(source, chapter, token, book: originBook);
       authorize();
       await root.create(recursive: true);
       final budget = await _downloadBudget();
@@ -177,12 +231,20 @@ final class AudiobookFiles {
       await File(
         p.join(staging.path, 'entry'),
       ).writeAsString(name, flush: true);
+      await File(
+        p.join(staging.path, 'source-evidence.json'),
+      ).writeAsString(jsonEncode(evidence.toJson()), flush: true);
       token.check();
       authorize();
-      final target = _directory(book, targetChapter);
-      if (await target.exists()) await target.delete(recursive: true);
+      final suffix = p.basename(staging.path).substring('.pending-'.length);
+      final directory = 'v2-${book.id}-${targetChapter.id}-$suffix';
+      final target = Directory(p.join(root.path, directory));
+      if (await target.exists()) throw const FormatException('离线音频目录冲突');
       await staging.rename(target.path);
       staging = null;
+      // Until the DB transaction publishes this immutable directory it is not
+      // reachable by playback. Failure leaves existing audio untouched.
+      await publish(directory);
     } finally {
       _running.remove(token);
       if (staging != null && await staging.exists()) {
@@ -226,6 +288,45 @@ final class AudiobookFiles {
       }
     });
   }
+
+  /// The selected files and their proof pointers share the download queue, so
+  /// a later download cannot publish between deletion and pointer cleanup.
+  Future<void> removeDownloaded(
+    Book book, {
+    BookChapter? chapter,
+    required Future<void> Function() clearProof,
+  }) => _enqueue(() async {
+    final directories = <(Directory, String)>[];
+    if (await root.exists()) {
+      final legacy = RegExp('^${book.id}-([a-f0-9]{64})\$');
+      final versioned = RegExp(
+        '^v2-${book.id}-([a-f0-9]{64})-[a-zA-Z0-9_-]+\$',
+      );
+      await for (final item in root.list(followLinks: false)) {
+        if (item is! Directory) continue;
+        if (!p.isWithin(
+          p.normalize(root.absolute.path),
+          p.normalize(item.absolute.path),
+        )) {
+          throw const FormatException('离线音频目录超出存储范围');
+        }
+        final name = p.basename(item.path);
+        final id = (legacy.firstMatch(name) ?? versioned.firstMatch(name))?[1];
+        if (id != null && (chapter == null || chapter.id == id)) {
+          directories.add((item, id));
+        }
+      }
+    }
+    for (final (_, id) in directories) {
+      if (offline.isPlaying('books:${book.id}:$id')) {
+        throw const FormatException('请先关闭正在播放的章节');
+      }
+    }
+    for (final (directory, _) in directories) {
+      await directory.delete(recursive: true);
+    }
+    await clearProof();
+  });
 
   Future<void> close() async {
     _closed = true;

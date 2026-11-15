@@ -1,13 +1,11 @@
 import 'dart:async';
-import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'package:path_provider/path_provider.dart';
 
 import '../../../app/app_services.dart';
 import '../../../core/network/cancellation_token.dart';
 import '../../../core/network/document_client.dart';
-import '../../../core/platform/file_transfer.dart';
+import '../../../core/platform/protected_book_export.dart';
 import '../../supervision/domain/supervision_rules.dart';
 import '../data/book_comic_export.dart';
 import '../data/books_repository.dart';
@@ -118,7 +116,7 @@ final class _BookDetailPageState extends State<BookDetailPage> {
   Future<void> _finishDownload(BookDownloadTask task) async {
     try {
       final saved = task.book.kind == BookKind.audio
-          ? await _books.audioFiles.saved(task.book)
+          ? await _books.savedAudio(task.book)
           : task.book.kind == BookKind.comic
           ? await _books.store.savedImages(task.book)
           : await _books.store.savedText(task.book);
@@ -163,6 +161,10 @@ final class _BookDetailPageState extends State<BookDetailPage> {
     });
     try {
       await action(token);
+    } on BookExportCleanupFailure catch (error) {
+      if (mounted) setState(() => _error = error.message);
+    } on BookExportInterrupted catch (error) {
+      if (mounted) setState(() => _error = error.message);
     } on FormatException catch (error) {
       if (mounted && !token.isCancelled) setState(() => _error = error.message);
     } on RemoteFailure catch (error) {
@@ -198,7 +200,7 @@ final class _BookDetailPageState extends State<BookDetailPage> {
           return <BookChapter>[];
         });
     final saved = _audio
-        ? await _books.audioFiles.saved(_book)
+        ? await _books.savedAudio(_book)
         : _comic
         ? await _books.store.savedImages(_book)
         : await _books.store.savedText(_book);
@@ -322,15 +324,18 @@ final class _BookDetailPageState extends State<BookDetailPage> {
   Future<void> _exportOfflineText() => _run((token) async {
     final buffer = StringBuffer('${_book.title}\n${_book.author}\n\n');
     final included = <(BookChapter, String)>[];
+    final validateOrigins = <void Function()>[];
     var exported = 0;
     for (final chapter in _chapters) {
       token.check();
       if (!_saved.contains(chapter.id)) continue;
       _books.requireBook(_book, chapter);
-      final body = await _books.store.text(_book, chapter);
+      final saved = await _books.offlineText(_book, chapter, token);
+      final body = saved.body;
       if (body == null || !_books.policy.textAllowed(body)) continue;
       buffer.write('${chapter.title}\n\n$body\n\n');
       included.add((chapter, body));
+      validateOrigins.add(() => _books.requireDownloadEvidence(saved.evidence));
       exported++;
     }
     if (exported == 0) throw const FormatException('没有可导出的离线章节');
@@ -342,13 +347,17 @@ final class _BookDetailPageState extends State<BookDetailPage> {
         _books.requireBook(_book, chapter);
         if (!_books.policy.textAllowed(body)) throw const ContentBlocked();
       }
+      for (final validateOrigin in validateOrigins) {
+        validateOrigin();
+      }
     }
 
-    validate();
-    await FileTransfer.saveText(
+    final validation = _exportValidation(token, validate);
+    await ProtectedBookExport().saveText(
       '$name.txt',
       buffer.toString(),
-      beforeWrite: validate,
+      cancellation: token,
+      validate: validation.check,
     );
     if (mounted) _toast('已导出 $exported 章');
   });
@@ -394,28 +403,39 @@ final class _BookDetailPageState extends State<BookDetailPage> {
       }
     }
 
-    validate();
+    final validation = _exportValidation(token, validate);
     final indexText = contents.join('\n');
     final zipBytes = await encodeComicArchive(files, indexText);
-    validate();
+    validation.check();
     final name = _book.title.replaceAll(RegExp(r'[\\/:*?"<>|\x00-\x1f]'), '_');
-    final directory = await (await getTemporaryDirectory()).createTemp(
-      'zero-comic-',
+    await ProtectedBookExport().saveBytes(
+      '$name.zip',
+      zipBytes,
+      'application/zip',
+      cancellation: token,
+      validate: validation.check,
     );
-    try {
-      final file = File('${directory.path}/$name.zip');
-      await file.writeAsBytes(zipBytes, flush: true);
-      await FileTransfer.saveFile(
-        file,
-        '$name.zip',
-        'application/zip',
-        beforeWrite: validate,
-      );
-      if (mounted) _toast('已导出 $chapters 章');
-    } finally {
-      await directory.delete(recursive: true);
-    }
+    if (mounted) _toast('已导出 $chapters 章');
   });
+
+  BookExportValidation _exportValidation(
+    CancellationToken token,
+    void Function() validateContent,
+  ) {
+    final book = _book;
+    final lease = _books.downloadGuard.lease();
+    return BookExportValidation(
+      cancellation: token,
+      validateContent: validateContent,
+      validateState: () {
+        if (!identical(_book, book) ||
+            (book.sourceId != 'local' && !_books.sourceRisksReady) ||
+            _books.downloadGuard.lease() != lease) {
+          throw const ContentBlocked();
+        }
+      },
+    );
+  }
 
   Future<void> _changeSource() => _run((token) async {
     final editions = await _books.alternatives(_book, token);
@@ -944,7 +964,7 @@ final class _BookDetailPageState extends State<BookDetailPage> {
                   : saved
                   ? () => _run((_) async {
                       if (_audio) {
-                        await _books.audioFiles.remove(_book, chapter);
+                        await _books.removeSavedAudio(_book, chapter: chapter);
                       } else if (_comic) {
                         await _books.store.deleteImages(_book, chapter);
                       } else {

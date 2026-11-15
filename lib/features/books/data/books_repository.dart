@@ -26,6 +26,8 @@ import 'aoaostar_book_catalog.dart';
 import 'audiobook_files.dart';
 import 'book_client.dart';
 import 'book_cover_cache.dart';
+import 'book_download_evidence.dart';
+import 'book_download_guard.dart';
 import 'book_import.dart';
 import 'book_image_payload.dart';
 import 'book_mixed_content.dart';
@@ -35,6 +37,8 @@ import 'book_store.dart';
 import 'local_book.dart';
 import 'qidian_catalog.dart';
 import 'rich_book.dart';
+
+part 'book_comic_download.dart';
 
 typedef BookEdition = ({Book book, List<BookChapter> chapters});
 typedef BookImportChanges = ({
@@ -77,6 +81,7 @@ final class BooksRepository {
     this.policy,
     Future<void> Function(File, CancellationToken, String) validateAudio, {
     int coverCacheMiB = 32,
+    this.downloadText,
   }) : store = BookStore(db),
        riskStore = BookSourceRiskStore(db),
        coverCache = BookCoverCache(
@@ -109,6 +114,8 @@ final class BooksRepository {
   Listenable get sourceRiskChanges => _sourceRiskChanges;
   bool get sourceRisksReady => _riskLoaded && !_riskSuspended;
   bool get sourceRisksSuspended => _riskSuspended;
+  bool get sourceRiskMutationPending =>
+      _evidenceMutations > 0 || _evidenceClosing;
   final BookCoverCache coverCache;
   final ContentPolicy policy;
   late bool _coverSupervisionRestricted;
@@ -127,6 +134,14 @@ final class BooksRepository {
   }
 
   final MediaHttpClient _http;
+  @visibleForTesting
+  final Future<String> Function(
+    BookSource,
+    Book,
+    BookChapter,
+    CancellationToken,
+  )?
+  downloadText;
   late final client = BookClient(DocumentClient(_http));
   late final qidian = QidianCatalog(client.network, policy, store.db);
   late final AudiobookFiles audioFiles;
@@ -134,6 +149,7 @@ final class BooksRepository {
   final _verifiedSources = <String, BookSource>{};
   final _riskSourceEntries = <String, BookSourceEntry>{};
   final _sourceAssessments = <String, BookSourceAssessment>{};
+  final _contentEpochs = <String, int>{};
   final _blockedSourceIds = <String>{};
   final _assessedAdultIds = <String>{};
   final _assessedQuarantinedIds = <String>{};
@@ -145,6 +161,45 @@ final class BooksRepository {
   int _riskGeneration = 0;
   final _refreshingSubscriptions = <String>{};
   Future<void>? _seeding;
+  int _evidenceMutations = 0;
+  bool _evidenceClosing = false;
+  Future<void>? _closing;
+  final _pendingEvidenceMutations = <Completer<void>>{};
+  @visibleForTesting
+  Future<void> Function()? beforeEvidenceMutationForTesting;
+  Future<T> _withEvidenceMutation<T>(Future<T> Function() action) async {
+    if (_evidenceClosing) throw StateError('书源服务正在关闭');
+    final done = Completer<void>();
+    _pendingEvidenceMutations.add(done);
+    _evidenceMutations++;
+    _sourceRiskChanges.value++;
+    try {
+      final before = beforeEvidenceMutationForTesting;
+      if (before != null) await before();
+      return await action();
+    } finally {
+      _evidenceMutations--;
+      _sourceRiskChanges.value++;
+      _pendingEvidenceMutations.remove(done);
+      done.complete();
+    }
+  }
+
+  BookDownloadGuard? _downloadGuard;
+  BookDownloadGuard get downloadGuard => _downloadGuard ??= BookDownloadGuard(
+    store: store,
+    risks: riskStore,
+    policy: policy,
+    sources: _riskSourceEntries,
+    verified: _verifiedSources,
+    epochs: _contentEpochs,
+    ready: () =>
+        sourceRisksReady && !_evidenceClosing && _evidenceMutations == 0,
+    bookAllowed: bookAllowed,
+    entryAllowed: _sourceEntryAllowed,
+    generation: () => _riskGeneration,
+    ensureReady: ensureSourceRiskLoaded,
+  );
 
   Future<void> ensureCatalog() async {
     if (policy.supervision.enabled || policy.supervision.corrupted) return;
@@ -208,7 +263,9 @@ final class BooksRepository {
     _riskLoaded = false;
     final generation = _riskGeneration;
     final entries = await store.sources(await _builtins);
+    await store.observeTrackedSources(entries);
     final assessments = await riskStore.all();
+    final contentEpochs = await store.contentEpochs();
     final blocked = await store.blockedSources();
     if (_riskSuspended) throw const ContentBlocked();
     // A completed mark/clear may have changed the DB while this snapshot was
@@ -220,11 +277,25 @@ final class BooksRepository {
     _sourceAssessments
       ..clear()
       ..addAll(assessments);
+    _contentEpochs
+      ..clear()
+      ..addAll(contentEpochs);
     _blockedSourceIds
       ..clear()
       ..addAll(blocked.keys);
     _rebuildAssessmentHosts();
     _riskLoaded = true;
+  }
+
+  Future<void> _refreshChangedSources() async {
+    _riskGeneration++;
+    _riskLoaded = false;
+    _sourceRiskChanges.value++;
+    try {
+      await refreshSourceRisks();
+    } finally {
+      _sourceRiskChanges.value++;
+    }
   }
 
   void suspendSourceRisks() {
@@ -314,6 +385,14 @@ final class BooksRepository {
     BookSource source, {
     bool adult = false,
     bool quarantine = false,
+  }) => _withEvidenceMutation(
+    () => _markSourceRisk(source, adult: adult, quarantine: quarantine),
+  );
+
+  Future<void> _markSourceRisk(
+    BookSource source, {
+    required bool adult,
+    required bool quarantine,
   }) async {
     if (!adult && !quarantine) throw const FormatException('没有可保存的风险证据');
     _requireSubscriptionAccess();
@@ -711,7 +790,10 @@ final class BooksRepository {
     return (books: result.books.where(bookAllowed).toList(), next: result.next);
   }
 
-  Future<void> restoreDefaultSources(BookKind kind) async {
+  Future<void> restoreDefaultSources(BookKind kind) =>
+      _withEvidenceMutation(() => _restoreDefaultSources(kind));
+
+  Future<void> _restoreDefaultSources(BookKind kind) async {
     policy.supervision.require(SensitiveOperation.channels);
     await ensureSourceRiskLoaded();
     final builtins = (await _builtins).where((s) => s.kind == kind).toList();
@@ -741,11 +823,17 @@ final class BooksRepository {
       }
       policy.supervision.require(SensitiveOperation.channels);
     }, tables: {'app_meta'});
-    _riskGeneration++;
-    await refreshSourceRisks();
+    await _refreshChangedSources();
   }
 
-  Future<void> saveSource(
+  Future<void> saveSource(BookSource source, Map<String, Object?> updates) =>
+      updates.keys.any(
+        (key) => const {'group', 'source', 'removed'}.contains(key),
+      )
+      ? _withEvidenceMutation(() => _saveSource(source, updates))
+      : _saveSource(source, updates);
+
+  Future<void> _saveSource(
     BookSource source,
     Map<String, Object?> updates,
   ) async {
@@ -784,7 +872,10 @@ final class BooksRepository {
       (key) => const {'group', 'enabled', 'removed', 'source'}.contains(key),
     )) {
       _riskGeneration++;
+      _riskLoaded = false;
+      _sourceRiskChanges.value++;
       await refreshSourceRisks();
+      _sourceRiskChanges.value++;
       if (updates.containsKey('group') || updates.containsKey('source')) {
         policy.refresh();
       }
@@ -792,6 +883,12 @@ final class BooksRepository {
   }
 
   Future<void> setSourcesEnabled(
+    BookKind kind,
+    Set<String> ids,
+    bool enabled,
+  ) => _withEvidenceMutation(() => _setSourcesEnabled(kind, ids, enabled));
+
+  Future<void> _setSourcesEnabled(
     BookKind kind,
     Set<String> ids,
     bool enabled,
@@ -811,12 +908,14 @@ final class BooksRepository {
       policy.supervision.require(SensitiveOperation.channels);
     }, tables: {'app_meta'});
     if (changed) {
-      _riskGeneration++;
-      await refreshSourceRisks();
+      await _refreshChangedSources();
     }
   }
 
-  Future<void> blockSource(BookSource source) async {
+  Future<void> blockSource(BookSource source) =>
+      _withEvidenceMutation(() => _blockSource(source));
+
+  Future<void> _blockSource(BookSource source) async {
     await ensureSourceRiskLoaded();
     await store.db.atomic(() async {
       policy.supervision.require(SensitiveOperation.channels);
@@ -955,6 +1054,24 @@ final class BooksRepository {
   }
 
   Future<BookImportChanges> importSources(
+    List<BookSource> incoming, {
+    Uri? subscription,
+    CancellationToken? token,
+    bool fromCatalog = false,
+    String? catalogRevision,
+    bool? catalogAdultFilter,
+  }) => _withEvidenceMutation(
+    () => _importSources(
+      incoming,
+      subscription: subscription,
+      token: token,
+      fromCatalog: fromCatalog,
+      catalogRevision: catalogRevision,
+      catalogAdultFilter: catalogAdultFilter,
+    ),
+  );
+
+  Future<BookImportChanges> _importSources(
     List<BookSource> incoming, {
     Uri? subscription,
     CancellationToken? token,
@@ -1121,7 +1238,11 @@ final class BooksRepository {
     }
     if (added > 0 || updated > 0) {
       _riskGeneration++;
+      _riskLoaded = false;
+      _sourceRiskChanges.value++;
       await refreshSourceRisks();
+      _sourceRiskChanges.value++;
+      policy.refresh();
     }
     if (retainedAssessments.isNotEmpty || recoveredQuarantine) {
       policy.refresh();
@@ -1166,7 +1287,10 @@ final class BooksRepository {
     return BookSource.fromJson(source.toJson()..remove('sourceKey'));
   }
 
-  Future<void> removeSource(BookSource source) async {
+  Future<void> removeSource(BookSource source) =>
+      _withEvidenceMutation(() => _removeSource(source));
+
+  Future<void> _removeSource(BookSource source) async {
     policy.supervision.require(SensitiveOperation.channels);
     await ensureSourceRiskLoaded();
     if (!sourceAllowed(source)) throw const ContentBlocked();
@@ -1200,7 +1324,10 @@ final class BooksRepository {
     }, tables: {'app_meta'});
     if (retainedEvidence != null) _rememberAssessment(retainedEvidence!);
     _riskGeneration++;
+    _riskLoaded = false;
+    _sourceRiskChanges.value++;
     await refreshSourceRisks();
+    _sourceRiskChanges.value++;
     policy.refresh();
   }
 
@@ -1633,6 +1760,150 @@ final class BooksRepository {
     }
   }
 
+  void requireDownloadEvidence(BookDownloadEvidence? evidence) {
+    if (evidence != null && !downloadGuard.allowed(evidence)) {
+      throw const ContentBlocked();
+    }
+  }
+
+  /// Existing unlabelled files remain available under the existing policy;
+  /// they are never treated as evidence for a subsequent download.
+  Future<({String? body, BookDownloadEvidence? evidence})> offlineText(
+    Book book,
+    BookChapter chapter,
+    CancellationToken token,
+  ) async {
+    token.check();
+    if (book.sourceId != 'local') await ensureSourceRiskLoaded();
+    requireBook(book, chapter);
+    final proven = await store.provenText(book, chapter);
+    if (proven != null) {
+      await downloadGuard.validate(proven.evidence);
+      token.check();
+      requireBook(book, chapter);
+      if (!policy.textAllowed(proven.body)) throw const ContentBlocked();
+      requireDownloadEvidence(proven.evidence);
+      return (body: proven.body, evidence: proven.evidence);
+    }
+    final body = await store.text(book, chapter);
+    token.check();
+    requireBook(book, chapter);
+    if (body != null && !policy.textAllowed(body)) throw const ContentBlocked();
+    return (body: body, evidence: null);
+  }
+
+  Future<Set<String>> savedAudio(Book book) async => {
+    ...await audioFiles.saved(book),
+    ...await store.provenChapters('audio', book),
+  };
+
+  /// Explicit downloads may reuse only evidence that is currently valid.
+  /// Unlabelled legacy data and stale revisions remain stored but are not
+  /// counted as a successful new download.
+  Future<Set<String>> reusableDownloads(
+    Book book,
+    Iterable<BookChapter> chapters,
+    CancellationToken token,
+  ) async {
+    if (book.kind == BookKind.comic) return store.savedImages(book);
+    final type = book.kind == BookKind.audio ? 'audio' : 'text';
+    final indexed = await store.provenChapters(type, book);
+    final result = <String>{};
+    for (final chapter in chapters) {
+      token.check();
+      if (!indexed.contains(chapter.id)) continue;
+      try {
+        if (book.kind == BookKind.audio) {
+          final audio = await store.provenAudio(book, chapter);
+          if (audio == null) continue;
+          final lease = downloadGuard.lease();
+          await downloadGuard.validate(audio.evidence, expected: lease);
+          final session = await audioFiles.openProven(
+            book,
+            chapter,
+            audio.directory,
+            audio.evidence,
+          );
+          try {
+            await downloadGuard.validate(audio.evidence, expected: lease);
+            token.check();
+          } finally {
+            session.close();
+          }
+        } else {
+          final text = await store.provenText(book, chapter);
+          if (text == null) continue;
+          await downloadGuard.validate(text.evidence);
+          if (!policy.textAllowed(text.body)) continue;
+        }
+        token.check();
+        result.add(chapter.id);
+      } on RequestCancelled {
+        rethrow;
+      } on Exception {
+        // A stale or damaged proof is not usable; a fresh download can replace
+        // the pointer while retaining all previous records and files.
+        token.check();
+      }
+    }
+    return result;
+  }
+
+  Future<void> removeSavedAudio(Book book, {BookChapter? chapter}) =>
+      audioFiles.removeDownloaded(
+        book,
+        chapter: chapter,
+        clearProof: () => store.clearProvenAudio(book, chapter: chapter),
+      );
+
+  Future<({OfflineSession session, BookDownloadEvidence? evidence})>
+  openOfflineAudio(
+    Book book,
+    BookChapter chapter,
+    CancellationToken token,
+  ) async {
+    await ensureSourceRiskLoaded();
+    token.check();
+    requireBook(book, chapter);
+    var saved = await store.provenAudio(book, chapter);
+    if (saved == null && !await audioFiles.contains(book, chapter)) {
+      await download(book, chapter, token);
+      saved = await store.provenAudio(book, chapter);
+      if (saved == null) throw const FormatException('离线音频来源记录缺失');
+    }
+    if (saved != null) {
+      final evidence = saved.evidence;
+      final lease = downloadGuard.lease();
+      await downloadGuard.validate(evidence, expected: lease);
+      token.check();
+      final session = await audioFiles.openProven(
+        book,
+        chapter,
+        saved.directory,
+        evidence,
+      );
+      try {
+        await downloadGuard.validate(evidence, expected: lease);
+        token.check();
+        requireBook(book, chapter);
+        requireDownloadEvidence(evidence);
+        return (session: session, evidence: evidence);
+      } on Object {
+        session.close();
+        rethrow;
+      }
+    }
+    final session = await audioFiles.open(book, chapter);
+    try {
+      token.check();
+      requireBook(book, chapter);
+      return (session: session, evidence: null);
+    } on Object {
+      session.close();
+      rethrow;
+    }
+  }
+
   Future<String> readText(
     Book book,
     BookChapter chapter,
@@ -1642,7 +1913,8 @@ final class BooksRepository {
     if (book.sourceId != 'local') await ensureSourceRiskLoaded();
     requireBook(book, chapter);
     if (await _blocked(book.sourceId)) throw const ContentBlocked();
-    final offline = await store.text(book, chapter);
+    final saved = await offlineText(book, chapter, token);
+    final offline = saved.body;
     var body = offline;
     List<BookChapterSegment>? mixed;
     body ??= await store.readingCache(book, chapter);
@@ -1661,6 +1933,7 @@ final class BooksRepository {
     if (await _blocked(book.sourceId)) throw const ContentBlocked();
     token.check();
     requireBook(book, chapter);
+    requireDownloadEvidence(saved.evidence);
     if (!policy.textAllowed(body)) throw const ContentBlocked();
     if (body.trim().isEmpty) throw const FormatException('章节正文为空');
     if (offline == null) {
@@ -1696,6 +1969,30 @@ final class BooksRepository {
     if (book.sourceId != 'local') await ensureSourceRiskLoaded();
     if (policy.supervision.enabled) return const [];
     requireBook(book, chapter);
+    final proven = await store.provenText(book, chapter);
+    if (proven != null) {
+      await downloadGuard.validate(proven.evidence);
+      token.check();
+      requireBook(book, chapter);
+      if (proven.evidence.origin.sourceId != book.sourceId ||
+          !proven.segments.any((part) => part is BookImageSegment)) {
+        return const [];
+      }
+      final source = await _active(book);
+      token.check();
+      requireDownloadEvidence(proven.evidence);
+      for (final part in proven.segments) {
+        switch (part) {
+          case BookTextSegment text when !policy.textAllowed(text.text):
+            throw const ContentBlocked();
+          case BookImageSegment image:
+            source.requestTarget(image.address, media: true);
+          default:
+            break;
+        }
+      }
+      return proven.segments;
+    }
     final parts = await store.mixedReading(book, chapter);
     if (!parts.any((part) => part is BookImageSegment)) return const [];
     final source = await _active(book);
@@ -1937,30 +2234,7 @@ final class BooksRepository {
   }) async {
     await ensureSourceRiskLoaded();
     if (book.kind == BookKind.comic) {
-      requireBook(book, chapter);
-      final images = await chapterImages(book, chapter, token);
-      if (images.isEmpty) throw const FormatException('章节没有可保存的图片');
-      final content = <Uri, List<int>>{};
-      for (final image in images) {
-        token.check();
-        content[image] = await chapterImageBytes(
-          book,
-          image,
-          token,
-          chapter: chapter,
-        );
-      }
-      await store.saveOfflineImages(book, chapter, content, () async {
-        token.check();
-        await _enabledSource(book.kind, book.sourceId);
-        token.check();
-        if (policy.supervision.enabled ||
-            !bookAllowed(book) ||
-            await _blocked(book.sourceId)) {
-          throw const ContentBlocked();
-        }
-        requireBook(book, chapter);
-      });
+      await _downloadComic(book, chapter, token);
       return;
     }
     requireBook(book, chapter);
@@ -1974,27 +2248,95 @@ final class BooksRepository {
     for (final (candidate, part) in candidates) {
       token.check();
       try {
+        final evidence = await downloadGuard.capture(
+          book,
+          chapter,
+          candidate,
+          part,
+        );
+        final lease = downloadGuard.lease();
+        final source = await _active(candidate);
+        void authorize() {
+          token.check();
+          if (lease != downloadGuard.lease()) throw const ContentBlocked();
+          requireBook(book, chapter);
+          requireBook(candidate, part);
+          requireDownloadEvidence(evidence);
+        }
+
+        Future<void> validate() async {
+          authorize();
+          await downloadGuard.validate(evidence, expected: lease);
+          authorize();
+        }
+
+        await validate();
         if (book.kind == BookKind.text) {
-          final body = await readText(candidate, part, token);
-          await store.db.atomic(() async {
-            if (await _blocked(book.sourceId) ||
-                await _blocked(candidate.sourceId)) {
+          // Legacy caches have no origin. Fetch fresh bytes so an old C→B
+          // fallback cannot be relabelled as a verified B→A download.
+          final freshChapter = BookChapter(
+            part.title,
+            part.uri,
+            request: part.request,
+          );
+          List<BookChapterSegment>? mixed;
+          final body = downloadText == null
+              ? await client.text(
+                  source,
+                  freshChapter,
+                  token,
+                  book: candidate,
+                  onSegments: (segments) => mixed = segments,
+                )
+              : await downloadText!(source, candidate, freshChapter, token);
+          await validate();
+          if (!policy.textAllowed(body)) throw const ContentBlocked();
+          if (body.trim().isEmpty) throw const FormatException('章节正文为空');
+          final segments =
+              candidate.sourceId == book.sourceId &&
+                  mixed != null &&
+                  mixed!.whereType<BookTextSegment>().every(
+                    (part) => policy.textAllowed(part.text),
+                  ) &&
+                  jsonEncode([
+                        for (final part in mixed!)
+                          switch (part) {
+                            BookTextSegment text => {'text': text.text},
+                            BookImageSegment image => {
+                              'image': image.address.toString(),
+                            },
+                          },
+                      ]).length <=
+                      512 * 1024
+              ? mixed!
+              : const <BookChapterSegment>[];
+          await store.saveProvenText(book, chapter, body, evidence, () async {
+            await validate();
+            if (!policy.textAllowed(body) ||
+                !segments.whereType<BookTextSegment>().every(
+                  (part) => policy.textAllowed(part.text),
+                )) {
               throw const ContentBlocked();
             }
-            token.check();
-            requireBook(book, chapter);
-            requireBook(candidate, part);
-            if (!policy.textAllowed(body)) throw const ContentBlocked();
-            await store.saveText(book, chapter, body);
-            token.check();
-          }, tables: {'app_meta'});
+          }, segments: segments);
         } else {
-          final source = await _active(candidate);
-          await audioFiles.download(source, book, part, token, () {
-            requireBook(book, chapter);
-            requireBook(candidate, part);
-            if (!sourceAllowed(source)) throw const ContentBlocked();
-          }, targetChapter: chapter);
+          await audioFiles.download(
+            source,
+            book,
+            part,
+            token,
+            authorize,
+            targetChapter: chapter,
+            originBook: candidate,
+            evidence: evidence,
+            publish: (directory) => store.saveProvenAudio(
+              book,
+              chapter,
+              directory,
+              evidence,
+              validate,
+            ),
+          );
         }
         return;
       } on ContentBlocked {
@@ -2110,8 +2452,29 @@ final class BooksRepository {
     }
   }, tables: {'app_meta'});
 
-  Future<void> close() async {
+  Future<void> close() {
+    final running = _closing;
+    if (running != null) return running;
+    _evidenceClosing = true;
+    final done = Completer<void>();
+    _closing = done.future;
+    unawaited(
+      _close().then<void>(
+        (_) => done.complete(),
+        onError: (Object error, StackTrace stack) =>
+            done.completeError(error, stack),
+      ),
+    );
+    return done.future;
+  }
+
+  Future<void> _close() async {
+    _sourceRiskChanges.value++;
+    await Future.wait(
+      _pendingEvidenceMutations.map((done) => done.future).toList(),
+    );
     policy.removeListener(_coverPolicyChanged);
+    _downloadGuard?.dispose();
     _sourceRiskChanges.dispose();
     _http.close();
     await audioFiles.close();

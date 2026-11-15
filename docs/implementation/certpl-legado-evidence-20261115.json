@@ -1,0 +1,58 @@
+{
+  "method": "Offline local comparison only; no catalog URLs requested and no source rules executed.",
+  "source": {
+    "endpoint": "https://hole.cert.pl/domains/v2/domains.csv",
+    "description_and_terms_url": "https://cert.pl/en/warning-list/",
+    "usage_terms": "Provider permits any purpose including commercial use; no provider endorsement or warranty.",
+    "scope": "Domains used for phishing targeting Polish users; not a comprehensive malware feed.",
+    "observed_at": "2026-11-15T05:22:22.605541+00:00",
+    "status": 200,
+    "content_type": "application/octet-stream",
+    "last_modified": "Sun, 15 Nov 2026 05:20:04 GMT",
+    "etag": "\"6af94104-697463\"",
+    "bytes": 6911075,
+    "sha256": "13b74eeffde9f991da8efd9f84934b60fe88ce560fda6ab20a683c0ad1bd6069",
+    "records_by_status": {
+      "active_in_snapshot": 123918,
+      "withdrawn": 44
+    },
+    "time_ranges": {
+      "first_added_at": "2026-05-15T05:20:13+00:00",
+      "last_added_at": "2026-11-15T04:03:06+00:00",
+      "last_removed_at": "2026-11-10T11:14:15+00:00"
+    },
+    "retention_and_withdrawal": "Provider v2 is limited to the last six months; an entry with a past removal timestamp is withdrawn. An absent or removed entry is not grounds for blocking. Active here means present without removal at observation, not presently valid."
+  },
+  "catalog": {
+    "archive_sha256": "012a0e0d6e6adc8d303c32b578510e14b562088b3e965cb01a1a647b5e7e034d",
+    "raw_records": 4845,
+    "endpoint_hosts": 2010,
+    "unresolved_endpoint_records": 81,
+    "import_inventory_sha256": "ad4e347888cad71812ee7da9477f027baf0bee5bceb1d4247fc69d6c4df8764c",
+    "import_inventory_generated_at": "2026-11-15T02:32:19.183484Z",
+    "importer_code_sha256": {
+      "lib/features/books/data/book_import.dart": "5c27a8cac7806ca8854672f89fcc90d0d98e5ab25b92ec4fc13f094bfe93a629",
+      "lib/features/books/data/legado/legado_import.dart": "3d4f0f1fb848c26bf65a0eec25373bc993403576634c60524dc17c5a6e217b69",
+      "lib/features/books/domain/book.dart": "c0aec8fc6c82eef58dba4047654e8c75a8ef45e6bcfb5e9e185880609b09583f",
+      "lib/features/books/domain/legado_source.dart": "5b907923968332090760ecc9f4d6f7e652aa06501ac7981b5f477ef7c0d954d1"
+    },
+    "selected_source_ids": 2139,
+    "selected_source_hosts": 1541,
+    "selected_sources_without_valid_host": 0,
+    "scope": "All catalog records: statically extracted endpoint hosts, normalized hosts of the selected imported sources and syntactically valid literal HTTP(S) URL hosts from every string field, including comments and scripts. Literal mentions are not proof of execution. Dynamic, nonliteral, malformed or credential-bearing URLs are not fully covered.",
+    "literal_url_occurrences": 52806,
+    "unique_compared_hosts": 2720
+  },
+  "comparison": {
+    "rule": "Case-insensitive IDNA DNS-label equality or a listed parent domain of the catalog host; no parent, sibling, substring, URL-path or shared-IP inference.",
+    "matching_host_indicator_pairs": 0,
+    "matching_hosts": 0,
+    "matches": []
+  },
+  "reproduction": "Pass this evidence file as --metadata along with the original local TSV and pinned import inventory. The TSV is intentionally not committed: recovering identical bytes requires a separately retained snapshot; a new download may have changed and needs new metadata.",
+  "limitations": [
+    "No match does not establish safety, absence of malware, or current/future availability.",
+    "This domain-only feed cannot establish an exact URL match or identify malicious paths on shared hosts.",
+    "Snapshot and importer evidence are historical; they do not describe subsequent feed or code changes."
+  ]
+}

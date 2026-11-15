@@ -1,0 +1,135 @@
+{
+  "host": "www.4qo.net",
+  "record_indices": [
+    2031
+  ],
+  "selected_source_ids": [],
+  "prior_result_file_sha256": "04dd4ee143e9de7fc6d16ab649fbe9796bae40f7c045bfdb7632e6b4ad5061c8",
+  "prior_sample_sha256": "81aff21c048bae20338367499e4718a487077b9e926a55c2ba5ff02433734717",
+  "started_at": "2026-11-15T05:47:40.375923+00:00",
+  "method": "Fresh bounded anonymous HTTPS root GET; public DNS fixed IP; no redirects, credentials, scripts or subresources. Static patterns and AMSI scan in memory only.",
+  "limitations": "Indicators are clues, not a malware verdict; absence of a marker does not prove safety. AMSI may use provider cloud protection.",
+  "controls": {
+    "observed_at": "2026-11-15T05:47:40.583299+00:00",
+    "negative": {
+      "phase": "scan",
+      "hresult": "0x00000000",
+      "amsi_result": 1,
+      "classification": "not_detected"
+    },
+    "eicar": {
+      "phase": "scan",
+      "hresult": "0x00000000",
+      "amsi_result": 32768,
+      "classification": "detected"
+    },
+    "html_wrapped_eicar": {
+      "phase": "scan",
+      "hresult": "0x00000000",
+      "amsi_result": 1,
+      "classification": "not_detected"
+    },
+    "inline_script_with_eicar": {
+      "phase": "scan",
+      "hresult": "0x00000000",
+      "amsi_result": 1,
+      "classification": "not_detected"
+    },
+    "passed": true
+  },
+  "http_status": 200,
+  "content_type": "text/html",
+  "truncated": false,
+  "sample_bytes": 636,
+  "sample_sha256": "81aff21c048bae20338367499e4718a487077b9e926a55c2ba5ff02433734717",
+  "sample_observed_at": "2026-11-15T05:47:40.811431+00:00",
+  "same_sha256_as_prior": true,
+  "structural_indicators": {
+    "complete_eicar_control_present": false,
+    "eicar_word_present_case_insensitive": false,
+    "contains_404_text": true,
+    "meta_refresh_pattern_present": false,
+    "iframe_tag_present": false,
+    "script_location_reference_present": false,
+    "script_eval_reference_present": false,
+    "script_base64_decode_reference_present": true,
+    "script_document_write_reference_present": false,
+    "external_script_attribute_present": false
+  },
+  "amsi": {
+    "phase": "scan",
+    "hresult": "0x00000000",
+    "amsi_result": 32768,
+    "classification": "detected"
+  },
+  "inline_scripts": {
+    "script_tags_observed": 1,
+    "nonempty_inline_scripts_observed": 1,
+    "inline_scripts_selected": 1,
+    "inline_scripts_omitted": 0,
+    "scanned_samples": [
+      {
+        "ordinal": 1,
+        "has_src_attribute": false,
+        "bytes_seen": 140,
+        "sample_bytes": 140,
+        "sample_sha256": "4824cd1f47232df34092311c66445638a8b9b6deb893a7988ffff3b7974ef212",
+        "truncated": false,
+        "closing_tag_observed": true,
+        "amsi": {
+          "phase": "scan",
+          "hresult": "0x00000000",
+          "amsi_result": 1,
+          "classification": "not_detected"
+        }
+      }
+    ]
+  },
+  "bounded_segment_scans": [
+    {
+      "offset": 0,
+      "sample_bytes": 159,
+      "sample_sha256": "32d851964e950b634084ce23e75fe50b65ef9497a4a388c6250d55ab551b5921",
+      "amsi": {
+        "phase": "scan",
+        "hresult": "0x00000000",
+        "amsi_result": 1,
+        "classification": "not_detected"
+      }
+    },
+    {
+      "offset": 159,
+      "sample_bytes": 159,
+      "sample_sha256": "36761bd5db8bcc23d25b309d426665cf2530817096dae1a87c8907cc04bbdf65",
+      "amsi": {
+        "phase": "scan",
+        "hresult": "0x00000000",
+        "amsi_result": 1,
+        "classification": "not_detected"
+      }
+    },
+    {
+      "offset": 318,
+      "sample_bytes": 159,
+      "sample_sha256": "add89accd6abb227c1453cb1a2bb0c9d478114e0f595d91223f6591a81f87ebb",
+      "amsi": {
+        "phase": "scan",
+        "hresult": "0x00000000",
+        "amsi_result": 1,
+        "classification": "not_detected"
+      }
+    },
+    {
+      "offset": 477,
+      "sample_bytes": 159,
+      "sample_sha256": "9eb77bd26b2bf20965983e61eb6681f6691a23c44d8dd58be7d6d8e1ce7e1b87",
+      "amsi": {
+        "phase": "scan",
+        "hresult": "0x00000000",
+        "amsi_result": 1,
+        "classification": "not_detected"
+      }
+    }
+  ],
+  "completed_at": "2026-11-15T05:47:41.031432+00:00"
+}

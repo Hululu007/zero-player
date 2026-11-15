@@ -1,0 +1,3395 @@
+{
+  "method": "Offline-only match of exact DNS names or explicitly listed parent domains. No websites visited, rules executed, or user data read or uploaded.",
+  "source": {
+    "repository": "https://github.com/blocklistproject/Lists",
+    "revision": "ee3bdbaddf49c756cf3340bb2e6a9dee5282d1c6",
+    "commit_date": "2026-07-20T13:05:33Z",
+    "tree": "b8cf4bdbdf55e6092439c6e31639e8d35490f4f3",
+    "tree_metadata_url": "https://api.github.com/repos/blocklistproject/Lists/git/trees/b8cf4bdbdf55e6092439c6e31639e8d35490f4f3",
+    "repository_license_declaration": "Unlicense (repository LICENSE and README)",
+    "license_file": {
+      "url": "https://raw.githubusercontent.com/blocklistproject/Lists/ee3bdbaddf49c756cf3340bb2e6a9dee5282d1c6/LICENSE",
+      "observed_at": "2026-11-15T13:10:36.013045+00:00",
+      "completed_at": "2026-11-15T13:10:36.611176+00:00",
+      "status": 200,
+      "content_type": "text/plain; charset=utf-8",
+      "etag": "\"146bd39d54b503e154dc47a4bb92afdc2cf9c4b7f1f0b5cb7c4f2ef04e4a108b\"",
+      "bytes": 1211,
+      "git_blob_sha1": "fdddb29aa445bf3d6a5d843d6dd77e10a9f99657",
+      "sha256": "6b0382b16279f26ff69014300541967a356a666eb0b91b422f6862f6b7dad17e",
+      "file_header": {}
+    },
+    "readme_file": {
+      "url": "https://raw.githubusercontent.com/blocklistproject/Lists/ee3bdbaddf49c756cf3340bb2e6a9dee5282d1c6/README.md",
+      "observed_at": "2026-11-15T13:10:36.611272+00:00",
+      "completed_at": "2026-11-15T13:10:37.591957+00:00",
+      "status": 200,
+      "content_type": "text/plain; charset=utf-8",
+      "etag": "\"97229a5d5cd6fd20f9a50e223f3f0f45ecfe1645bef641ace9658ff16dcafa27\"",
+      "bytes": 23229,
+      "git_blob_sha1": "ef5cfe9523743ef708603f983c5db9e457b7f65a",
+      "sha256": "0bf3a6a013e63cccbc6da754a8c1ef5b7d0807236988473940885609f40f13f0",
+      "file_header": {}
+    },
+    "license_caveat": "The repository declares Unlicense; malware, phishing and porn file headers say MIT, while gambling has no license field in its leading header. Upstream data rights and redistribution terms have not been determined.",
+    "snapshot_manifest_sha256": "8178dec1c61f84fb12e991eb9aa6abe6fdc60227646684492d1cf03baab6acf6"
+  },
+  "catalog": {
+    "archive_sha256": "012a0e0d6e6adc8d303c32b578510e14b562088b3e965cb01a1a647b5e7e034d",
+    "raw_records": 4845,
+    "unresolved_endpoint_records": 81,
+    "import_inventory_sha256": "ad4e347888cad71812ee7da9477f027baf0bee5bceb1d4247fc69d6c4df8764c",
+    "import_inventory_generated_at": "2026-11-15T02:32:19.183484Z",
+    "importer_code_sha256": {
+      "lib/features/books/data/book_import.dart": "5c27a8cac7806ca8854672f89fcc90d0d98e5ab25b92ec4fc13f094bfe93a629",
+      "lib/features/books/data/legado/legado_import.dart": "3d4f0f1fb848c26bf65a0eec25373bc993403576634c60524dc17c5a6e217b69",
+      "lib/features/books/domain/book.dart": "c0aec8fc6c82eef58dba4047654e8c75a8ef45e6bcfb5e9e185880609b09583f",
+      "lib/features/books/domain/legado_source.dart": "5b907923968332090760ecc9f4d6f7e652aa06501ac7981b5f477ef7c0d954d1"
+    },
+    "selected_source_ids": 2139,
+    "selected_source_hosts": 1541,
+    "literal_url_occurrences": 52806,
+    "unique_compared_hosts": 2720,
+    "scope": "Original 4845 bundled records: declared endpoints and literal HTTP(S) hosts in all fields, plus the 2139 selected imported IDs. Field references can be comments or script text and do not prove that a host was contacted."
+  },
+  "audit_script_sha256": {
+    "tool/audit_blocklistproject_legado.py": "343d306cb884dd8b0acb8cd5354f5bd83fc91d8b6797501001bccf01cdd61267",
+    "tool/fetch_blocklistproject_snapshot.py": "d5dc99210a42455cd1443a7ec4ea2a7a99cc5d0f5eaaa4e0d2cc924699c6ab3a",
+    "tool/audit_certpl_legado.py": "236250bc91496cce6d3af1bc04c3dfc0932f079f017f1b3eaa56705a766589f5",
+    "tool/audit_legado_catalog.py": "36f5359259ba259e84ae10875be6383884ad0cc71e829f029dd96b6dc9976563",
+    "tool/audit_legado_rule_patterns.py": "8f411753eaa514acb82d625fc3433f8be9ef0cc091811c1b555220b5dd0abb5a",
+    "tool/triage_legado_eval_candidates.py": "459ec7c8a6111d1f853bf21fe0a065dcf3e6aa48f2a8a45fa2383b14827d4a7b"
+  },
+  "manual_review_metadata": {
+    "uaa_novel": {
+      "source_id": "08b828adf2d0154db83894b6b77db3defa9dfae30de8a832fc26a5f7c72cbe07",
+      "historical_selected_record_index": 989,
+      "basis": "These are bundled source category labels, not a fresh website observation.",
+      "records": [
+        {
+          "record_index": 989,
+          "last_update_time": 1692613811576,
+          "discovery_field_sha256": "7c8dfc898783d6067314d0e89f98742ef4383c48ea22fa4da9d005a58698ded1",
+          "category_count": 49,
+          "explicit_category_examples": [
+            "家庭乱伦",
+            "调教虐待"
+          ],
+          "adult_level_filter_sequence": [
+            "肉量·全部",
+            "少肉",
+            "中肉",
+            "多肉",
+            "超多"
+          ]
+        },
+        {
+          "record_index": 3116,
+          "last_update_time": 1692613811576,
+          "discovery_field_sha256": "7c8dfc898783d6067314d0e89f98742ef4383c48ea22fa4da9d005a58698ded1",
+          "category_count": 49,
+          "explicit_category_examples": [
+            "家庭乱伦",
+            "调教虐待"
+          ],
+          "adult_level_filter_sequence": [
+            "肉量·全部",
+            "少肉",
+            "中肉",
+            "多肉",
+            "超多"
+          ]
+        }
+      ]
+    }
+  },
+  "comparison": {
+    "rule": "Match case-insensitive IDNA DNS labels exactly or a listed parent of the catalog host; never reverse the relation or match siblings, substrings, paths, shared IPs, or dynamic domains.",
+    "total_distinct_matching_hosts": 33,
+    "categories": {
+      "malware": {
+        "source": {
+          "url": "https://raw.githubusercontent.com/blocklistproject/Lists/ee3bdbaddf49c756cf3340bb2e6a9dee5282d1c6/malware.txt",
+          "observed_at": "2026-11-15T13:10:42.302385+00:00",
+          "completed_at": "2026-11-15T13:11:36.602174+00:00",
+          "status": 200,
+          "content_type": "text/plain; charset=utf-8",
+          "etag": "\"3457fc2705c2ab9537ad1e8eb631973b20c5d63da9ca4d0f4cf6b6ccef70a2d8\"",
+          "bytes": 72161681,
+          "git_blob_sha1": "2c588b9044ffd92c13ae58d66c168ab76b01a18b",
+          "sha256": "0b439fa1a71f1482eaf922321ee7c824beabebdd81173b68ead7e4ffa07e0115",
+          "file_header": {
+            "title": "Malware Block List",
+            "description": "Malware distribution domains",
+            "license": "MIT",
+            "last_modified": "2026-07-18 23:57:33 UTC",
+            "format": "hosts",
+            "entries": "2,656,393"
+          }
+        },
+        "parse_stats": {
+          "empty_or_comment": 13,
+          "invalid_domain_tokens": 68,
+          "domain_tokens": 2656325,
+          "sinkhole_mapping": 2656393,
+          "invalid_tokens_with_underscore": 68
+        },
+        "matching_hosts": 16,
+        "matching_host_indicator_pairs": 16,
+        "selected_source_ids_with_matching_reference": 15,
+        "selected_sources_by_relation": {
+          "exact_endpoint": [
+            {
+              "source_id": "11880289e42a01f4c52b6dcbea27624ec633b4bea97347d3340bba4b3ac439b7",
+              "name": "久久小说①",
+              "kind": "text",
+              "source_endpoint_host": "fu44.pw",
+              "selected_record_index": 3316,
+              "signals": [
+                {
+                  "catalog_host": "fu44.pw",
+                  "listed_domain": "fu44.pw",
+                  "relation": "exact",
+                  "fields": [
+                    "bookSourceUrl",
+                    "declared_endpoint",
+                    "exploreUrl",
+                    "searchUrl",
+                    "selected_imported_host"
+                  ]
+                }
+              ]
+            }
+          ],
+          "listed_parent_endpoint": [
+            {
+              "source_id": "00340d93028a42e3b86600b9e91ef285f4fefdc0372f2c60cd36d8850159eee8",
+              "name": "♝✎笔趣阁⑬③",
+              "kind": "text",
+              "source_endpoint_host": "www.yuanzunxs.cc",
+              "selected_record_index": 1685,
+              "signals": [
+                {
+                  "catalog_host": "www.yuanzunxs.cc",
+                  "listed_domain": "yuanzunxs.cc",
+                  "relation": "listed_parent",
+                  "fields": [
+                    "bookSourceUrl",
+                    "bookUrlPattern",
+                    "declared_endpoint",
+                    "ruleSearch.coverUrl",
+                    "searchUrl",
+                    "selected_imported_host"
+                  ]
+                }
+              ]
+            },
+            {
+              "source_id": "03c21059485d0eb60b46ebe2e97026b34733bb8b03426b7e23a29ccffe679f0d",
+              "name": "笔趣阁⑬③",
+              "kind": "text",
+              "source_endpoint_host": "www.yuanzunxs.cc",
+              "selected_record_index": 3311,
+              "signals": [
+                {
+                  "catalog_host": "www.yuanzunxs.cc",
+                  "listed_domain": "yuanzunxs.cc",
+                  "relation": "listed_parent",
+                  "fields": [
+                    "bookSourceUrl",
+                    "bookUrlPattern",
+                    "declared_endpoint",
+                    "ruleSearch.coverUrl",
+                    "searchUrl",
+                    "selected_imported_host"
+                  ]
+                }
+              ]
+            },
+            {
+              "source_id": "3206775ccea17aaa7c010bf822a04da384819ae82d4ee94acd3cde06ba2cf837",
+              "name": "漫小肆韩漫",
+              "kind": "text",
+              "source_endpoint_host": "www.jjmh.top",
+              "selected_record_index": 4223,
+              "signals": [
+                {
+                  "catalog_host": "www.jjmh.top",
+                  "listed_domain": "jjmh.top",
+                  "relation": "listed_parent",
+                  "fields": [
+                    "bookSourceUrl",
+                    "declared_endpoint",
+                    "selected_imported_host"
+                  ]
+                }
+              ]
+            },
+            {
+              "source_id": "579f77abbbbe0d480ebcf75b9aca291c573954fac9496263f2747ac0dd2e0156",
+              "name": "新笔趣阁",
+              "kind": "text",
+              "source_endpoint_host": "m.newbiquge.org",
+              "selected_record_index": 3107,
+              "signals": [
+                {
+                  "catalog_host": "m.newbiquge.org",
+                  "listed_domain": "newbiquge.org",
+                  "relation": "listed_parent",
+                  "fields": [
+                    "bookSourceUrl",
+                    "bookUrlPattern",
+                    "declared_endpoint",
+                    "searchUrl",
+                    "selected_imported_host"
+                  ]
+                }
+              ]
+            },
+            {
+              "source_id": "785cdc990d599991d1f3252b4718154312fcba3b56c20dea3f580d2d80258d64",
+              "name": "耽美小说网",
+              "kind": "text",
+              "source_endpoint_host": "www.blxsw.cc",
+              "selected_record_index": 4832,
+              "signals": [
+                {
+                  "catalog_host": "www.blxsw.cc",
+                  "listed_domain": "blxsw.cc",
+                  "relation": "listed_parent",
+                  "fields": [
+                    "bookSourceUrl",
+                    "declared_endpoint",
+                    "selected_imported_host"
+                  ]
+                }
+              ]
+            },
+            {
+              "source_id": "80a04e50867288cf60ffd2769bde2db23261ed2ed2bd5ea0940ccd6a9ce13325",
+              "name": "漫小肆20251217",
+              "kind": "comic",
+              "source_endpoint_host": "www.jjmh.top",
+              "selected_record_index": 4833,
+              "signals": [
+                {
+                  "catalog_host": "www.jjmh.top",
+                  "listed_domain": "jjmh.top",
+                  "relation": "listed_parent",
+                  "fields": [
+                    "bookSourceUrl",
+                    "declared_endpoint",
+                    "searchUrl",
+                    "selected_imported_host"
+                  ]
+                }
+              ]
+            },
+            {
+              "source_id": "87d398aba568c0d4f582e4513d4ed5846e8602418a41bb8cd4caa4c1cef76280",
+              "name": "🔥 腐小说网",
+              "kind": "text",
+              "source_endpoint_host": "www.fxsw.cc",
+              "selected_record_index": 1355,
+              "signals": [
+                {
+                  "catalog_host": "www.fxsw.cc",
+                  "listed_domain": "fxsw.cc",
+                  "relation": "listed_parent",
+                  "fields": [
+                    "bookSourceUrl",
+                    "declared_endpoint",
+                    "selected_imported_host"
+                  ]
+                }
+              ]
+            },
+            {
+              "source_id": "bdc4291851fab1e11b1c99448c7177f2d57c151072ca3b83539ec4f83ae38387",
+              "name": "侠客小说",
+              "kind": "text",
+              "source_endpoint_host": "www.tcknh.com",
+              "selected_record_index": 3053,
+              "signals": [
+                {
+                  "catalog_host": "www.tcknh.com",
+                  "listed_domain": "tcknh.com",
+                  "relation": "listed_parent",
+                  "fields": [
+                    "bookSourceUrl",
+                    "declared_endpoint",
+                    "selected_imported_host"
+                  ]
+                }
+              ]
+            },
+            {
+              "source_id": "d46eab3d5dbd9b6550cced538c8c999b87a1bd37f3574c10f8a2dcda342c7c79",
+              "name": "殆知阁",
+              "kind": "text",
+              "source_endpoint_host": "www.daizhige.org",
+              "selected_record_index": 457,
+              "signals": [
+                {
+                  "catalog_host": "www.daizhige.org",
+                  "listed_domain": "daizhige.org",
+                  "relation": "listed_parent",
+                  "fields": [
+                    "bookSourceUrl",
+                    "declared_endpoint",
+                    "searchUrl",
+                    "selected_imported_host"
+                  ]
+                }
+              ]
+            },
+            {
+              "source_id": "d83830bb838b2fd9ea4aaf04986846e6d3fdfaeec660b17db8f6e0877aead2a2",
+              "name": "侠客小说",
+              "kind": "text",
+              "source_endpoint_host": "m.tcknh.com",
+              "selected_record_index": 3747,
+              "signals": [
+                {
+                  "catalog_host": "m.tcknh.com",
+                  "listed_domain": "tcknh.com",
+                  "relation": "listed_parent",
+                  "fields": [
+                    "bookSourceUrl",
+                    "declared_endpoint",
+                    "searchUrl",
+                    "selected_imported_host"
+                  ]
+                }
+              ]
+            },
+            {
+              "source_id": "fbe121ae8f0bb57c6b34b95fea013c2844350c2bd142b5c978a695d09f7dca97",
+              "name": "🍁笔趣阁⑧⑨",
+              "kind": "text",
+              "source_endpoint_host": "www.108shu.com",
+              "selected_record_index": 984,
+              "signals": [
+                {
+                  "catalog_host": "www.108shu.com",
+                  "listed_domain": "108shu.com",
+                  "relation": "listed_parent",
+                  "fields": [
+                    "bookSourceUrl",
+                    "bookUrlPattern",
+                    "declared_endpoint",
+                    "searchUrl",
+                    "selected_imported_host"
+                  ]
+                }
+              ]
+            }
+          ],
+          "other_fields_only": [
+            {
+              "source_id": "8655daf88fd9f3ad8024896e3ec8fdd36ca3a92ba040cf41a614c2ff2f108a8c",
+              "name": "猫耳FM",
+              "kind": "audio",
+              "source_endpoint_host": "www.missevan.com",
+              "selected_record_index": 4421,
+              "signals": [
+                {
+                  "catalog_host": "static.missevan.com",
+                  "listed_domain": "static.missevan.com",
+                  "relation": "exact",
+                  "fields": [
+                    "ruleContent.content"
+                  ]
+                }
+              ]
+            },
+            {
+              "source_id": "97c59c931f045c136e0b77f546e843e1c07ec8187aa951d524b89a69fd59a06a",
+              "name": "腐小说🎃#2",
+              "kind": "text",
+              "source_endpoint_host": "www.fxshu.top",
+              "selected_record_index": 4264,
+              "signals": [
+                {
+                  "catalog_host": "inews.gtimg.com",
+                  "listed_domain": "gtimg.com",
+                  "relation": "listed_parent",
+                  "fields": [
+                    "ruleExplore.coverUrl",
+                    "ruleSearch.coverUrl"
+                  ]
+                }
+              ]
+            },
+            {
+              "source_id": "f34ff874709b831b18d04de349d7bf67ace5a32113cb7ad8492860e88645729f",
+              "name": "腐万小说",
+              "kind": "text",
+              "source_endpoint_host": "www.fxshu.top",
+              "selected_record_index": 4309,
+              "signals": [
+                {
+                  "catalog_host": "inews.gtimg.com",
+                  "listed_domain": "gtimg.com",
+                  "relation": "listed_parent",
+                  "fields": [
+                    "ruleExplore.coverUrl",
+                    "ruleSearch.coverUrl"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "matches": [
+          {
+            "catalog_host": "fu44.pw",
+            "listed_domain": "fu44.pw",
+            "relation": "exact",
+            "category": "malware",
+            "catalog_references": [
+              {
+                "record_index": 516,
+                "field": "bookSourceUrl",
+                "source_id": "11880289e42a01f4c52b6dcbea27624ec633b4bea97347d3340bba4b3ac439b7",
+                "selected_version": false
+              },
+              {
+                "record_index": 516,
+                "field": "declared_endpoint",
+                "source_id": "11880289e42a01f4c52b6dcbea27624ec633b4bea97347d3340bba4b3ac439b7",
+                "selected_version": false
+              },
+              {
+                "record_index": 516,
+                "field": "exploreUrl",
+                "source_id": "11880289e42a01f4c52b6dcbea27624ec633b4bea97347d3340bba4b3ac439b7",
+                "selected_version": false
+              },
+              {
+                "record_index": 516,
+                "field": "searchUrl",
+                "source_id": "11880289e42a01f4c52b6dcbea27624ec633b4bea97347d3340bba4b3ac439b7",
+                "selected_version": false
+              },
+              {
+                "record_index": 3156,
+                "field": "bookSourceUrl",
+                "source_id": "11880289e42a01f4c52b6dcbea27624ec633b4bea97347d3340bba4b3ac439b7",
+                "selected_version": false
+              },
+              {
+                "record_index": 3156,
+                "field": "declared_endpoint",
+                "source_id": "11880289e42a01f4c52b6dcbea27624ec633b4bea97347d3340bba4b3ac439b7",
+                "selected_version": false
+              },
+              {
+                "record_index": 3156,
+                "field": "exploreUrl",
+                "source_id": "11880289e42a01f4c52b6dcbea27624ec633b4bea97347d3340bba4b3ac439b7",
+                "selected_version": false
+              },
+              {
+                "record_index": 3156,
+                "field": "searchUrl",
+                "source_id": "11880289e42a01f4c52b6dcbea27624ec633b4bea97347d3340bba4b3ac439b7",
+                "selected_version": false
+              },
+              {
+                "record_index": 3316,
+                "field": "bookSourceUrl",
+                "source_id": "11880289e42a01f4c52b6dcbea27624ec633b4bea97347d3340bba4b3ac439b7",
+                "selected_version": true
+              },
+              {
+                "record_index": 3316,
+                "field": "declared_endpoint",
+                "source_id": "11880289e42a01f4c52b6dcbea27624ec633b4bea97347d3340bba4b3ac439b7",
+                "selected_version": true
+              },
+              {
+                "record_index": 3316,
+                "field": "exploreUrl",
+                "source_id": "11880289e42a01f4c52b6dcbea27624ec633b4bea97347d3340bba4b3ac439b7",
+                "selected_version": true
+              },
+              {
+                "record_index": 3316,
+                "field": "searchUrl",
+                "source_id": "11880289e42a01f4c52b6dcbea27624ec633b4bea97347d3340bba4b3ac439b7",
+                "selected_version": true
+              },
+              {
+                "record_index": 3316,
+                "field": "selected_imported_host",
+                "source_id": "11880289e42a01f4c52b6dcbea27624ec633b4bea97347d3340bba4b3ac439b7",
+                "selected_version": true
+              }
+            ]
+          },
+          {
+            "catalog_host": "inews.gtimg.com",
+            "listed_domain": "gtimg.com",
+            "relation": "listed_parent",
+            "category": "malware",
+            "catalog_references": [
+              {
+                "record_index": 4264,
+                "field": "ruleExplore.coverUrl",
+                "source_id": "97c59c931f045c136e0b77f546e843e1c07ec8187aa951d524b89a69fd59a06a",
+                "selected_version": true
+              },
+              {
+                "record_index": 4264,
+                "field": "ruleSearch.coverUrl",
+                "source_id": "97c59c931f045c136e0b77f546e843e1c07ec8187aa951d524b89a69fd59a06a",
+                "selected_version": true
+              },
+              {
+                "record_index": 4309,
+                "field": "ruleExplore.coverUrl",
+                "source_id": "f34ff874709b831b18d04de349d7bf67ace5a32113cb7ad8492860e88645729f",
+                "selected_version": true
+              },
+              {
+                "record_index": 4309,
+                "field": "ruleSearch.coverUrl",
+                "source_id": "f34ff874709b831b18d04de349d7bf67ace5a32113cb7ad8492860e88645729f",
+                "selected_version": true
+              }
+            ]
+          },
+          {
+            "catalog_host": "m.newbiquge.org",
+            "listed_domain": "newbiquge.org",
+            "relation": "listed_parent",
+            "category": "malware",
+            "catalog_references": [
+              {
+                "record_index": 489,
+                "field": "bookSourceUrl",
+                "source_id": "579f77abbbbe0d480ebcf75b9aca291c573954fac9496263f2747ac0dd2e0156",
+                "selected_version": false
+              },
+              {
+                "record_index": 489,
+                "field": "bookUrlPattern",
+                "source_id": "579f77abbbbe0d480ebcf75b9aca291c573954fac9496263f2747ac0dd2e0156",
+                "selected_version": false
+              },
+              {
+                "record_index": 489,
+                "field": "declared_endpoint",
+                "source_id": "579f77abbbbe0d480ebcf75b9aca291c573954fac9496263f2747ac0dd2e0156",
+                "selected_version": false
+              },
+              {
+                "record_index": 489,
+                "field": "searchUrl",
+                "source_id": "579f77abbbbe0d480ebcf75b9aca291c573954fac9496263f2747ac0dd2e0156",
+                "selected_version": false
+              },
+              {
+                "record_index": 3107,
+                "field": "bookSourceUrl",
+                "source_id": "579f77abbbbe0d480ebcf75b9aca291c573954fac9496263f2747ac0dd2e0156",
+                "selected_version": true
+              },
+              {
+                "record_index": 3107,
+                "field": "bookUrlPattern",
+                "source_id": "579f77abbbbe0d480ebcf75b9aca291c573954fac9496263f2747ac0dd2e0156",
+                "selected_version": true
+              },
+              {
+                "record_index": 3107,
+                "field": "declared_endpoint",
+                "source_id": "579f77abbbbe0d480ebcf75b9aca291c573954fac9496263f2747ac0dd2e0156",
+                "selected_version": true
+              },
+              {
+                "record_index": 3107,
+                "field": "searchUrl",
+                "source_id": "579f77abbbbe0d480ebcf75b9aca291c573954fac9496263f2747ac0dd2e0156",
+                "selected_version": true
+              },
+              {
+                "record_index": 3107,
+                "field": "selected_imported_host",
+                "source_id": "579f77abbbbe0d480ebcf75b9aca291c573954fac9496263f2747ac0dd2e0156",
+                "selected_version": true
+              }
+            ]
+          },
+          {
+            "catalog_host": "m.tcknh.com",
+            "listed_domain": "tcknh.com",
+            "relation": "listed_parent",
+            "category": "malware",
+            "catalog_references": [
+              {
+                "record_index": 3189,
+                "field": "bookSourceUrl",
+                "source_id": "d83830bb838b2fd9ea4aaf04986846e6d3fdfaeec660b17db8f6e0877aead2a2",
+                "selected_version": false
+              },
+              {
+                "record_index": 3189,
+                "field": "declared_endpoint",
+                "source_id": "d83830bb838b2fd9ea4aaf04986846e6d3fdfaeec660b17db8f6e0877aead2a2",
+                "selected_version": false
+              },
+              {
+                "record_index": 3189,
+                "field": "searchUrl",
+                "source_id": "d83830bb838b2fd9ea4aaf04986846e6d3fdfaeec660b17db8f6e0877aead2a2",
+                "selected_version": false
+              },
+              {
+                "record_index": 3747,
+                "field": "bookSourceUrl",
+                "source_id": "d83830bb838b2fd9ea4aaf04986846e6d3fdfaeec660b17db8f6e0877aead2a2",
+                "selected_version": true
+              },
+              {
+                "record_index": 3747,
+                "field": "declared_endpoint",
+                "source_id": "d83830bb838b2fd9ea4aaf04986846e6d3fdfaeec660b17db8f6e0877aead2a2",
+                "selected_version": true
+              },
+              {
+                "record_index": 3747,
+                "field": "searchUrl",
+                "source_id": "d83830bb838b2fd9ea4aaf04986846e6d3fdfaeec660b17db8f6e0877aead2a2",
+                "selected_version": true
+              },
+              {
+                "record_index": 3747,
+                "field": "selected_imported_host",
+                "source_id": "d83830bb838b2fd9ea4aaf04986846e6d3fdfaeec660b17db8f6e0877aead2a2",
+                "selected_version": true
+              }
+            ]
+          },
+          {
+            "catalog_host": "m.zei8.vip",
+            "listed_domain": "m.zei8.vip",
+            "relation": "exact",
+            "category": "malware",
+            "catalog_references": [
+              {
+                "record_index": 985,
+                "field": "bookSourceUrl",
+                "source_id": null,
+                "selected_version": false
+              },
+              {
+                "record_index": 985,
+                "field": "declared_endpoint",
+                "source_id": null,
+                "selected_version": false
+              },
+              {
+                "record_index": 3237,
+                "field": "bookSourceUrl",
+                "source_id": null,
+                "selected_version": false
+              },
+              {
+                "record_index": 3237,
+                "field": "declared_endpoint",
+                "source_id": null,
+                "selected_version": false
+              }
+            ]
+          },
+          {
+            "catalog_host": "ss.apps.dj",
+            "listed_domain": "apps.dj",
+            "relation": "listed_parent",
+            "category": "malware",
+            "catalog_references": [
+              {
+                "record_index": 4063,
+                "field": "bookSourceUrl",
+                "source_id": null,
+                "selected_version": false
+              },
+              {
+                "record_index": 4063,
+                "field": "declared_endpoint",
+                "source_id": null,
+                "selected_version": false
+              },
+              {
+                "record_index": 4063,
+                "field": "ruleToc.chapterUrl",
+                "source_id": null,
+                "selected_version": false
+              }
+            ]
+          },
+          {
+            "catalog_host": "static.missevan.com",
+            "listed_domain": "static.missevan.com",
+            "relation": "exact",
+            "category": "malware",
+            "catalog_references": [
+              {
+                "record_index": 3173,
+                "field": "ruleContent.content",
+                "source_id": "8655daf88fd9f3ad8024896e3ec8fdd36ca3a92ba040cf41a614c2ff2f108a8c",
+                "selected_version": false
+              },
+              {
+                "record_index": 4421,
+                "field": "ruleContent.content",
+                "source_id": "8655daf88fd9f3ad8024896e3ec8fdd36ca3a92ba040cf41a614c2ff2f108a8c",
+                "selected_version": true
+              }
+            ]
+          },
+          {
+            "catalog_host": "www.108shu.com",
+            "listed_domain": "108shu.com",
+            "relation": "listed_parent",
+            "category": "malware",
+            "catalog_references": [
+              {
+                "record_index": 984,
+                "field": "bookSourceUrl",
+                "source_id": "fbe121ae8f0bb57c6b34b95fea013c2844350c2bd142b5c978a695d09f7dca97",
+                "selected_version": true
+              },
+              {
+                "record_index": 984,
+                "field": "bookUrlPattern",
+                "source_id": "fbe121ae8f0bb57c6b34b95fea013c2844350c2bd142b5c978a695d09f7dca97",
+                "selected_version": true
+              },
+              {
+                "record_index": 984,
+                "field": "declared_endpoint",
+                "source_id": "fbe121ae8f0bb57c6b34b95fea013c2844350c2bd142b5c978a695d09f7dca97",
+                "selected_version": true
+              },
+              {
+                "record_index": 984,
+                "field": "searchUrl",
+                "source_id": "fbe121ae8f0bb57c6b34b95fea013c2844350c2bd142b5c978a695d09f7dca97",
+                "selected_version": true
+              },
+              {
+                "record_index": 984,
+                "field": "selected_imported_host",
+                "source_id": "fbe121ae8f0bb57c6b34b95fea013c2844350c2bd142b5c978a695d09f7dca97",
+                "selected_version": true
+              }
+            ]
+          },
+          {
+            "catalog_host": "www.52xs.net",
+            "listed_domain": "52xs.net",
+            "relation": "listed_parent",
+            "category": "malware",
+            "catalog_references": [
+              {
+                "record_index": 2529,
+                "field": "bookSourceUrl",
+                "source_id": null,
+                "selected_version": false
+              },
+              {
+                "record_index": 2529,
+                "field": "declared_endpoint",
+                "source_id": null,
+                "selected_version": false
+              }
+            ]
+          },
+          {
+            "catalog_host": "www.blxsw.cc",
+            "listed_domain": "blxsw.cc",
+            "relation": "listed_parent",
+            "category": "malware",
+            "catalog_references": [
+              {
+                "record_index": 4832,
+                "field": "bookSourceUrl",
+                "source_id": "785cdc990d599991d1f3252b4718154312fcba3b56c20dea3f580d2d80258d64",
+                "selected_version": true
+              },
+              {
+                "record_index": 4832,
+                "field": "declared_endpoint",
+                "source_id": "785cdc990d599991d1f3252b4718154312fcba3b56c20dea3f580d2d80258d64",
+                "selected_version": true
+              },
+              {
+                "record_index": 4832,
+                "field": "selected_imported_host",
+                "source_id": "785cdc990d599991d1f3252b4718154312fcba3b56c20dea3f580d2d80258d64",
+                "selected_version": true
+              }
+            ]
+          },
+          {
+            "catalog_host": "www.daizhige.org",
+            "listed_domain": "daizhige.org",
+            "relation": "listed_parent",
+            "category": "malware",
+            "catalog_references": [
+              {
+                "record_index": 457,
+                "field": "bookSourceUrl",
+                "source_id": "d46eab3d5dbd9b6550cced538c8c999b87a1bd37f3574c10f8a2dcda342c7c79",
+                "selected_version": true
+              },
+              {
+                "record_index": 457,
+                "field": "declared_endpoint",
+                "source_id": "d46eab3d5dbd9b6550cced538c8c999b87a1bd37f3574c10f8a2dcda342c7c79",
+                "selected_version": true
+              },
+              {
+                "record_index": 457,
+                "field": "searchUrl",
+                "source_id": "d46eab3d5dbd9b6550cced538c8c999b87a1bd37f3574c10f8a2dcda342c7c79",
+                "selected_version": true
+              },
+              {
+                "record_index": 457,
+                "field": "selected_imported_host",
+                "source_id": "d46eab3d5dbd9b6550cced538c8c999b87a1bd37f3574c10f8a2dcda342c7c79",
+                "selected_version": true
+              },
+              {
+                "record_index": 2437,
+                "field": "bookSourceUrl",
+                "source_id": "d46eab3d5dbd9b6550cced538c8c999b87a1bd37f3574c10f8a2dcda342c7c79",
+                "selected_version": false
+              },
+              {
+                "record_index": 2437,
+                "field": "declared_endpoint",
+                "source_id": "d46eab3d5dbd9b6550cced538c8c999b87a1bd37f3574c10f8a2dcda342c7c79",
+                "selected_version": false
+              },
+              {
+                "record_index": 2437,
+                "field": "searchUrl",
+                "source_id": "d46eab3d5dbd9b6550cced538c8c999b87a1bd37f3574c10f8a2dcda342c7c79",
+                "selected_version": false
+              }
+            ]
+          },
+          {
+            "catalog_host": "www.fxsw.cc",
+            "listed_domain": "fxsw.cc",
+            "relation": "listed_parent",
+            "category": "malware",
+            "catalog_references": [
+              {
+                "record_index": 1355,
+                "field": "bookSourceUrl",
+                "source_id": "87d398aba568c0d4f582e4513d4ed5846e8602418a41bb8cd4caa4c1cef76280",
+                "selected_version": true
+              },
+              {
+                "record_index": 1355,
+                "field": "declared_endpoint",
+                "source_id": "87d398aba568c0d4f582e4513d4ed5846e8602418a41bb8cd4caa4c1cef76280",
+                "selected_version": true
+              },
+              {
+                "record_index": 1355,
+                "field": "selected_imported_host",
+                "source_id": "87d398aba568c0d4f582e4513d4ed5846e8602418a41bb8cd4caa4c1cef76280",
+                "selected_version": true
+              },
+              {
+                "record_index": 3547,
+                "field": "bookSourceUrl",
+                "source_id": "87d398aba568c0d4f582e4513d4ed5846e8602418a41bb8cd4caa4c1cef76280",
+                "selected_version": false
+              },
+              {
+                "record_index": 3547,
+                "field": "declared_endpoint",
+                "source_id": "87d398aba568c0d4f582e4513d4ed5846e8602418a41bb8cd4caa4c1cef76280",
+                "selected_version": false
+              }
+            ]
+          },
+          {
+            "catalog_host": "www.jjmh.top",
+            "listed_domain": "jjmh.top",
+            "relation": "listed_parent",
+            "category": "malware",
+            "catalog_references": [
+              {
+                "record_index": 4223,
+                "field": "bookSourceUrl",
+                "source_id": "3206775ccea17aaa7c010bf822a04da384819ae82d4ee94acd3cde06ba2cf837",
+                "selected_version": true
+              },
+              {
+                "record_index": 4223,
+                "field": "declared_endpoint",
+                "source_id": "3206775ccea17aaa7c010bf822a04da384819ae82d4ee94acd3cde06ba2cf837",
+                "selected_version": true
+              },
+              {
+                "record_index": 4223,
+                "field": "selected_imported_host",
+                "source_id": "3206775ccea17aaa7c010bf822a04da384819ae82d4ee94acd3cde06ba2cf837",
+                "selected_version": true
+              },
+              {
+                "record_index": 4833,
+                "field": "bookSourceUrl",
+                "source_id": "80a04e50867288cf60ffd2769bde2db23261ed2ed2bd5ea0940ccd6a9ce13325",
+                "selected_version": true
+              },
+              {
+                "record_index": 4833,
+                "field": "declared_endpoint",
+                "source_id": "80a04e50867288cf60ffd2769bde2db23261ed2ed2bd5ea0940ccd6a9ce13325",
+                "selected_version": true
+              },
+              {
+                "record_index": 4833,
+                "field": "searchUrl",
+                "source_id": "80a04e50867288cf60ffd2769bde2db23261ed2ed2bd5ea0940ccd6a9ce13325",
+                "selected_version": true
+              },
+              {
+                "record_index": 4833,
+                "field": "selected_imported_host",
+                "source_id": "80a04e50867288cf60ffd2769bde2db23261ed2ed2bd5ea0940ccd6a9ce13325",
+                "selected_version": true
+              }
+            ]
+          },
+          {
+            "catalog_host": "www.tcknh.com",
+            "listed_domain": "tcknh.com",
+            "relation": "listed_parent",
+            "category": "malware",
+            "catalog_references": [
+              {
+                "record_index": 3053,
+                "field": "bookSourceUrl",
+                "source_id": "bdc4291851fab1e11b1c99448c7177f2d57c151072ca3b83539ec4f83ae38387",
+                "selected_version": true
+              },
+              {
+                "record_index": 3053,
+                "field": "declared_endpoint",
+                "source_id": "bdc4291851fab1e11b1c99448c7177f2d57c151072ca3b83539ec4f83ae38387",
+                "selected_version": true
+              },
+              {
+                "record_index": 3053,
+                "field": "selected_imported_host",
+                "source_id": "bdc4291851fab1e11b1c99448c7177f2d57c151072ca3b83539ec4f83ae38387",
+                "selected_version": true
+              }
+            ]
+          },
+          {
+            "catalog_host": "www.yuanzunxs.cc",
+            "listed_domain": "yuanzunxs.cc",
+            "relation": "listed_parent",
+            "category": "malware",
+            "catalog_references": [
+              {
+                "record_index": 800,
+                "field": "bookSourceUrl",
+                "source_id": null,
+                "selected_version": false
+              },
+              {
+                "record_index": 800,
+                "field": "declared_endpoint",
+                "source_id": null,
+                "selected_version": false
+              },
+              {
+                "record_index": 1280,
+                "field": "bookSourceUrl",
+                "source_id": "03c21059485d0eb60b46ebe2e97026b34733bb8b03426b7e23a29ccffe679f0d",
+                "selected_version": false
+              },
+              {
+                "record_index": 1280,
+                "field": "declared_endpoint",
+                "source_id": "03c21059485d0eb60b46ebe2e97026b34733bb8b03426b7e23a29ccffe679f0d",
+                "selected_version": false
+              },
+              {
+                "record_index": 1280,
+                "field": "searchUrl",
+                "source_id": "03c21059485d0eb60b46ebe2e97026b34733bb8b03426b7e23a29ccffe679f0d",
+                "selected_version": false
+              },
+              {
+                "record_index": 1685,
+                "field": "bookSourceUrl",
+                "source_id": "00340d93028a42e3b86600b9e91ef285f4fefdc0372f2c60cd36d8850159eee8",
+                "selected_version": true
+              },
+              {
+                "record_index": 1685,
+                "field": "bookUrlPattern",
+                "source_id": "00340d93028a42e3b86600b9e91ef285f4fefdc0372f2c60cd36d8850159eee8",
+                "selected_version": true
+              },
+              {
+                "record_index": 1685,
+                "field": "declared_endpoint",
+                "source_id": "00340d93028a42e3b86600b9e91ef285f4fefdc0372f2c60cd36d8850159eee8",
+                "selected_version": true
+              },
+              {
+                "record_index": 1685,
+                "field": "ruleSearch.coverUrl",
+                "source_id": "00340d93028a42e3b86600b9e91ef285f4fefdc0372f2c60cd36d8850159eee8",
+                "selected_version": true
+              },
+              {
+                "record_index": 1685,
+                "field": "searchUrl",
+                "source_id": "00340d93028a42e3b86600b9e91ef285f4fefdc0372f2c60cd36d8850159eee8",
+                "selected_version": true
+              },
+              {
+                "record_index": 1685,
+                "field": "selected_imported_host",
+                "source_id": "00340d93028a42e3b86600b9e91ef285f4fefdc0372f2c60cd36d8850159eee8",
+                "selected_version": true
+              },
+              {
+                "record_index": 2771,
+                "field": "bookSourceUrl",
+                "source_id": "03c21059485d0eb60b46ebe2e97026b34733bb8b03426b7e23a29ccffe679f0d",
+                "selected_version": false
+              },
+              {
+                "record_index": 2771,
+                "field": "bookUrlPattern",
+                "source_id": "03c21059485d0eb60b46ebe2e97026b34733bb8b03426b7e23a29ccffe679f0d",
+                "selected_version": false
+              },
+              {
+                "record_index": 2771,
+                "field": "declared_endpoint",
+                "source_id": "03c21059485d0eb60b46ebe2e97026b34733bb8b03426b7e23a29ccffe679f0d",
+                "selected_version": false
+              },
+              {
+                "record_index": 2771,
+                "field": "ruleSearch.coverUrl",
+                "source_id": "03c21059485d0eb60b46ebe2e97026b34733bb8b03426b7e23a29ccffe679f0d",
+                "selected_version": false
+              },
+              {
+                "record_index": 2771,
+                "field": "searchUrl",
+                "source_id": "03c21059485d0eb60b46ebe2e97026b34733bb8b03426b7e23a29ccffe679f0d",
+                "selected_version": false
+              },
+              {
+                "record_index": 3311,
+                "field": "bookSourceUrl",
+                "source_id": "03c21059485d0eb60b46ebe2e97026b34733bb8b03426b7e23a29ccffe679f0d",
+                "selected_version": true
+              },
+              {
+                "record_index": 3311,
+                "field": "bookUrlPattern",
+                "source_id": "03c21059485d0eb60b46ebe2e97026b34733bb8b03426b7e23a29ccffe679f0d",
+                "selected_version": true
+              },
+              {
+                "record_index": 3311,
+                "field": "declared_endpoint",
+                "source_id": "03c21059485d0eb60b46ebe2e97026b34733bb8b03426b7e23a29ccffe679f0d",
+                "selected_version": true
+              },
+              {
+                "record_index": 3311,
+                "field": "ruleSearch.coverUrl",
+                "source_id": "03c21059485d0eb60b46ebe2e97026b34733bb8b03426b7e23a29ccffe679f0d",
+                "selected_version": true
+              },
+              {
+                "record_index": 3311,
+                "field": "searchUrl",
+                "source_id": "03c21059485d0eb60b46ebe2e97026b34733bb8b03426b7e23a29ccffe679f0d",
+                "selected_version": true
+              },
+              {
+                "record_index": 3311,
+                "field": "selected_imported_host",
+                "source_id": "03c21059485d0eb60b46ebe2e97026b34733bb8b03426b7e23a29ccffe679f0d",
+                "selected_version": true
+              },
+              {
+                "record_index": 3669,
+                "field": "bookSourceUrl",
+                "source_id": "00340d93028a42e3b86600b9e91ef285f4fefdc0372f2c60cd36d8850159eee8",
+                "selected_version": false
+              },
+              {
+                "record_index": 3669,
+                "field": "bookUrlPattern",
+                "source_id": "00340d93028a42e3b86600b9e91ef285f4fefdc0372f2c60cd36d8850159eee8",
+                "selected_version": false
+              },
+              {
+                "record_index": 3669,
+                "field": "declared_endpoint",
+                "source_id": "00340d93028a42e3b86600b9e91ef285f4fefdc0372f2c60cd36d8850159eee8",
+                "selected_version": false
+              },
+              {
+                "record_index": 3669,
+                "field": "ruleSearch.coverUrl",
+                "source_id": "00340d93028a42e3b86600b9e91ef285f4fefdc0372f2c60cd36d8850159eee8",
+                "selected_version": false
+              },
+              {
+                "record_index": 3669,
+                "field": "searchUrl",
+                "source_id": "00340d93028a42e3b86600b9e91ef285f4fefdc0372f2c60cd36d8850159eee8",
+                "selected_version": false
+              }
+            ]
+          },
+          {
+            "catalog_host": "zxcs.zip",
+            "listed_domain": "zxcs.zip",
+            "relation": "exact",
+            "category": "malware",
+            "catalog_references": [
+              {
+                "record_index": 4024,
+                "field": "bookSourceUrl",
+                "source_id": null,
+                "selected_version": false
+              },
+              {
+                "record_index": 4024,
+                "field": "declared_endpoint",
+                "source_id": null,
+                "selected_version": false
+              }
+            ]
+          }
+        ]
+      },
+      "gambling": {
+        "source": {
+          "url": "https://raw.githubusercontent.com/blocklistproject/Lists/ee3bdbaddf49c756cf3340bb2e6a9dee5282d1c6/gambling.txt",
+          "observed_at": "2026-11-15T13:10:37.592059+00:00",
+          "completed_at": "2026-11-15T13:10:42.302059+00:00",
+          "status": 200,
+          "content_type": "text/plain; charset=utf-8",
+          "etag": "\"f70982da9a4721f92fee58b7269289789b708ed8bc9924d3a58993833a846024\"",
+          "bytes": 8368035,
+          "git_blob_sha1": "701eb4384ae3d65cfc25d9334f7eb0ee34fb4ef9",
+          "sha256": "d583202e86eb80f8cb6311e65d10f36e472d921d7cac5ff18e98d7dd0b9cf439",
+          "file_header": {
+            "date": "2026-07-20T05:54:15.217075"
+          }
+        },
+        "parse_stats": {
+          "empty_or_comment": 4,
+          "invalid_domain_tokens": 0,
+          "domain_tokens": 342623,
+          "sinkhole_mapping": 342623
+        },
+        "matching_hosts": 0,
+        "matching_host_indicator_pairs": 0,
+        "selected_source_ids_with_matching_reference": 0,
+        "selected_sources_by_relation": {
+          "exact_endpoint": [],
+          "listed_parent_endpoint": [],
+          "other_fields_only": []
+        },
+        "matches": []
+      },
+      "porn": {
+        "source": {
+          "url": "https://raw.githubusercontent.com/blocklistproject/Lists/ee3bdbaddf49c756cf3340bb2e6a9dee5282d1c6/porn.txt",
+          "observed_at": "2026-11-15T13:11:39.889529+00:00",
+          "completed_at": "2026-11-15T13:12:16.949846+00:00",
+          "status": 200,
+          "content_type": "text/plain; charset=utf-8",
+          "etag": "\"450fcbbe3c7304deb1e8d5193ea68909c2321be332c94d59823c6e56b47e4587\"",
+          "bytes": 26095053,
+          "git_blob_sha1": "1be063bbf6411576e4b2e911816a77c28b9f49d1",
+          "sha256": "425590c37e3ea624fdf646b14ba661f8b8f38391686adcf02b73f8b2d74b0db1",
+          "file_header": {
+            "title": "Porn Block List",
+            "description": "Adult content domains",
+            "license": "MIT",
+            "last_modified": "2026-07-18 01:36:50 UTC",
+            "format": "hosts",
+            "entries": "953,393"
+          }
+        },
+        "parse_stats": {
+          "empty_or_comment": 13,
+          "invalid_domain_tokens": 196,
+          "domain_tokens": 953197,
+          "sinkhole_mapping": 953393,
+          "invalid_tokens_with_underscore": 196
+        },
+        "matching_hosts": 18,
+        "matching_host_indicator_pairs": 18,
+        "selected_source_ids_with_matching_reference": 18,
+        "selected_sources_by_relation": {
+          "exact_endpoint": [
+            {
+              "source_id": "1de929a5b482007aa2af4d5050b33cdcdd62df6d32ae34739f63f0fa25c3af99",
+              "name": "成人小说网（上版发现页1链接写错，重传）",
+              "kind": "text",
+              "source_endpoint_host": "crxs.me",
+              "selected_record_index": 1274,
+              "signals": [
+                {
+                  "catalog_host": "crxs.me",
+                  "listed_domain": "crxs.me",
+                  "relation": "exact",
+                  "fields": [
+                    "bookSourceUrl",
+                    "declared_endpoint",
+                    "exploreUrl",
+                    "searchUrl",
+                    "selected_imported_host"
+                  ]
+                }
+              ]
+            },
+            {
+              "source_id": "9dd98d18033be16ecf6ff1d248abe671b0d0925e8544e8aa67b4ac63e823cc6e",
+              "name": "🗂🙈丽图",
+              "kind": "comic",
+              "source_endpoint_host": "litu100.xyz",
+              "selected_record_index": 1124,
+              "signals": [
+                {
+                  "catalog_host": "litu100.xyz",
+                  "listed_domain": "litu100.xyz",
+                  "relation": "exact",
+                  "fields": [
+                    "bookSourceUrl",
+                    "declared_endpoint",
+                    "searchUrl",
+                    "selected_imported_host"
+                  ]
+                }
+              ]
+            },
+            {
+              "source_id": "b866227d0b7b693729789e5078d995f87cfdb3e2832b28a8c627fcb0d0f96d28",
+              "name": "🔞🎨丽图·污漫画",
+              "kind": "text",
+              "source_endpoint_host": "litu100.xyz",
+              "selected_record_index": 3309,
+              "signals": [
+                {
+                  "catalog_host": "litu100.xyz",
+                  "listed_domain": "litu100.xyz",
+                  "relation": "exact",
+                  "fields": [
+                    "bookSourceUrl",
+                    "declared_endpoint",
+                    "searchUrl",
+                    "selected_imported_host"
+                  ]
+                }
+              ]
+            },
+            {
+              "source_id": "cb24bdf6620a08c5177f52faf62db07ec6180a21278f43d22c4bef75e802abb9",
+              "name": "🚭 色情001",
+              "kind": "text",
+              "source_endpoint_host": "seqing001.com",
+              "selected_record_index": 3923,
+              "signals": [
+                {
+                  "catalog_host": "seqing001.com",
+                  "listed_domain": "seqing001.com",
+                  "relation": "exact",
+                  "fields": [
+                    "bookSourceUrl",
+                    "declared_endpoint",
+                    "searchUrl",
+                    "selected_imported_host"
+                  ]
+                }
+              ]
+            }
+          ],
+          "listed_parent_endpoint": [
+            {
+              "source_id": "08b828adf2d0154db83894b6b77db3defa9dfae30de8a832fc26a5f7c72cbe07",
+              "name": "📓UAA·小说",
+              "kind": "text",
+              "source_endpoint_host": "api.uaa.com",
+              "selected_record_index": 989,
+              "signals": [
+                {
+                  "catalog_host": "api.uaa.com",
+                  "listed_domain": "uaa.com",
+                  "relation": "listed_parent",
+                  "fields": [
+                    "bookSourceUrl",
+                    "declared_endpoint",
+                    "exploreUrl",
+                    "ruleSearch.checkKeyWord",
+                    "searchUrl",
+                    "selected_imported_host"
+                  ]
+                },
+                {
+                  "catalog_host": "www.uaa.com",
+                  "listed_domain": "uaa.com",
+                  "relation": "listed_parent",
+                  "fields": [
+                    "bookSourceComment"
+                  ]
+                }
+              ]
+            },
+            {
+              "source_id": "0bfbc4c3258bd02f80e16c63b47467939512e8c24f7023d1a425088e1a5a901a",
+              "name": "👍 爱看书",
+              "kind": "text",
+              "source_endpoint_host": "cxb-pro.cread.com",
+              "selected_record_index": 1604,
+              "signals": [
+                {
+                  "catalog_host": "cxb-pro.cread.com",
+                  "listed_domain": "cread.com",
+                  "relation": "listed_parent",
+                  "fields": [
+                    "bookSourceUrl",
+                    "declared_endpoint",
+                    "ruleSearch.bookUrl",
+                    "ruleToc.chapterUrl",
+                    "searchUrl",
+                    "selected_imported_host"
+                  ]
+                }
+              ]
+            },
+            {
+              "source_id": "25749e82df95e79b09416f4a0eb7e982898b976d4843cd0cd1a0e064de849132",
+              "name": "🔞夜读集 [小说/漫画] (有VIP章节)",
+              "kind": "text",
+              "source_endpoint_host": "www.yeduji.com",
+              "selected_record_index": 3908,
+              "signals": [
+                {
+                  "catalog_host": "www.yeduji.com",
+                  "listed_domain": "yeduji.com",
+                  "relation": "listed_parent",
+                  "fields": [
+                    "bookSourceUrl",
+                    "declared_endpoint",
+                    "selected_imported_host"
+                  ]
+                }
+              ]
+            },
+            {
+              "source_id": "3206775ccea17aaa7c010bf822a04da384819ae82d4ee94acd3cde06ba2cf837",
+              "name": "漫小肆韩漫",
+              "kind": "text",
+              "source_endpoint_host": "www.jjmh.top",
+              "selected_record_index": 4223,
+              "signals": [
+                {
+                  "catalog_host": "www.jjmh.top",
+                  "listed_domain": "jjmh.top",
+                  "relation": "listed_parent",
+                  "fields": [
+                    "bookSourceUrl",
+                    "declared_endpoint",
+                    "selected_imported_host"
+                  ]
+                }
+              ]
+            },
+            {
+              "source_id": "80a04e50867288cf60ffd2769bde2db23261ed2ed2bd5ea0940ccd6a9ce13325",
+              "name": "漫小肆20251217",
+              "kind": "comic",
+              "source_endpoint_host": "www.jjmh.top",
+              "selected_record_index": 4833,
+              "signals": [
+                {
+                  "catalog_host": "www.jjmh.top",
+                  "listed_domain": "jjmh.top",
+                  "relation": "listed_parent",
+                  "fields": [
+                    "bookSourceUrl",
+                    "declared_endpoint",
+                    "searchUrl",
+                    "selected_imported_host"
+                  ]
+                }
+              ]
+            },
+            {
+              "source_id": "8baa3664968243315eae7a169985419a5c72e0b624e07d481eb484a98b4108c0",
+              "name": "免费追书",
+              "kind": "text",
+              "source_endpoint_host": "cxb-pro.cread.com",
+              "selected_record_index": 924,
+              "signals": [
+                {
+                  "catalog_host": "cxb-pro.cread.com",
+                  "listed_domain": "cread.com",
+                  "relation": "listed_parent",
+                  "fields": [
+                    "bookSourceComment",
+                    "bookSourceUrl",
+                    "declared_endpoint",
+                    "exploreUrl",
+                    "ruleBookInfo.tocUrl",
+                    "ruleToc.chapterUrl",
+                    "searchUrl",
+                    "selected_imported_host"
+                  ]
+                },
+                {
+                  "catalog_host": "readbook-service-freebook.cread.com",
+                  "listed_domain": "cread.com",
+                  "relation": "listed_parent",
+                  "fields": [
+                    "bookSourceComment",
+                    "ruleExplore.bookUrl",
+                    "ruleSearch.bookUrl"
+                  ]
+                }
+              ]
+            },
+            {
+              "source_id": "aa2be459c25ec267189830bb0f487a4a42c50887b8f3098cf04371a9c78c1a5e",
+              "name": "🌸思兔（需要🛫）",
+              "kind": "text",
+              "source_endpoint_host": "www.sto.cx",
+              "selected_record_index": 156,
+              "signals": [
+                {
+                  "catalog_host": "www.sto.cx",
+                  "listed_domain": "sto.cx",
+                  "relation": "listed_parent",
+                  "fields": [
+                    "bookSourceUrl",
+                    "declared_endpoint",
+                    "exploreUrl",
+                    "searchUrl",
+                    "selected_imported_host"
+                  ]
+                }
+              ]
+            },
+            {
+              "source_id": "b293cc11e4f9cd10cb8c79533a961b0e15e84283d11347c27e67d253bd54ba98",
+              "name": "爱轻写真（优+）",
+              "kind": "comic",
+              "source_endpoint_host": "www.635k.com",
+              "selected_record_index": 4043,
+              "signals": [
+                {
+                  "catalog_host": "www.635k.com",
+                  "listed_domain": "635k.com",
+                  "relation": "listed_parent",
+                  "fields": [
+                    "bookSourceUrl",
+                    "declared_endpoint",
+                    "exploreUrl",
+                    "selected_imported_host"
+                  ]
+                }
+              ]
+            },
+            {
+              "source_id": "e7830aff2d331cabbbe123bd8d94cfe614181793ee4f8fbe0e02327effb376db",
+              "name": "友漫",
+              "kind": "comic",
+              "source_endpoint_host": "api.uaa.com",
+              "selected_record_index": 3352,
+              "signals": [
+                {
+                  "catalog_host": "api.uaa.com",
+                  "listed_domain": "uaa.com",
+                  "relation": "listed_parent",
+                  "fields": [
+                    "declared_endpoint",
+                    "exploreUrl",
+                    "searchUrl",
+                    "selected_imported_host"
+                  ]
+                }
+              ]
+            },
+            {
+              "source_id": "eeff5563e45dc16e73a5be7098b9ce4cd47161be7936e95ad269970a87fecd07",
+              "name": "♛+爱看书▪︎API✔︎  #Haxc",
+              "kind": "text",
+              "source_endpoint_host": "cxb-pro.cread.com",
+              "selected_record_index": 2076,
+              "signals": [
+                {
+                  "catalog_host": "cxb-pro.cread.com",
+                  "listed_domain": "cread.com",
+                  "relation": "listed_parent",
+                  "fields": [
+                    "bookSourceUrl",
+                    "declared_endpoint",
+                    "exploreUrl",
+                    "ruleBookInfo.tocUrl",
+                    "ruleToc.chapterUrl",
+                    "searchUrl",
+                    "selected_imported_host"
+                  ]
+                },
+                {
+                  "catalog_host": "readbook-service-freebook.cread.com",
+                  "listed_domain": "cread.com",
+                  "relation": "listed_parent",
+                  "fields": [
+                    "ruleExplore.bookUrl",
+                    "ruleSearch.bookUrl"
+                  ]
+                }
+              ]
+            },
+            {
+              "source_id": "f1ce24b25c15dc440eac8adba44ed0b6db4089fd646f06c9c5b198e9eb808688",
+              "name": "中文书城[api]",
+              "kind": "text",
+              "source_endpoint_host": "cxb-pro.cread.com",
+              "selected_record_index": 1470,
+              "signals": [
+                {
+                  "catalog_host": "cxb-pro.cread.com",
+                  "listed_domain": "cread.com",
+                  "relation": "listed_parent",
+                  "fields": [
+                    "bookSourceUrl",
+                    "declared_endpoint",
+                    "exploreUrl",
+                    "ruleBookInfo.tocUrl",
+                    "ruleToc.chapterUrl",
+                    "searchUrl",
+                    "selected_imported_host"
+                  ]
+                },
+                {
+                  "catalog_host": "readbook-service-freebook.cread.com",
+                  "listed_domain": "cread.com",
+                  "relation": "listed_parent",
+                  "fields": [
+                    "ruleExplore.bookUrl",
+                    "ruleSearch.bookUrl"
+                  ]
+                }
+              ]
+            },
+            {
+              "source_id": "f44c7e7d83ca20312dd48786f9bb53448cbbf8bfd737f5bff7108798d7c97ddd",
+              "name": "友文",
+              "kind": "text",
+              "source_endpoint_host": "api.uaa.com",
+              "selected_record_index": 1860,
+              "signals": [
+                {
+                  "catalog_host": "api.uaa.com",
+                  "listed_domain": "uaa.com",
+                  "relation": "listed_parent",
+                  "fields": [
+                    "declared_endpoint",
+                    "exploreUrl",
+                    "searchUrl",
+                    "selected_imported_host"
+                  ]
+                }
+              ]
+            },
+            {
+              "source_id": "f55889c694e46c91b0cb834eb5a36c861eb49963e8f86c042f164732dbdb6f06",
+              "name": "友爱",
+              "kind": "text",
+              "source_endpoint_host": "api.uaa.com",
+              "selected_record_index": 3903,
+              "signals": [
+                {
+                  "catalog_host": "api.uaa.com",
+                  "listed_domain": "uaa.com",
+                  "relation": "listed_parent",
+                  "fields": [
+                    "declared_endpoint",
+                    "exploreUrl",
+                    "searchUrl",
+                    "selected_imported_host"
+                  ]
+                }
+              ]
+            },
+            {
+              "source_id": "fa50597f852b3d7e4fc57a138ca9218ee1412daea02daeb2c15e99acd98d9b52",
+              "name": "友声",
+              "kind": "audio",
+              "source_endpoint_host": "api.uaa.com",
+              "selected_record_index": 3355,
+              "signals": [
+                {
+                  "catalog_host": "api.uaa.com",
+                  "listed_domain": "uaa.com",
+                  "relation": "listed_parent",
+                  "fields": [
+                    "declared_endpoint",
+                    "exploreUrl",
+                    "searchUrl",
+                    "selected_imported_host"
+                  ]
+                }
+              ]
+            }
+          ],
+          "other_fields_only": []
+        },
+        "matches": [
+          {
+            "catalog_host": "api.uaa.com",
+            "listed_domain": "uaa.com",
+            "relation": "listed_parent",
+            "category": "porn",
+            "catalog_references": [
+              {
+                "record_index": 989,
+                "field": "bookSourceUrl",
+                "source_id": "08b828adf2d0154db83894b6b77db3defa9dfae30de8a832fc26a5f7c72cbe07",
+                "selected_version": true
+              },
+              {
+                "record_index": 989,
+                "field": "declared_endpoint",
+                "source_id": "08b828adf2d0154db83894b6b77db3defa9dfae30de8a832fc26a5f7c72cbe07",
+                "selected_version": true
+              },
+              {
+                "record_index": 989,
+                "field": "exploreUrl",
+                "source_id": "08b828adf2d0154db83894b6b77db3defa9dfae30de8a832fc26a5f7c72cbe07",
+                "selected_version": true
+              },
+              {
+                "record_index": 989,
+                "field": "ruleSearch.checkKeyWord",
+                "source_id": "08b828adf2d0154db83894b6b77db3defa9dfae30de8a832fc26a5f7c72cbe07",
+                "selected_version": true
+              },
+              {
+                "record_index": 989,
+                "field": "searchUrl",
+                "source_id": "08b828adf2d0154db83894b6b77db3defa9dfae30de8a832fc26a5f7c72cbe07",
+                "selected_version": true
+              },
+              {
+                "record_index": 989,
+                "field": "selected_imported_host",
+                "source_id": "08b828adf2d0154db83894b6b77db3defa9dfae30de8a832fc26a5f7c72cbe07",
+                "selected_version": true
+              },
+              {
+                "record_index": 1220,
+                "field": "exploreUrl",
+                "source_id": null,
+                "selected_version": false
+              },
+              {
+                "record_index": 1220,
+                "field": "ruleBookInfo.tocUrl",
+                "source_id": null,
+                "selected_version": false
+              },
+              {
+                "record_index": 1220,
+                "field": "ruleSearch.bookUrl",
+                "source_id": null,
+                "selected_version": false
+              },
+              {
+                "record_index": 1220,
+                "field": "ruleToc.chapterUrl",
+                "source_id": null,
+                "selected_version": false
+              },
+              {
+                "record_index": 1220,
+                "field": "searchUrl",
+                "source_id": null,
+                "selected_version": false
+              },
+              {
+                "record_index": 1644,
+                "field": "exploreUrl",
+                "source_id": null,
+                "selected_version": false
+              },
+              {
+                "record_index": 1644,
+                "field": "ruleExplore.bookUrl",
+                "source_id": null,
+                "selected_version": false
+              },
+              {
+                "record_index": 1644,
+                "field": "ruleSearch.bookUrl",
+                "source_id": null,
+                "selected_version": false
+              },
+              {
+                "record_index": 1644,
+                "field": "ruleToc.chapterUrl",
+                "source_id": null,
+                "selected_version": false
+              },
+              {
+                "record_index": 1644,
+                "field": "searchUrl",
+                "source_id": null,
+                "selected_version": false
+              },
+              {
+                "record_index": 1860,
+                "field": "declared_endpoint",
+                "source_id": "f44c7e7d83ca20312dd48786f9bb53448cbbf8bfd737f5bff7108798d7c97ddd",
+                "selected_version": true
+              },
+              {
+                "record_index": 1860,
+                "field": "exploreUrl",
+                "source_id": "f44c7e7d83ca20312dd48786f9bb53448cbbf8bfd737f5bff7108798d7c97ddd",
+                "selected_version": true
+              },
+              {
+                "record_index": 1860,
+                "field": "searchUrl",
+                "source_id": "f44c7e7d83ca20312dd48786f9bb53448cbbf8bfd737f5bff7108798d7c97ddd",
+                "selected_version": true
+              },
+              {
+                "record_index": 1860,
+                "field": "selected_imported_host",
+                "source_id": "f44c7e7d83ca20312dd48786f9bb53448cbbf8bfd737f5bff7108798d7c97ddd",
+                "selected_version": true
+              },
+              {
+                "record_index": 3116,
+                "field": "bookSourceUrl",
+                "source_id": "08b828adf2d0154db83894b6b77db3defa9dfae30de8a832fc26a5f7c72cbe07",
+                "selected_version": false
+              },
+              {
+                "record_index": 3116,
+                "field": "declared_endpoint",
+                "source_id": "08b828adf2d0154db83894b6b77db3defa9dfae30de8a832fc26a5f7c72cbe07",
+                "selected_version": false
+              },
+              {
+                "record_index": 3116,
+                "field": "exploreUrl",
+                "source_id": "08b828adf2d0154db83894b6b77db3defa9dfae30de8a832fc26a5f7c72cbe07",
+                "selected_version": false
+              },
+              {
+                "record_index": 3116,
+                "field": "ruleSearch.checkKeyWord",
+                "source_id": "08b828adf2d0154db83894b6b77db3defa9dfae30de8a832fc26a5f7c72cbe07",
+                "selected_version": false
+              },
+              {
+                "record_index": 3116,
+                "field": "searchUrl",
+                "source_id": "08b828adf2d0154db83894b6b77db3defa9dfae30de8a832fc26a5f7c72cbe07",
+                "selected_version": false
+              },
+              {
+                "record_index": 3218,
+                "field": "exploreUrl",
+                "source_id": null,
+                "selected_version": false
+              },
+              {
+                "record_index": 3218,
+                "field": "ruleSearch.bookUrl",
+                "source_id": null,
+                "selected_version": false
+              },
+              {
+                "record_index": 3218,
+                "field": "ruleToc.chapterUrl",
+                "source_id": null,
+                "selected_version": false
+              },
+              {
+                "record_index": 3218,
+                "field": "searchUrl",
+                "source_id": null,
+                "selected_version": false
+              },
+              {
+                "record_index": 3352,
+                "field": "declared_endpoint",
+                "source_id": "e7830aff2d331cabbbe123bd8d94cfe614181793ee4f8fbe0e02327effb376db",
+                "selected_version": true
+              },
+              {
+                "record_index": 3352,
+                "field": "exploreUrl",
+                "source_id": "e7830aff2d331cabbbe123bd8d94cfe614181793ee4f8fbe0e02327effb376db",
+                "selected_version": true
+              },
+              {
+                "record_index": 3352,
+                "field": "searchUrl",
+                "source_id": "e7830aff2d331cabbbe123bd8d94cfe614181793ee4f8fbe0e02327effb376db",
+                "selected_version": true
+              },
+              {
+                "record_index": 3352,
+                "field": "selected_imported_host",
+                "source_id": "e7830aff2d331cabbbe123bd8d94cfe614181793ee4f8fbe0e02327effb376db",
+                "selected_version": true
+              },
+              {
+                "record_index": 3355,
+                "field": "declared_endpoint",
+                "source_id": "fa50597f852b3d7e4fc57a138ca9218ee1412daea02daeb2c15e99acd98d9b52",
+                "selected_version": true
+              },
+              {
+                "record_index": 3355,
+                "field": "exploreUrl",
+                "source_id": "fa50597f852b3d7e4fc57a138ca9218ee1412daea02daeb2c15e99acd98d9b52",
+                "selected_version": true
+              },
+              {
+                "record_index": 3355,
+                "field": "searchUrl",
+                "source_id": "fa50597f852b3d7e4fc57a138ca9218ee1412daea02daeb2c15e99acd98d9b52",
+                "selected_version": true
+              },
+              {
+                "record_index": 3355,
+                "field": "selected_imported_host",
+                "source_id": "fa50597f852b3d7e4fc57a138ca9218ee1412daea02daeb2c15e99acd98d9b52",
+                "selected_version": true
+              },
+              {
+                "record_index": 3858,
+                "field": "ruleBookInfo.tocUrl",
+                "source_id": null,
+                "selected_version": false
+              },
+              {
+                "record_index": 3858,
+                "field": "ruleSearch.bookUrl",
+                "source_id": null,
+                "selected_version": false
+              },
+              {
+                "record_index": 3858,
+                "field": "ruleToc.chapterUrl",
+                "source_id": null,
+                "selected_version": false
+              },
+              {
+                "record_index": 3858,
+                "field": "searchUrl",
+                "source_id": null,
+                "selected_version": false
+              },
+              {
+                "record_index": 3903,
+                "field": "declared_endpoint",
+                "source_id": "f55889c694e46c91b0cb834eb5a36c861eb49963e8f86c042f164732dbdb6f06",
+                "selected_version": true
+              },
+              {
+                "record_index": 3903,
+                "field": "exploreUrl",
+                "source_id": "f55889c694e46c91b0cb834eb5a36c861eb49963e8f86c042f164732dbdb6f06",
+                "selected_version": true
+              },
+              {
+                "record_index": 3903,
+                "field": "searchUrl",
+                "source_id": "f55889c694e46c91b0cb834eb5a36c861eb49963e8f86c042f164732dbdb6f06",
+                "selected_version": true
+              },
+              {
+                "record_index": 3903,
+                "field": "selected_imported_host",
+                "source_id": "f55889c694e46c91b0cb834eb5a36c861eb49963e8f86c042f164732dbdb6f06",
+                "selected_version": true
+              },
+              {
+                "record_index": 3905,
+                "field": "exploreUrl",
+                "source_id": null,
+                "selected_version": false
+              },
+              {
+                "record_index": 3905,
+                "field": "ruleExplore.bookUrl",
+                "source_id": null,
+                "selected_version": false
+              },
+              {
+                "record_index": 3905,
+                "field": "ruleSearch.bookUrl",
+                "source_id": null,
+                "selected_version": false
+              },
+              {
+                "record_index": 3905,
+                "field": "ruleToc.chapterUrl",
+                "source_id": null,
+                "selected_version": false
+              },
+              {
+                "record_index": 3905,
+                "field": "searchUrl",
+                "source_id": null,
+                "selected_version": false
+              }
+            ]
+          },
+          {
+            "catalog_host": "book.qidian.com",
+            "listed_domain": "book.qidian.com",
+            "relation": "exact",
+            "category": "porn",
+            "catalog_references": [
+              {
+                "record_index": 137,
+                "field": "bookUrlPattern",
+                "source_id": "98d7dfe8d17c84e8c23932efd0f7932c1f24473580f86767a87b8fd582d306cf",
+                "selected_version": false
+              }
+            ]
+          },
+          {
+            "catalog_host": "cread.com",
+            "listed_domain": "cread.com",
+            "relation": "exact",
+            "category": "porn",
+            "catalog_references": [
+              {
+                "record_index": 1675,
+                "field": "bookSourceUrl",
+                "source_id": null,
+                "selected_version": false
+              },
+              {
+                "record_index": 1675,
+                "field": "declared_endpoint",
+                "source_id": null,
+                "selected_version": false
+              },
+              {
+                "record_index": 3639,
+                "field": "bookSourceUrl",
+                "source_id": null,
+                "selected_version": false
+              },
+              {
+                "record_index": 3639,
+                "field": "declared_endpoint",
+                "source_id": null,
+                "selected_version": false
+              },
+              {
+                "record_index": 3988,
+                "field": "bookSourceUrl",
+                "source_id": null,
+                "selected_version": false
+              },
+              {
+                "record_index": 3988,
+                "field": "declared_endpoint",
+                "source_id": null,
+                "selected_version": false
+              },
+              {
+                "record_index": 4307,
+                "field": "bookSourceUrl",
+                "source_id": null,
+                "selected_version": false
+              },
+              {
+                "record_index": 4307,
+                "field": "declared_endpoint",
+                "source_id": null,
+                "selected_version": false
+              },
+              {
+                "record_index": 4316,
+                "field": "bookSourceUrl",
+                "source_id": null,
+                "selected_version": false
+              },
+              {
+                "record_index": 4316,
+                "field": "declared_endpoint",
+                "source_id": null,
+                "selected_version": false
+              }
+            ]
+          },
+          {
+            "catalog_host": "crxs.me",
+            "listed_domain": "crxs.me",
+            "relation": "exact",
+            "category": "porn",
+            "catalog_references": [
+              {
+                "record_index": 1274,
+                "field": "bookSourceUrl",
+                "source_id": "1de929a5b482007aa2af4d5050b33cdcdd62df6d32ae34739f63f0fa25c3af99",
+                "selected_version": true
+              },
+              {
+                "record_index": 1274,
+                "field": "declared_endpoint",
+                "source_id": "1de929a5b482007aa2af4d5050b33cdcdd62df6d32ae34739f63f0fa25c3af99",
+                "selected_version": true
+              },
+              {
+                "record_index": 1274,
+                "field": "exploreUrl",
+                "source_id": "1de929a5b482007aa2af4d5050b33cdcdd62df6d32ae34739f63f0fa25c3af99",
+                "selected_version": true
+              },
+              {
+                "record_index": 1274,
+                "field": "searchUrl",
+                "source_id": "1de929a5b482007aa2af4d5050b33cdcdd62df6d32ae34739f63f0fa25c3af99",
+                "selected_version": true
+              },
+              {
+                "record_index": 1274,
+                "field": "selected_imported_host",
+                "source_id": "1de929a5b482007aa2af4d5050b33cdcdd62df6d32ae34739f63f0fa25c3af99",
+                "selected_version": true
+              },
+              {
+                "record_index": 3127,
+                "field": "bookSourceUrl",
+                "source_id": "1de929a5b482007aa2af4d5050b33cdcdd62df6d32ae34739f63f0fa25c3af99",
+                "selected_version": false
+              },
+              {
+                "record_index": 3127,
+                "field": "declared_endpoint",
+                "source_id": "1de929a5b482007aa2af4d5050b33cdcdd62df6d32ae34739f63f0fa25c3af99",
+                "selected_version": false
+              },
+              {
+                "record_index": 3127,
+                "field": "exploreUrl",
+                "source_id": "1de929a5b482007aa2af4d5050b33cdcdd62df6d32ae34739f63f0fa25c3af99",
+                "selected_version": false
+              },
+              {
+                "record_index": 3127,
+                "field": "searchUrl",
+                "source_id": "1de929a5b482007aa2af4d5050b33cdcdd62df6d32ae34739f63f0fa25c3af99",
+                "selected_version": false
+              }
+            ]
+          },
+          {
+            "catalog_host": "cxb-pro.cread.com",
+            "listed_domain": "cread.com",
+            "relation": "listed_parent",
+            "category": "porn",
+            "catalog_references": [
+              {
+                "record_index": 924,
+                "field": "bookSourceComment",
+                "source_id": "8baa3664968243315eae7a169985419a5c72e0b624e07d481eb484a98b4108c0",
+                "selected_version": true
+              },
+              {
+                "record_index": 924,
+                "field": "bookSourceUrl",
+                "source_id": "8baa3664968243315eae7a169985419a5c72e0b624e07d481eb484a98b4108c0",
+                "selected_version": true
+              },
+              {
+                "record_index": 924,
+                "field": "declared_endpoint",
+                "source_id": "8baa3664968243315eae7a169985419a5c72e0b624e07d481eb484a98b4108c0",
+                "selected_version": true
+              },
+              {
+                "record_index": 924,
+                "field": "exploreUrl",
+                "source_id": "8baa3664968243315eae7a169985419a5c72e0b624e07d481eb484a98b4108c0",
+                "selected_version": true
+              },
+              {
+                "record_index": 924,
+                "field": "ruleBookInfo.tocUrl",
+                "source_id": "8baa3664968243315eae7a169985419a5c72e0b624e07d481eb484a98b4108c0",
+                "selected_version": true
+              },
+              {
+                "record_index": 924,
+                "field": "ruleToc.chapterUrl",
+                "source_id": "8baa3664968243315eae7a169985419a5c72e0b624e07d481eb484a98b4108c0",
+                "selected_version": true
+              },
+              {
+                "record_index": 924,
+                "field": "searchUrl",
+                "source_id": "8baa3664968243315eae7a169985419a5c72e0b624e07d481eb484a98b4108c0",
+                "selected_version": true
+              },
+              {
+                "record_index": 924,
+                "field": "selected_imported_host",
+                "source_id": "8baa3664968243315eae7a169985419a5c72e0b624e07d481eb484a98b4108c0",
+                "selected_version": true
+              },
+              {
+                "record_index": 1127,
+                "field": "bookSourceUrl",
+                "source_id": "f1ce24b25c15dc440eac8adba44ed0b6db4089fd646f06c9c5b198e9eb808688",
+                "selected_version": false
+              },
+              {
+                "record_index": 1127,
+                "field": "declared_endpoint",
+                "source_id": "f1ce24b25c15dc440eac8adba44ed0b6db4089fd646f06c9c5b198e9eb808688",
+                "selected_version": false
+              },
+              {
+                "record_index": 1127,
+                "field": "exploreUrl",
+                "source_id": "f1ce24b25c15dc440eac8adba44ed0b6db4089fd646f06c9c5b198e9eb808688",
+                "selected_version": false
+              },
+              {
+                "record_index": 1127,
+                "field": "ruleBookInfo.tocUrl",
+                "source_id": "f1ce24b25c15dc440eac8adba44ed0b6db4089fd646f06c9c5b198e9eb808688",
+                "selected_version": false
+              },
+              {
+                "record_index": 1127,
+                "field": "ruleToc.chapterUrl",
+                "source_id": "f1ce24b25c15dc440eac8adba44ed0b6db4089fd646f06c9c5b198e9eb808688",
+                "selected_version": false
+              },
+              {
+                "record_index": 1127,
+                "field": "searchUrl",
+                "source_id": "f1ce24b25c15dc440eac8adba44ed0b6db4089fd646f06c9c5b198e9eb808688",
+                "selected_version": false
+              },
+              {
+                "record_index": 1470,
+                "field": "bookSourceUrl",
+                "source_id": "f1ce24b25c15dc440eac8adba44ed0b6db4089fd646f06c9c5b198e9eb808688",
+                "selected_version": true
+              },
+              {
+                "record_index": 1470,
+                "field": "declared_endpoint",
+                "source_id": "f1ce24b25c15dc440eac8adba44ed0b6db4089fd646f06c9c5b198e9eb808688",
+                "selected_version": true
+              },
+              {
+                "record_index": 1470,
+                "field": "exploreUrl",
+                "source_id": "f1ce24b25c15dc440eac8adba44ed0b6db4089fd646f06c9c5b198e9eb808688",
+                "selected_version": true
+              },
+              {
+                "record_index": 1470,
+                "field": "ruleBookInfo.tocUrl",
+                "source_id": "f1ce24b25c15dc440eac8adba44ed0b6db4089fd646f06c9c5b198e9eb808688",
+                "selected_version": true
+              },
+              {
+                "record_index": 1470,
+                "field": "ruleToc.chapterUrl",
+                "source_id": "f1ce24b25c15dc440eac8adba44ed0b6db4089fd646f06c9c5b198e9eb808688",
+                "selected_version": true
+              },
+              {
+                "record_index": 1470,
+                "field": "searchUrl",
+                "source_id": "f1ce24b25c15dc440eac8adba44ed0b6db4089fd646f06c9c5b198e9eb808688",
+                "selected_version": true
+              },
+              {
+                "record_index": 1470,
+                "field": "selected_imported_host",
+                "source_id": "f1ce24b25c15dc440eac8adba44ed0b6db4089fd646f06c9c5b198e9eb808688",
+                "selected_version": true
+              },
+              {
+                "record_index": 1604,
+                "field": "bookSourceUrl",
+                "source_id": "0bfbc4c3258bd02f80e16c63b47467939512e8c24f7023d1a425088e1a5a901a",
+                "selected_version": true
+              },
+              {
+                "record_index": 1604,
+                "field": "declared_endpoint",
+                "source_id": "0bfbc4c3258bd02f80e16c63b47467939512e8c24f7023d1a425088e1a5a901a",
+                "selected_version": true
+              },
+              {
+                "record_index": 1604,
+                "field": "ruleSearch.bookUrl",
+                "source_id": "0bfbc4c3258bd02f80e16c63b47467939512e8c24f7023d1a425088e1a5a901a",
+                "selected_version": true
+              },
+              {
+                "record_index": 1604,
+                "field": "ruleToc.chapterUrl",
+                "source_id": "0bfbc4c3258bd02f80e16c63b47467939512e8c24f7023d1a425088e1a5a901a",
+                "selected_version": true
+              },
+              {
+                "record_index": 1604,
+                "field": "searchUrl",
+                "source_id": "0bfbc4c3258bd02f80e16c63b47467939512e8c24f7023d1a425088e1a5a901a",
+                "selected_version": true
+              },
+              {
+                "record_index": 1604,
+                "field": "selected_imported_host",
+                "source_id": "0bfbc4c3258bd02f80e16c63b47467939512e8c24f7023d1a425088e1a5a901a",
+                "selected_version": true
+              },
+              {
+                "record_index": 1675,
+                "field": "exploreUrl",
+                "source_id": null,
+                "selected_version": false
+              },
+              {
+                "record_index": 1675,
+                "field": "searchUrl",
+                "source_id": null,
+                "selected_version": false
+              },
+              {
+                "record_index": 1823,
+                "field": "bookSourceComment",
+                "source_id": "8baa3664968243315eae7a169985419a5c72e0b624e07d481eb484a98b4108c0",
+                "selected_version": false
+              },
+              {
+                "record_index": 1823,
+                "field": "bookSourceUrl",
+                "source_id": "8baa3664968243315eae7a169985419a5c72e0b624e07d481eb484a98b4108c0",
+                "selected_version": false
+              },
+              {
+                "record_index": 1823,
+                "field": "declared_endpoint",
+                "source_id": "8baa3664968243315eae7a169985419a5c72e0b624e07d481eb484a98b4108c0",
+                "selected_version": false
+              },
+              {
+                "record_index": 1823,
+                "field": "exploreUrl",
+                "source_id": "8baa3664968243315eae7a169985419a5c72e0b624e07d481eb484a98b4108c0",
+                "selected_version": false
+              },
+              {
+                "record_index": 1823,
+                "field": "ruleBookInfo.tocUrl",
+                "source_id": "8baa3664968243315eae7a169985419a5c72e0b624e07d481eb484a98b4108c0",
+                "selected_version": false
+              },
+              {
+                "record_index": 1823,
+                "field": "ruleToc.chapterUrl",
+                "source_id": "8baa3664968243315eae7a169985419a5c72e0b624e07d481eb484a98b4108c0",
+                "selected_version": false
+              },
+              {
+                "record_index": 1823,
+                "field": "searchUrl",
+                "source_id": "8baa3664968243315eae7a169985419a5c72e0b624e07d481eb484a98b4108c0",
+                "selected_version": false
+              },
+              {
+                "record_index": 2076,
+                "field": "bookSourceUrl",
+                "source_id": "eeff5563e45dc16e73a5be7098b9ce4cd47161be7936e95ad269970a87fecd07",
+                "selected_version": true
+              },
+              {
+                "record_index": 2076,
+                "field": "declared_endpoint",
+                "source_id": "eeff5563e45dc16e73a5be7098b9ce4cd47161be7936e95ad269970a87fecd07",
+                "selected_version": true
+              },
+              {
+                "record_index": 2076,
+                "field": "exploreUrl",
+                "source_id": "eeff5563e45dc16e73a5be7098b9ce4cd47161be7936e95ad269970a87fecd07",
+                "selected_version": true
+              },
+              {
+                "record_index": 2076,
+                "field": "ruleBookInfo.tocUrl",
+                "source_id": "eeff5563e45dc16e73a5be7098b9ce4cd47161be7936e95ad269970a87fecd07",
+                "selected_version": true
+              },
+              {
+                "record_index": 2076,
+                "field": "ruleToc.chapterUrl",
+                "source_id": "eeff5563e45dc16e73a5be7098b9ce4cd47161be7936e95ad269970a87fecd07",
+                "selected_version": true
+              },
+              {
+                "record_index": 2076,
+                "field": "searchUrl",
+                "source_id": "eeff5563e45dc16e73a5be7098b9ce4cd47161be7936e95ad269970a87fecd07",
+                "selected_version": true
+              },
+              {
+                "record_index": 2076,
+                "field": "selected_imported_host",
+                "source_id": "eeff5563e45dc16e73a5be7098b9ce4cd47161be7936e95ad269970a87fecd07",
+                "selected_version": true
+              },
+              {
+                "record_index": 3639,
+                "field": "exploreUrl",
+                "source_id": null,
+                "selected_version": false
+              },
+              {
+                "record_index": 3639,
+                "field": "searchUrl",
+                "source_id": null,
+                "selected_version": false
+              },
+              {
+                "record_index": 3810,
+                "field": "bookSourceUrl",
+                "source_id": "0bfbc4c3258bd02f80e16c63b47467939512e8c24f7023d1a425088e1a5a901a",
+                "selected_version": false
+              },
+              {
+                "record_index": 3810,
+                "field": "declared_endpoint",
+                "source_id": "0bfbc4c3258bd02f80e16c63b47467939512e8c24f7023d1a425088e1a5a901a",
+                "selected_version": false
+              },
+              {
+                "record_index": 3810,
+                "field": "ruleSearch.bookUrl",
+                "source_id": "0bfbc4c3258bd02f80e16c63b47467939512e8c24f7023d1a425088e1a5a901a",
+                "selected_version": false
+              },
+              {
+                "record_index": 3810,
+                "field": "ruleToc.chapterUrl",
+                "source_id": "0bfbc4c3258bd02f80e16c63b47467939512e8c24f7023d1a425088e1a5a901a",
+                "selected_version": false
+              },
+              {
+                "record_index": 3810,
+                "field": "searchUrl",
+                "source_id": "0bfbc4c3258bd02f80e16c63b47467939512e8c24f7023d1a425088e1a5a901a",
+                "selected_version": false
+              },
+              {
+                "record_index": 3839,
+                "field": "bookSourceUrl",
+                "source_id": "f1ce24b25c15dc440eac8adba44ed0b6db4089fd646f06c9c5b198e9eb808688",
+                "selected_version": false
+              },
+              {
+                "record_index": 3839,
+                "field": "declared_endpoint",
+                "source_id": "f1ce24b25c15dc440eac8adba44ed0b6db4089fd646f06c9c5b198e9eb808688",
+                "selected_version": false
+              },
+              {
+                "record_index": 3839,
+                "field": "exploreUrl",
+                "source_id": "f1ce24b25c15dc440eac8adba44ed0b6db4089fd646f06c9c5b198e9eb808688",
+                "selected_version": false
+              },
+              {
+                "record_index": 3839,
+                "field": "ruleBookInfo.tocUrl",
+                "source_id": "f1ce24b25c15dc440eac8adba44ed0b6db4089fd646f06c9c5b198e9eb808688",
+                "selected_version": false
+              },
+              {
+                "record_index": 3839,
+                "field": "ruleToc.chapterUrl",
+                "source_id": "f1ce24b25c15dc440eac8adba44ed0b6db4089fd646f06c9c5b198e9eb808688",
+                "selected_version": false
+              },
+              {
+                "record_index": 3839,
+                "field": "searchUrl",
+                "source_id": "f1ce24b25c15dc440eac8adba44ed0b6db4089fd646f06c9c5b198e9eb808688",
+                "selected_version": false
+              },
+              {
+                "record_index": 3896,
+                "field": "bookSourceUrl",
+                "source_id": "f1ce24b25c15dc440eac8adba44ed0b6db4089fd646f06c9c5b198e9eb808688",
+                "selected_version": false
+              },
+              {
+                "record_index": 3896,
+                "field": "declared_endpoint",
+                "source_id": "f1ce24b25c15dc440eac8adba44ed0b6db4089fd646f06c9c5b198e9eb808688",
+                "selected_version": false
+              },
+              {
+                "record_index": 3896,
+                "field": "exploreUrl",
+                "source_id": "f1ce24b25c15dc440eac8adba44ed0b6db4089fd646f06c9c5b198e9eb808688",
+                "selected_version": false
+              },
+              {
+                "record_index": 3896,
+                "field": "ruleBookInfo.tocUrl",
+                "source_id": "f1ce24b25c15dc440eac8adba44ed0b6db4089fd646f06c9c5b198e9eb808688",
+                "selected_version": false
+              },
+              {
+                "record_index": 3896,
+                "field": "ruleToc.chapterUrl",
+                "source_id": "f1ce24b25c15dc440eac8adba44ed0b6db4089fd646f06c9c5b198e9eb808688",
+                "selected_version": false
+              },
+              {
+                "record_index": 3896,
+                "field": "searchUrl",
+                "source_id": "f1ce24b25c15dc440eac8adba44ed0b6db4089fd646f06c9c5b198e9eb808688",
+                "selected_version": false
+              },
+              {
+                "record_index": 3988,
+                "field": "exploreUrl",
+                "source_id": null,
+                "selected_version": false
+              },
+              {
+                "record_index": 3988,
+                "field": "searchUrl",
+                "source_id": null,
+                "selected_version": false
+              },
+              {
+                "record_index": 4307,
+                "field": "exploreUrl",
+                "source_id": null,
+                "selected_version": false
+              },
+              {
+                "record_index": 4307,
+                "field": "searchUrl",
+                "source_id": null,
+                "selected_version": false
+              },
+              {
+                "record_index": 4316,
+                "field": "exploreUrl",
+                "source_id": null,
+                "selected_version": false
+              },
+              {
+                "record_index": 4316,
+                "field": "searchUrl",
+                "source_id": null,
+                "selected_version": false
+              },
+              {
+                "record_index": 4434,
+                "field": "exploreUrl",
+                "source_id": null,
+                "selected_version": false
+              },
+              {
+                "record_index": 4434,
+                "field": "searchUrl",
+                "source_id": null,
+                "selected_version": false
+              },
+              {
+                "record_index": 4435,
+                "field": "exploreUrl",
+                "source_id": null,
+                "selected_version": false
+              },
+              {
+                "record_index": 4435,
+                "field": "searchUrl",
+                "source_id": null,
+                "selected_version": false
+              }
+            ]
+          },
+          {
+            "catalog_host": "litu100.xyz",
+            "listed_domain": "litu100.xyz",
+            "relation": "exact",
+            "category": "porn",
+            "catalog_references": [
+              {
+                "record_index": 1124,
+                "field": "bookSourceUrl",
+                "source_id": "9dd98d18033be16ecf6ff1d248abe671b0d0925e8544e8aa67b4ac63e823cc6e",
+                "selected_version": true
+              },
+              {
+                "record_index": 1124,
+                "field": "declared_endpoint",
+                "source_id": "9dd98d18033be16ecf6ff1d248abe671b0d0925e8544e8aa67b4ac63e823cc6e",
+                "selected_version": true
+              },
+              {
+                "record_index": 1124,
+                "field": "searchUrl",
+                "source_id": "9dd98d18033be16ecf6ff1d248abe671b0d0925e8544e8aa67b4ac63e823cc6e",
+                "selected_version": true
+              },
+              {
+                "record_index": 1124,
+                "field": "selected_imported_host",
+                "source_id": "9dd98d18033be16ecf6ff1d248abe671b0d0925e8544e8aa67b4ac63e823cc6e",
+                "selected_version": true
+              },
+              {
+                "record_index": 3309,
+                "field": "bookSourceUrl",
+                "source_id": "b866227d0b7b693729789e5078d995f87cfdb3e2832b28a8c627fcb0d0f96d28",
+                "selected_version": true
+              },
+              {
+                "record_index": 3309,
+                "field": "declared_endpoint",
+                "source_id": "b866227d0b7b693729789e5078d995f87cfdb3e2832b28a8c627fcb0d0f96d28",
+                "selected_version": true
+              },
+              {
+                "record_index": 3309,
+                "field": "searchUrl",
+                "source_id": "b866227d0b7b693729789e5078d995f87cfdb3e2832b28a8c627fcb0d0f96d28",
+                "selected_version": true
+              },
+              {
+                "record_index": 3309,
+                "field": "selected_imported_host",
+                "source_id": "b866227d0b7b693729789e5078d995f87cfdb3e2832b28a8c627fcb0d0f96d28",
+                "selected_version": true
+              },
+              {
+                "record_index": 3555,
+                "field": "bookSourceUrl",
+                "source_id": "9dd98d18033be16ecf6ff1d248abe671b0d0925e8544e8aa67b4ac63e823cc6e",
+                "selected_version": false
+              },
+              {
+                "record_index": 3555,
+                "field": "declared_endpoint",
+                "source_id": "9dd98d18033be16ecf6ff1d248abe671b0d0925e8544e8aa67b4ac63e823cc6e",
+                "selected_version": false
+              },
+              {
+                "record_index": 3555,
+                "field": "searchUrl",
+                "source_id": "9dd98d18033be16ecf6ff1d248abe671b0d0925e8544e8aa67b4ac63e823cc6e",
+                "selected_version": false
+              }
+            ]
+          },
+          {
+            "catalog_host": "m.aaread.club",
+            "listed_domain": "aaread.club",
+            "relation": "listed_parent",
+            "category": "porn",
+            "catalog_references": [
+              {
+                "record_index": 3233,
+                "field": "bookSourceUrl",
+                "source_id": null,
+                "selected_version": false
+              },
+              {
+                "record_index": 3233,
+                "field": "declared_endpoint",
+                "source_id": null,
+                "selected_version": false
+              }
+            ]
+          },
+          {
+            "catalog_host": "m.cread.com",
+            "listed_domain": "cread.com",
+            "relation": "listed_parent",
+            "category": "porn",
+            "catalog_references": [
+              {
+                "record_index": 4434,
+                "field": "bookSourceUrl",
+                "source_id": null,
+                "selected_version": false
+              },
+              {
+                "record_index": 4434,
+                "field": "declared_endpoint",
+                "source_id": null,
+                "selected_version": false
+              },
+              {
+                "record_index": 4435,
+                "field": "bookSourceUrl",
+                "source_id": null,
+                "selected_version": false
+              },
+              {
+                "record_index": 4435,
+                "field": "declared_endpoint",
+                "source_id": null,
+                "selected_version": false
+              }
+            ]
+          },
+          {
+            "catalog_host": "nhentai.net",
+            "listed_domain": "nhentai.net",
+            "relation": "exact",
+            "category": "porn",
+            "catalog_references": [
+              {
+                "record_index": 948,
+                "field": "bookSourceUrl",
+                "source_id": null,
+                "selected_version": false
+              },
+              {
+                "record_index": 948,
+                "field": "declared_endpoint",
+                "source_id": null,
+                "selected_version": false
+              },
+              {
+                "record_index": 2116,
+                "field": "bookSourceUrl",
+                "source_id": null,
+                "selected_version": false
+              },
+              {
+                "record_index": 2116,
+                "field": "declared_endpoint",
+                "source_id": null,
+                "selected_version": false
+              }
+            ]
+          },
+          {
+            "catalog_host": "readbook-service-freebook.cread.com",
+            "listed_domain": "cread.com",
+            "relation": "listed_parent",
+            "category": "porn",
+            "catalog_references": [
+              {
+                "record_index": 924,
+                "field": "bookSourceComment",
+                "source_id": "8baa3664968243315eae7a169985419a5c72e0b624e07d481eb484a98b4108c0",
+                "selected_version": true
+              },
+              {
+                "record_index": 924,
+                "field": "ruleExplore.bookUrl",
+                "source_id": "8baa3664968243315eae7a169985419a5c72e0b624e07d481eb484a98b4108c0",
+                "selected_version": true
+              },
+              {
+                "record_index": 924,
+                "field": "ruleSearch.bookUrl",
+                "source_id": "8baa3664968243315eae7a169985419a5c72e0b624e07d481eb484a98b4108c0",
+                "selected_version": true
+              },
+              {
+                "record_index": 1127,
+                "field": "ruleExplore.bookUrl",
+                "source_id": "f1ce24b25c15dc440eac8adba44ed0b6db4089fd646f06c9c5b198e9eb808688",
+                "selected_version": false
+              },
+              {
+                "record_index": 1127,
+                "field": "ruleSearch.bookUrl",
+                "source_id": "f1ce24b25c15dc440eac8adba44ed0b6db4089fd646f06c9c5b198e9eb808688",
+                "selected_version": false
+              },
+              {
+                "record_index": 1470,
+                "field": "ruleExplore.bookUrl",
+                "source_id": "f1ce24b25c15dc440eac8adba44ed0b6db4089fd646f06c9c5b198e9eb808688",
+                "selected_version": true
+              },
+              {
+                "record_index": 1470,
+                "field": "ruleSearch.bookUrl",
+                "source_id": "f1ce24b25c15dc440eac8adba44ed0b6db4089fd646f06c9c5b198e9eb808688",
+                "selected_version": true
+              },
+              {
+                "record_index": 1675,
+                "field": "ruleBookInfo.tocUrl",
+                "source_id": null,
+                "selected_version": false
+              },
+              {
+                "record_index": 1675,
+                "field": "ruleExplore.bookUrl",
+                "source_id": null,
+                "selected_version": false
+              },
+              {
+                "record_index": 1675,
+                "field": "ruleSearch.bookUrl",
+                "source_id": null,
+                "selected_version": false
+              },
+              {
+                "record_index": 1675,
+                "field": "ruleSearch.checkKeyWord",
+                "source_id": null,
+                "selected_version": false
+              },
+              {
+                "record_index": 1675,
+                "field": "ruleToc.chapterList",
+                "source_id": null,
+                "selected_version": false
+              },
+              {
+                "record_index": 1823,
+                "field": "bookSourceComment",
+                "source_id": "8baa3664968243315eae7a169985419a5c72e0b624e07d481eb484a98b4108c0",
+                "selected_version": false
+              },
+              {
+                "record_index": 1823,
+                "field": "ruleExplore.bookUrl",
+                "source_id": "8baa3664968243315eae7a169985419a5c72e0b624e07d481eb484a98b4108c0",
+                "selected_version": false
+              },
+              {
+                "record_index": 1823,
+                "field": "ruleSearch.bookUrl",
+                "source_id": "8baa3664968243315eae7a169985419a5c72e0b624e07d481eb484a98b4108c0",
+                "selected_version": false
+              },
+              {
+                "record_index": 2076,
+                "field": "ruleExplore.bookUrl",
+                "source_id": "eeff5563e45dc16e73a5be7098b9ce4cd47161be7936e95ad269970a87fecd07",
+                "selected_version": true
+              },
+              {
+                "record_index": 2076,
+                "field": "ruleSearch.bookUrl",
+                "source_id": "eeff5563e45dc16e73a5be7098b9ce4cd47161be7936e95ad269970a87fecd07",
+                "selected_version": true
+              },
+              {
+                "record_index": 3639,
+                "field": "ruleBookInfo.tocUrl",
+                "source_id": null,
+                "selected_version": false
+              },
+              {
+                "record_index": 3639,
+                "field": "ruleExplore.bookUrl",
+                "source_id": null,
+                "selected_version": false
+              },
+              {
+                "record_index": 3639,
+                "field": "ruleSearch.bookUrl",
+                "source_id": null,
+                "selected_version": false
+              },
+              {
+                "record_index": 3639,
+                "field": "ruleSearch.checkKeyWord",
+                "source_id": null,
+                "selected_version": false
+              },
+              {
+                "record_index": 3639,
+                "field": "ruleToc.chapterList",
+                "source_id": null,
+                "selected_version": false
+              },
+              {
+                "record_index": 3839,
+                "field": "ruleExplore.bookUrl",
+                "source_id": "f1ce24b25c15dc440eac8adba44ed0b6db4089fd646f06c9c5b198e9eb808688",
+                "selected_version": false
+              },
+              {
+                "record_index": 3839,
+                "field": "ruleSearch.bookUrl",
+                "source_id": "f1ce24b25c15dc440eac8adba44ed0b6db4089fd646f06c9c5b198e9eb808688",
+                "selected_version": false
+              },
+              {
+                "record_index": 3896,
+                "field": "ruleExplore.bookUrl",
+                "source_id": "f1ce24b25c15dc440eac8adba44ed0b6db4089fd646f06c9c5b198e9eb808688",
+                "selected_version": false
+              },
+              {
+                "record_index": 3896,
+                "field": "ruleSearch.bookUrl",
+                "source_id": "f1ce24b25c15dc440eac8adba44ed0b6db4089fd646f06c9c5b198e9eb808688",
+                "selected_version": false
+              },
+              {
+                "record_index": 3988,
+                "field": "ruleBookInfo.tocUrl",
+                "source_id": null,
+                "selected_version": false
+              },
+              {
+                "record_index": 3988,
+                "field": "ruleExplore.bookUrl",
+                "source_id": null,
+                "selected_version": false
+              },
+              {
+                "record_index": 3988,
+                "field": "ruleSearch.bookUrl",
+                "source_id": null,
+                "selected_version": false
+              },
+              {
+                "record_index": 3988,
+                "field": "ruleToc.chapterList",
+                "source_id": null,
+                "selected_version": false
+              },
+              {
+                "record_index": 4307,
+                "field": "ruleBookInfo.tocUrl",
+                "source_id": null,
+                "selected_version": false
+              },
+              {
+                "record_index": 4307,
+                "field": "ruleExplore.bookUrl",
+                "source_id": null,
+                "selected_version": false
+              },
+              {
+                "record_index": 4307,
+                "field": "ruleSearch.bookUrl",
+                "source_id": null,
+                "selected_version": false
+              },
+              {
+                "record_index": 4307,
+                "field": "ruleToc.chapterList",
+                "source_id": null,
+                "selected_version": false
+              },
+              {
+                "record_index": 4316,
+                "field": "ruleBookInfo.tocUrl",
+                "source_id": null,
+                "selected_version": false
+              },
+              {
+                "record_index": 4316,
+                "field": "ruleExplore.bookUrl",
+                "source_id": null,
+                "selected_version": false
+              },
+              {
+                "record_index": 4316,
+                "field": "ruleSearch.bookUrl",
+                "source_id": null,
+                "selected_version": false
+              },
+              {
+                "record_index": 4316,
+                "field": "ruleToc.chapterList",
+                "source_id": null,
+                "selected_version": false
+              },
+              {
+                "record_index": 4434,
+                "field": "ruleBookInfo.tocUrl",
+                "source_id": null,
+                "selected_version": false
+              },
+              {
+                "record_index": 4434,
+                "field": "ruleExplore.bookUrl",
+                "source_id": null,
+                "selected_version": false
+              },
+              {
+                "record_index": 4434,
+                "field": "ruleSearch.bookUrl",
+                "source_id": null,
+                "selected_version": false
+              },
+              {
+                "record_index": 4434,
+                "field": "ruleToc.chapterList",
+                "source_id": null,
+                "selected_version": false
+              },
+              {
+                "record_index": 4435,
+                "field": "ruleBookInfo.tocUrl",
+                "source_id": null,
+                "selected_version": false
+              },
+              {
+                "record_index": 4435,
+                "field": "ruleExplore.bookUrl",
+                "source_id": null,
+                "selected_version": false
+              },
+              {
+                "record_index": 4435,
+                "field": "ruleSearch.bookUrl",
+                "source_id": null,
+                "selected_version": false
+              },
+              {
+                "record_index": 4435,
+                "field": "ruleToc.chapterList",
+                "source_id": null,
+                "selected_version": false
+              }
+            ]
+          },
+          {
+            "catalog_host": "seqing001.com",
+            "listed_domain": "seqing001.com",
+            "relation": "exact",
+            "category": "porn",
+            "catalog_references": [
+              {
+                "record_index": 3923,
+                "field": "bookSourceUrl",
+                "source_id": "cb24bdf6620a08c5177f52faf62db07ec6180a21278f43d22c4bef75e802abb9",
+                "selected_version": true
+              },
+              {
+                "record_index": 3923,
+                "field": "declared_endpoint",
+                "source_id": "cb24bdf6620a08c5177f52faf62db07ec6180a21278f43d22c4bef75e802abb9",
+                "selected_version": true
+              },
+              {
+                "record_index": 3923,
+                "field": "searchUrl",
+                "source_id": "cb24bdf6620a08c5177f52faf62db07ec6180a21278f43d22c4bef75e802abb9",
+                "selected_version": true
+              },
+              {
+                "record_index": 3923,
+                "field": "selected_imported_host",
+                "source_id": "cb24bdf6620a08c5177f52faf62db07ec6180a21278f43d22c4bef75e802abb9",
+                "selected_version": true
+              }
+            ]
+          },
+          {
+            "catalog_host": "sexinsex.net",
+            "listed_domain": "sexinsex.net",
+            "relation": "exact",
+            "category": "porn",
+            "catalog_references": [
+              {
+                "record_index": 2186,
+                "field": "bookSourceUrl",
+                "source_id": null,
+                "selected_version": false
+              },
+              {
+                "record_index": 2186,
+                "field": "declared_endpoint",
+                "source_id": null,
+                "selected_version": false
+              }
+            ]
+          },
+          {
+            "catalog_host": "www.635k.com",
+            "listed_domain": "635k.com",
+            "relation": "listed_parent",
+            "category": "porn",
+            "catalog_references": [
+              {
+                "record_index": 4043,
+                "field": "bookSourceUrl",
+                "source_id": "b293cc11e4f9cd10cb8c79533a961b0e15e84283d11347c27e67d253bd54ba98",
+                "selected_version": true
+              },
+              {
+                "record_index": 4043,
+                "field": "declared_endpoint",
+                "source_id": "b293cc11e4f9cd10cb8c79533a961b0e15e84283d11347c27e67d253bd54ba98",
+                "selected_version": true
+              },
+              {
+                "record_index": 4043,
+                "field": "exploreUrl",
+                "source_id": "b293cc11e4f9cd10cb8c79533a961b0e15e84283d11347c27e67d253bd54ba98",
+                "selected_version": true
+              },
+              {
+                "record_index": 4043,
+                "field": "selected_imported_host",
+                "source_id": "b293cc11e4f9cd10cb8c79533a961b0e15e84283d11347c27e67d253bd54ba98",
+                "selected_version": true
+              },
+              {
+                "record_index": 4815,
+                "field": "bookSourceUrl",
+                "source_id": "b293cc11e4f9cd10cb8c79533a961b0e15e84283d11347c27e67d253bd54ba98",
+                "selected_version": false
+              },
+              {
+                "record_index": 4815,
+                "field": "declared_endpoint",
+                "source_id": "b293cc11e4f9cd10cb8c79533a961b0e15e84283d11347c27e67d253bd54ba98",
+                "selected_version": false
+              },
+              {
+                "record_index": 4815,
+                "field": "exploreUrl",
+                "source_id": "b293cc11e4f9cd10cb8c79533a961b0e15e84283d11347c27e67d253bd54ba98",
+                "selected_version": false
+              }
+            ]
+          },
+          {
+            "catalog_host": "www.jjmh.top",
+            "listed_domain": "jjmh.top",
+            "relation": "listed_parent",
+            "category": "porn",
+            "catalog_references": [
+              {
+                "record_index": 4223,
+                "field": "bookSourceUrl",
+                "source_id": "3206775ccea17aaa7c010bf822a04da384819ae82d4ee94acd3cde06ba2cf837",
+                "selected_version": true
+              },
+              {
+                "record_index": 4223,
+                "field": "declared_endpoint",
+                "source_id": "3206775ccea17aaa7c010bf822a04da384819ae82d4ee94acd3cde06ba2cf837",
+                "selected_version": true
+              },
+              {
+                "record_index": 4223,
+                "field": "selected_imported_host",
+                "source_id": "3206775ccea17aaa7c010bf822a04da384819ae82d4ee94acd3cde06ba2cf837",
+                "selected_version": true
+              },
+              {
+                "record_index": 4833,
+                "field": "bookSourceUrl",
+                "source_id": "80a04e50867288cf60ffd2769bde2db23261ed2ed2bd5ea0940ccd6a9ce13325",
+                "selected_version": true
+              },
+              {
+                "record_index": 4833,
+                "field": "declared_endpoint",
+                "source_id": "80a04e50867288cf60ffd2769bde2db23261ed2ed2bd5ea0940ccd6a9ce13325",
+                "selected_version": true
+              },
+              {
+                "record_index": 4833,
+                "field": "searchUrl",
+                "source_id": "80a04e50867288cf60ffd2769bde2db23261ed2ed2bd5ea0940ccd6a9ce13325",
+                "selected_version": true
+              },
+              {
+                "record_index": 4833,
+                "field": "selected_imported_host",
+                "source_id": "80a04e50867288cf60ffd2769bde2db23261ed2ed2bd5ea0940ccd6a9ce13325",
+                "selected_version": true
+              }
+            ]
+          },
+          {
+            "catalog_host": "www.sto.cx",
+            "listed_domain": "sto.cx",
+            "relation": "listed_parent",
+            "category": "porn",
+            "catalog_references": [
+              {
+                "record_index": 156,
+                "field": "bookSourceUrl",
+                "source_id": "aa2be459c25ec267189830bb0f487a4a42c50887b8f3098cf04371a9c78c1a5e",
+                "selected_version": true
+              },
+              {
+                "record_index": 156,
+                "field": "declared_endpoint",
+                "source_id": "aa2be459c25ec267189830bb0f487a4a42c50887b8f3098cf04371a9c78c1a5e",
+                "selected_version": true
+              },
+              {
+                "record_index": 156,
+                "field": "exploreUrl",
+                "source_id": "aa2be459c25ec267189830bb0f487a4a42c50887b8f3098cf04371a9c78c1a5e",
+                "selected_version": true
+              },
+              {
+                "record_index": 156,
+                "field": "searchUrl",
+                "source_id": "aa2be459c25ec267189830bb0f487a4a42c50887b8f3098cf04371a9c78c1a5e",
+                "selected_version": true
+              },
+              {
+                "record_index": 156,
+                "field": "selected_imported_host",
+                "source_id": "aa2be459c25ec267189830bb0f487a4a42c50887b8f3098cf04371a9c78c1a5e",
+                "selected_version": true
+              }
+            ]
+          },
+          {
+            "catalog_host": "www.uaa.com",
+            "listed_domain": "uaa.com",
+            "relation": "listed_parent",
+            "category": "porn",
+            "catalog_references": [
+              {
+                "record_index": 989,
+                "field": "bookSourceComment",
+                "source_id": "08b828adf2d0154db83894b6b77db3defa9dfae30de8a832fc26a5f7c72cbe07",
+                "selected_version": true
+              },
+              {
+                "record_index": 1220,
+                "field": "bookSourceUrl",
+                "source_id": null,
+                "selected_version": false
+              },
+              {
+                "record_index": 1220,
+                "field": "declared_endpoint",
+                "source_id": null,
+                "selected_version": false
+              },
+              {
+                "record_index": 1644,
+                "field": "bookSourceUrl",
+                "source_id": null,
+                "selected_version": false
+              },
+              {
+                "record_index": 1644,
+                "field": "declared_endpoint",
+                "source_id": null,
+                "selected_version": false
+              },
+              {
+                "record_index": 3116,
+                "field": "bookSourceComment",
+                "source_id": "08b828adf2d0154db83894b6b77db3defa9dfae30de8a832fc26a5f7c72cbe07",
+                "selected_version": false
+              },
+              {
+                "record_index": 3218,
+                "field": "bookSourceUrl",
+                "source_id": null,
+                "selected_version": false
+              },
+              {
+                "record_index": 3218,
+                "field": "declared_endpoint",
+                "source_id": null,
+                "selected_version": false
+              },
+              {
+                "record_index": 3858,
+                "field": "bookSourceUrl",
+                "source_id": null,
+                "selected_version": false
+              },
+              {
+                "record_index": 3858,
+                "field": "declared_endpoint",
+                "source_id": null,
+                "selected_version": false
+              },
+              {
+                "record_index": 3905,
+                "field": "bookSourceUrl",
+                "source_id": null,
+                "selected_version": false
+              },
+              {
+                "record_index": 3905,
+                "field": "declared_endpoint",
+                "source_id": null,
+                "selected_version": false
+              }
+            ]
+          },
+          {
+            "catalog_host": "www.webtoon.xyz",
+            "listed_domain": "webtoon.xyz",
+            "relation": "listed_parent",
+            "category": "porn",
+            "catalog_references": [
+              {
+                "record_index": 3726,
+                "field": "bookSourceUrl",
+                "source_id": null,
+                "selected_version": false
+              },
+              {
+                "record_index": 3726,
+                "field": "declared_endpoint",
+                "source_id": null,
+                "selected_version": false
+              },
+              {
+                "record_index": 3726,
+                "field": "searchUrl",
+                "source_id": null,
+                "selected_version": false
+              }
+            ]
+          },
+          {
+            "catalog_host": "www.yeduji.com",
+            "listed_domain": "yeduji.com",
+            "relation": "listed_parent",
+            "category": "porn",
+            "catalog_references": [
+              {
+                "record_index": 3908,
+                "field": "bookSourceUrl",
+                "source_id": "25749e82df95e79b09416f4a0eb7e982898b976d4843cd0cd1a0e064de849132",
+                "selected_version": true
+              },
+              {
+                "record_index": 3908,
+                "field": "declared_endpoint",
+                "source_id": "25749e82df95e79b09416f4a0eb7e982898b976d4843cd0cd1a0e064de849132",
+                "selected_version": true
+              },
+              {
+                "record_index": 3908,
+                "field": "selected_imported_host",
+                "source_id": "25749e82df95e79b09416f4a0eb7e982898b976d4843cd0cd1a0e064de849132",
+                "selected_version": true
+              },
+              {
+                "record_index": 4194,
+                "field": "bookSourceUrl",
+                "source_id": "25749e82df95e79b09416f4a0eb7e982898b976d4843cd0cd1a0e064de849132",
+                "selected_version": false
+              },
+              {
+                "record_index": 4194,
+                "field": "declared_endpoint",
+                "source_id": "25749e82df95e79b09416f4a0eb7e982898b976d4843cd0cd1a0e064de849132",
+                "selected_version": false
+              },
+              {
+                "record_index": 4194,
+                "field": "exploreUrl",
+                "source_id": "25749e82df95e79b09416f4a0eb7e982898b976d4843cd0cd1a0e064de849132",
+                "selected_version": false
+              }
+            ]
+          }
+        ]
+      },
+      "phishing": {
+        "source": {
+          "url": "https://raw.githubusercontent.com/blocklistproject/Lists/ee3bdbaddf49c756cf3340bb2e6a9dee5282d1c6/phishing.txt",
+          "observed_at": "2026-11-15T13:11:36.602362+00:00",
+          "completed_at": "2026-11-15T13:11:39.889384+00:00",
+          "status": 200,
+          "content_type": "text/plain; charset=utf-8",
+          "etag": "\"65a107adc80f16336433e36e86b40f51aff4b2c89fb374eb9e132fbc8f5ca75f\"",
+          "bytes": 5686136,
+          "git_blob_sha1": "e0a28da056a5c01c7bc37c12760cb97d4d51207c",
+          "sha256": "4407e6b9af2fa1e4def92ed523643a3380448fde81837341ffc596c6e781f134",
+          "file_header": {
+            "title": "Phishing Block List",
+            "description": "Phishing domains",
+            "license": "MIT",
+            "last_modified": "2026-07-06 00:40:29 UTC",
+            "format": "hosts",
+            "entries": "190,215"
+          }
+        },
+        "parse_stats": {
+          "empty_or_comment": 13,
+          "invalid_domain_tokens": 24,
+          "domain_tokens": 190191,
+          "sinkhole_mapping": 190215,
+          "invalid_tokens_with_underscore": 24
+        },
+        "matching_hosts": 0,
+        "matching_host_indicator_pairs": 0,
+        "selected_source_ids_with_matching_reference": 0,
+        "selected_sources_by_relation": {
+          "exact_endpoint": [],
+          "listed_parent_endpoint": [],
+          "other_fields_only": []
+        },
+        "matches": []
+      }
+    }
+  },
+  "limitations": [
+    "Each category represents a third-party list entry, not proof of current malware, gambling, adult content, phishing, availability, or wrongdoing.",
+    "A listed parent can contain unrelated subdomains, and shared services or static comments can cause false associations; check each reference and actual site before any classification.",
+    "No match does not establish safety; dynamic domains, malformed URLs, private addresses and content behind paths may be outside coverage.",
+    "The repository is archived and the pinned source is historical; host ownership, website behavior and rules may change.",
+    "The import inventory is the historical 2139-ID baseline and does not represent current installation, enablement or later rule repairs."
+  ],
+  "reproduction": "Run this offline script with the retained pinned build snapshot and the hashed import inventory; raw upstream lists are not committed."
+}

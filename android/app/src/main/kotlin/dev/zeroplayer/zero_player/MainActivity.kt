@@ -23,10 +23,12 @@ class MainActivity : FlutterActivity() {
     private val videoDirectories by lazy { VideoDirectoryBridge(this) }
     private val playbackDiagnostics by lazy { PlaybackDeviceDiagnostics(this) }
     private val musicOverlay by lazy { MusicLyricsOverlay(this) }
+    private val protectedBookExport by lazy { ProtectedBookExport(this) }
     private var saveResult: MethodChannel.Result? = null
     private var savePath: String? = null
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
+        ActivityRequestCodes.validate()
         videoPicker.progress = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "zero_player/local_video_progress")
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "zero_player/platform")
             .setMethodCallHandler { call, result ->
@@ -65,6 +67,10 @@ class MainActivity : FlutterActivity() {
                         }
                     }
                     "saveFile" -> requestSave(call, result)
+                    "chooseProtectedBookExport" -> protectedBookExport.choose(call, result)
+                    "writeProtectedBookExport" -> protectedBookExport.write(call, result)
+                    "cancelProtectedBookExport" -> protectedBookExport.cancel(call, result)
+                    "finishProtectedBookExport" -> protectedBookExport.finish(call, result)
                     "chooseLocalVideo" -> videoPicker.choose(call, result)
                     "cancelLocalVideo" -> { videoPicker.cancel(); result.success(null) }
                     "clearLocalVideoCopies" -> videoPicker.clear(call, result)
@@ -114,7 +120,7 @@ class MainActivity : FlutterActivity() {
             }
             saveResult = result
             savePath = path
-            startActivityForResult(intent, 7201)
+            startActivityForResult(intent, ActivityRequestCodes.SAVE_FILE)
         } catch (_: Exception) {
             if (saveResult === result) {
                 finishSave(result, error = "Unable to open the file picker")
@@ -137,6 +143,7 @@ class MainActivity : FlutterActivity() {
             videoPicker.close()
             videoDirectories.close()
             musicOverlay.hide()
+            protectedBookExport.close()
             saveResult?.let { finishSave(it) }
         } finally {
             super.onDestroy()
@@ -148,7 +155,8 @@ class MainActivity : FlutterActivity() {
         super.onActivityResult(requestCode, resultCode, data)
         if (videoPicker.onResult(requestCode, resultCode, data)) return
         if (videoDirectories.onResult(requestCode, resultCode, data)) return
-        if (requestCode != 7201) return
+        if (protectedBookExport.onResult(requestCode, resultCode, data)) return
+        if (requestCode != ActivityRequestCodes.SAVE_FILE) return
         val pending = saveResult ?: return
         val path = savePath
         val uri = data?.data

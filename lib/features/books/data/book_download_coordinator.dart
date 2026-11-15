@@ -105,11 +105,7 @@ final class BookDownloadCoordinator extends ChangeNotifier {
         );
         await repository.store.write(key, savedPlan.toJson());
       }
-      final saved = book.kind == BookKind.audio
-          ? await repository.audioFiles.saved(book)
-          : book.kind == BookKind.comic
-          ? await repository.store.savedImages(book)
-          : await repository.store.savedText(book);
+      final saved = await repository.reusableDownloads(book, range, token);
       token.check();
       final chapters = range
           .where((chapter) => !saved.contains(chapter.id))

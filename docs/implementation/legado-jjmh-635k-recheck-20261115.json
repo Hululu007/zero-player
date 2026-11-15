@@ -1,0 +1,160 @@
+{
+  "method": "At most two anonymous HTTPS GET / requests per exact host; validated public DNS, one pinned IP, verified TLS, no redirects, scripts, subresources or credentials. No response body saved.",
+  "limitations": "Visible text is a static approximation excluding common hidden/script elements; dynamic content, stylesheet visibility, malware and parsing usability are not verified. Photo/glamour labels and a single category are not proof that an entire host is adult.",
+  "archive_sha256": "012a0e0d6e6adc8d303c32b578510e14b562088b3e965cb01a1a647b5e7e034d",
+  "import_inventory_sha256": "ad4e347888cad71812ee7da9477f027baf0bee5bceb1d4247fc69d6c4df8764c",
+  "import_inventory_generated_at": "2026-11-15T02:32:19.183484Z",
+  "timeout_seconds": 8,
+  "started_at": "2026-11-15T13:20:42.780810+00:00",
+  "sources": {
+    "www.jjmh.top": [
+      {
+        "record_index": 4223,
+        "raw_name": "漫小肆韩漫",
+        "source_id": "3206775ccea17aaa7c010bf822a04da384819ae82d4ee94acd3cde06ba2cf837",
+        "selected_version": true
+      },
+      {
+        "record_index": 4833,
+        "raw_name": "漫小肆20251217",
+        "source_id": "80a04e50867288cf60ffd2769bde2db23261ed2ed2bd5ea0940ccd6a9ce13325",
+        "selected_version": true
+      }
+    ],
+    "www.635k.com": [
+      {
+        "record_index": 4043,
+        "raw_name": "爱轻写真（优+）",
+        "source_id": "b293cc11e4f9cd10cb8c79533a961b0e15e84283d11347c27e67d253bd54ba98",
+        "selected_version": true
+      },
+      {
+        "record_index": 4815,
+        "raw_name": "😍轻写真",
+        "source_id": "b293cc11e4f9cd10cb8c79533a961b0e15e84283d11347c27e67d253bd54ba98",
+        "selected_version": false
+      }
+    ]
+  },
+  "results": [
+    {
+      "host": "www.jjmh.top",
+      "attempt": 1,
+      "started_at": "2026-11-15T13:20:42.780820+00:00",
+      "http_status": 200,
+      "content_type": "text/html",
+      "truncated": true,
+      "sample_bytes": 32768,
+      "sample_sha256": "da53707a4d532b96c210ef3c94a05ca6b35ba111a1d6744d4bba91d456d2ec49",
+      "encoding": "utf-8",
+      "title": "漫小肆韓漫-92韩漫最新地址-顶通免费地址-玩漫最快更新-顶通破解版-歪歪漫画最新地址-桃桃漫画无删减-美丽新世界最新话-秘密教学最新话-Toptoon破解-ikanmh最新地址",
+      "descriptions": [
+        "漫小肆韓漫为大家带来最新最全韩国漫画,这里有超多韩漫资源,主打韩国都市系列漫画，立志于做韩漫免费韩国漫画第一站,韩漫免费全集就来漫小肆韓漫"
+      ],
+      "visible_text_clues": {
+        "adult_explicit": [],
+        "photography_or_sexy": [],
+        "gambling": []
+      },
+      "observed_at": "2026-11-15T13:20:49.275659+00:00"
+    },
+    {
+      "host": "www.635k.com",
+      "attempt": 1,
+      "started_at": "2026-11-15T13:20:50.276144+00:00",
+      "http_status": 200,
+      "content_type": "text/html",
+      "truncated": false,
+      "sample_bytes": 15315,
+      "sample_sha256": "c67e2aa9d5d795a7fa963e90e69565599a994314ac8aae196abe1f6631a13176",
+      "encoding": "utf-8",
+      "title": "丝袜美腿套图 - 国产精品丝袜美腿美女写真图片套图站",
+      "descriptions": [
+        "丝袜美腿聚焦丝袜美腿领域，集视觉欣赏与精品推荐于一体！这里汇聚海量高清丝袜美腿图片，细腻呈现丝袜美腿美女的优雅身姿与迷人韵味，尽显丝袜美腿诱惑的独特魅力；同时严选国产精品丝袜，从优质材质到潮流设计，全方位展现国产丝袜的匠心品质与时尚风采。"
+      ],
+      "visible_text_clues": {
+        "adult_explicit": [],
+        "photography_or_sexy": [
+          {
+            "word": "写真",
+            "excerpt": "5 Model 薇薇《黑丝镣铐女警》 [丽柜贵足LiGui] 美腿丝足写真图片 Ligui丽柜 2026-11-15 丝享家042 七七 《蕾丝"
+          },
+          {
+            "word": "美腿",
+            "excerpt": "11-15 Model 薇薇《黑丝镣铐女警》 [丽柜贵足LiGui] 美腿丝足写真图片 Ligui丽柜 2026-11-15 丝享家042 七七"
+          },
+          {
+            "word": "丝袜",
+            "excerpt": "ui丽柜 克拉女神 绅士摄影 SSA丝社 丝慕SMOU 丝意SIEE 丝袜套图 慕丝女郎 梦丝女神 幻灯片1标题 幻灯片2标题 [异思趣向IES"
+          },
+          {
+            "word": "套图",
+            "excerpt": "丽柜 克拉女神 绅士摄影 SSA丝社 丝慕SMOU 丝意SIEE 丝袜套图 慕丝女郎 梦丝女神 幻灯片1标题 幻灯片2标题 [异思趣向IESS]"
+          }
+        ],
+        "gambling": []
+      },
+      "observed_at": "2026-11-15T13:20:50.658301+00:00"
+    },
+    {
+      "host": "www.jjmh.top",
+      "attempt": 2,
+      "started_at": "2026-11-15T13:20:51.658655+00:00",
+      "http_status": 200,
+      "content_type": "text/html",
+      "truncated": true,
+      "sample_bytes": 32768,
+      "sample_sha256": "da53707a4d532b96c210ef3c94a05ca6b35ba111a1d6744d4bba91d456d2ec49",
+      "encoding": "utf-8",
+      "title": "漫小肆韓漫-92韩漫最新地址-顶通免费地址-玩漫最快更新-顶通破解版-歪歪漫画最新地址-桃桃漫画无删减-美丽新世界最新话-秘密教学最新话-Toptoon破解-ikanmh最新地址",
+      "descriptions": [
+        "漫小肆韓漫为大家带来最新最全韩国漫画,这里有超多韩漫资源,主打韩国都市系列漫画，立志于做韩漫免费韩国漫画第一站,韩漫免费全集就来漫小肆韓漫"
+      ],
+      "visible_text_clues": {
+        "adult_explicit": [],
+        "photography_or_sexy": [],
+        "gambling": []
+      },
+      "observed_at": "2026-11-15T13:20:53.538473+00:00"
+    },
+    {
+      "host": "www.635k.com",
+      "attempt": 2,
+      "started_at": "2026-11-15T13:20:54.538563+00:00",
+      "http_status": 200,
+      "content_type": "text/html",
+      "truncated": false,
+      "sample_bytes": 15315,
+      "sample_sha256": "e37b56d833dcb28197f40d8aecc6ea6612397c7cc0e949d8d4fe1db963e48903",
+      "encoding": "utf-8",
+      "title": "丝袜美腿套图 - 国产精品丝袜美腿美女写真图片套图站",
+      "descriptions": [
+        "丝袜美腿聚焦丝袜美腿领域，集视觉欣赏与精品推荐于一体！这里汇聚海量高清丝袜美腿图片，细腻呈现丝袜美腿美女的优雅身姿与迷人韵味，尽显丝袜美腿诱惑的独特魅力；同时严选国产精品丝袜，从优质材质到潮流设计，全方位展现国产丝袜的匠心品质与时尚风采。"
+      ],
+      "visible_text_clues": {
+        "adult_explicit": [],
+        "photography_or_sexy": [
+          {
+            "word": "写真",
+            "excerpt": "5 Model 薇薇《黑丝镣铐女警》 [丽柜贵足LiGui] 美腿丝足写真图片 Ligui丽柜 2026-11-15 丝享家042 七七 《蕾丝"
+          },
+          {
+            "word": "美腿",
+            "excerpt": "11-15 Model 薇薇《黑丝镣铐女警》 [丽柜贵足LiGui] 美腿丝足写真图片 Ligui丽柜 2026-11-15 丝享家042 七七"
+          },
+          {
+            "word": "丝袜",
+            "excerpt": "ui丽柜 克拉女神 绅士摄影 SSA丝社 丝慕SMOU 丝意SIEE 丝袜套图 慕丝女郎 梦丝女神 幻灯片1标题 幻灯片2标题 [异思趣向IES"
+          },
+          {
+            "word": "套图",
+            "excerpt": "丽柜 克拉女神 绅士摄影 SSA丝社 丝慕SMOU 丝意SIEE 丝袜套图 慕丝女郎 梦丝女神 幻灯片1标题 幻灯片2标题 [异思趣向IESS]"
+          }
+        ],
+        "gambling": []
+      },
+      "observed_at": "2026-11-15T13:20:54.924747+00:00"
+    }
+  ],
+  "completed_at": "2026-11-15T13:20:55.924947+00:00"
+}

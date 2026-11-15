@@ -28,9 +28,9 @@ const _adultExactBookHosts = {
   'm.aaread.club', // Homepage explicitly labels itself an adult-novel site
 };
 
-// Same-ID records in the bundled snapshot carry explicit 🔞 metadata, but the
-// latest duplicate omits it. Keep that evidence on the precise source ID,
-// not every variant hosted by the same domain. See the bundled-source audit.
+// Preserve explicit adult evidence hidden by deduplication or corroborated by
+// a bundled source's own catalogue metadata. Apply it to the precise source
+// ID, not every variant hosted by the same domain. See the bundled-source audit.
 const _adultBundledSourceIds = {
   'f670f04810ccca4af8ffc8321a4b177747dac12a1a98a3d8162387a48413016c', // 绿竹
   'fd43c18e3b6b2020f3f7823c48ae7691362f156e2c3b3a1523d5a7fb5c1bbfbf', // 肉书屋
@@ -42,6 +42,8 @@ const _adultBundledSourceIds = {
   '7df90d3beaf532252f0021e506f357948791a895ccaf02e1f39b28aa3a824d6c', // 肉肉屋
   'f9ffbe0993c187ab5f33b9616f653318b0fc14c7ba93376aea19430eaff709bc', // 搜小说
   '0c6317e420614be60b383b06e99c8967ed905eb88a604a5c82baf1b25e0d078f', // 鄱阳镇庭
+  '9dd98d18033be16ecf6ff1d248abe671b0d0925e8544e8aa67b4ac63e823cc6e', // 丽图：全部黄漫
+  '08b828adf2d0154db83894b6b77db3defa9dfae30de8a832fc26a5f7c72cbe07', // UAA：成人小说分类
 };
 
 bool adultBundledSourceId(String id) => _adultBundledSourceIds.contains(id);

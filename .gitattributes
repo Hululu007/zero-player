@@ -4,6 +4,9 @@
 *.md text eol=lf
 *.yaml text eol=lf
 *.json text eol=lf
+# Dated audit evidence is referenced by byte-level SHA-256 in other reports.
+# Keep the original recorded bytes intact across staging and checkout.
+/docs/implementation/*-20261115.json -text whitespace=cr-at-eol
 *.sh text eol=lf
 *.ps1 text eol=crlf
 *.png binary

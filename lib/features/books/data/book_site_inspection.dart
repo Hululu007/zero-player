@@ -41,8 +41,8 @@ final class BookSiteInspection {
 
   final BookSiteFinding finding;
 
-  /// These require both a business-specific and a separate solicitation or
-  /// age-gate signal. A single word must never trigger an automatic block.
+  /// These require independently supported business and solicitation, age,
+  /// or site-purpose clues. One isolated keyword cannot trigger a block.
   final bool gamblingRisk, adultRisk, truncated;
   final int? statusCode;
   final BookSiteRedirect redirect;
@@ -254,10 +254,23 @@ final _gamblingWarningAfter = RegExp(
   r'危害|风险|風險|应当远离|應當遠離|切勿参与|切勿參與)',
 );
 final _adultBusiness = RegExp(
-  r'成人(?:视频|視頻|(?:黄色|黃色)?(?:小说|小說)|漫画|漫畫)|'
+  r'成人(?:视频|視頻|(?:黄色|黃色)?(?:连载|連載)?(?:小说|小說)|漫画|漫畫)|'
   r'色情(?:小说|小說|视频|視頻|漫画|漫畫)|情色(?:小说|小說)|'
+  r'(?:18禁|十八禁)(?:情欲|情慾|色情|情色)(?:类|類)?(?:小说|小說)|'
   r'肉文|肉漫|无码视频',
   caseSensitive: false,
+);
+final _adultSiteTitle = RegExp(r'高辣文(?:小说|小說)(?:网|網|站)');
+final _adultSiteDescription = RegExp(
+  r'(?:成人(?:黄色|黃色)?(?:连载|連載)?(?:小说|小說)|'
+  r'色情(?:小说|小說)|成人(?:漫画|漫畫)|色情(?:漫画|漫畫))'
+  r'(?:网站|網站|阅读网|閱讀網|站|网|網|平台)|'
+  r'(?:专属|專屬|专门提供|專門提供|主要提供|主打)'
+  r'[^，。；;\n]{0,20}(?:成人(?:小说|小說)|色情(?:小说|小說)|肉文|肉漫)',
+);
+final _adultSiteWarning = RegExp(
+  r'抵制|远离|遠離|打击|打擊|不提供|不收录|不收錄|拒绝|拒絕|'
+  r'禁止(?:传播|傳播|提供|访问|訪問)|危害|举报|舉報',
 );
 final _adultGate = RegExp(
   r'(?:年|未)?(?:满|滿)\s*(?:[1１][8８]|十八)\s*(?:岁|歲)|'
@@ -289,6 +302,23 @@ bool _hasGamblingSignalOutsideWarning(String text, RegExp signal) {
     }
     if (_gamblingWarningAfter.hasMatch(after)) continue;
     return true;
+  }
+  return false;
+}
+
+bool _hasAdultBusinessOutsideWarning(String text) {
+  const contextLength = 32;
+  for (final match in _adultBusiness.allMatches(text)) {
+    final start = (match.start - contextLength).clamp(0, text.length);
+    final before = text
+        .substring(start, match.start)
+        .split(_gamblingContextBoundary)
+        .last;
+    final warning = _adultSiteWarning.allMatches(before).lastOrNull;
+    if (warning == null ||
+        _adultBusiness.hasMatch(before.substring(warning.end))) {
+      return true;
+    }
   }
   return false;
 }
@@ -346,7 +376,21 @@ BookSiteInspection inspectBookSiteHtml(
       gambling &&
       _hasGamblingSignalOutsideWarning(text, _gamblingBusiness) &&
       _hasGamblingSignalOutsideWarning(text, _gamblingPromotion);
-  final adultRisk = adult && _adultGate.hasMatch(text);
+  final title = document.querySelector('title')?.text ?? '';
+  final titleNamesAdultSite =
+      (_adultBusiness.hasMatch(title) || _adultSiteTitle.hasMatch(title)) &&
+      !_adultSiteWarning.hasMatch(title);
+  final sitePurpose =
+      titleNamesAdultSite &&
+      descriptions.any(
+        (description) =>
+            _adultSiteDescription.hasMatch(description) &&
+            !_adultSiteWarning.hasMatch(description),
+      );
+  final adultRisk =
+      adult &&
+      _hasAdultBusinessOutsideWarning(text) &&
+      (_adultGate.hasMatch(text) || sitePurpose);
   final finding = gambling && adult
       ? BookSiteFinding.gamblingAndAdultClues
       : gambling

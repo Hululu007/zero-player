@@ -1,0 +1,1586 @@
+{
+  "method": "Re-fetch only prior detected catalog roots over bounded anonymous HTTPS, validate and pin public DNS, no redirects, no scripts executed, no external requests or credentials.",
+  "limitations": "Only static shape is compared. Replacing quoted strings and numbers can group different behavior; shared shape or network identity does not establish origin, operator, malware or safe content. AMSI provider may use cloud features.",
+  "source_scans": [
+    {
+      "file": "legado-amsi-pilot-20261115.json",
+      "sha256": "09b2cdc14e2032814fd7d6b4615a8682ad4bf989f380ea8d4a22a949a216615f",
+      "archive_sha256": "012a0e0d6e6adc8d303c32b578510e14b562088b3e965cb01a1a647b5e7e034d"
+    },
+    {
+      "file": "legado-amsi-prior-html-20261115.json",
+      "sha256": "04dd4ee143e9de7fc6d16ab649fbe9796bae40f7c045bfdb7632e6b4ad5061c8",
+      "archive_sha256": "012a0e0d6e6adc8d303c32b578510e14b562088b3e965cb01a1a647b5e7e034d"
+    },
+    {
+      "file": "legado-amsi-other-hosts-20261115.json",
+      "sha256": "25180e804c1df15165af8bb20ae58c5b4dd6b2e24f6a0a092d50281ca5e25750",
+      "archive_sha256": "012a0e0d6e6adc8d303c32b578510e14b562088b3e965cb01a1a647b5e7e034d"
+    }
+  ],
+  "selected_detected_hosts": 17,
+  "started_at": "2026-11-15T05:58:51.356225+00:00",
+  "minimum_request_interval_seconds": 0.5,
+  "defender_status": {
+    "AMRunningMode": "Normal",
+    "AntivirusEnabled": true,
+    "AntivirusSignatureVersion": "1.463.304.0",
+    "AntivirusSignatureLastUpdated": "2026-11-14T18:57:15.0000000Z",
+    "AMProductVersion": "4.18.26100.4"
+  },
+  "controls": {
+    "observed_at": "2026-11-15T05:58:52.264223+00:00",
+    "negative": {
+      "phase": "scan",
+      "hresult": "0x00000000",
+      "amsi_result": 1,
+      "classification": "not_detected"
+    },
+    "eicar": {
+      "phase": "scan",
+      "hresult": "0x00000000",
+      "amsi_result": 32768,
+      "classification": "detected"
+    },
+    "html_wrapped_eicar": {
+      "phase": "scan",
+      "hresult": "0x00000000",
+      "amsi_result": 1,
+      "classification": "not_detected"
+    },
+    "inline_script_with_eicar": {
+      "phase": "scan",
+      "hresult": "0x00000000",
+      "amsi_result": 1,
+      "classification": "not_detected"
+    },
+    "passed": true
+  },
+  "results": [
+    {
+      "host": "api.jiaston.com",
+      "record_indices": [
+        1271
+      ],
+      "selected_source_ids": [],
+      "prior_sample_sha256": "3003d45d629f7853190e754c3f130fe4548a6368d11cb435cc768bb562c856e5",
+      "started_at": "2026-11-15T05:58:52.264246+00:00",
+      "http_status": 200,
+      "content_type": "text/html",
+      "truncated": false,
+      "sample_bytes": 477,
+      "sample_sha256": "289dc58ff0ee36fe1bad6060a8b51aa5b390a98d63cf25a11bb952e28aea8381",
+      "connection_identity": {
+        "tls_verified": true,
+        "connected_ip_sha256": "aee1887bc97c9a444c5ecdd5d087b8a0c3c85bb8920c731cba5af0d60d2e086a",
+        "tls_certificate_sha256": "9226552e2ca7b505177be280da0d1ad45c25737b60b59f7993c1b5b004ec649e",
+        "tls_issuer": [
+          "Let's Encrypt",
+          "YR1"
+        ],
+        "tls_not_before": "Oct 28 02:43:31 2026 GMT",
+        "tls_not_after": "Jan 26 02:43:30 2027 GMT"
+      },
+      "sample_observed_at": "2026-11-15T05:58:53.503117+00:00",
+      "same_sha256_as_prior": false,
+      "shape_sha256": "05e7d863aefa066d521304faf1ecf18b31791a0f55502474dc1d646e4a8bf6b6",
+      "structural_indicators": {
+        "complete_eicar_control_present": false,
+        "eicar_word_present_case_insensitive": false,
+        "contains_404_text": false,
+        "meta_refresh_pattern_present": false,
+        "iframe_tag_present": false,
+        "script_location_reference_present": true,
+        "script_eval_reference_present": false,
+        "script_base64_decode_reference_present": false,
+        "script_document_write_reference_present": false,
+        "external_script_attribute_present": false
+      },
+      "literal_navigation": {
+        "location_mentions": 1,
+        "direct_constant_targets": [
+          {
+            "script_ordinal": 1,
+            "category": "http_or_protocol_relative",
+            "target_host_defanged": "api[.]jiaston[.]com",
+            "target_host_sha256": "68ed7acdb62e76e44c7261eaa9a0b63ef55c4b9e91b3108fc0460a604fa75e10",
+            "target_host_is_source": true,
+            "scheme": "https",
+            "path_kind": "root_or_empty",
+            "has_query": true
+          }
+        ],
+        "limitation": "Only direct unescaped quoted assignments and assign/replace calls in scanned script prefixes; concatenated or computed values remain unconfirmed and no target is requested."
+      },
+      "amsi": {
+        "phase": "scan",
+        "hresult": "0x00000000",
+        "amsi_result": 32768,
+        "classification": "detected"
+      },
+      "inline_scripts": {
+        "script_tags_observed": 1,
+        "nonempty_inline_scripts_observed": 1,
+        "inline_scripts_selected": 1,
+        "inline_scripts_omitted": 0,
+        "samples": [
+          {
+            "ordinal": 1,
+            "has_src_attribute": false,
+            "bytes_seen": 373,
+            "sample_bytes": 373,
+            "sample_sha256": "0af09e798c7661336a9e50cd5cac33887c0f94943418804d5b47746a3af70069",
+            "truncated": false,
+            "closing_tag_observed": true,
+            "shape_sha256": "98b07651058455d48d466a9a1dae48b2066b39e9cb0bb8389db4bd90a2445f53",
+            "amsi": {
+              "phase": "scan",
+              "hresult": "0x00000000",
+              "amsi_result": 1,
+              "classification": "not_detected"
+            }
+          }
+        ]
+      },
+      "static_atob": {
+        "literal_calls_observed": 0,
+        "invalid_or_empty_literals": 0,
+        "decoded_values_selected": 0,
+        "omitted_values": 0,
+        "limitation": "Only direct quoted base64 arguments in selected script prefixes are decoded; no variables, concatenation, escapes, code execution or network requests.",
+        "decoded_samples": []
+      }
+    },
+    {
+      "host": "bbs.fanfanu.com",
+      "record_indices": [
+        168
+      ],
+      "selected_source_ids": [
+        "99dec828e154116574529a7c8013e0e1d08c12ccb01ffa57a1da3ee7aebb8654"
+      ],
+      "prior_sample_sha256": "b046d879f5b102c98e1e8b6db8057a27eea273bec663016228d7443fb4742216",
+      "started_at": "2026-11-15T05:58:54.067390+00:00",
+      "http_status": 200,
+      "content_type": "text/html",
+      "truncated": false,
+      "sample_bytes": 477,
+      "sample_sha256": "fe607bbfb03d784e8cdff5aa454f1b98b1b8239eeb787979d8ae45b4e47f5a52",
+      "connection_identity": {
+        "tls_verified": true,
+        "connected_ip_sha256": "d324ada479c0e00c9be19cc580cf4a7b014227fd6dd6dec1c46a854af672472f",
+        "tls_certificate_sha256": "ea292868323bd61049a73d3c226699f1208093088d3abee35b1753b395583fb7",
+        "tls_issuer": [
+          "Let's Encrypt",
+          "YR2"
+        ],
+        "tls_not_before": "Sep 10 00:53:46 2026 GMT",
+        "tls_not_after": "Dec  9 00:53:45 2026 GMT"
+      },
+      "sample_observed_at": "2026-11-15T05:58:55.032106+00:00",
+      "same_sha256_as_prior": false,
+      "shape_sha256": "05e7d863aefa066d521304faf1ecf18b31791a0f55502474dc1d646e4a8bf6b6",
+      "structural_indicators": {
+        "complete_eicar_control_present": false,
+        "eicar_word_present_case_insensitive": false,
+        "contains_404_text": false,
+        "meta_refresh_pattern_present": false,
+        "iframe_tag_present": false,
+        "script_location_reference_present": true,
+        "script_eval_reference_present": false,
+        "script_base64_decode_reference_present": false,
+        "script_document_write_reference_present": false,
+        "external_script_attribute_present": false
+      },
+      "literal_navigation": {
+        "location_mentions": 1,
+        "direct_constant_targets": [
+          {
+            "script_ordinal": 1,
+            "category": "http_or_protocol_relative",
+            "target_host_defanged": "bbs[.]fanfanu[.]com",
+            "target_host_sha256": "7bd828c5e4f9116e22b16088dfc7b58c90ee415e0d6241bd73f96be1a683b43f",
+            "target_host_is_source": true,
+            "scheme": "https",
+            "path_kind": "root_or_empty",
+            "has_query": true
+          }
+        ],
+        "limitation": "Only direct unescaped quoted assignments and assign/replace calls in scanned script prefixes; concatenated or computed values remain unconfirmed and no target is requested."
+      },
+      "amsi": {
+        "phase": "scan",
+        "hresult": "0x00000000",
+        "amsi_result": 32768,
+        "classification": "detected"
+      },
+      "inline_scripts": {
+        "script_tags_observed": 1,
+        "nonempty_inline_scripts_observed": 1,
+        "inline_scripts_selected": 1,
+        "inline_scripts_omitted": 0,
+        "samples": [
+          {
+            "ordinal": 1,
+            "has_src_attribute": false,
+            "bytes_seen": 373,
+            "sample_bytes": 373,
+            "sample_sha256": "899915f5325b091c82396353d81929b7490eb58ccbeb2df3da3791d33e21c0fa",
+            "truncated": false,
+            "closing_tag_observed": true,
+            "shape_sha256": "98b07651058455d48d466a9a1dae48b2066b39e9cb0bb8389db4bd90a2445f53",
+            "amsi": {
+              "phase": "scan",
+              "hresult": "0x00000000",
+              "amsi_result": 1,
+              "classification": "not_detected"
+            }
+          }
+        ]
+      },
+      "static_atob": {
+        "literal_calls_observed": 0,
+        "invalid_or_empty_literals": 0,
+        "decoded_values_selected": 0,
+        "omitted_values": 0,
+        "limitation": "Only direct quoted base64 arguments in selected script prefixes are decoded; no variables, concatenation, escapes, code execution or network requests.",
+        "decoded_samples": []
+      }
+    },
+    {
+      "host": "cl.2790z.xyz",
+      "record_indices": [
+        1993
+      ],
+      "selected_source_ids": [],
+      "prior_sample_sha256": "8c5a345696a7b63bd60f405c92a50dfcccfee8d286d61673120a11f8e83d0d07",
+      "started_at": "2026-11-15T05:58:55.416406+00:00",
+      "http_status": 200,
+      "content_type": "text/html",
+      "truncated": false,
+      "sample_bytes": 474,
+      "sample_sha256": "5057e47a485bc5d920b95a41746709c5694ef3479f259ee43bc4a59099382377",
+      "connection_identity": {
+        "tls_verified": true,
+        "connected_ip_sha256": "235dc7442e3c398dede9e61a0a0f195ff0585796f15ac9a18c2a3accd96ac86a",
+        "tls_certificate_sha256": "876773951da6152d6c133f25ceb0a11fb404d2ebcedac9bef8fd47edbc308f1d",
+        "tls_issuer": [
+          "Let's Encrypt",
+          "YR1"
+        ],
+        "tls_not_before": "Oct 28 03:25:00 2026 GMT",
+        "tls_not_after": "Jan 26 03:24:59 2027 GMT"
+      },
+      "sample_observed_at": "2026-11-15T05:58:56.856899+00:00",
+      "same_sha256_as_prior": false,
+      "shape_sha256": "05e7d863aefa066d521304faf1ecf18b31791a0f55502474dc1d646e4a8bf6b6",
+      "structural_indicators": {
+        "complete_eicar_control_present": false,
+        "eicar_word_present_case_insensitive": false,
+        "contains_404_text": false,
+        "meta_refresh_pattern_present": false,
+        "iframe_tag_present": false,
+        "script_location_reference_present": true,
+        "script_eval_reference_present": false,
+        "script_base64_decode_reference_present": false,
+        "script_document_write_reference_present": false,
+        "external_script_attribute_present": false
+      },
+      "literal_navigation": {
+        "location_mentions": 1,
+        "direct_constant_targets": [
+          {
+            "script_ordinal": 1,
+            "category": "http_or_protocol_relative",
+            "target_host_defanged": "cl[.]2790z[.]xyz",
+            "target_host_sha256": "7115781ce4450dd6375911f35d8d9c5d96075abea155baf55a104f19d9f38ac8",
+            "target_host_is_source": true,
+            "scheme": "https",
+            "path_kind": "root_or_empty",
+            "has_query": true
+          }
+        ],
+        "limitation": "Only direct unescaped quoted assignments and assign/replace calls in scanned script prefixes; concatenated or computed values remain unconfirmed and no target is requested."
+      },
+      "amsi": {
+        "phase": "scan",
+        "hresult": "0x00000000",
+        "amsi_result": 32768,
+        "classification": "detected"
+      },
+      "inline_scripts": {
+        "script_tags_observed": 1,
+        "nonempty_inline_scripts_observed": 1,
+        "inline_scripts_selected": 1,
+        "inline_scripts_omitted": 0,
+        "samples": [
+          {
+            "ordinal": 1,
+            "has_src_attribute": false,
+            "bytes_seen": 370,
+            "sample_bytes": 370,
+            "sample_sha256": "2a6b60bac4df1ebb02046d8f3fc42c3117ff1f971cf56d63bf42acdce7d29e1c",
+            "truncated": false,
+            "closing_tag_observed": true,
+            "shape_sha256": "98b07651058455d48d466a9a1dae48b2066b39e9cb0bb8389db4bd90a2445f53",
+            "amsi": {
+              "phase": "scan",
+              "hresult": "0x00000000",
+              "amsi_result": 1,
+              "classification": "not_detected"
+            }
+          }
+        ]
+      },
+      "static_atob": {
+        "literal_calls_observed": 0,
+        "invalid_or_empty_literals": 0,
+        "decoded_values_selected": 0,
+        "omitted_values": 0,
+        "limitation": "Only direct quoted base64 arguments in selected script prefixes are decoded; no variables, concatenation, escapes, code execution or network requests.",
+        "decoded_samples": []
+      }
+    },
+    {
+      "host": "get.xiashuzhan.com",
+      "record_indices": [
+        36
+      ],
+      "selected_source_ids": [
+        "1f08fd713aac15e302299bffa11eaed3964cb16a0d6c6024cbaf0cb2e2539c9f"
+      ],
+      "prior_sample_sha256": "00120eec56ee22a5f5fa619d11cabc95375cfa07e4c754c3ac35cad3ae25d7e9",
+      "started_at": "2026-11-15T05:58:57.187177+00:00",
+      "http_status": 200,
+      "content_type": "text/html",
+      "truncated": false,
+      "sample_bytes": 480,
+      "sample_sha256": "6bf4acd0a0a42e7fcd8cea6cc2fceb944b4388048a1a23f137858824483ee6eb",
+      "connection_identity": {
+        "tls_verified": true,
+        "connected_ip_sha256": "4251e460940b6bf1b15b2c72dbed65d6c26342fdf7a1b98f9bfe3ff2904df0d1",
+        "tls_certificate_sha256": "36b4772ef2f85927e93029c8ef38b9e4b2adbbb54cf59a096c0631713aa59d8c",
+        "tls_issuer": [
+          "Let's Encrypt",
+          "YR2"
+        ],
+        "tls_not_before": "Sep  2 03:32:54 2026 GMT",
+        "tls_not_after": "Dec  1 03:32:53 2026 GMT"
+      },
+      "sample_observed_at": "2026-11-15T05:58:58.096562+00:00",
+      "same_sha256_as_prior": false,
+      "shape_sha256": "05e7d863aefa066d521304faf1ecf18b31791a0f55502474dc1d646e4a8bf6b6",
+      "structural_indicators": {
+        "complete_eicar_control_present": false,
+        "eicar_word_present_case_insensitive": false,
+        "contains_404_text": false,
+        "meta_refresh_pattern_present": false,
+        "iframe_tag_present": false,
+        "script_location_reference_present": true,
+        "script_eval_reference_present": false,
+        "script_base64_decode_reference_present": false,
+        "script_document_write_reference_present": false,
+        "external_script_attribute_present": false
+      },
+      "literal_navigation": {
+        "location_mentions": 1,
+        "direct_constant_targets": [
+          {
+            "script_ordinal": 1,
+            "category": "http_or_protocol_relative",
+            "target_host_defanged": "get[.]xiashuzhan[.]com",
+            "target_host_sha256": "b4866f49f8ba643e72c3929116b55e059db166336ec458a839f702fa63417a08",
+            "target_host_is_source": true,
+            "scheme": "https",
+            "path_kind": "root_or_empty",
+            "has_query": true
+          }
+        ],
+        "limitation": "Only direct unescaped quoted assignments and assign/replace calls in scanned script prefixes; concatenated or computed values remain unconfirmed and no target is requested."
+      },
+      "amsi": {
+        "phase": "scan",
+        "hresult": "0x00000000",
+        "amsi_result": 32768,
+        "classification": "detected"
+      },
+      "inline_scripts": {
+        "script_tags_observed": 1,
+        "nonempty_inline_scripts_observed": 1,
+        "inline_scripts_selected": 1,
+        "inline_scripts_omitted": 0,
+        "samples": [
+          {
+            "ordinal": 1,
+            "has_src_attribute": false,
+            "bytes_seen": 376,
+            "sample_bytes": 376,
+            "sample_sha256": "e671b84cc39e10e6495d260f5f02cdf525d6be1fd10ccdeb5a63effd8ea424d5",
+            "truncated": false,
+            "closing_tag_observed": true,
+            "shape_sha256": "98b07651058455d48d466a9a1dae48b2066b39e9cb0bb8389db4bd90a2445f53",
+            "amsi": {
+              "phase": "scan",
+              "hresult": "0x00000000",
+              "amsi_result": 1,
+              "classification": "not_detected"
+            }
+          }
+        ]
+      },
+      "static_atob": {
+        "literal_calls_observed": 0,
+        "invalid_or_empty_literals": 0,
+        "decoded_values_selected": 0,
+        "omitted_values": 0,
+        "limitation": "Only direct quoted base64 arguments in selected script prefixes are decoded; no variables, concatenation, escapes, code execution or network requests.",
+        "decoded_samples": []
+      }
+    },
+    {
+      "host": "kuronavi.blog",
+      "record_indices": [
+        4838
+      ],
+      "selected_source_ids": [
+        "825bca65b0ffd75ab89a26aafc8b0f956f0075f28ee56305201766c2c86b70d0"
+      ],
+      "prior_sample_sha256": "e4c4ab6c022443f05edf474af5882fd39a4ad097b287a074e60e551cbd23fc2c",
+      "started_at": "2026-11-15T05:58:58.424731+00:00",
+      "http_status": 200,
+      "content_type": "text/html",
+      "truncated": false,
+      "sample_bytes": 475,
+      "sample_sha256": "d0e7375a921438dbdd0e82aa304a21edcb724686e994bc97e6ab22f71c205454",
+      "connection_identity": {
+        "tls_verified": true,
+        "connected_ip_sha256": "8bdc09246f6b270ec9f41614256377b8fe23e10ac8f373c7bd7495c8c9df8869",
+        "tls_certificate_sha256": "3e8a04939ff2c1a8fe4fd26b3f3535b0dc571868b10e382440cc253a3273750d",
+        "tls_issuer": [
+          "Let's Encrypt",
+          "YR2"
+        ],
+        "tls_not_before": "Sep 22 04:18:25 2026 GMT",
+        "tls_not_after": "Dec 21 04:18:24 2026 GMT"
+      },
+      "sample_observed_at": "2026-11-15T05:58:59.321101+00:00",
+      "same_sha256_as_prior": false,
+      "shape_sha256": "05e7d863aefa066d521304faf1ecf18b31791a0f55502474dc1d646e4a8bf6b6",
+      "structural_indicators": {
+        "complete_eicar_control_present": false,
+        "eicar_word_present_case_insensitive": false,
+        "contains_404_text": false,
+        "meta_refresh_pattern_present": false,
+        "iframe_tag_present": false,
+        "script_location_reference_present": true,
+        "script_eval_reference_present": false,
+        "script_base64_decode_reference_present": false,
+        "script_document_write_reference_present": false,
+        "external_script_attribute_present": false
+      },
+      "literal_navigation": {
+        "location_mentions": 1,
+        "direct_constant_targets": [
+          {
+            "script_ordinal": 1,
+            "category": "http_or_protocol_relative",
+            "target_host_defanged": "kuronavi[.]blog",
+            "target_host_sha256": "eb5020933f7d4d3f5622a45dbe11b8c3d56bf4cd6f4cec11549924125021abf2",
+            "target_host_is_source": true,
+            "scheme": "https",
+            "path_kind": "root_or_empty",
+            "has_query": true
+          }
+        ],
+        "limitation": "Only direct unescaped quoted assignments and assign/replace calls in scanned script prefixes; concatenated or computed values remain unconfirmed and no target is requested."
+      },
+      "amsi": {
+        "phase": "scan",
+        "hresult": "0x00000000",
+        "amsi_result": 32768,
+        "classification": "detected"
+      },
+      "inline_scripts": {
+        "script_tags_observed": 1,
+        "nonempty_inline_scripts_observed": 1,
+        "inline_scripts_selected": 1,
+        "inline_scripts_omitted": 0,
+        "samples": [
+          {
+            "ordinal": 1,
+            "has_src_attribute": false,
+            "bytes_seen": 371,
+            "sample_bytes": 371,
+            "sample_sha256": "2503f0a6849ef34bc4abaa7375edfd65c71e3b399d5c4957f436d2d42841af1e",
+            "truncated": false,
+            "closing_tag_observed": true,
+            "shape_sha256": "98b07651058455d48d466a9a1dae48b2066b39e9cb0bb8389db4bd90a2445f53",
+            "amsi": {
+              "phase": "scan",
+              "hresult": "0x00000000",
+              "amsi_result": 1,
+              "classification": "not_detected"
+            }
+          }
+        ]
+      },
+      "static_atob": {
+        "literal_calls_observed": 0,
+        "invalid_or_empty_literals": 0,
+        "decoded_values_selected": 0,
+        "omitted_values": 0,
+        "limitation": "Only direct quoted base64 arguments in selected script prefixes are decoded; no variables, concatenation, escapes, code execution or network requests.",
+        "decoded_samples": []
+      }
+    },
+    {
+      "host": "lwkk.xyz",
+      "record_indices": [
+        1222,
+        1366,
+        1959,
+        3513
+      ],
+      "selected_source_ids": [
+        "1de6d8be1459bb1df6991b86d63e4dd782ff8bb1806fd6c6f09a5e569bc722cc"
+      ],
+      "prior_sample_sha256": "f75374ad9173602d3e564b6ae7caf613f13b04c9cf1aebc75118322be6517677",
+      "started_at": "2026-11-15T05:58:59.670463+00:00",
+      "http_status": 200,
+      "content_type": "text/html",
+      "truncated": false,
+      "sample_bytes": 470,
+      "sample_sha256": "d863886ad4f1693894cd4634470ee09a3b08c239b9f44de321fa43b463b24105",
+      "connection_identity": {
+        "tls_verified": true,
+        "connected_ip_sha256": "d3e981f6bf0d093a02da42ba57f1749cb6855b67a726c61c4d3e057b0019350e",
+        "tls_certificate_sha256": "5cc45e78351aa0cada1b1874546cd6aa02ef71afc0b3441cc644ba67da10634a",
+        "tls_issuer": [
+          "Let's Encrypt",
+          "YR2"
+        ],
+        "tls_not_before": "Oct 28 02:37:29 2026 GMT",
+        "tls_not_after": "Jan 26 02:37:28 2027 GMT"
+      },
+      "sample_observed_at": "2026-11-15T05:59:00.621547+00:00",
+      "same_sha256_as_prior": false,
+      "shape_sha256": "05e7d863aefa066d521304faf1ecf18b31791a0f55502474dc1d646e4a8bf6b6",
+      "structural_indicators": {
+        "complete_eicar_control_present": false,
+        "eicar_word_present_case_insensitive": false,
+        "contains_404_text": false,
+        "meta_refresh_pattern_present": false,
+        "iframe_tag_present": false,
+        "script_location_reference_present": true,
+        "script_eval_reference_present": false,
+        "script_base64_decode_reference_present": false,
+        "script_document_write_reference_present": false,
+        "external_script_attribute_present": false
+      },
+      "literal_navigation": {
+        "location_mentions": 1,
+        "direct_constant_targets": [
+          {
+            "script_ordinal": 1,
+            "category": "http_or_protocol_relative",
+            "target_host_defanged": "lwkk[.]xyz",
+            "target_host_sha256": "5c5af37d9af702672a83cef56b7a328fbc0698260ec393df397db1bfe7b4b2c8",
+            "target_host_is_source": true,
+            "scheme": "https",
+            "path_kind": "root_or_empty",
+            "has_query": true
+          }
+        ],
+        "limitation": "Only direct unescaped quoted assignments and assign/replace calls in scanned script prefixes; concatenated or computed values remain unconfirmed and no target is requested."
+      },
+      "amsi": {
+        "phase": "scan",
+        "hresult": "0x00000000",
+        "amsi_result": 32768,
+        "classification": "detected"
+      },
+      "inline_scripts": {
+        "script_tags_observed": 1,
+        "nonempty_inline_scripts_observed": 1,
+        "inline_scripts_selected": 1,
+        "inline_scripts_omitted": 0,
+        "samples": [
+          {
+            "ordinal": 1,
+            "has_src_attribute": false,
+            "bytes_seen": 366,
+            "sample_bytes": 366,
+            "sample_sha256": "b4d8bbeb84245f76d7c8a7de5c70faabffb9d2bbb56fd5aeb9705d43344715a9",
+            "truncated": false,
+            "closing_tag_observed": true,
+            "shape_sha256": "98b07651058455d48d466a9a1dae48b2066b39e9cb0bb8389db4bd90a2445f53",
+            "amsi": {
+              "phase": "scan",
+              "hresult": "0x00000000",
+              "amsi_result": 1,
+              "classification": "not_detected"
+            }
+          }
+        ]
+      },
+      "static_atob": {
+        "literal_calls_observed": 0,
+        "invalid_or_empty_literals": 0,
+        "decoded_values_selected": 0,
+        "omitted_values": 0,
+        "limitation": "Only direct quoted base64 arguments in selected script prefixes are decoded; no variables, concatenation, escapes, code execution or network requests.",
+        "decoded_samples": []
+      }
+    },
+    {
+      "host": "m.69shu.la",
+      "record_indices": [
+        3012,
+        3558
+      ],
+      "selected_source_ids": [
+        "b0764c15a1a2830da1600ae84b8ac459a73a8dcbabe968630e10a66c9618137b"
+      ],
+      "prior_sample_sha256": "827cd97c5e5419562f1fae0145c9418f9d5437b51bcca17dd085d611cad9f5f3",
+      "started_at": "2026-11-15T05:59:00.996957+00:00",
+      "http_status": 200,
+      "content_type": "text/html",
+      "truncated": false,
+      "sample_bytes": 472,
+      "sample_sha256": "12663497384dd77f91c0edf841cea621fc015eccb2663aeed8a98e679c17fc39",
+      "connection_identity": {
+        "tls_verified": true,
+        "connected_ip_sha256": "f8ae8d3f1302c9abd60a5ce695333f926b3fcef201fd160f88514981859600e9",
+        "tls_certificate_sha256": "b5983b7e437776838ff4673632374f1a02953d32752e0544033b7004024494a6",
+        "tls_issuer": [
+          "Let's Encrypt",
+          "YR2"
+        ],
+        "tls_not_before": "Sep 22 04:18:29 2026 GMT",
+        "tls_not_after": "Dec 21 04:18:28 2026 GMT"
+      },
+      "sample_observed_at": "2026-11-15T05:59:02.058318+00:00",
+      "same_sha256_as_prior": false,
+      "shape_sha256": "05e7d863aefa066d521304faf1ecf18b31791a0f55502474dc1d646e4a8bf6b6",
+      "structural_indicators": {
+        "complete_eicar_control_present": false,
+        "eicar_word_present_case_insensitive": false,
+        "contains_404_text": false,
+        "meta_refresh_pattern_present": false,
+        "iframe_tag_present": false,
+        "script_location_reference_present": true,
+        "script_eval_reference_present": false,
+        "script_base64_decode_reference_present": false,
+        "script_document_write_reference_present": false,
+        "external_script_attribute_present": false
+      },
+      "literal_navigation": {
+        "location_mentions": 1,
+        "direct_constant_targets": [
+          {
+            "script_ordinal": 1,
+            "category": "http_or_protocol_relative",
+            "target_host_defanged": "m[.]69shu[.]la",
+            "target_host_sha256": "ff109e90707d4adb6a311c7aea788b290c7bf70e01bf6300a8595b8dbcbb5259",
+            "target_host_is_source": true,
+            "scheme": "https",
+            "path_kind": "root_or_empty",
+            "has_query": true
+          }
+        ],
+        "limitation": "Only direct unescaped quoted assignments and assign/replace calls in scanned script prefixes; concatenated or computed values remain unconfirmed and no target is requested."
+      },
+      "amsi": {
+        "phase": "scan",
+        "hresult": "0x00000000",
+        "amsi_result": 32768,
+        "classification": "detected"
+      },
+      "inline_scripts": {
+        "script_tags_observed": 1,
+        "nonempty_inline_scripts_observed": 1,
+        "inline_scripts_selected": 1,
+        "inline_scripts_omitted": 0,
+        "samples": [
+          {
+            "ordinal": 1,
+            "has_src_attribute": false,
+            "bytes_seen": 368,
+            "sample_bytes": 368,
+            "sample_sha256": "0831d6a3cd2e228eca41762df6dc8a242f44081aef6808d0805accc7cac78496",
+            "truncated": false,
+            "closing_tag_observed": true,
+            "shape_sha256": "98b07651058455d48d466a9a1dae48b2066b39e9cb0bb8389db4bd90a2445f53",
+            "amsi": {
+              "phase": "scan",
+              "hresult": "0x00000000",
+              "amsi_result": 1,
+              "classification": "not_detected"
+            }
+          }
+        ]
+      },
+      "static_atob": {
+        "literal_calls_observed": 0,
+        "invalid_or_empty_literals": 0,
+        "decoded_values_selected": 0,
+        "omitted_values": 0,
+        "limitation": "Only direct quoted base64 arguments in selected script prefixes are decoded; no variables, concatenation, escapes, code execution or network requests.",
+        "decoded_samples": []
+      }
+    },
+    {
+      "host": "m.bz001.org",
+      "record_indices": [
+        2174
+      ],
+      "selected_source_ids": [],
+      "prior_sample_sha256": "f1a9d76450a1e55dba9265c5ac7cb0079776165df49375bfbc49601cc4346e2f",
+      "started_at": "2026-11-15T05:59:02.402651+00:00",
+      "http_status": 200,
+      "content_type": "text/html",
+      "truncated": false,
+      "sample_bytes": 473,
+      "sample_sha256": "ac52a71ccfe30f621947a88a850b605099a6e91cf16d0bcb5b681c4f638dfb8a",
+      "connection_identity": {
+        "tls_verified": true,
+        "connected_ip_sha256": "932b8249e8c326df59e7eef50befce002e65a854389ab4d9f104a569751f1312",
+        "tls_certificate_sha256": "0b1a821dfb963d0e22ee8e7f7c18d289a6bfe1d4d43c7045c250f5e078b76fce",
+        "tls_issuer": [
+          "Let's Encrypt",
+          "YR2"
+        ],
+        "tls_not_before": "Nov 10 05:27:06 2026 GMT",
+        "tls_not_after": "Feb  8 05:27:05 2027 GMT"
+      },
+      "sample_observed_at": "2026-11-15T05:59:03.484855+00:00",
+      "same_sha256_as_prior": false,
+      "shape_sha256": "05e7d863aefa066d521304faf1ecf18b31791a0f55502474dc1d646e4a8bf6b6",
+      "structural_indicators": {
+        "complete_eicar_control_present": false,
+        "eicar_word_present_case_insensitive": false,
+        "contains_404_text": false,
+        "meta_refresh_pattern_present": false,
+        "iframe_tag_present": false,
+        "script_location_reference_present": true,
+        "script_eval_reference_present": false,
+        "script_base64_decode_reference_present": false,
+        "script_document_write_reference_present": false,
+        "external_script_attribute_present": false
+      },
+      "literal_navigation": {
+        "location_mentions": 1,
+        "direct_constant_targets": [
+          {
+            "script_ordinal": 1,
+            "category": "http_or_protocol_relative",
+            "target_host_defanged": "m[.]bz001[.]org",
+            "target_host_sha256": "f9850e9a42b77b55a2b8ad801c26bd7f00290e8893a89970a2eebfbe99464a6f",
+            "target_host_is_source": true,
+            "scheme": "https",
+            "path_kind": "root_or_empty",
+            "has_query": true
+          }
+        ],
+        "limitation": "Only direct unescaped quoted assignments and assign/replace calls in scanned script prefixes; concatenated or computed values remain unconfirmed and no target is requested."
+      },
+      "amsi": {
+        "phase": "scan",
+        "hresult": "0x00000000",
+        "amsi_result": 32768,
+        "classification": "detected"
+      },
+      "inline_scripts": {
+        "script_tags_observed": 1,
+        "nonempty_inline_scripts_observed": 1,
+        "inline_scripts_selected": 1,
+        "inline_scripts_omitted": 0,
+        "samples": [
+          {
+            "ordinal": 1,
+            "has_src_attribute": false,
+            "bytes_seen": 369,
+            "sample_bytes": 369,
+            "sample_sha256": "1c2d4e9cd109a5479492c527fbe51d17f33872494e044d89b7e27cc8e4f8cc66",
+            "truncated": false,
+            "closing_tag_observed": true,
+            "shape_sha256": "98b07651058455d48d466a9a1dae48b2066b39e9cb0bb8389db4bd90a2445f53",
+            "amsi": {
+              "phase": "scan",
+              "hresult": "0x00000000",
+              "amsi_result": 32768,
+              "classification": "detected"
+            }
+          }
+        ]
+      },
+      "static_atob": {
+        "literal_calls_observed": 0,
+        "invalid_or_empty_literals": 0,
+        "decoded_values_selected": 0,
+        "omitted_values": 0,
+        "limitation": "Only direct quoted base64 arguments in selected script prefixes are decoded; no variables, concatenation, escapes, code execution or network requests.",
+        "decoded_samples": []
+      }
+    },
+    {
+      "host": "m.nshkedu.com",
+      "record_indices": [
+        28,
+        1307
+      ],
+      "selected_source_ids": [
+        "09ef9895c10c575590ed8152e239031f32890758849aaecdca8b03a74538d76d"
+      ],
+      "prior_sample_sha256": "6ab80b3001d8bdeac2e4877586ee78bbda3f2182c04ba15f24dff25e5c140094",
+      "started_at": "2026-11-15T05:59:04.034340+00:00",
+      "http_status": 200,
+      "content_type": "text/html",
+      "truncated": false,
+      "sample_bytes": 475,
+      "sample_sha256": "f82c846ba941d73b01de8fe8f275616ce6c1c99b437c36193ff5b96ecba31b6c",
+      "connection_identity": {
+        "tls_verified": true,
+        "connected_ip_sha256": "0d7b351e4e64b5c07d5ca26446babc1069d61447ed9aa30b2a69d6a08b8e3000",
+        "tls_certificate_sha256": "0707082fbb14b276fa990fca10ba81e510f85c23e0768507fbeba549f210aaf3",
+        "tls_issuer": [
+          "Let's Encrypt",
+          "YR2"
+        ],
+        "tls_not_before": "Sep  2 01:32:12 2026 GMT",
+        "tls_not_after": "Dec  1 01:32:11 2026 GMT"
+      },
+      "sample_observed_at": "2026-11-15T05:59:05.817161+00:00",
+      "same_sha256_as_prior": false,
+      "shape_sha256": "05e7d863aefa066d521304faf1ecf18b31791a0f55502474dc1d646e4a8bf6b6",
+      "structural_indicators": {
+        "complete_eicar_control_present": false,
+        "eicar_word_present_case_insensitive": false,
+        "contains_404_text": false,
+        "meta_refresh_pattern_present": false,
+        "iframe_tag_present": false,
+        "script_location_reference_present": true,
+        "script_eval_reference_present": false,
+        "script_base64_decode_reference_present": false,
+        "script_document_write_reference_present": false,
+        "external_script_attribute_present": false
+      },
+      "literal_navigation": {
+        "location_mentions": 1,
+        "direct_constant_targets": [
+          {
+            "script_ordinal": 1,
+            "category": "http_or_protocol_relative",
+            "target_host_defanged": "m[.]nshkedu[.]com",
+            "target_host_sha256": "818d9013fdba3be0605c42cac05c38b75f6e7aeefd7a20f9ca487450ba729cc9",
+            "target_host_is_source": true,
+            "scheme": "https",
+            "path_kind": "root_or_empty",
+            "has_query": true
+          }
+        ],
+        "limitation": "Only direct unescaped quoted assignments and assign/replace calls in scanned script prefixes; concatenated or computed values remain unconfirmed and no target is requested."
+      },
+      "amsi": {
+        "phase": "scan",
+        "hresult": "0x00000000",
+        "amsi_result": 32768,
+        "classification": "detected"
+      },
+      "inline_scripts": {
+        "script_tags_observed": 1,
+        "nonempty_inline_scripts_observed": 1,
+        "inline_scripts_selected": 1,
+        "inline_scripts_omitted": 0,
+        "samples": [
+          {
+            "ordinal": 1,
+            "has_src_attribute": false,
+            "bytes_seen": 371,
+            "sample_bytes": 371,
+            "sample_sha256": "3ace78a096acd392d49c4615cf74123598c15e08af31e47a6298f093abd3104d",
+            "truncated": false,
+            "closing_tag_observed": true,
+            "shape_sha256": "98b07651058455d48d466a9a1dae48b2066b39e9cb0bb8389db4bd90a2445f53",
+            "amsi": {
+              "phase": "scan",
+              "hresult": "0x00000000",
+              "amsi_result": 1,
+              "classification": "not_detected"
+            }
+          }
+        ]
+      },
+      "static_atob": {
+        "literal_calls_observed": 0,
+        "invalid_or_empty_literals": 0,
+        "decoded_values_selected": 0,
+        "omitted_values": 0,
+        "limitation": "Only direct quoted base64 arguments in selected script prefixes are decoded; no variables, concatenation, escapes, code execution or network requests.",
+        "decoded_samples": []
+      }
+    },
+    {
+      "host": "s.fjwhcbsh.com",
+      "record_indices": [
+        1439,
+        2281
+      ],
+      "selected_source_ids": [
+        "49288d9a4a46a7b884896dab3a61500fb815269d48f710dbd640dfed9848bf1b"
+      ],
+      "prior_sample_sha256": "8242ac08f09dbb7f64184f5a8aecf54b2b845a92cbc6d15705d4fc2c87f2210a",
+      "started_at": "2026-11-15T05:59:06.142232+00:00",
+      "http_status": 200,
+      "content_type": "text/html",
+      "truncated": false,
+      "sample_bytes": 476,
+      "sample_sha256": "b2e5dfd2044b59fec684636582fc0280b3b273e09e0fe63e0281eea4bf55cf26",
+      "connection_identity": {
+        "tls_verified": true,
+        "connected_ip_sha256": "81a4da5894bf7d132275c4defe052bfd9ec196fb37d08fd72f280794c06a1260",
+        "tls_certificate_sha256": "c36186005251450f440ed39b915afd5d11ad292cc75ab78810f542c0563a6c26",
+        "tls_issuer": [
+          "Let's Encrypt",
+          "YR2"
+        ],
+        "tls_not_before": "Sep  1 10:50:27 2026 GMT",
+        "tls_not_after": "Nov 30 10:50:26 2026 GMT"
+      },
+      "sample_observed_at": "2026-11-15T05:59:07.031080+00:00",
+      "same_sha256_as_prior": false,
+      "shape_sha256": "05e7d863aefa066d521304faf1ecf18b31791a0f55502474dc1d646e4a8bf6b6",
+      "structural_indicators": {
+        "complete_eicar_control_present": false,
+        "eicar_word_present_case_insensitive": false,
+        "contains_404_text": false,
+        "meta_refresh_pattern_present": false,
+        "iframe_tag_present": false,
+        "script_location_reference_present": true,
+        "script_eval_reference_present": false,
+        "script_base64_decode_reference_present": false,
+        "script_document_write_reference_present": false,
+        "external_script_attribute_present": false
+      },
+      "literal_navigation": {
+        "location_mentions": 1,
+        "direct_constant_targets": [
+          {
+            "script_ordinal": 1,
+            "category": "http_or_protocol_relative",
+            "target_host_defanged": "s[.]fjwhcbsh[.]com",
+            "target_host_sha256": "62e75ddae9700f87c4a95b081a69dffae9f8a295d877b929aa0ec1dc02d93385",
+            "target_host_is_source": true,
+            "scheme": "https",
+            "path_kind": "root_or_empty",
+            "has_query": true
+          }
+        ],
+        "limitation": "Only direct unescaped quoted assignments and assign/replace calls in scanned script prefixes; concatenated or computed values remain unconfirmed and no target is requested."
+      },
+      "amsi": {
+        "phase": "scan",
+        "hresult": "0x00000000",
+        "amsi_result": 32768,
+        "classification": "detected"
+      },
+      "inline_scripts": {
+        "script_tags_observed": 1,
+        "nonempty_inline_scripts_observed": 1,
+        "inline_scripts_selected": 1,
+        "inline_scripts_omitted": 0,
+        "samples": [
+          {
+            "ordinal": 1,
+            "has_src_attribute": false,
+            "bytes_seen": 372,
+            "sample_bytes": 372,
+            "sample_sha256": "12b6e0586009c9b25c8e96ef96a7d73ed77f95167a7dbeb29179ad22331f1b46",
+            "truncated": false,
+            "closing_tag_observed": true,
+            "shape_sha256": "98b07651058455d48d466a9a1dae48b2066b39e9cb0bb8389db4bd90a2445f53",
+            "amsi": {
+              "phase": "scan",
+              "hresult": "0x00000000",
+              "amsi_result": 1,
+              "classification": "not_detected"
+            }
+          }
+        ]
+      },
+      "static_atob": {
+        "literal_calls_observed": 0,
+        "invalid_or_empty_literals": 0,
+        "decoded_values_selected": 0,
+        "omitted_values": 0,
+        "limitation": "Only direct quoted base64 arguments in selected script prefixes are decoded; no variables, concatenation, escapes, code execution or network requests.",
+        "decoded_samples": []
+      }
+    },
+    {
+      "host": "shuhuang.la",
+      "record_indices": [
+        3030
+      ],
+      "selected_source_ids": [],
+      "prior_sample_sha256": "b34999bdeeb0ed8fcf8bb34cf0dcc80801ac5d0399df53913f7497ec5cdac445",
+      "started_at": "2026-11-15T05:59:07.377474+00:00",
+      "http_status": 429,
+      "failure": "http_status",
+      "connection_identity": {
+        "tls_verified": true,
+        "connected_ip_sha256": "56b3c06d5480cd9b8567ab94be52a021e64608259cfe85073176ee4283304b6e",
+        "tls_certificate_sha256": "95ba5789fa83128e24100ce519fbce62524c97df89563fe6f1b6181d2fc722df",
+        "tls_issuer": [
+          "Let's Encrypt",
+          "YR2"
+        ],
+        "tls_not_before": "Sep  3 07:03:23 2026 GMT",
+        "tls_not_after": "Dec  2 07:03:22 2026 GMT"
+      },
+      "sample_observed_at": "2026-11-15T05:59:08.428639+00:00"
+    },
+    {
+      "host": "wap.18biquge.com",
+      "record_indices": [
+        390,
+        2098
+      ],
+      "selected_source_ids": [
+        "5395fcb9dde14042bb1d7f37a878fe7400d5e87d0f96178b0e48561e386879e2"
+      ],
+      "prior_sample_sha256": "e333c7f787e0c3c0c4c59c7039b21281e4d0b9eb33abe9606a19117cc68ce56a",
+      "started_at": "2026-11-15T05:59:08.430031+00:00",
+      "http_status": 200,
+      "content_type": "text/html",
+      "truncated": false,
+      "sample_bytes": 478,
+      "sample_sha256": "6ddaea1357ba2ef705ec784d3e8beeec5ca16034dcd13186dcb3262f9fdefffa",
+      "connection_identity": {
+        "tls_verified": true,
+        "connected_ip_sha256": "5227793186d881f70cbded1186c78aa6cdaa3f8479d51cad73ad59954ab5e78d",
+        "tls_certificate_sha256": "1d1019d60427c9b38c33da5f5e4b98c4190d444bc11c1a4a6c85f29fae5a09ec",
+        "tls_issuer": [
+          "Let's Encrypt",
+          "YR1"
+        ],
+        "tls_not_before": "Sep 22 04:21:23 2026 GMT",
+        "tls_not_after": "Dec 21 04:21:22 2026 GMT"
+      },
+      "sample_observed_at": "2026-11-15T05:59:09.405908+00:00",
+      "same_sha256_as_prior": false,
+      "shape_sha256": "05e7d863aefa066d521304faf1ecf18b31791a0f55502474dc1d646e4a8bf6b6",
+      "structural_indicators": {
+        "complete_eicar_control_present": false,
+        "eicar_word_present_case_insensitive": false,
+        "contains_404_text": false,
+        "meta_refresh_pattern_present": false,
+        "iframe_tag_present": false,
+        "script_location_reference_present": true,
+        "script_eval_reference_present": false,
+        "script_base64_decode_reference_present": false,
+        "script_document_write_reference_present": false,
+        "external_script_attribute_present": false
+      },
+      "literal_navigation": {
+        "location_mentions": 1,
+        "direct_constant_targets": [
+          {
+            "script_ordinal": 1,
+            "category": "http_or_protocol_relative",
+            "target_host_defanged": "wap[.]18biquge[.]com",
+            "target_host_sha256": "f9d41ad1957ad9157e2d3b24f56823009db2d5edcbe0c63dfb63baf49298ce4f",
+            "target_host_is_source": true,
+            "scheme": "https",
+            "path_kind": "root_or_empty",
+            "has_query": true
+          }
+        ],
+        "limitation": "Only direct unescaped quoted assignments and assign/replace calls in scanned script prefixes; concatenated or computed values remain unconfirmed and no target is requested."
+      },
+      "amsi": {
+        "phase": "scan",
+        "hresult": "0x00000000",
+        "amsi_result": 32768,
+        "classification": "detected"
+      },
+      "inline_scripts": {
+        "script_tags_observed": 1,
+        "nonempty_inline_scripts_observed": 1,
+        "inline_scripts_selected": 1,
+        "inline_scripts_omitted": 0,
+        "samples": [
+          {
+            "ordinal": 1,
+            "has_src_attribute": false,
+            "bytes_seen": 374,
+            "sample_bytes": 374,
+            "sample_sha256": "bef144c5a07cb3587b6b03c6e16cafc8d806cc97ca60af3f256cc9003a3b71c7",
+            "truncated": false,
+            "closing_tag_observed": true,
+            "shape_sha256": "98b07651058455d48d466a9a1dae48b2066b39e9cb0bb8389db4bd90a2445f53",
+            "amsi": {
+              "phase": "scan",
+              "hresult": "0x00000000",
+              "amsi_result": 1,
+              "classification": "not_detected"
+            }
+          }
+        ]
+      },
+      "static_atob": {
+        "literal_calls_observed": 0,
+        "invalid_or_empty_literals": 0,
+        "decoded_values_selected": 0,
+        "omitted_values": 0,
+        "limitation": "Only direct quoted base64 arguments in selected script prefixes are decoded; no variables, concatenation, escapes, code execution or network requests.",
+        "decoded_samples": []
+      }
+    },
+    {
+      "host": "www.230book.net",
+      "record_indices": [
+        863,
+        2790,
+        2865,
+        2892
+      ],
+      "selected_source_ids": [],
+      "prior_sample_sha256": "e056cadc22a7dea3efc5299e7efe8ad3e710bedd864022ad486fc0552c071749",
+      "started_at": "2026-11-15T05:59:09.798185+00:00",
+      "http_status": 200,
+      "content_type": "text/html",
+      "truncated": false,
+      "sample_bytes": 477,
+      "sample_sha256": "d22ba58ed4e15478e6361d0945bac46bbbac17928ea33da98eb548488ac77bb4",
+      "connection_identity": {
+        "tls_verified": true,
+        "connected_ip_sha256": "777ba636a146b5b13c64379ca25faa099cdba273a8ae55d74ebad794eaf2dd4c",
+        "tls_certificate_sha256": "65127413e044fed2d76c0caf07e71d5df3a29a32a06b0befd1477b466b557d9b",
+        "tls_issuer": [
+          "Let's Encrypt",
+          "YR2"
+        ],
+        "tls_not_before": "Sep  2 03:44:13 2026 GMT",
+        "tls_not_after": "Dec  1 03:44:12 2026 GMT"
+      },
+      "sample_observed_at": "2026-11-15T05:59:10.760051+00:00",
+      "same_sha256_as_prior": false,
+      "shape_sha256": "05e7d863aefa066d521304faf1ecf18b31791a0f55502474dc1d646e4a8bf6b6",
+      "structural_indicators": {
+        "complete_eicar_control_present": false,
+        "eicar_word_present_case_insensitive": false,
+        "contains_404_text": false,
+        "meta_refresh_pattern_present": false,
+        "iframe_tag_present": false,
+        "script_location_reference_present": true,
+        "script_eval_reference_present": false,
+        "script_base64_decode_reference_present": false,
+        "script_document_write_reference_present": false,
+        "external_script_attribute_present": false
+      },
+      "literal_navigation": {
+        "location_mentions": 1,
+        "direct_constant_targets": [
+          {
+            "script_ordinal": 1,
+            "category": "http_or_protocol_relative",
+            "target_host_defanged": "www[.]230book[.]net",
+            "target_host_sha256": "5a56eb8b9a31856a07240379dd3176d13be09a651e2ee5dac0974f965d29d7d1",
+            "target_host_is_source": true,
+            "scheme": "https",
+            "path_kind": "root_or_empty",
+            "has_query": true
+          }
+        ],
+        "limitation": "Only direct unescaped quoted assignments and assign/replace calls in scanned script prefixes; concatenated or computed values remain unconfirmed and no target is requested."
+      },
+      "amsi": {
+        "phase": "scan",
+        "hresult": "0x00000000",
+        "amsi_result": 32768,
+        "classification": "detected"
+      },
+      "inline_scripts": {
+        "script_tags_observed": 1,
+        "nonempty_inline_scripts_observed": 1,
+        "inline_scripts_selected": 1,
+        "inline_scripts_omitted": 0,
+        "samples": [
+          {
+            "ordinal": 1,
+            "has_src_attribute": false,
+            "bytes_seen": 373,
+            "sample_bytes": 373,
+            "sample_sha256": "70ae71dbd8e4888f5654326440360b3fb3e452496257723261f94bfde8cb6e13",
+            "truncated": false,
+            "closing_tag_observed": true,
+            "shape_sha256": "98b07651058455d48d466a9a1dae48b2066b39e9cb0bb8389db4bd90a2445f53",
+            "amsi": {
+              "phase": "scan",
+              "hresult": "0x00000000",
+              "amsi_result": 1,
+              "classification": "not_detected"
+            }
+          }
+        ]
+      },
+      "static_atob": {
+        "literal_calls_observed": 0,
+        "invalid_or_empty_literals": 0,
+        "decoded_values_selected": 0,
+        "omitted_values": 0,
+        "limitation": "Only direct quoted base64 arguments in selected script prefixes are decoded; no variables, concatenation, escapes, code execution or network requests.",
+        "decoded_samples": []
+      }
+    },
+    {
+      "host": "www.4qo.net",
+      "record_indices": [
+        2031
+      ],
+      "selected_source_ids": [],
+      "prior_sample_sha256": "81aff21c048bae20338367499e4718a487077b9e926a55c2ba5ff02433734717",
+      "started_at": "2026-11-15T05:59:11.122126+00:00",
+      "http_status": 200,
+      "content_type": "text/html",
+      "truncated": false,
+      "sample_bytes": 636,
+      "sample_sha256": "81aff21c048bae20338367499e4718a487077b9e926a55c2ba5ff02433734717",
+      "connection_identity": {
+        "tls_verified": true,
+        "connected_ip_sha256": "6d0dae96b9d7b925e083341bbe4be68385816a09751c3b28a448728f270d23f9",
+        "tls_certificate_sha256": "d579c5008086e6f33dd8779c43c1d94fd057a1cfef4284923d0ce396c17c9d5d",
+        "tls_issuer": [
+          "TrustAsia Technologies, Inc.",
+          "LiteSSL RSA CA 2025"
+        ],
+        "tls_not_before": "Nov 11 00:00:00 2026 GMT",
+        "tls_not_after": "Feb  8 23:59:59 2027 GMT"
+      },
+      "sample_observed_at": "2026-11-15T05:59:11.321215+00:00",
+      "same_sha256_as_prior": true,
+      "shape_sha256": "22b1348cc4b5c9a16eac7263fc819461823b95ec6ddebae9f1989daf1e863f8c",
+      "structural_indicators": {
+        "complete_eicar_control_present": false,
+        "eicar_word_present_case_insensitive": false,
+        "contains_404_text": true,
+        "meta_refresh_pattern_present": false,
+        "iframe_tag_present": false,
+        "script_location_reference_present": false,
+        "script_eval_reference_present": false,
+        "script_base64_decode_reference_present": true,
+        "script_document_write_reference_present": false,
+        "external_script_attribute_present": false
+      },
+      "literal_navigation": {
+        "location_mentions": 0,
+        "direct_constant_targets": [],
+        "limitation": "Only direct unescaped quoted assignments and assign/replace calls in scanned script prefixes; concatenated or computed values remain unconfirmed and no target is requested."
+      },
+      "amsi": {
+        "phase": "scan",
+        "hresult": "0x00000000",
+        "amsi_result": 32768,
+        "classification": "detected"
+      },
+      "inline_scripts": {
+        "script_tags_observed": 1,
+        "nonempty_inline_scripts_observed": 1,
+        "inline_scripts_selected": 1,
+        "inline_scripts_omitted": 0,
+        "samples": [
+          {
+            "ordinal": 1,
+            "has_src_attribute": false,
+            "bytes_seen": 140,
+            "sample_bytes": 140,
+            "sample_sha256": "4824cd1f47232df34092311c66445638a8b9b6deb893a7988ffff3b7974ef212",
+            "truncated": false,
+            "closing_tag_observed": true,
+            "shape_sha256": "1d19eeda71997760f97b6c1d07bfb3682e11c8ce9f7c8aee2191b04edf5b7c35",
+            "amsi": {
+              "phase": "scan",
+              "hresult": "0x00000000",
+              "amsi_result": 1,
+              "classification": "not_detected"
+            }
+          }
+        ]
+      },
+      "static_atob": {
+        "literal_calls_observed": 1,
+        "invalid_or_empty_literals": 0,
+        "decoded_values_selected": 1,
+        "omitted_values": 0,
+        "limitation": "Only direct quoted base64 arguments in selected script prefixes are decoded; no variables, concatenation, escapes, code execution or network requests.",
+        "decoded_samples": [
+          {
+            "script_ordinal": 1,
+            "decoded_bytes": 29,
+            "decoded_sha256": "59ea344e55797cabfd83d78ea268e36ba5c504be914d08225857a3c61a7da05e",
+            "category": "http_url_text",
+            "contains_http_url": true,
+            "contains_navigation_syntax": false,
+            "contains_script_syntax": false,
+            "executable_file_magic": false,
+            "amsi": {
+              "phase": "scan",
+              "hresult": "0x00000000",
+              "amsi_result": 1,
+              "classification": "not_detected"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "host": "www.ffxs.info",
+      "record_indices": [
+        644,
+        2574
+      ],
+      "selected_source_ids": [],
+      "prior_sample_sha256": "1682f7954b9c6f306997129f232ead7d6122a67cd6edd99ac548aa4e8854f3cd",
+      "started_at": "2026-11-15T05:59:11.633240+00:00",
+      "http_status": 429,
+      "failure": "http_status",
+      "connection_identity": {
+        "tls_verified": true,
+        "connected_ip_sha256": "3a946006bc73aaaebc0858527c10a2f458a19fdb136f19fa3c0ac1027d51e57f",
+        "tls_certificate_sha256": "b655764d1b7853931e9b6fb148f02fab53317205a6b5aefac3b7910e9b08a9f4",
+        "tls_issuer": [
+          "Let's Encrypt",
+          "YR1"
+        ],
+        "tls_not_before": "Nov 10 05:08:47 2026 GMT",
+        "tls_not_after": "Feb  8 05:08:46 2027 GMT"
+      },
+      "sample_observed_at": "2026-11-15T05:59:12.557731+00:00"
+    },
+    {
+      "host": "www.jpxgyw.cc",
+      "record_indices": [
+        333,
+        734
+      ],
+      "selected_source_ids": [
+        "cfbb36028127f6cc633eb8142da8ad160d68e37a53ff5160d0ff5e77b7973257"
+      ],
+      "prior_sample_sha256": "744234f586ba7d778554ceb904a6b9eb84e53e476d4c4e8a940f4c6141dcb7ae",
+      "started_at": "2026-11-15T05:59:12.559229+00:00",
+      "http_status": 200,
+      "content_type": "text/html",
+      "truncated": false,
+      "sample_bytes": 475,
+      "sample_sha256": "245801a3befe30196665bb69d48b900d6a3f6fa3de0c6243151d9d211d8fc7b1",
+      "connection_identity": {
+        "tls_verified": true,
+        "connected_ip_sha256": "34c1c5a00e99a83fcad2b1c3d7f04c3306441b4dd789fc1b701b3c494170ff93",
+        "tls_certificate_sha256": "22f71b6cfc41893b56d8306d96c0a410defa8dc501065b7518a7aa79a4840373",
+        "tls_issuer": [
+          "Let's Encrypt",
+          "YR2"
+        ],
+        "tls_not_before": "Sep  1 11:00:48 2026 GMT",
+        "tls_not_after": "Nov 30 11:00:47 2026 GMT"
+      },
+      "sample_observed_at": "2026-11-15T05:59:13.651819+00:00",
+      "same_sha256_as_prior": false,
+      "shape_sha256": "05e7d863aefa066d521304faf1ecf18b31791a0f55502474dc1d646e4a8bf6b6",
+      "structural_indicators": {
+        "complete_eicar_control_present": false,
+        "eicar_word_present_case_insensitive": false,
+        "contains_404_text": false,
+        "meta_refresh_pattern_present": false,
+        "iframe_tag_present": false,
+        "script_location_reference_present": true,
+        "script_eval_reference_present": false,
+        "script_base64_decode_reference_present": false,
+        "script_document_write_reference_present": false,
+        "external_script_attribute_present": false
+      },
+      "literal_navigation": {
+        "location_mentions": 1,
+        "direct_constant_targets": [
+          {
+            "script_ordinal": 1,
+            "category": "http_or_protocol_relative",
+            "target_host_defanged": "www[.]jpxgyw[.]cc",
+            "target_host_sha256": "f087de315eeeb38a87eaa460a72c61fc6b98e4bba8dac6ba40c3e14ecca57e86",
+            "target_host_is_source": true,
+            "scheme": "https",
+            "path_kind": "root_or_empty",
+            "has_query": true
+          }
+        ],
+        "limitation": "Only direct unescaped quoted assignments and assign/replace calls in scanned script prefixes; concatenated or computed values remain unconfirmed and no target is requested."
+      },
+      "amsi": {
+        "phase": "scan",
+        "hresult": "0x00000000",
+        "amsi_result": 32768,
+        "classification": "detected"
+      },
+      "inline_scripts": {
+        "script_tags_observed": 1,
+        "nonempty_inline_scripts_observed": 1,
+        "inline_scripts_selected": 1,
+        "inline_scripts_omitted": 0,
+        "samples": [
+          {
+            "ordinal": 1,
+            "has_src_attribute": false,
+            "bytes_seen": 371,
+            "sample_bytes": 371,
+            "sample_sha256": "6c72d8d420d369d91f8155566816f87b54f324e77461d950a6970d44622aa196",
+            "truncated": false,
+            "closing_tag_observed": true,
+            "shape_sha256": "98b07651058455d48d466a9a1dae48b2066b39e9cb0bb8389db4bd90a2445f53",
+            "amsi": {
+              "phase": "scan",
+              "hresult": "0x00000000",
+              "amsi_result": 1,
+              "classification": "not_detected"
+            }
+          }
+        ]
+      },
+      "static_atob": {
+        "literal_calls_observed": 0,
+        "invalid_or_empty_literals": 0,
+        "decoded_values_selected": 0,
+        "omitted_values": 0,
+        "limitation": "Only direct quoted base64 arguments in selected script prefixes are decoded; no variables, concatenation, escapes, code execution or network requests.",
+        "decoded_samples": []
+      }
+    },
+    {
+      "host": "www.lengmen.org",
+      "record_indices": [
+        450,
+        1921,
+        2318
+      ],
+      "selected_source_ids": [
+        "47e709728d21b76a1156fd1a080dd45d8dc82c1a95f8e66359533ac4d336847e",
+        "5c5cc84bbd5019fd7fc40a5effcdf9adfddca60a2f4f6885b1eb034ad4da0a93"
+      ],
+      "prior_sample_sha256": "7ac2e9bb156f7bea815170de3c7d48c9df6031587555ccb7f6740dcaf358c0e7",
+      "started_at": "2026-11-15T05:59:13.988521+00:00",
+      "http_status": 200,
+      "content_type": "text/html",
+      "truncated": false,
+      "sample_bytes": 477,
+      "sample_sha256": "fc122e4488cc8eae6228f629dfc5edec9989863a44b0fb1af31409f74a57ab73",
+      "connection_identity": {
+        "tls_verified": true,
+        "connected_ip_sha256": "cdc4048b447f643407ca69d90ce3dd0129589caadddd366dbb5760ae537042c6",
+        "tls_certificate_sha256": "fd46bcfe39eaed9b540efab878b1ddccfbc926d79a43b3ecba3a277b0c400af5",
+        "tls_issuer": [
+          "Let's Encrypt",
+          "YR1"
+        ],
+        "tls_not_before": "Sep 22 04:27:17 2026 GMT",
+        "tls_not_after": "Dec 21 04:27:16 2026 GMT"
+      },
+      "sample_observed_at": "2026-11-15T05:59:14.994035+00:00",
+      "same_sha256_as_prior": false,
+      "shape_sha256": "05e7d863aefa066d521304faf1ecf18b31791a0f55502474dc1d646e4a8bf6b6",
+      "structural_indicators": {
+        "complete_eicar_control_present": false,
+        "eicar_word_present_case_insensitive": false,
+        "contains_404_text": false,
+        "meta_refresh_pattern_present": false,
+        "iframe_tag_present": false,
+        "script_location_reference_present": true,
+        "script_eval_reference_present": false,
+        "script_base64_decode_reference_present": false,
+        "script_document_write_reference_present": false,
+        "external_script_attribute_present": false
+      },
+      "literal_navigation": {
+        "location_mentions": 1,
+        "direct_constant_targets": [
+          {
+            "script_ordinal": 1,
+            "category": "http_or_protocol_relative",
+            "target_host_defanged": "www[.]lengmen[.]org",
+            "target_host_sha256": "f3dca01e6de26fd4f05ff878da1af6870060673a428dd45e6657cd68649be316",
+            "target_host_is_source": true,
+            "scheme": "https",
+            "path_kind": "root_or_empty",
+            "has_query": true
+          }
+        ],
+        "limitation": "Only direct unescaped quoted assignments and assign/replace calls in scanned script prefixes; concatenated or computed values remain unconfirmed and no target is requested."
+      },
+      "amsi": {
+        "phase": "scan",
+        "hresult": "0x00000000",
+        "amsi_result": 32768,
+        "classification": "detected"
+      },
+      "inline_scripts": {
+        "script_tags_observed": 1,
+        "nonempty_inline_scripts_observed": 1,
+        "inline_scripts_selected": 1,
+        "inline_scripts_omitted": 0,
+        "samples": [
+          {
+            "ordinal": 1,
+            "has_src_attribute": false,
+            "bytes_seen": 373,
+            "sample_bytes": 373,
+            "sample_sha256": "7cf3150106c7262ff61f5efb023996a3d520c448239cbcb944a4c9549bca29de",
+            "truncated": false,
+            "closing_tag_observed": true,
+            "shape_sha256": "98b07651058455d48d466a9a1dae48b2066b39e9cb0bb8389db4bd90a2445f53",
+            "amsi": {
+              "phase": "scan",
+              "hresult": "0x00000000",
+              "amsi_result": 32768,
+              "classification": "detected"
+            }
+          }
+        ]
+      },
+      "static_atob": {
+        "literal_calls_observed": 0,
+        "invalid_or_empty_literals": 0,
+        "decoded_values_selected": 0,
+        "omitted_values": 0,
+        "limitation": "Only direct quoted base64 arguments in selected script prefixes are decoded; no variables, concatenation, escapes, code execution or network requests.",
+        "decoded_samples": []
+      }
+    }
+  ],
+  "shape_groups": [
+    {
+      "shape_sha256": "05e7d863aefa066d521304faf1ecf18b31791a0f55502474dc1d646e4a8bf6b6",
+      "hosts": [
+        "api.jiaston.com",
+        "bbs.fanfanu.com",
+        "cl.2790z.xyz",
+        "get.xiashuzhan.com",
+        "kuronavi.blog",
+        "lwkk.xyz",
+        "m.69shu.la",
+        "m.bz001.org",
+        "m.nshkedu.com",
+        "s.fjwhcbsh.com",
+        "wap.18biquge.com",
+        "www.230book.net",
+        "www.jpxgyw.cc",
+        "www.lengmen.org"
+      ]
+    },
+    {
+      "shape_sha256": "22b1348cc4b5c9a16eac7263fc819461823b95ec6ddebae9f1989daf1e863f8c",
+      "hosts": [
+        "www.4qo.net"
+      ]
+    }
+  ],
+  "completed_at": "2026-11-15T05:59:15.498918+00:00"
+}

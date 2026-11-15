@@ -1,10 +1,26 @@
 import 'dart:convert';
 
+import 'package:crypto/crypto.dart';
+
 import '../../../core/persistence/app_database.dart';
 import '../domain/book.dart';
 import '../domain/book_download_plan.dart';
 import 'book_source_links.dart';
 import 'book_mixed_content.dart';
+import 'book_download_evidence.dart';
+
+final class ProvenBookText {
+  const ProvenBookText(this.body, this.evidence, this.segments);
+  final String body;
+  final BookDownloadEvidence evidence;
+  final List<BookChapterSegment> segments;
+}
+
+final class ProvenBookAudio {
+  const ProvenBookAudio(this.directory, this.evidence);
+  final String directory;
+  final BookDownloadEvidence evidence;
+}
 
 final class BookSourceSubscription {
   const BookSourceSubscription(this.url, this.count, this.refreshedAt);
@@ -117,6 +133,105 @@ final class BookStore {
     [key, jsonEncode(value)],
   );
 
+  static String _contentEpochKey(String id) => 'books_content_epoch:$id';
+  static String _contentFingerprintKey(String id) =>
+      'books_content_fingerprint:$id';
+  static const _bumpEpochSql =
+      'UPDATE app_meta SET value=CAST(CAST(value AS INTEGER)+1 AS TEXT) '
+      "WHERE key=? AND value GLOB '[1-9]*' "
+      "AND value NOT GLOB '*[^0-9]*' AND length(value)<18";
+
+  Future<Map<String, int>> contentEpochs() async {
+    final rows = await db.rows(
+      "SELECT key,value FROM app_meta WHERE key GLOB 'books_content_epoch:*'",
+    );
+    final result = <String, int>{};
+    for (final row in rows) {
+      final id = (row['key'] as String).substring(
+        'books_content_epoch:'.length,
+      );
+      try {
+        final value = jsonDecode(row['value'] as String);
+        result[id] = value is int && value >= 1 && value < 100000000000000000
+            ? value
+            : 0;
+      } on Object {
+        result[id] = 0;
+      }
+    }
+    return result;
+  }
+
+  /// Called inside the transaction that captures the source identity.
+  Future<int> ensureContentEpoch(String id, String fingerprint) async {
+    final rows = await db.rows('SELECT value FROM app_meta WHERE key=?', [
+      _contentEpochKey(id),
+    ]);
+    if (rows.isEmpty) {
+      await write(_contentEpochKey(id), 1);
+      await write(_contentFingerprintKey(id), fingerprint);
+      return 1;
+    }
+    final value = jsonDecode(rows.single['value'] as String);
+    if (value is! int || value < 1 || value >= 100000000000000000) {
+      throw const FormatException('离线内容来源版本损坏');
+    }
+    final observed = await read(_contentFingerprintKey(id));
+    if (observed != fingerprint) {
+      if (value >= 99999999999999999) {
+        throw const FormatException('离线内容来源版本超出限制');
+      }
+      await write(_contentEpochKey(id), value + 1);
+      await write(_contentFingerprintKey(id), fingerprint);
+      return value + 1;
+    }
+    return value;
+  }
+
+  /// Track changes to built-in rules too, including A → B → A across launches.
+  Future<void> observeTrackedSources(List<BookSourceEntry> entries) async {
+    final tracked = await db.rows(
+      "SELECT key FROM app_meta WHERE key GLOB 'books_content_epoch:*'",
+    );
+    if (tracked.isEmpty) return;
+    final byId = {for (final entry in entries) entry.source.id: entry.source};
+    await db.atomic(() async {
+      for (final row in tracked) {
+        final id = (row['key'] as String).substring(
+          'books_content_epoch:'.length,
+        );
+        final source = byId[id];
+        final fingerprint = source == null
+            ? 'missing'
+            : bookDownloadSourceFingerprint(source);
+        Object? observed;
+        try {
+          observed = await read(_contentFingerprintKey(id));
+        } on FormatException {
+          // Do not bless an old proof when its revision metadata is damaged.
+        }
+        if (observed == fingerprint) continue;
+        await db.write(_bumpEpochSql, [_contentEpochKey(id)]);
+        await write(_contentFingerprintKey(id), fingerprint);
+      }
+    }, tables: {'app_meta'});
+  }
+
+  Future<int> contentEpoch(String id) async {
+    final rows = await db.rows('SELECT value FROM app_meta WHERE key=?', [
+      _contentEpochKey(id),
+    ]);
+    if (rows.isEmpty) return 0;
+    try {
+      final value = jsonDecode(rows.single['value'] as String);
+      return value is int && value >= 1 && value < 100000000000000000
+          ? value
+          : 0;
+    } on Object {
+      return 0;
+    }
+  }
+
   Future<List<BookSourceEntry>> sources(
     List<BookSource> builtins, {
     bool enabledOnly = false,
@@ -197,15 +312,23 @@ final class BookStore {
           (old is Map && old['removed'] == true)) {
         throw const FormatException('该来源已移除');
       }
+      if (changes.containsKey('source')) {
+        await db.write(_bumpEpochSql, [_contentEpochKey(source.id)]);
+      }
       await write(key, {if (old is Map) ...old, ...changes});
     }, tables: {'app_meta'});
   }
 
-  Future<void> deleteSource(BookSource source) => source.builtin
-      ? write('books_source:${source.id}', {'removed': true})
-      : db.write('DELETE FROM app_meta WHERE key=?', [
-          'books_source:${source.id}',
-        ]);
+  Future<void> deleteSource(BookSource source) => db.atomic(() async {
+    await db.write(_bumpEpochSql, [_contentEpochKey(source.id)]);
+    if (source.builtin) {
+      await write('books_source:${source.id}', {'removed': true});
+    } else {
+      await db.write('DELETE FROM app_meta WHERE key=?', [
+        'books_source:${source.id}',
+      ]);
+    }
+  }, tables: {'app_meta'});
 
   Future<Map<String, String>> blockedSources() async {
     final value = await read('books_source_blacklist');
@@ -246,6 +369,7 @@ final class BookStore {
     bool fromCatalog = false,
   }) => db.batch((batch) {
     for (final (:source, :previous) in entries) {
+      batch.customStatement(_bumpEpochSql, [_contentEpochKey(source.id)]);
       batch.customStatement(
         'INSERT OR REPLACE INTO app_meta(key,value) VALUES(?,?)',
         [
@@ -456,6 +580,195 @@ final class BookStore {
     }
     return newer.values.take(4000).map((chapter) => chapter.toJson()).toList();
   }
+
+  String _provenPointer(String type, Book book, BookChapter chapter) =>
+      'books_proven_${type}_current:${book.id}:${chapter.id}';
+
+  String _provenRecord(
+    String type,
+    Book book,
+    BookChapter chapter,
+    String hash,
+  ) => 'books_proven_${type}_record:${book.id}:${chapter.id}:$hash';
+
+  Future<void> _writeProven(
+    String type,
+    Book book,
+    BookChapter chapter,
+    Map<String, Object?> value,
+    Future<void> Function() validate,
+  ) async {
+    final encoded = jsonEncode(value);
+    final hash = sha256.convert(utf8.encode(encoded)).toString();
+    await db.atomic(() async {
+      await validate();
+      if (type == 'text') {
+        final key = _provenRecord(type, book, chapter, hash);
+        final existing = await db.rows('SELECT 1 FROM app_meta WHERE key=?', [
+          key,
+        ]);
+        if (existing.isEmpty) {
+          final used =
+              (await db.rows(
+                    "SELECT COALESCE(SUM(length(CAST(value AS BLOB))),0) AS bytes "
+                    "FROM app_meta WHERE key GLOB 'books_text:*' "
+                    "OR key GLOB 'books_proven_text_record:*'",
+                  )).single['bytes']
+                  as int;
+          if (used + utf8.encode(encoded).length > 96 * 1024 * 1024) {
+            throw const FormatException('离线正文空间已满');
+          }
+        }
+      }
+      await db.write('INSERT OR IGNORE INTO app_meta(key,value) VALUES(?,?)', [
+        _provenRecord(type, book, chapter, hash),
+        encoded,
+      ]);
+      await write(_provenPointer(type, book, chapter), {'hash': hash});
+      await validate();
+    }, tables: {'app_meta'});
+  }
+
+  Future<Map?> _readProven(String type, Book book, BookChapter chapter) async {
+    final rows = await db.rows('SELECT value FROM app_meta WHERE key=?', [
+      _provenPointer(type, book, chapter),
+    ]);
+    if (rows.isEmpty) return null;
+    try {
+      final pointer = jsonDecode(rows.single['value'] as String);
+      final hash = pointer is Map ? pointer['hash'] : null;
+      if (hash is! String || !RegExp(r'^[a-f0-9]{64}$').hasMatch(hash)) {
+        throw const FormatException('离线内容来源记录损坏');
+      }
+      final records = await db.rows('SELECT value FROM app_meta WHERE key=?', [
+        _provenRecord(type, book, chapter, hash),
+      ]);
+      if (records.length != 1) throw const FormatException('离线内容来源记录缺失');
+      final encoded = records.single['value'] as String;
+      if (sha256.convert(utf8.encode(encoded)).toString() != hash) {
+        throw const FormatException('离线内容来源记录损坏');
+      }
+      final value = jsonDecode(encoded);
+      if (value is! Map) throw const FormatException('离线内容来源记录损坏');
+      return value;
+    } on FormatException {
+      rethrow;
+    } on Object {
+      throw const FormatException('离线内容来源记录损坏');
+    }
+  }
+
+  Future<void> saveProvenText(
+    Book book,
+    BookChapter chapter,
+    String body,
+    BookDownloadEvidence evidence,
+    Future<void> Function() validate, {
+    List<BookChapterSegment> segments = const [],
+  }) {
+    if (!evidence.describes(book, chapter)) {
+      throw const FormatException('离线内容与来源记录不一致');
+    }
+    return _writeProven('text', book, chapter, {
+      'body': body,
+      'evidence': evidence.toJson(),
+      if (segments.isNotEmpty)
+        'segments': [
+          for (final segment in segments)
+            switch (segment) {
+              BookTextSegment text => {'text': text.text},
+              BookImageSegment image => {'image': image.address.toString()},
+            },
+        ],
+    }, validate);
+  }
+
+  Future<ProvenBookText?> provenText(Book book, BookChapter chapter) async {
+    final value = await _readProven('text', book, chapter);
+    if (value == null) return null;
+    if (value['body'] is! String) throw const FormatException('离线内容来源记录损坏');
+    final evidence = BookDownloadEvidence.fromJson(value['evidence']);
+    if (!evidence.describes(book, chapter)) {
+      throw const FormatException('离线内容与来源记录不一致');
+    }
+    final rawSegments = value['segments'];
+    if (rawSegments != null &&
+        (rawSegments is! List || rawSegments.length > 5000)) {
+      throw const FormatException('离线图文来源记录损坏');
+    }
+    final segments = <BookChapterSegment>[];
+    for (final raw in rawSegments as List? ?? const []) {
+      if (raw is! Map || raw.length != 1) {
+        throw const FormatException('离线图文来源记录损坏');
+      }
+      if (raw['text'] is String) {
+        segments.add(BookTextSegment(raw['text'] as String));
+      } else if (raw['image'] is String) {
+        segments.add(BookImageSegment(Uri.parse(raw['image'] as String)));
+      } else {
+        throw const FormatException('离线图文来源记录损坏');
+      }
+    }
+    return ProvenBookText(value['body'] as String, evidence, segments);
+  }
+
+  Future<void> saveProvenAudio(
+    Book book,
+    BookChapter chapter,
+    String directory,
+    BookDownloadEvidence evidence,
+    Future<void> Function() validate,
+  ) {
+    if (!evidence.describes(book, chapter) ||
+        !_validAudioDirectory(book, chapter, directory)) {
+      throw const FormatException('离线音频与来源记录不一致');
+    }
+    return _writeProven('audio', book, chapter, {
+      'directory': directory,
+      'evidence': evidence.toJson(),
+    }, validate);
+  }
+
+  Future<ProvenBookAudio?> provenAudio(Book book, BookChapter chapter) async {
+    final value = await _readProven('audio', book, chapter);
+    if (value == null) return null;
+    final directory = value['directory'];
+    if (directory is! String ||
+        !_validAudioDirectory(book, chapter, directory)) {
+      throw const FormatException('离线音频来源记录损坏');
+    }
+    final evidence = BookDownloadEvidence.fromJson(value['evidence']);
+    if (!evidence.describes(book, chapter)) {
+      throw const FormatException('离线音频与来源记录不一致');
+    }
+    return ProvenBookAudio(directory, evidence);
+  }
+
+  bool _validAudioDirectory(Book book, BookChapter chapter, String directory) =>
+      RegExp(
+        r'^v2-[a-f0-9]{64}-[a-f0-9]{64}-[a-zA-Z0-9_-]+$',
+      ).hasMatch(directory) &&
+      directory.startsWith('v2-${book.id}-${chapter.id}-');
+
+  Future<Set<String>> provenChapters(String type, Book book) async {
+    final prefix = 'books_proven_${type}_current:${book.id}:';
+    final rows = await db.rows('SELECT key FROM app_meta WHERE key GLOB ?', [
+      '$prefix*',
+    ]);
+    return {
+      for (final row in rows) (row['key'] as String).substring(prefix.length),
+    };
+  }
+
+  Future<void> clearProvenAudio(Book book, {BookChapter? chapter}) =>
+      db.atomic(() async {
+        final suffix = chapter == null ? '*' : '${chapter.id}*';
+        for (final type in ['current', 'record']) {
+          await db.write('DELETE FROM app_meta WHERE key GLOB ?', [
+            'books_proven_audio_$type:${book.id}:$suffix',
+          ]);
+        }
+      }, tables: {'app_meta'});
 
   String _textKey(Book book, BookChapter chapter) =>
       'books_text:${book.id}:${chapter.id}';
@@ -737,7 +1050,7 @@ final class BookStore {
       final used =
           (await db.rows(
                 "SELECT COALESCE(SUM(length(CAST(value AS BLOB))),0) AS bytes FROM app_meta "
-                "WHERE key GLOB 'books_text:*'",
+                "WHERE key GLOB 'books_text:*' OR key GLOB 'books_proven_text_record:*'",
               )).single['bytes']
               as int;
       final current = await db.rows(
@@ -810,16 +1123,31 @@ final class BookStore {
     ]);
     return {
       for (final row in rows) (row['key'] as String).substring(prefix.length),
+      ...await provenChapters('text', book),
     };
   }
 
   Future<void> deleteText(Book book, BookChapter chapter) =>
-      db.write('DELETE FROM app_meta WHERE key=?', [_textKey(book, chapter)]);
+      db.atomic(() async {
+        await db.write('DELETE FROM app_meta WHERE key=?', [
+          _textKey(book, chapter),
+        ]);
+        await db.write('DELETE FROM app_meta WHERE key=?', [
+          _provenPointer('text', book, chapter),
+        ]);
+        await db.write('DELETE FROM app_meta WHERE key GLOB ?', [
+          'books_proven_text_record:${book.id}:${chapter.id}:*',
+        ]);
+      }, tables: {'app_meta'});
 
   Future<void> clearOffline(Book book) => db.atomic(() async {
     final patterns = book.kind == BookKind.comic
         ? ['books_image_offline:${book.id}:*', 'books_image_data:${book.id}:*']
-        : ['books_text:${book.id}:*'];
+        : [
+            'books_text:${book.id}:*',
+            'books_proven_text_current:${book.id}:*',
+            'books_proven_text_record:${book.id}:*',
+          ];
     for (final pattern in patterns) {
       await db.customStatement('DELETE FROM app_meta WHERE key GLOB ?', [
         pattern,

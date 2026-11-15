@@ -81,7 +81,7 @@ final class _BookDownloadManagementPageState
   Future<Set<String>> _saved(Book book) => switch (book.kind) {
     BookKind.text => widget.services.books.store.savedText(book),
     BookKind.comic => widget.services.books.store.savedImages(book),
-    BookKind.audio => widget.services.books.audioFiles.saved(book),
+    BookKind.audio => widget.services.books.savedAudio(book),
   };
 
   Future<void> _reload() async {
@@ -185,7 +185,7 @@ final class _BookDownloadManagementPageState
     await _action(book, () async {
       await _manager.removePlan(book);
       if (book.kind == BookKind.audio) {
-        await widget.services.books.audioFiles.removeSaved(book);
+        await widget.services.books.removeSavedAudio(book);
       } else {
         await widget.services.books.store.clearOffline(book);
       }

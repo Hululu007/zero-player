@@ -1,0 +1,1585 @@
+{
+  "method": "Only A/AAAA RFC 8484 DoH to the named public providers. No catalog host is contacted. DNS wire responses are parsed in memory; no concrete IP, CNAME or raw reply is stored.",
+  "limitations": "Resolvers are separate operators but use the same client network. This is a deliberately selected small sample, not independent geography or a permanent-failure determination.",
+  "providers": {
+    "aliyun": "dns.alidns.com",
+    "tencent": "doh.pub"
+  },
+  "archive_sha256": "012a0e0d6e6adc8d303c32b578510e14b562088b3e965cb01a1a647b5e7e034d",
+  "head_recheck_sha256": "fcb543ff2a41e7e4960d2a0112af9c311d8e55148b8716d8854c09360b1080af",
+  "address_recheck_sha256": "87d6830970d6dbb6c57cd9e2b303ac6b05673e98cefdf7ddf2061885923cc595",
+  "sampling": {
+    "selection": "For each baseline group, only hosts with selected import IDs; sort by SHA256(archive:group:host), take first 10.",
+    "nxdomain_baseline_hosts": 98,
+    "nxdomain_eligible_hosts": 69,
+    "unspecified_baseline_hosts": 103,
+    "unspecified_eligible_hosts": 76,
+    "selected_hosts": 20
+  },
+  "concurrency": 2,
+  "minimum_start_interval_seconds": 0.3,
+  "per_request_timeout_seconds": 6,
+  "started_at": "2026-11-15T12:54:53.778804+00:00",
+  "results": [
+    {
+      "host": "api.kuduwxw.com",
+      "baseline": "repeated_nxdomain",
+      "provider": "aliyun",
+      "query_type": "A",
+      "started_at": "2026-11-15T12:54:53.779721+00:00",
+      "http_status": 200,
+      "dns_rcode": 3,
+      "dns_truncated": false,
+      "dnssec_authenticated": false,
+      "address_categories": {},
+      "address_ttls_seconds": [],
+      "negative_ttls_seconds": [
+        1
+      ],
+      "classification": "nxdomain",
+      "response_sha256": "fbaff7a5a53042d613cecaa4c4d8b60810ca9a4456f20880d3bdb4b9b82f73f2",
+      "observed_at": "2026-11-15T12:54:53.951488+00:00"
+    },
+    {
+      "host": "api.kuduwxw.com",
+      "baseline": "repeated_nxdomain",
+      "provider": "aliyun",
+      "query_type": "AAAA",
+      "started_at": "2026-11-15T12:54:54.079818+00:00",
+      "http_status": 200,
+      "dns_rcode": 3,
+      "dns_truncated": false,
+      "dnssec_authenticated": false,
+      "address_categories": {},
+      "address_ttls_seconds": [],
+      "negative_ttls_seconds": [
+        600
+      ],
+      "classification": "nxdomain",
+      "response_sha256": "f064719c664368fe24f7dd275760afd3b9b450525dec8e19f1a9dcde519623b0",
+      "observed_at": "2026-11-15T12:54:54.616375+00:00"
+    },
+    {
+      "host": "api.kuduwxw.com",
+      "baseline": "repeated_nxdomain",
+      "provider": "tencent",
+      "query_type": "A",
+      "started_at": "2026-11-15T12:54:54.379988+00:00",
+      "http_status": 200,
+      "dns_rcode": 3,
+      "dns_truncated": false,
+      "dnssec_authenticated": false,
+      "address_categories": {},
+      "address_ttls_seconds": [],
+      "negative_ttls_seconds": [
+        600
+      ],
+      "classification": "nxdomain",
+      "response_sha256": "c660a900a9b92dd6aa4382aca6ba07eb2c1283e1c70ccc13876dd92f8269ac93",
+      "observed_at": "2026-11-15T12:54:55.122812+00:00"
+    },
+    {
+      "host": "api.kuduwxw.com",
+      "baseline": "repeated_nxdomain",
+      "provider": "tencent",
+      "query_type": "AAAA",
+      "started_at": "2026-11-15T12:54:54.680217+00:00",
+      "http_status": 200,
+      "dns_rcode": 3,
+      "dns_truncated": false,
+      "dnssec_authenticated": false,
+      "address_categories": {},
+      "address_ttls_seconds": [],
+      "negative_ttls_seconds": [
+        600
+      ],
+      "classification": "nxdomain",
+      "response_sha256": "5e8a796a7ca260f8ef499c45894fe5167fb5c158435c7772ba7a6af0e332fb64",
+      "observed_at": "2026-11-15T12:54:55.501492+00:00"
+    },
+    {
+      "host": "book.yuntuxs.com",
+      "baseline": "repeated_nxdomain",
+      "provider": "aliyun",
+      "query_type": "A",
+      "started_at": "2026-11-15T12:54:55.122836+00:00",
+      "http_status": 200,
+      "dns_rcode": 3,
+      "dns_truncated": false,
+      "dnssec_authenticated": false,
+      "address_categories": {},
+      "address_ttls_seconds": [],
+      "negative_ttls_seconds": [
+        600
+      ],
+      "classification": "nxdomain",
+      "response_sha256": "d5fac518e6f64e025d277f2ad2ab7bc66c95efa6efdf7ab85abf2349bc089974",
+      "observed_at": "2026-11-15T12:54:55.505099+00:00"
+    },
+    {
+      "host": "book.yuntuxs.com",
+      "baseline": "repeated_nxdomain",
+      "provider": "aliyun",
+      "query_type": "AAAA",
+      "started_at": "2026-11-15T12:54:55.501516+00:00",
+      "http_status": 200,
+      "dns_rcode": 3,
+      "dns_truncated": false,
+      "dnssec_authenticated": false,
+      "address_categories": {},
+      "address_ttls_seconds": [],
+      "negative_ttls_seconds": [
+        600
+      ],
+      "classification": "nxdomain",
+      "response_sha256": "888ed680461fe9f923af853fb3dd118c8df3d4ac2442ea7511d3e47372968162",
+      "observed_at": "2026-11-15T12:54:55.840472+00:00"
+    },
+    {
+      "host": "book.yuntuxs.com",
+      "baseline": "repeated_nxdomain",
+      "provider": "tencent",
+      "query_type": "A",
+      "started_at": "2026-11-15T12:54:55.801808+00:00",
+      "http_status": 200,
+      "dns_rcode": 3,
+      "dns_truncated": false,
+      "dnssec_authenticated": false,
+      "address_categories": {},
+      "address_ttls_seconds": [],
+      "negative_ttls_seconds": [
+        600
+      ],
+      "classification": "nxdomain",
+      "response_sha256": "d342dc596c7e612349fc23c2d26e3764aad7025fad1870cdc4c3b25a981b454e",
+      "observed_at": "2026-11-15T12:54:56.590542+00:00"
+    },
+    {
+      "host": "book.yuntuxs.com",
+      "baseline": "repeated_nxdomain",
+      "provider": "tencent",
+      "query_type": "AAAA",
+      "started_at": "2026-11-15T12:54:56.102089+00:00",
+      "http_status": 200,
+      "dns_rcode": 3,
+      "dns_truncated": false,
+      "dnssec_authenticated": false,
+      "address_categories": {},
+      "address_ttls_seconds": [],
+      "negative_ttls_seconds": [
+        600
+      ],
+      "classification": "nxdomain",
+      "response_sha256": "35fe44d7c0308d24248602e02dc2283a7a9d25fd53876fdbfc4e2766a4dfbbc7",
+      "observed_at": "2026-11-15T12:54:57.242923+00:00"
+    },
+    {
+      "host": "h5.duduxiaoshuo.top",
+      "baseline": "repeated_nxdomain",
+      "provider": "aliyun",
+      "query_type": "A",
+      "started_at": "2026-11-15T12:55:04.090160+00:00",
+      "http_status": 200,
+      "dns_rcode": 3,
+      "dns_truncated": false,
+      "dnssec_authenticated": false,
+      "address_categories": {},
+      "address_ttls_seconds": [],
+      "negative_ttls_seconds": [
+        1
+      ],
+      "classification": "nxdomain",
+      "response_sha256": "39a6c4ddc75127ddf3590d7d6c7e35f5f494b81bb24e59d68a4184acd3488609",
+      "observed_at": "2026-11-15T12:55:04.240658+00:00"
+    },
+    {
+      "host": "h5.duduxiaoshuo.top",
+      "baseline": "repeated_nxdomain",
+      "provider": "aliyun",
+      "query_type": "AAAA",
+      "started_at": "2026-11-15T12:55:04.390233+00:00",
+      "http_status": 200,
+      "dns_rcode": 3,
+      "dns_truncated": false,
+      "dnssec_authenticated": false,
+      "address_categories": {},
+      "address_ttls_seconds": [],
+      "negative_ttls_seconds": [
+        600
+      ],
+      "classification": "nxdomain",
+      "response_sha256": "f01c0296cd15694fd891e5b064f006fa15d62ba574d23f578f016288b17fa111",
+      "observed_at": "2026-11-15T12:55:04.569064+00:00"
+    },
+    {
+      "host": "h5.duduxiaoshuo.top",
+      "baseline": "repeated_nxdomain",
+      "provider": "tencent",
+      "query_type": "A",
+      "started_at": "2026-11-15T12:55:04.690330+00:00",
+      "http_status": 200,
+      "dns_rcode": 3,
+      "dns_truncated": false,
+      "dnssec_authenticated": false,
+      "address_categories": {},
+      "address_ttls_seconds": [],
+      "negative_ttls_seconds": [
+        600
+      ],
+      "classification": "nxdomain",
+      "response_sha256": "c627f615f33c356e999eb75ce0c9b480e204529aa15833e013dc05a5c0b4ee3a",
+      "observed_at": "2026-11-15T12:55:04.970281+00:00"
+    },
+    {
+      "host": "h5.duduxiaoshuo.top",
+      "baseline": "repeated_nxdomain",
+      "provider": "tencent",
+      "query_type": "AAAA",
+      "started_at": "2026-11-15T12:55:04.990376+00:00",
+      "http_status": 200,
+      "dns_rcode": 3,
+      "dns_truncated": false,
+      "dnssec_authenticated": false,
+      "address_categories": {},
+      "address_ttls_seconds": [],
+      "negative_ttls_seconds": [
+        600
+      ],
+      "classification": "nxdomain",
+      "response_sha256": "89289bdbfedf5203bae0635407e947ef5ff772daa25f0e4eccd6d3fb7ef59b0e",
+      "observed_at": "2026-11-15T12:55:05.324806+00:00"
+    },
+    {
+      "host": "m.22biqu.net",
+      "baseline": "repeated_nxdomain",
+      "provider": "aliyun",
+      "query_type": "A",
+      "started_at": "2026-11-15T12:55:08.378354+00:00",
+      "http_status": 200,
+      "dns_rcode": 3,
+      "dns_truncated": false,
+      "dnssec_authenticated": false,
+      "address_categories": {},
+      "address_ttls_seconds": [],
+      "negative_ttls_seconds": [
+        600
+      ],
+      "classification": "nxdomain",
+      "response_sha256": "2e5457ba462a3546c6d40a6b328965056d7ebaea0ea414b5745338f03fb4fb14",
+      "observed_at": "2026-11-15T12:55:08.685990+00:00"
+    },
+    {
+      "host": "m.22biqu.net",
+      "baseline": "repeated_nxdomain",
+      "provider": "aliyun",
+      "query_type": "AAAA",
+      "started_at": "2026-11-15T12:55:08.678641+00:00",
+      "http_status": 200,
+      "dns_rcode": 3,
+      "dns_truncated": false,
+      "dnssec_authenticated": false,
+      "address_categories": {},
+      "address_ttls_seconds": [],
+      "negative_ttls_seconds": [
+        600
+      ],
+      "classification": "nxdomain",
+      "response_sha256": "5307c75a6a1aa14bde8149f93ed97619a72b70e57c04bdbc07cd79bfe2850f6b",
+      "observed_at": "2026-11-15T12:55:08.992231+00:00"
+    },
+    {
+      "host": "m.22biqu.net",
+      "baseline": "repeated_nxdomain",
+      "provider": "tencent",
+      "query_type": "A",
+      "started_at": "2026-11-15T12:55:08.979052+00:00",
+      "http_status": 200,
+      "dns_rcode": 3,
+      "dns_truncated": false,
+      "dnssec_authenticated": false,
+      "address_categories": {},
+      "address_ttls_seconds": [],
+      "negative_ttls_seconds": [
+        600
+      ],
+      "classification": "nxdomain",
+      "response_sha256": "99637d2104bec851ca7c786cd90e46c2c6106219f11160b0f1370d699e499801",
+      "observed_at": "2026-11-15T12:55:09.403040+00:00"
+    },
+    {
+      "host": "m.22biqu.net",
+      "baseline": "repeated_nxdomain",
+      "provider": "tencent",
+      "query_type": "AAAA",
+      "started_at": "2026-11-15T12:55:09.279518+00:00",
+      "http_status": 200,
+      "dns_rcode": 3,
+      "dns_truncated": false,
+      "dnssec_authenticated": false,
+      "address_categories": {},
+      "address_ttls_seconds": [],
+      "negative_ttls_seconds": [
+        600
+      ],
+      "classification": "nxdomain",
+      "response_sha256": "d6a25b25c42d750e89f9fcec7453162b4d5ac7e10f5cd12d0c7e4712547bb07a",
+      "observed_at": "2026-11-15T12:55:09.922356+00:00"
+    },
+    {
+      "host": "m.dmx5.com",
+      "baseline": "repeated_nxdomain",
+      "provider": "aliyun",
+      "query_type": "A",
+      "started_at": "2026-11-15T12:54:56.590570+00:00",
+      "http_status": 200,
+      "dns_rcode": 2,
+      "dns_truncated": false,
+      "dnssec_authenticated": false,
+      "address_categories": {},
+      "address_ttls_seconds": [],
+      "negative_ttls_seconds": [],
+      "classification": "servfail",
+      "response_sha256": "086ecc14154c1616e0010eff2d0767e94f3841ccf1f1b2cd55bf3756595f9bd5",
+      "observed_at": "2026-11-15T12:54:56.761660+00:00"
+    },
+    {
+      "host": "m.dmx5.com",
+      "baseline": "repeated_nxdomain",
+      "provider": "aliyun",
+      "query_type": "AAAA",
+      "started_at": "2026-11-15T12:54:56.891060+00:00",
+      "http_status": 200,
+      "dns_rcode": 2,
+      "dns_truncated": false,
+      "dnssec_authenticated": false,
+      "address_categories": {},
+      "address_ttls_seconds": [],
+      "negative_ttls_seconds": [],
+      "classification": "servfail",
+      "response_sha256": "426ff6bdb43fe6aa9eb12eaf5c4d8cb5a8da9cae31c612ab959eca5d7ed81063",
+      "observed_at": "2026-11-15T12:54:58.748756+00:00"
+    },
+    {
+      "host": "m.dmx5.com",
+      "baseline": "repeated_nxdomain",
+      "provider": "tencent",
+      "query_type": "A",
+      "started_at": "2026-11-15T12:54:57.242947+00:00",
+      "http_status": 200,
+      "dns_rcode": 3,
+      "dns_truncated": false,
+      "dnssec_authenticated": false,
+      "address_categories": {},
+      "address_ttls_seconds": [],
+      "negative_ttls_seconds": [
+        600
+      ],
+      "classification": "nxdomain",
+      "response_sha256": "c4cb84b7c8bc0d47bab05c094679794ac8dcf6945820c8f3dfbb006df4795cfd",
+      "observed_at": "2026-11-15T12:54:58.491461+00:00"
+    },
+    {
+      "host": "m.dmx5.com",
+      "baseline": "repeated_nxdomain",
+      "provider": "tencent",
+      "query_type": "AAAA",
+      "started_at": "2026-11-15T12:54:58.491489+00:00",
+      "http_status": 200,
+      "dns_rcode": 3,
+      "dns_truncated": false,
+      "dnssec_authenticated": false,
+      "address_categories": {},
+      "address_ttls_seconds": [],
+      "negative_ttls_seconds": [
+        600
+      ],
+      "classification": "nxdomain",
+      "response_sha256": "efd7cd8e5509962d898f2ca2c1005abc8c20fb5a776a10f342ac7772e1e36ec8",
+      "observed_at": "2026-11-15T12:54:59.249239+00:00"
+    },
+    {
+      "host": "m.ecc6.com",
+      "baseline": "repeated_nxdomain",
+      "provider": "aliyun",
+      "query_type": "A",
+      "started_at": "2026-11-15T12:55:00.292325+00:00",
+      "http_status": 200,
+      "dns_rcode": 3,
+      "dns_truncated": false,
+      "dnssec_authenticated": false,
+      "address_categories": {},
+      "address_ttls_seconds": [],
+      "negative_ttls_seconds": [
+        600
+      ],
+      "classification": "nxdomain",
+      "response_sha256": "cace8b6491019406c436a6626634817b0d864299c6a53a1a9069eff6ad1e63f3",
+      "observed_at": "2026-11-15T12:55:01.631210+00:00"
+    },
+    {
+      "host": "m.ecc6.com",
+      "baseline": "repeated_nxdomain",
+      "provider": "aliyun",
+      "query_type": "AAAA",
+      "started_at": "2026-11-15T12:55:01.631237+00:00",
+      "http_status": 200,
+      "dns_rcode": 3,
+      "dns_truncated": false,
+      "dnssec_authenticated": false,
+      "address_categories": {},
+      "address_ttls_seconds": [],
+      "negative_ttls_seconds": [
+        600
+      ],
+      "classification": "nxdomain",
+      "response_sha256": "c528e210e08fa732f0b40e7fa8bb188d93fdff536fb784a872e71118499ba492",
+      "observed_at": "2026-11-15T12:55:02.977708+00:00"
+    },
+    {
+      "host": "m.ecc6.com",
+      "baseline": "repeated_nxdomain",
+      "provider": "tencent",
+      "query_type": "A",
+      "started_at": "2026-11-15T12:55:02.977735+00:00",
+      "http_status": 200,
+      "dns_rcode": 3,
+      "dns_truncated": false,
+      "dnssec_authenticated": false,
+      "address_categories": {},
+      "address_ttls_seconds": [],
+      "negative_ttls_seconds": [
+        600
+      ],
+      "classification": "nxdomain",
+      "response_sha256": "8cc908326e08e8559de1ea0660c7cc70d4f5bc3281ecfcef12035a61cea043b7",
+      "observed_at": "2026-11-15T12:55:03.482508+00:00"
+    },
+    {
+      "host": "m.ecc6.com",
+      "baseline": "repeated_nxdomain",
+      "provider": "tencent",
+      "query_type": "AAAA",
+      "started_at": "2026-11-15T12:55:03.482533+00:00",
+      "http_status": 200,
+      "dns_rcode": 3,
+      "dns_truncated": false,
+      "dnssec_authenticated": false,
+      "address_categories": {},
+      "address_ttls_seconds": [],
+      "negative_ttls_seconds": [
+        600
+      ],
+      "classification": "nxdomain",
+      "response_sha256": "0be2150edd0b89c059e0fda0b9ffb23ba07e6ac6537f614bc3675f8bf2cd0156",
+      "observed_at": "2026-11-15T12:55:04.090131+00:00"
+    },
+    {
+      "host": "m.wxc.cc",
+      "baseline": "repeated_nxdomain",
+      "provider": "aliyun",
+      "query_type": "A",
+      "started_at": "2026-11-15T12:55:09.580028+00:00",
+      "http_status": 200,
+      "dns_rcode": 3,
+      "dns_truncated": false,
+      "dnssec_authenticated": false,
+      "address_categories": {},
+      "address_ttls_seconds": [],
+      "negative_ttls_seconds": [
+        600
+      ],
+      "classification": "nxdomain",
+      "response_sha256": "f06bce8f59bd3f16895bf4171179c71d84c1ac0b4e1384b832d69da925b4af0a",
+      "observed_at": "2026-11-15T12:55:09.887796+00:00"
+    },
+    {
+      "host": "m.wxc.cc",
+      "baseline": "repeated_nxdomain",
+      "provider": "aliyun",
+      "query_type": "AAAA",
+      "started_at": "2026-11-15T12:55:09.887822+00:00",
+      "http_status": 200,
+      "dns_rcode": 3,
+      "dns_truncated": false,
+      "dnssec_authenticated": false,
+      "address_categories": {},
+      "address_ttls_seconds": [],
+      "negative_ttls_seconds": [
+        600
+      ],
+      "classification": "nxdomain",
+      "response_sha256": "b0050d0f1211b3657c6e51444fbaf5101e6f302bce68aaaa2e74fdb4a26dc649",
+      "observed_at": "2026-11-15T12:55:11.450670+00:00"
+    },
+    {
+      "host": "m.wxc.cc",
+      "baseline": "repeated_nxdomain",
+      "provider": "tencent",
+      "query_type": "A",
+      "started_at": "2026-11-15T12:55:10.188299+00:00",
+      "http_status": 200,
+      "dns_rcode": 3,
+      "dns_truncated": false,
+      "dnssec_authenticated": false,
+      "address_categories": {},
+      "address_ttls_seconds": [],
+      "negative_ttls_seconds": [
+        600
+      ],
+      "classification": "nxdomain",
+      "response_sha256": "35539a87eee9c926429c4ea090edb58f66b35429de2f97fd59865340821e1817",
+      "observed_at": "2026-11-15T12:55:10.552761+00:00"
+    },
+    {
+      "host": "m.wxc.cc",
+      "baseline": "repeated_nxdomain",
+      "provider": "tencent",
+      "query_type": "AAAA",
+      "started_at": "2026-11-15T12:55:10.552788+00:00",
+      "http_status": 200,
+      "dns_rcode": 3,
+      "dns_truncated": false,
+      "dnssec_authenticated": false,
+      "address_categories": {},
+      "address_ttls_seconds": [],
+      "negative_ttls_seconds": [
+        600
+      ],
+      "classification": "nxdomain",
+      "response_sha256": "74aaccb322e7f502beb03138aa633f488f8a8a95bbdcd922d988b8e6fbd755b2",
+      "observed_at": "2026-11-15T12:55:11.350578+00:00"
+    },
+    {
+      "host": "newsmiss.lofter.com1",
+      "baseline": "repeated_nxdomain",
+      "provider": "aliyun",
+      "query_type": "A",
+      "started_at": "2026-11-15T12:54:58.791644+00:00",
+      "http_status": 200,
+      "dns_rcode": 3,
+      "dns_truncated": false,
+      "dnssec_authenticated": false,
+      "address_categories": {},
+      "address_ttls_seconds": [],
+      "negative_ttls_seconds": [
+        600
+      ],
+      "classification": "nxdomain",
+      "response_sha256": "6dfa506de9e645eebb55e1afc3ef86d6631462d2c77f7c0d2764a06199eff3f3",
+      "observed_at": "2026-11-15T12:54:58.932301+00:00"
+    },
+    {
+      "host": "newsmiss.lofter.com1",
+      "baseline": "repeated_nxdomain",
+      "provider": "aliyun",
+      "query_type": "AAAA",
+      "started_at": "2026-11-15T12:54:59.091786+00:00",
+      "http_status": 200,
+      "dns_rcode": 3,
+      "dns_truncated": false,
+      "dnssec_authenticated": false,
+      "address_categories": {},
+      "address_ttls_seconds": [],
+      "negative_ttls_seconds": [
+        599
+      ],
+      "classification": "nxdomain",
+      "response_sha256": "7b958eca1b6fb1e8400a1a7585c6f9dd339125ae807ec18f113b7e2290d486db",
+      "observed_at": "2026-11-15T12:54:59.187688+00:00"
+    },
+    {
+      "host": "newsmiss.lofter.com1",
+      "baseline": "repeated_nxdomain",
+      "provider": "tencent",
+      "query_type": "A",
+      "started_at": "2026-11-15T12:54:59.392036+00:00",
+      "classification": "provider_timeout",
+      "observed_at": "2026-11-15T12:55:05.401564+00:00"
+    },
+    {
+      "host": "newsmiss.lofter.com1",
+      "baseline": "repeated_nxdomain",
+      "provider": "tencent",
+      "query_type": "AAAA",
+      "started_at": "2026-11-15T12:54:59.692272+00:00",
+      "http_status": 200,
+      "dns_rcode": 3,
+      "dns_truncated": false,
+      "dnssec_authenticated": false,
+      "address_categories": {},
+      "address_ttls_seconds": [],
+      "negative_ttls_seconds": [
+        600
+      ],
+      "classification": "nxdomain",
+      "response_sha256": "4185c6f608212b47b81494a1737172fbf28e1d88974663c6a3a84e500fc8c454",
+      "observed_at": "2026-11-15T12:55:00.292300+00:00"
+    },
+    {
+      "host": "www.shujige.cc",
+      "baseline": "repeated_nxdomain",
+      "provider": "aliyun",
+      "query_type": "A",
+      "started_at": "2026-11-15T12:55:07.030960+00:00",
+      "http_status": 200,
+      "dns_rcode": 3,
+      "dns_truncated": false,
+      "dnssec_authenticated": false,
+      "address_categories": {},
+      "address_ttls_seconds": [],
+      "negative_ttls_seconds": [
+        600
+      ],
+      "classification": "nxdomain",
+      "response_sha256": "8904b213c6ecffd5865086d6731e740574e0d023f0191fa0ec4c11c03484fac3",
+      "observed_at": "2026-11-15T12:55:07.576800+00:00"
+    },
+    {
+      "host": "www.shujige.cc",
+      "baseline": "repeated_nxdomain",
+      "provider": "aliyun",
+      "query_type": "AAAA",
+      "started_at": "2026-11-15T12:55:07.351171+00:00",
+      "http_status": 200,
+      "dns_rcode": 3,
+      "dns_truncated": false,
+      "dnssec_authenticated": false,
+      "address_categories": {},
+      "address_ttls_seconds": [],
+      "negative_ttls_seconds": [
+        600
+      ],
+      "classification": "nxdomain",
+      "response_sha256": "7bafc979b9aeb40563b59901a9d2d3a36f6922be47dc5efe172c5f05d939b2e5",
+      "observed_at": "2026-11-15T12:55:07.728637+00:00"
+    },
+    {
+      "host": "www.shujige.cc",
+      "baseline": "repeated_nxdomain",
+      "provider": "tencent",
+      "query_type": "A",
+      "started_at": "2026-11-15T12:55:07.651672+00:00",
+      "http_status": 200,
+      "dns_rcode": 3,
+      "dns_truncated": false,
+      "dnssec_authenticated": false,
+      "address_categories": {},
+      "address_ttls_seconds": [],
+      "negative_ttls_seconds": [
+        600
+      ],
+      "classification": "nxdomain",
+      "response_sha256": "dede690f300a70d0ecbf5b2668591abac1c51a64c3e3cbc239a8c5790974ba22",
+      "observed_at": "2026-11-15T12:55:08.378330+00:00"
+    },
+    {
+      "host": "www.shujige.cc",
+      "baseline": "repeated_nxdomain",
+      "provider": "tencent",
+      "query_type": "AAAA",
+      "started_at": "2026-11-15T12:55:07.952109+00:00",
+      "http_status": 200,
+      "dns_rcode": 3,
+      "dns_truncated": false,
+      "dnssec_authenticated": false,
+      "address_categories": {},
+      "address_ttls_seconds": [],
+      "negative_ttls_seconds": [
+        600
+      ],
+      "classification": "nxdomain",
+      "response_sha256": "20f3c92e9220f59912dc2223993812e5b202045615a7b6284ba23e50351f6df9",
+      "observed_at": "2026-11-15T12:55:08.615668+00:00"
+    },
+    {
+      "host": "www.uuhanman.com",
+      "baseline": "repeated_nxdomain",
+      "provider": "aliyun",
+      "query_type": "A",
+      "started_at": "2026-11-15T12:55:05.324832+00:00",
+      "http_status": 200,
+      "dns_rcode": 3,
+      "dns_truncated": false,
+      "dnssec_authenticated": false,
+      "address_categories": {},
+      "address_ttls_seconds": [],
+      "negative_ttls_seconds": [
+        600
+      ],
+      "classification": "nxdomain",
+      "response_sha256": "0560f0f5b718e0b087298f48fbd126b3bb2bb11b98b1d4baec8c3baf40cf3622",
+      "observed_at": "2026-11-15T12:55:05.912638+00:00"
+    },
+    {
+      "host": "www.uuhanman.com",
+      "baseline": "repeated_nxdomain",
+      "provider": "aliyun",
+      "query_type": "AAAA",
+      "started_at": "2026-11-15T12:55:05.625352+00:00",
+      "http_status": 200,
+      "dns_rcode": 3,
+      "dns_truncated": false,
+      "dnssec_authenticated": false,
+      "address_categories": {},
+      "address_ttls_seconds": [],
+      "negative_ttls_seconds": [
+        600
+      ],
+      "classification": "nxdomain",
+      "response_sha256": "ea99064ebcbc44f90230496cc765a0c82a9312d2e92a2d15b8fb3f6c7b93693f",
+      "observed_at": "2026-11-15T12:55:05.978812+00:00"
+    },
+    {
+      "host": "www.uuhanman.com",
+      "baseline": "repeated_nxdomain",
+      "provider": "tencent",
+      "query_type": "A",
+      "started_at": "2026-11-15T12:55:05.925415+00:00",
+      "http_status": 200,
+      "dns_rcode": 3,
+      "dns_truncated": false,
+      "dnssec_authenticated": false,
+      "address_categories": {},
+      "address_ttls_seconds": [],
+      "negative_ttls_seconds": [
+        600
+      ],
+      "classification": "nxdomain",
+      "response_sha256": "2fb17b59c4321304163113700b0504b0884fb718e72eb4f0804712a6647690be",
+      "observed_at": "2026-11-15T12:55:07.030934+00:00"
+    },
+    {
+      "host": "www.uuhanman.com",
+      "baseline": "repeated_nxdomain",
+      "provider": "tencent",
+      "query_type": "AAAA",
+      "started_at": "2026-11-15T12:55:06.225744+00:00",
+      "http_status": 200,
+      "dns_rcode": 3,
+      "dns_truncated": false,
+      "dnssec_authenticated": false,
+      "address_categories": {},
+      "address_ttls_seconds": [],
+      "negative_ttls_seconds": [
+        600
+      ],
+      "classification": "nxdomain",
+      "response_sha256": "bcbd9a18c5993959e170a1e24c34f3f172531961723ac5b88ba206698d469839",
+      "observed_at": "2026-11-15T12:55:07.351144+00:00"
+    },
+    {
+      "host": "m.ibiquge.info",
+      "baseline": "repeated_unspecified",
+      "provider": "aliyun",
+      "query_type": "A",
+      "started_at": "2026-11-15T12:55:16.387736+00:00",
+      "http_status": 200,
+      "dns_rcode": 0,
+      "dns_truncated": false,
+      "dnssec_authenticated": false,
+      "address_categories": {
+        "public": 2
+      },
+      "address_ttls_seconds": [
+        599,
+        599
+      ],
+      "negative_ttls_seconds": [],
+      "classification": "noerror_addresses",
+      "response_sha256": "cb2c40bc0bb1985e0d110402b3c5dd146da5e143451ddb4e2653e10f258c26fc",
+      "observed_at": "2026-11-15T12:55:16.555044+00:00"
+    },
+    {
+      "host": "m.ibiquge.info",
+      "baseline": "repeated_unspecified",
+      "provider": "aliyun",
+      "query_type": "AAAA",
+      "started_at": "2026-11-15T12:55:16.687923+00:00",
+      "http_status": 200,
+      "dns_rcode": 0,
+      "dns_truncated": false,
+      "dnssec_authenticated": false,
+      "address_categories": {},
+      "address_ttls_seconds": [],
+      "negative_ttls_seconds": [
+        599
+      ],
+      "classification": "noerror_no_address",
+      "response_sha256": "fb54704711b3110df4933f82c380e566a65a56802350d212ab0caccd9bf73bcd",
+      "observed_at": "2026-11-15T12:55:16.822467+00:00"
+    },
+    {
+      "host": "m.ibiquge.info",
+      "baseline": "repeated_unspecified",
+      "provider": "tencent",
+      "query_type": "A",
+      "started_at": "2026-11-15T12:55:16.988326+00:00",
+      "http_status": 200,
+      "dns_rcode": 0,
+      "dns_truncated": false,
+      "dnssec_authenticated": false,
+      "address_categories": {
+        "public": 2
+      },
+      "address_ttls_seconds": [
+        600,
+        600
+      ],
+      "negative_ttls_seconds": [],
+      "classification": "noerror_addresses",
+      "response_sha256": "3f31e5fd698e02040e158e5153509222f46afb8f39aa4f7c427eb06f73614337",
+      "observed_at": "2026-11-15T12:55:17.545256+00:00"
+    },
+    {
+      "host": "m.ibiquge.info",
+      "baseline": "repeated_unspecified",
+      "provider": "tencent",
+      "query_type": "AAAA",
+      "started_at": "2026-11-15T12:55:17.288536+00:00",
+      "http_status": 200,
+      "dns_rcode": 0,
+      "dns_truncated": false,
+      "dnssec_authenticated": false,
+      "address_categories": {},
+      "address_ttls_seconds": [],
+      "negative_ttls_seconds": [],
+      "classification": "noerror_no_address",
+      "response_sha256": "cc9db404aee575528bec16f4fc26a9eff23cbf58dc77ad3a20c42e9dacf632e6",
+      "observed_at": "2026-11-15T12:55:17.834777+00:00"
+    },
+    {
+      "host": "m.mddtxt.net",
+      "baseline": "repeated_unspecified",
+      "provider": "aliyun",
+      "query_type": "A",
+      "started_at": "2026-11-15T12:55:18.789914+00:00",
+      "http_status": 200,
+      "dns_rcode": 0,
+      "dns_truncated": false,
+      "dnssec_authenticated": false,
+      "address_categories": {
+        "public": 1
+      },
+      "address_ttls_seconds": [
+        600
+      ],
+      "negative_ttls_seconds": [],
+      "classification": "noerror_addresses",
+      "response_sha256": "d70e69679978243803082104070c25670589b7fe3514a253efc3599e536e3900",
+      "observed_at": "2026-11-15T12:55:20.120610+00:00"
+    },
+    {
+      "host": "m.mddtxt.net",
+      "baseline": "repeated_unspecified",
+      "provider": "aliyun",
+      "query_type": "AAAA",
+      "started_at": "2026-11-15T12:55:19.096767+00:00",
+      "http_status": 200,
+      "dns_rcode": 0,
+      "dns_truncated": false,
+      "dnssec_authenticated": false,
+      "address_categories": {},
+      "address_ttls_seconds": [],
+      "negative_ttls_seconds": [
+        600
+      ],
+      "classification": "noerror_no_address",
+      "response_sha256": "71d7d9b0420f1e94e232e1304798588f76019eb7189718a44a9f735dd70c245b",
+      "observed_at": "2026-11-15T12:55:20.455506+00:00"
+    },
+    {
+      "host": "m.mddtxt.net",
+      "baseline": "repeated_unspecified",
+      "provider": "tencent",
+      "query_type": "A",
+      "started_at": "2026-11-15T12:55:20.120638+00:00",
+      "http_status": 200,
+      "dns_rcode": 0,
+      "dns_truncated": false,
+      "dnssec_authenticated": false,
+      "address_categories": {
+        "public": 1
+      },
+      "address_ttls_seconds": [
+        600
+      ],
+      "negative_ttls_seconds": [],
+      "classification": "noerror_addresses",
+      "response_sha256": "e6ed4d6203fb6ac56f652aadc5f2f61b7d7eaaaaaf93eced9007d51d2b453568",
+      "observed_at": "2026-11-15T12:55:21.036512+00:00"
+    },
+    {
+      "host": "m.mddtxt.net",
+      "baseline": "repeated_unspecified",
+      "provider": "tencent",
+      "query_type": "AAAA",
+      "started_at": "2026-11-15T12:55:20.455531+00:00",
+      "http_status": 200,
+      "dns_rcode": 0,
+      "dns_truncated": false,
+      "dnssec_authenticated": false,
+      "address_categories": {},
+      "address_ttls_seconds": [],
+      "negative_ttls_seconds": [
+        600
+      ],
+      "classification": "noerror_no_address",
+      "response_sha256": "52253ecfac10c6310c086c649f5ed769e2574c0d813efd8ea64f3d71fcb35b6f",
+      "observed_at": "2026-11-15T12:55:21.055594+00:00"
+    },
+    {
+      "host": "seshuwu.com",
+      "baseline": "repeated_unspecified",
+      "provider": "aliyun",
+      "query_type": "A",
+      "started_at": "2026-11-15T12:55:13.985672+00:00",
+      "http_status": 200,
+      "dns_rcode": 0,
+      "dns_truncated": false,
+      "dnssec_authenticated": false,
+      "address_categories": {
+        "public": 2
+      },
+      "address_ttls_seconds": [
+        108,
+        108
+      ],
+      "negative_ttls_seconds": [],
+      "classification": "noerror_addresses",
+      "response_sha256": "5fffe515fd9159852a6cdf6106f81bf09cdd5cac7254d91f2ffec7643df4ceb1",
+      "observed_at": "2026-11-15T12:55:14.469502+00:00"
+    },
+    {
+      "host": "seshuwu.com",
+      "baseline": "repeated_unspecified",
+      "provider": "aliyun",
+      "query_type": "AAAA",
+      "started_at": "2026-11-15T12:55:14.285957+00:00",
+      "http_status": 200,
+      "dns_rcode": 0,
+      "dns_truncated": false,
+      "dnssec_authenticated": false,
+      "address_categories": {},
+      "address_ttls_seconds": [],
+      "negative_ttls_seconds": [
+        600
+      ],
+      "classification": "noerror_no_address",
+      "response_sha256": "97d9cde41ddad03e2b91f6728e18e72c8e18922f24b8cab85a980ed03dd4787a",
+      "observed_at": "2026-11-15T12:55:14.836473+00:00"
+    },
+    {
+      "host": "seshuwu.com",
+      "baseline": "repeated_unspecified",
+      "provider": "tencent",
+      "query_type": "A",
+      "started_at": "2026-11-15T12:55:14.586359+00:00",
+      "http_status": 200,
+      "dns_rcode": 0,
+      "dns_truncated": false,
+      "dnssec_authenticated": false,
+      "address_categories": {
+        "public": 2
+      },
+      "address_ttls_seconds": [
+        600,
+        600
+      ],
+      "negative_ttls_seconds": [],
+      "classification": "noerror_addresses",
+      "response_sha256": "6daed8e94c659f93a5279c7103ad5b799df909873db98b7ff05f9f6242db4b27",
+      "observed_at": "2026-11-15T12:55:14.887657+00:00"
+    },
+    {
+      "host": "seshuwu.com",
+      "baseline": "repeated_unspecified",
+      "provider": "tencent",
+      "query_type": "AAAA",
+      "started_at": "2026-11-15T12:55:14.886543+00:00",
+      "http_status": 200,
+      "dns_rcode": 0,
+      "dns_truncated": false,
+      "dnssec_authenticated": false,
+      "address_categories": {},
+      "address_ttls_seconds": [],
+      "negative_ttls_seconds": [],
+      "classification": "noerror_no_address",
+      "response_sha256": "ebbb852e39a2f9ee3bf50f2483ea35178ef352ccd43702ba38b187b05a970134",
+      "observed_at": "2026-11-15T12:55:15.213399+00:00"
+    },
+    {
+      "host": "www.dbxs123.com",
+      "baseline": "repeated_unspecified",
+      "provider": "aliyun",
+      "query_type": "A",
+      "started_at": "2026-11-15T12:55:23.438705+00:00",
+      "http_status": 200,
+      "dns_rcode": 0,
+      "dns_truncated": false,
+      "dnssec_authenticated": false,
+      "address_categories": {
+        "unspecified": 1
+      },
+      "address_ttls_seconds": [
+        60
+      ],
+      "negative_ttls_seconds": [],
+      "classification": "noerror_addresses",
+      "response_sha256": "c25be6a52c5df80228a2c3d8160e81cb3e2bbc24d4bff38cf2c099b2c80191c2",
+      "observed_at": "2026-11-15T12:55:23.551150+00:00"
+    },
+    {
+      "host": "www.dbxs123.com",
+      "baseline": "repeated_unspecified",
+      "provider": "aliyun",
+      "query_type": "AAAA",
+      "started_at": "2026-11-15T12:55:23.739226+00:00",
+      "http_status": 200,
+      "dns_rcode": 0,
+      "dns_truncated": false,
+      "dnssec_authenticated": false,
+      "address_categories": {
+        "unspecified": 1
+      },
+      "address_ttls_seconds": [
+        60
+      ],
+      "negative_ttls_seconds": [],
+      "classification": "noerror_addresses",
+      "response_sha256": "5582f8966a7fd9e271810c74258d55a32d9f12ae1d005ffe531591e228c9444c",
+      "observed_at": "2026-11-15T12:55:23.857363+00:00"
+    },
+    {
+      "host": "www.dbxs123.com",
+      "baseline": "repeated_unspecified",
+      "provider": "tencent",
+      "query_type": "A",
+      "started_at": "2026-11-15T12:55:24.039714+00:00",
+      "http_status": 200,
+      "dns_rcode": 0,
+      "dns_truncated": false,
+      "dnssec_authenticated": false,
+      "address_categories": {
+        "public": 1
+      },
+      "address_ttls_seconds": [
+        300
+      ],
+      "negative_ttls_seconds": [],
+      "classification": "noerror_addresses",
+      "response_sha256": "f78f8fcbe0548925d32991381867b1db576eddcd3d3e6e02c9e0fba80bfdd75c",
+      "observed_at": "2026-11-15T12:55:25.488019+00:00"
+    },
+    {
+      "host": "www.dbxs123.com",
+      "baseline": "repeated_unspecified",
+      "provider": "tencent",
+      "query_type": "AAAA",
+      "started_at": "2026-11-15T12:55:24.339864+00:00",
+      "http_status": 200,
+      "dns_rcode": 0,
+      "dns_truncated": false,
+      "dnssec_authenticated": false,
+      "address_categories": {},
+      "address_ttls_seconds": [],
+      "negative_ttls_seconds": [],
+      "classification": "noerror_no_address",
+      "response_sha256": "ba75940df0c382ddfa3f31fce7632a24b34765c4d27d6e73687770b727b4d50e",
+      "observed_at": "2026-11-15T12:55:25.810321+00:00"
+    },
+    {
+      "host": "www.jile1.com",
+      "baseline": "repeated_unspecified",
+      "provider": "aliyun",
+      "query_type": "A",
+      "started_at": "2026-11-15T12:55:21.036536+00:00",
+      "http_status": 200,
+      "dns_rcode": 0,
+      "dns_truncated": false,
+      "dnssec_authenticated": false,
+      "address_categories": {
+        "unspecified": 1
+      },
+      "address_ttls_seconds": [
+        60
+      ],
+      "negative_ttls_seconds": [],
+      "classification": "noerror_addresses",
+      "response_sha256": "51424aa32bdbfc96424faa14bd7392d44790ff35376c674b5a9bf01683a2a583",
+      "observed_at": "2026-11-15T12:55:21.125854+00:00"
+    },
+    {
+      "host": "www.jile1.com",
+      "baseline": "repeated_unspecified",
+      "provider": "aliyun",
+      "query_type": "AAAA",
+      "started_at": "2026-11-15T12:55:21.336688+00:00",
+      "http_status": 200,
+      "dns_rcode": 0,
+      "dns_truncated": false,
+      "dnssec_authenticated": false,
+      "address_categories": {
+        "unspecified": 1
+      },
+      "address_ttls_seconds": [
+        60
+      ],
+      "negative_ttls_seconds": [],
+      "classification": "noerror_addresses",
+      "response_sha256": "70af58d56874c9ba0b951dcf20435989596e69797782f267352fee0bf0422434",
+      "observed_at": "2026-11-15T12:55:21.436847+00:00"
+    },
+    {
+      "host": "www.jile1.com",
+      "baseline": "repeated_unspecified",
+      "provider": "tencent",
+      "query_type": "A",
+      "started_at": "2026-11-15T12:55:21.636889+00:00",
+      "http_status": 200,
+      "dns_rcode": 0,
+      "dns_truncated": false,
+      "dnssec_authenticated": false,
+      "address_categories": {
+        "public": 1
+      },
+      "address_ttls_seconds": [
+        3600
+      ],
+      "negative_ttls_seconds": [],
+      "classification": "noerror_addresses",
+      "response_sha256": "d37abbb998739df9978a3b5e0392b144f2373192d2949f548b056a66f0f77b22",
+      "observed_at": "2026-11-15T12:55:21.966210+00:00"
+    },
+    {
+      "host": "www.jile1.com",
+      "baseline": "repeated_unspecified",
+      "provider": "tencent",
+      "query_type": "AAAA",
+      "started_at": "2026-11-15T12:55:21.937220+00:00",
+      "http_status": 200,
+      "dns_rcode": 0,
+      "dns_truncated": false,
+      "dnssec_authenticated": false,
+      "address_categories": {},
+      "address_ttls_seconds": [],
+      "negative_ttls_seconds": [],
+      "classification": "noerror_no_address",
+      "response_sha256": "d47af2d7005f21ef84cef4950b2ffcd2d01e7db6c860b1bee61a7cdd5aeb935d",
+      "observed_at": "2026-11-15T12:55:22.579452+00:00"
+    },
+    {
+      "host": "www.kk169.net",
+      "baseline": "repeated_unspecified",
+      "provider": "aliyun",
+      "query_type": "A",
+      "started_at": "2026-11-15T12:55:17.589034+00:00",
+      "http_status": 200,
+      "dns_rcode": 0,
+      "dns_truncated": false,
+      "dnssec_authenticated": false,
+      "address_categories": {
+        "public": 1
+      },
+      "address_ttls_seconds": [
+        3600
+      ],
+      "negative_ttls_seconds": [],
+      "classification": "noerror_addresses",
+      "response_sha256": "fed23ce372c906f8f4e6a8e1498c948e263cf19c0672d17f00d8a4f8e4ea3322",
+      "observed_at": "2026-11-15T12:55:17.700041+00:00"
+    },
+    {
+      "host": "www.kk169.net",
+      "baseline": "repeated_unspecified",
+      "provider": "aliyun",
+      "query_type": "AAAA",
+      "started_at": "2026-11-15T12:55:17.889298+00:00",
+      "http_status": 200,
+      "dns_rcode": 0,
+      "dns_truncated": false,
+      "dnssec_authenticated": false,
+      "address_categories": {},
+      "address_ttls_seconds": [],
+      "negative_ttls_seconds": [
+        600
+      ],
+      "classification": "noerror_no_address",
+      "response_sha256": "6fa3738eeeaf7dfef94983c6a6529d7a8f78ae5aec63106e3c21b0d256e7be38",
+      "observed_at": "2026-11-15T12:55:18.015310+00:00"
+    },
+    {
+      "host": "www.kk169.net",
+      "baseline": "repeated_unspecified",
+      "provider": "tencent",
+      "query_type": "A",
+      "started_at": "2026-11-15T12:55:18.189405+00:00",
+      "http_status": 200,
+      "dns_rcode": 0,
+      "dns_truncated": false,
+      "dnssec_authenticated": false,
+      "address_categories": {
+        "public": 1
+      },
+      "address_ttls_seconds": [
+        3600
+      ],
+      "negative_ttls_seconds": [],
+      "classification": "noerror_addresses",
+      "response_sha256": "858cf7291ca684632fa8fa8d20309cf3e786cd71021fcf7d2e881f09f36c54e3",
+      "observed_at": "2026-11-15T12:55:18.375818+00:00"
+    },
+    {
+      "host": "www.kk169.net",
+      "baseline": "repeated_unspecified",
+      "provider": "tencent",
+      "query_type": "AAAA",
+      "started_at": "2026-11-15T12:55:18.489851+00:00",
+      "http_status": 200,
+      "dns_rcode": 0,
+      "dns_truncated": false,
+      "dnssec_authenticated": false,
+      "address_categories": {},
+      "address_ttls_seconds": [],
+      "negative_ttls_seconds": [
+        600
+      ],
+      "classification": "noerror_no_address",
+      "response_sha256": "ad52ada62e8d4ab05347905049338a90e6f897b931fc3a19c0623dd33773cabd",
+      "observed_at": "2026-11-15T12:55:19.096742+00:00"
+    },
+    {
+      "host": "www.tianshuwx.com",
+      "baseline": "repeated_unspecified",
+      "provider": "aliyun",
+      "query_type": "A",
+      "started_at": "2026-11-15T12:55:11.350606+00:00",
+      "http_status": 200,
+      "dns_rcode": 0,
+      "dns_truncated": false,
+      "dnssec_authenticated": false,
+      "address_categories": {
+        "public": 1
+      },
+      "address_ttls_seconds": [
+        353
+      ],
+      "negative_ttls_seconds": [],
+      "classification": "noerror_addresses",
+      "response_sha256": "9f3d563b532f070b90f3d7102b7fbed1a8cd10d09e0ddbf791d3b5eb1e79cc8c",
+      "observed_at": "2026-11-15T12:55:11.443662+00:00"
+    },
+    {
+      "host": "www.tianshuwx.com",
+      "baseline": "repeated_unspecified",
+      "provider": "aliyun",
+      "query_type": "AAAA",
+      "started_at": "2026-11-15T12:55:11.650791+00:00",
+      "http_status": 200,
+      "dns_rcode": 0,
+      "dns_truncated": false,
+      "dnssec_authenticated": false,
+      "address_categories": {},
+      "address_ttls_seconds": [],
+      "negative_ttls_seconds": [
+        600
+      ],
+      "classification": "noerror_no_address",
+      "response_sha256": "be52325436209a75a71f2a1c26efad2dd94a13ff9ff2f29e3a317ef9aad64e02",
+      "observed_at": "2026-11-15T12:55:11.788261+00:00"
+    },
+    {
+      "host": "www.tianshuwx.com",
+      "baseline": "repeated_unspecified",
+      "provider": "tencent",
+      "query_type": "A",
+      "started_at": "2026-11-15T12:55:11.951307+00:00",
+      "http_status": 200,
+      "dns_rcode": 0,
+      "dns_truncated": false,
+      "dnssec_authenticated": false,
+      "address_categories": {
+        "public": 1
+      },
+      "address_ttls_seconds": [
+        3600
+      ],
+      "negative_ttls_seconds": [],
+      "classification": "noerror_addresses",
+      "response_sha256": "5841871097137bba313a1528e8dbdba7949e1638b651a9f5979463b239c2bff7",
+      "observed_at": "2026-11-15T12:55:12.188146+00:00"
+    },
+    {
+      "host": "www.tianshuwx.com",
+      "baseline": "repeated_unspecified",
+      "provider": "tencent",
+      "query_type": "AAAA",
+      "started_at": "2026-11-15T12:55:12.251831+00:00",
+      "http_status": 200,
+      "dns_rcode": 0,
+      "dns_truncated": false,
+      "dnssec_authenticated": false,
+      "address_categories": {},
+      "address_ttls_seconds": [],
+      "negative_ttls_seconds": [
+        600
+      ],
+      "classification": "noerror_no_address",
+      "response_sha256": "a4e758bc6d896da305608d85b1f517e5e6daba7c3cfc76243a1379ad1a8009b8",
+      "observed_at": "2026-11-15T12:55:12.955338+00:00"
+    },
+    {
+      "host": "www.ttwcm.net",
+      "baseline": "repeated_unspecified",
+      "provider": "aliyun",
+      "query_type": "A",
+      "started_at": "2026-11-15T12:55:12.552210+00:00",
+      "http_status": 200,
+      "dns_rcode": 0,
+      "dns_truncated": false,
+      "dnssec_authenticated": false,
+      "address_categories": {
+        "public": 3
+      },
+      "address_ttls_seconds": [
+        353,
+        353,
+        353
+      ],
+      "negative_ttls_seconds": [],
+      "classification": "noerror_addresses",
+      "response_sha256": "72592ee21a4e652ace31b1a229392838d50575263c63df1a1a7299486844d468",
+      "observed_at": "2026-11-15T12:55:12.955216+00:00"
+    },
+    {
+      "host": "www.ttwcm.net",
+      "baseline": "repeated_unspecified",
+      "provider": "aliyun",
+      "query_type": "AAAA",
+      "started_at": "2026-11-15T12:55:12.955242+00:00",
+      "http_status": 200,
+      "dns_rcode": 0,
+      "dns_truncated": false,
+      "dnssec_authenticated": false,
+      "address_categories": {},
+      "address_ttls_seconds": [],
+      "negative_ttls_seconds": [
+        600
+      ],
+      "classification": "noerror_no_address",
+      "response_sha256": "1517368e1bc57a63dd7a6a7a2862350e699b5534902902e394cc964ea79bbd64",
+      "observed_at": "2026-11-15T12:55:13.075509+00:00"
+    },
+    {
+      "host": "www.ttwcm.net",
+      "baseline": "repeated_unspecified",
+      "provider": "tencent",
+      "query_type": "A",
+      "started_at": "2026-11-15T12:55:13.255570+00:00",
+      "http_status": 200,
+      "dns_rcode": 0,
+      "dns_truncated": false,
+      "dnssec_authenticated": false,
+      "address_categories": {
+        "public": 3
+      },
+      "address_ttls_seconds": [
+        600,
+        600,
+        600
+      ],
+      "negative_ttls_seconds": [],
+      "classification": "noerror_addresses",
+      "response_sha256": "014f58da7f6417bf6fe142536ed56740cf83c14d3c60a53d9f9d9ae05e9c0f41",
+      "observed_at": "2026-11-15T12:55:13.992140+00:00"
+    },
+    {
+      "host": "www.ttwcm.net",
+      "baseline": "repeated_unspecified",
+      "provider": "tencent",
+      "query_type": "AAAA",
+      "started_at": "2026-11-15T12:55:13.555854+00:00",
+      "http_status": 200,
+      "dns_rcode": 0,
+      "dns_truncated": false,
+      "dnssec_authenticated": false,
+      "address_categories": {},
+      "address_ttls_seconds": [],
+      "negative_ttls_seconds": [],
+      "classification": "noerror_no_address",
+      "response_sha256": "7d08e20fc439fba2360b7e2deb1b98a5a2cfe02cf3819a6a4b35c5315f1d2fd8",
+      "observed_at": "2026-11-15T12:55:13.985647+00:00"
+    },
+    {
+      "host": "www.xinshuge.net",
+      "baseline": "repeated_unspecified",
+      "provider": "aliyun",
+      "query_type": "A",
+      "started_at": "2026-11-15T12:55:22.237423+00:00",
+      "http_status": 200,
+      "dns_rcode": 0,
+      "dns_truncated": false,
+      "dnssec_authenticated": false,
+      "address_categories": {
+        "public": 1
+      },
+      "address_ttls_seconds": [
+        600
+      ],
+      "negative_ttls_seconds": [],
+      "classification": "noerror_addresses",
+      "response_sha256": "011af24ec794d99eb7eca53688ee973c424ab865f0dfec903c1549ca3ed09b45",
+      "observed_at": "2026-11-15T12:55:22.350664+00:00"
+    },
+    {
+      "host": "www.xinshuge.net",
+      "baseline": "repeated_unspecified",
+      "provider": "aliyun",
+      "query_type": "AAAA",
+      "started_at": "2026-11-15T12:55:22.537835+00:00",
+      "http_status": 200,
+      "dns_rcode": 0,
+      "dns_truncated": false,
+      "dnssec_authenticated": false,
+      "address_categories": {},
+      "address_ttls_seconds": [],
+      "negative_ttls_seconds": [
+        600
+      ],
+      "classification": "noerror_no_address",
+      "response_sha256": "3a9301a4bea4502a24436efc3b2ad259c9e000d1efa19c6a167ac282881a9695",
+      "observed_at": "2026-11-15T12:55:22.702098+00:00"
+    },
+    {
+      "host": "www.xinshuge.net",
+      "baseline": "repeated_unspecified",
+      "provider": "tencent",
+      "query_type": "A",
+      "started_at": "2026-11-15T12:55:22.838156+00:00",
+      "http_status": 200,
+      "dns_rcode": 0,
+      "dns_truncated": false,
+      "dnssec_authenticated": false,
+      "address_categories": {
+        "public": 1
+      },
+      "address_ttls_seconds": [
+        600
+      ],
+      "negative_ttls_seconds": [],
+      "classification": "noerror_addresses",
+      "response_sha256": "e4050ace0bc92471be44f2914c2051d6e119f2e5ed9adf809af728a6d9ec7c17",
+      "observed_at": "2026-11-15T12:55:23.081039+00:00"
+    },
+    {
+      "host": "www.xinshuge.net",
+      "baseline": "repeated_unspecified",
+      "provider": "tencent",
+      "query_type": "AAAA",
+      "started_at": "2026-11-15T12:55:23.138554+00:00",
+      "http_status": 200,
+      "dns_rcode": 0,
+      "dns_truncated": false,
+      "dnssec_authenticated": false,
+      "address_categories": {},
+      "address_ttls_seconds": [],
+      "negative_ttls_seconds": [
+        600
+      ],
+      "classification": "noerror_no_address",
+      "response_sha256": "9263a6e9cfaa8564a0418927500ae08e6290fe0f63664b217e7a2e3e19567420",
+      "observed_at": "2026-11-15T12:55:23.411362+00:00"
+    },
+    {
+      "host": "www.zwduxs.com",
+      "baseline": "repeated_unspecified",
+      "provider": "aliyun",
+      "query_type": "A",
+      "started_at": "2026-11-15T12:55:15.186736+00:00",
+      "http_status": 200,
+      "dns_rcode": 0,
+      "dns_truncated": false,
+      "dnssec_authenticated": false,
+      "address_categories": {
+        "public": 1
+      },
+      "address_ttls_seconds": [
+        3243
+      ],
+      "negative_ttls_seconds": [],
+      "classification": "noerror_addresses",
+      "response_sha256": "1109d98cbe72f2288b67fbe1cff6858ceebb02329ed7ce4659705cf08ef98617",
+      "observed_at": "2026-11-15T12:55:15.286044+00:00"
+    },
+    {
+      "host": "www.zwduxs.com",
+      "baseline": "repeated_unspecified",
+      "provider": "aliyun",
+      "query_type": "AAAA",
+      "started_at": "2026-11-15T12:55:15.486890+00:00",
+      "http_status": 200,
+      "dns_rcode": 0,
+      "dns_truncated": false,
+      "dnssec_authenticated": false,
+      "address_categories": {},
+      "address_ttls_seconds": [],
+      "negative_ttls_seconds": [
+        600
+      ],
+      "classification": "noerror_no_address",
+      "response_sha256": "177114819b3dc770d9fc97ee8faeecf1cce147f53bbd43580277ef52e040d808",
+      "observed_at": "2026-11-15T12:55:15.606571+00:00"
+    },
+    {
+      "host": "www.zwduxs.com",
+      "baseline": "repeated_unspecified",
+      "provider": "tencent",
+      "query_type": "A",
+      "started_at": "2026-11-15T12:55:15.787119+00:00",
+      "http_status": 200,
+      "dns_rcode": 0,
+      "dns_truncated": false,
+      "dnssec_authenticated": false,
+      "address_categories": {
+        "public": 1
+      },
+      "address_ttls_seconds": [
+        3600
+      ],
+      "negative_ttls_seconds": [],
+      "classification": "noerror_addresses",
+      "response_sha256": "84c0599ea20551b718b41d8a7cbd7a659e1a98872365d37c8ba4756a0e484dd7",
+      "observed_at": "2026-11-15T12:55:15.994748+00:00"
+    },
+    {
+      "host": "www.zwduxs.com",
+      "baseline": "repeated_unspecified",
+      "provider": "tencent",
+      "query_type": "AAAA",
+      "started_at": "2026-11-15T12:55:16.087491+00:00",
+      "http_status": 200,
+      "dns_rcode": 0,
+      "dns_truncated": false,
+      "dnssec_authenticated": false,
+      "address_categories": {},
+      "address_ttls_seconds": [],
+      "negative_ttls_seconds": [
+        600
+      ],
+      "classification": "noerror_no_address",
+      "response_sha256": "2c698396deaa651ca3a62ce0dd8f5e618c1c841ef2953b9c559069fa8d69cf50",
+      "observed_at": "2026-11-15T12:55:16.410674+00:00"
+    }
+  ],
+  "completed_at": "2026-11-15T12:55:25.810544+00:00",
+  "summary": {
+    "repeated_nxdomain": {
+      "nxdomain": 37,
+      "servfail": 2,
+      "provider_timeout": 1
+    },
+    "repeated_unspecified": {
+      "noerror_addresses": 22,
+      "noerror_no_address": 18
+    }
+  }
+}

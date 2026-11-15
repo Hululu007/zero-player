@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_widget_from_html_core/flutter_widget_from_html_core.dart';
 import 'package:pdfrx/pdfrx.dart';
+import '../../../core/network/cancellation_token.dart';
 import '../../../core/platform/platform_services.dart';
 import '../data/local_book.dart';
 import '../data/books_repository.dart';
@@ -194,10 +195,17 @@ class _RichReaderState extends State<RichReaderPage>
     List<RichSection>? sections,
   ) async {
     final repository = widget.repository;
+    // EPUB/PDF documents are local imports; remote content uses the guarded
+    // online reader and must not be paired with an unrelated local file.
+    if (widget.book.sourceId != 'local') return false;
     if (!repository.bookAllowed(widget.book)) return false;
     for (final (index, chapter) in chapters.indexed) {
       if (!mounted || _error != null) return false;
-      final cached = await repository.store.text(widget.book, chapter);
+      final cached = (await repository.offlineText(
+        widget.book,
+        chapter,
+        CancellationToken(),
+      )).body;
       if (cached == null ||
           !repository.policy.textAllowed(chapter.title) ||
           !repository.policy.textAllowed(cached)) {

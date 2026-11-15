@@ -8,6 +8,7 @@ import 'package:crypto/crypto.dart';
 import 'package:path/path.dart' as p;
 
 import '../../core/network/file_response.dart';
+import '../../core/network/cancellation_token.dart';
 import '../cache/segment_store.dart';
 
 final class OfflineSession {
@@ -24,6 +25,7 @@ final class OfflineServer {
   Future<void>? _closing;
   int _generation = 0;
   final _sessions = <String, Map<String, File>>{};
+  final _revocations = <String, CancellationToken>{};
   final _tasks = <String, String>{};
   final _localFiles = <String, String>{};
   Iterable<String> get activeLocalFiles => _localFiles.values.toList();
@@ -126,10 +128,13 @@ final class OfflineServer {
       List.generate(24, (_) => random.nextInt(256)),
     );
     _sessions[token] = files;
+    final cancellation = _revocations[token] = CancellationToken();
     _tasks[token] = taskId;
     return OfflineSession(
       Uri.parse('http://127.0.0.1:${_server!.port}/$token/$entry'),
       () {
+        cancellation.cancel();
+        _revocations.remove(token);
         _sessions.remove(token);
         _tasks.remove(token);
       },
@@ -158,11 +163,14 @@ final class OfflineServer {
     );
     final name = 'video${p.extension(file.path).toLowerCase()}';
     _sessions[token] = {name: file};
+    final cancellation = _revocations[token] = CancellationToken();
     _localFiles[token] = file.path;
     _tasks[token] = 'local:$token';
     return OfflineSession(
       Uri.parse('http://127.0.0.1:${_server!.port}/$token/$name'),
       () {
+        cancellation.cancel();
+        _revocations.remove(token);
         _sessions.remove(token);
         _tasks.remove(token);
         _localFiles.remove(token);
@@ -194,11 +202,15 @@ final class OfflineServer {
       final File? file = parts.length == 2
           ? (_sessions[parts[0]]?[parts[1]])
           : null;
+      final cancellation = parts.length == 2 ? _revocations[parts[0]] : null;
       if (!{'GET', 'HEAD'}.contains(request.method)) {
         request.response.statusCode = 405;
         return;
       }
-      if (file == null || !isNativeLoopbackRequest(request, _server!.port)) {
+      if (file == null ||
+          cancellation == null ||
+          cancellation.isCancelled ||
+          !isNativeLoopbackRequest(request, _server!.port)) {
         request.response.statusCode = 404;
         return;
       }
@@ -207,7 +219,12 @@ final class OfflineServer {
           : parts.last.endsWith('.mp4') || parts.last.endsWith('.m4s')
           ? 'video/mp4'
           : 'application/octet-stream';
-      await serveLocalFile(request, file, contentType: type);
+      await serveLocalFile(
+        request,
+        file,
+        contentType: type,
+        cancellation: cancellation,
+      );
     } catch (_) {
       try {
         request.response.statusCode = 500;
@@ -224,6 +241,10 @@ final class OfflineServer {
 
   Future<void> _close() async {
     _generation++;
+    for (final cancellation in _revocations.values) {
+      cancellation.cancel();
+    }
+    _revocations.clear();
     _sessions.clear();
     _tasks.clear();
     _localFiles.clear();

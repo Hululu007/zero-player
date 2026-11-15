@@ -15,6 +15,69 @@ import 'package:zero_player/features/books/presentation/book_sources_page.dart';
 void main() {
   _quarantineReviewPageTests();
   _sourceListPolicyRaceTests();
+  _ruleCluePageTests();
+}
+
+void _ruleCluePageTests() {
+  testWidgets(
+    'dynamic rule clues can be filtered without hiding other sources',
+    (tester) async {
+      tester.view.physicalSize = const Size(390, 844);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+      late Directory root;
+      late AppServices services;
+      final ordinary = _source('普通规则源', 'ordinary.example');
+      final historical = _source('历史规则源', 'm.nshkedu.com');
+      final dynamicSource = BookSource.fromJson({
+        ..._source('动态规则源', 'dynamic.example').toJson(),
+        'legado': {
+          'rules': {'content': '@js: eval(result)'},
+        },
+      });
+      await tester.runAsync(() async {
+        root = await Directory.systemTemp.createTemp('book-rule-clue-ui-');
+        services = AppServices.scoped(root, AppDatabase.memory());
+        await services.supervision.load();
+        await services.settings.load();
+        await _skipCatalogSeed(services);
+        await services.books.importSources([
+          ordinary,
+          dynamicSource,
+          historical,
+        ]);
+      });
+      addTearDown(() => _close(tester, services, root));
+      await tester.pumpWidget(
+        MaterialApp(
+          home: BookSourcesPage(services: services, kind: BookKind.text),
+        ),
+      );
+      await tester.enterText(find.byType(TextField).first, '规则源');
+      await _waitFor(tester, () => find.text('动态规则源').evaluate().isNotEmpty);
+      expect(find.textContaining('规则含动态求值，待复核'), findsOneWidget);
+      expect(find.text('普通规则源'), findsOneWidget);
+      await tester.tap(find.text('动态求值'));
+      await tester.pump();
+      expect(find.text('动态规则源'), findsOneWidget);
+      expect(find.text('普通规则源'), findsNothing);
+      await tester.tap(find.text('动态求值'));
+      await tester.pump();
+      expect(find.text('普通规则源'), findsOneWidget);
+      expect(find.textContaining('2026-11-15 首页防护检出，待复核'), findsOneWidget);
+      await tester.tap(find.text('历史检出'));
+      await tester.pump();
+      expect(find.text('历史规则源'), findsOneWidget);
+      expect(find.text('普通规则源'), findsNothing);
+      await tester.tap(find.text('历史检出'));
+      await tester.pump();
+      expect(find.text('普通规则源'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    },
+  );
 }
 
 void _quarantineReviewPageTests() {

@@ -26,7 +26,7 @@ class VideoDirectoryBridge(private val activity: Activity) {
             activity.startActivityForResult(Intent(Intent.ACTION_OPEN_DOCUMENT_TREE).apply {
                 addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION or
                     Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION or Intent.FLAG_GRANT_PREFIX_URI_PERMISSION)
-            }, 7202)
+            }, ActivityRequestCodes.VIDEO_DIRECTORY)
         } catch (_: Exception) {
             pending = null
             result.error("directory_failed", "无法打开目录选择器", null)
@@ -34,7 +34,7 @@ class VideoDirectoryBridge(private val activity: Activity) {
     }
 
     fun onResult(code: Int, resultCode: Int, data: Intent?): Boolean {
-        if (code != 7202) return false
+        if (code != ActivityRequestCodes.VIDEO_DIRECTORY) return false
         val result = pending ?: return true
         pending = null
         val uri = data?.data
