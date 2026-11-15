@@ -103,11 +103,10 @@ final class BookSiteMonitor {
             final check = saved[entry.source.id];
             return check == null || check.isDue(now);
           }).toList()..sort(
-            (a, b) =>
-                (saved[a.source.id]?.checkedAt.millisecondsSinceEpoch ?? 0)
-                    .compareTo(
-                      saved[b.source.id]?.checkedAt.millisecondsSinceEpoch ?? 0,
-                    ),
+            (a, b) => (saved[a.source.id]?.nextDue.millisecondsSinceEpoch ?? 0)
+                .compareTo(
+                  saved[b.source.id]?.nextDue.millisecondsSinceEpoch ?? 0,
+                ),
           );
       await checks.run(due.take(20).toList(), token, enabledOnly: true);
     } finally {

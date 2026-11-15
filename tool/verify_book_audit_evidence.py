@@ -1,8 +1,9 @@
 """Check stored book-audit evidence links without a network request.
 
 This checks internal byte-level consistency, not the authenticity of the
-evidence or the safety of any source. Historical tool hashes are not compared
-to today's tools; the current ledger's recorded source snapshot is checked.
+evidence or the safety of any source. The current ledger source snapshot and
+explicitly retained collector digests are checked; unsaved historical tools
+and raw network responses cannot be reconstructed.
 """
 
 import hashlib
@@ -258,6 +259,129 @@ class EvidenceVerifier:
         path = 'docs/implementation/' + filename('legado-source-ledger')
         self.git_snapshot(reference['commit'], reference['path'], reference['sha256'], path)
 
+    def verify_later_sources(self, archive):
+        ledger_path = 'docs/implementation/' + filename('legado-source-ledger')
+        later = json.loads(self.read(self.docs / 'legado-unresolved-head-later-20261116.json'))
+        allowed_inputs = {
+            'docs/implementation/' + filename(name) for name in (
+                'legado-host-audit', 'legado-host-recheck', 'legado-import-inventory', *STAGES,
+            )
+        } | {
+            'assets/catalogs/books/legado/catalog.json.bz2',
+            'assets/catalogs/books/legado/manifest.json',
+        }
+        if set(later['input_sha256']) != allowed_inputs:
+            raise ValueError('unexpected later HEAD evidence inputs')
+        for path, digest in later['input_sha256'].items():
+            self.check_digest(self.root / path, digest)
+        self.check_digest(archive, later['archive_sha256'])
+
+        amsi = json.loads(self.read(self.docs / 'legado-recovered-amsi-20261116.json'))
+        self.check_digest(archive, amsi['archive_sha256'])
+        self.check_digest(self.docs / filename('legado-import-inventory'), amsi['import_inventory_sha256'])
+        rows = [{'host': row['host'], 'record_indices': row['record_indices']}
+                for row in later['results'] if row['latest_head'].get('http_status') == 200]
+        if len(rows) != 40:
+            raise ValueError('unexpected later AMSI candidate count')
+        baseline = {'archive_sha256': later['archive_sha256'],
+                    'source_recheck_sha256': later['local_collector_sha256']['recheck'],
+                    'results': rows}
+        wire = json.dumps(baseline, ensure_ascii=False, separators=(',', ':')).encode() + b'\r\n'
+        if hashlib.sha256(wire).hexdigest() != amsi['prior_audit_sha256']:
+            raise ValueError('later AMSI candidate baseline mismatch')
+        self.checked += 1
+
+        top = json.loads(self.read(self.docs / 'legado-rdap-top-cc-20261116.json'))
+        refs = top['input_references']
+        expected = {
+            'catalog_archive': 'assets/catalogs/books/legado/catalog.json.bz2',
+            'catalog_manifest': 'assets/catalogs/books/legado/manifest.json',
+            'host_recheck': 'docs/implementation/' + filename('legado-host-recheck'),
+            'doh_reviewed': 'docs/implementation/' + filename('legado-doh-reviewed'),
+        }
+        if set(refs) != set(expected) | {'source_ledger_historical_git'}:
+            raise ValueError('unexpected top/cc evidence inputs')
+        for key, path in expected.items():
+            if refs[key]['path'] != path:
+                raise ValueError('unexpected top/cc evidence path')
+            self.check_digest(self.root / path, refs[key]['sha256'])
+        ref = refs['source_ledger_historical_git']
+        self.git_snapshot(ref['commit'], ref['path'], ref['sha256'], ledger_path)
+        collector = top['collection_script']
+        if collector['path'] != 'tool/collect_legado_rdap_top_cc.py':
+            raise ValueError('unexpected top/cc collector')
+        self.check_digest(self.root / collector['path'], collector['sha256'], normalize_lf=True)
+
+        three = json.loads(self.read(self.docs / 'legado-three-redirect-recheck-20261116.json'))
+        refs = three['input_references']
+        expected = {
+            'catalog_archive': 'assets/catalogs/books/legado/catalog.json.bz2',
+            'catalog_manifest': 'assets/catalogs/books/legado/manifest.json',
+            'previous_head': 'docs/implementation/legado-unresolved-head-later-20261116.json',
+        }
+        if set(refs) != set(expected) | {'source_ledger_historical_git'}:
+            raise ValueError('unexpected three-source redirect inputs')
+        for key, path in expected.items():
+            if refs[key]['path'] != path:
+                raise ValueError('unexpected three-source redirect path')
+            self.check_digest(self.root / path, refs[key]['sha256'])
+        ref = refs['source_ledger_historical_git']
+        self.git_snapshot(ref['commit'], ref['path'], ref['sha256'], ledger_path)
+
+        redirect = json.loads(self.read(self.docs / 'legado-redirected-sources-20261116.json'))
+        self.check_digest(archive, redirect['archive_sha256'])
+        ref = redirect['historical_ledger']
+        self.git_snapshot(ref['commit'], ref['path'], ref['sha256'], ledger_path)
+        self.check_digest(self.root / 'tool/recheck_redirected_book_sources.py',
+                          redirect['collector_source_sha256'], normalize_lf=True)
+        self.check_digest(self.root / 'tool/audit_legado_catalog.py',
+                          redirect['transport_source_sha256'], normalize_lf=True)
+
+        myxzm = json.loads(self.read(self.docs / 'legado-myxzm-recheck-20261116.json'))
+        refs = myxzm['input_references']
+        if set(refs) != {'catalog_archive', 'catalog_manifest', 'source_ledger_historical_git'}:
+            raise ValueError('unexpected novel-source evidence inputs')
+        for key, path in (('catalog_archive', 'assets/catalogs/books/legado/catalog.json.bz2'),
+                          ('catalog_manifest', 'assets/catalogs/books/legado/manifest.json')):
+            if refs[key]['path'] != path:
+                raise ValueError('unexpected novel-source evidence path')
+            self.check_digest(self.root / path, refs[key]['sha256'])
+        ref = refs['source_ledger_historical_git']
+        self.git_snapshot(ref['commit'], ref['path'], ref['sha256'], ledger_path)
+
+        woo = json.loads(self.read(self.docs / 'legado-woo15-home-review-20261116.json'))
+        self.check_digest(archive, woo['catalog_archive_sha256'])
+        self.git_snapshot('a6c7d9986a64a2c7328c5f74c06415a116ef27a9', ledger_path,
+                          woo['historical_ledger_sha256'], ledger_path)
+
+        mixed = json.loads(self.read(self.docs / 'legado-adult-mixed-home-recheck-20261116.json'))
+        refs = mixed['input_references']
+        if set(refs) != {'catalog_archive', 'catalog_manifest', 'source_ledger_historical_git'}:
+            raise ValueError('unexpected mixed-source evidence inputs')
+        for key, path in (('catalog_archive', 'assets/catalogs/books/legado/catalog.json.bz2'),
+                          ('catalog_manifest', 'assets/catalogs/books/legado/manifest.json')):
+            if refs[key]['path'] != path:
+                raise ValueError('unexpected mixed-source evidence path')
+            self.check_digest(self.root / path, refs[key]['sha256'])
+        ref = refs['source_ledger_historical_git']
+        history = json.loads(self.git_snapshot(ref['commit'], ref['path'], ref['sha256'], ledger_path))
+        snapshot = mixed['source_code_snapshot']
+        if (snapshot['commit'] != ref['commit'] or
+                snapshot['normalized_sha256'] != history['normalized_source_code_sha256']):
+            raise ValueError('mixed-source historical code snapshot mismatch')
+
+        novel_242 = json.loads(self.read(self.docs / 'legado-242xs-recheck-20261116.json'))
+        refs = novel_242['input_references']
+        if set(refs) != {'catalog_archive', 'catalog_manifest', 'source_ledger_historical_git'}:
+            raise ValueError('unexpected 242 source evidence inputs')
+        for key, path in (('catalog_archive', 'assets/catalogs/books/legado/catalog.json.bz2'),
+                          ('catalog_manifest', 'assets/catalogs/books/legado/manifest.json')):
+            if refs[key]['path'] != path:
+                raise ValueError('unexpected 242 source evidence path')
+            self.check_digest(self.root / path, refs[key]['sha256'])
+        ref = refs['source_ledger_historical_git']
+        self.git_snapshot(ref['commit'], ref['path'], ref['sha256'], ledger_path)
+
     def verify(self):
         for source, key, target in DIRECT_LINKS:
             self.check_digest(self.docs / filename(target), self.report(source)[key])
@@ -310,6 +434,7 @@ class EvidenceVerifier:
         self.check_digest(self.root / pilot_path, recheck_560['initial_pilot_evidence_sha256'])
         self.check_digest(archive, recheck_560['catalog_archive_sha256'])
         self.verify_recent_evidence(archive)
+        self.verify_later_sources(archive)
         self.verify_ledger()
         return self.checked
 

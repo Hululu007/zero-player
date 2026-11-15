@@ -1,0 +1,165 @@
+{
+  "schema_version": 1,
+  "scope": "Offline-verifiable snapshot of the selected bundled source and a deliberately redacted, time-bound reading investigation; no original webpages, extracted body, work or chapter identity is included.",
+  "input_references": {
+    "catalog_archive": {
+      "path": "assets/catalogs/books/legado/catalog.json.bz2",
+      "sha256": "012a0e0d6e6adc8d303c32b578510e14b562088b3e965cb01a1a647b5e7e034d"
+    },
+    "catalog_manifest": {
+      "path": "assets/catalogs/books/legado/manifest.json",
+      "sha256": "59bb9e3551b5a01406c1d720d2b5d5d5f21518eccbb52cd93f8d752c19f7cf66"
+    },
+    "source_ledger_historical_git": {
+      "commit": "df798cc773dd09722214cdced6eded5a2d2431ea",
+      "path": "docs/implementation/legado-source-ledger-20261115.json",
+      "sha256": "7e53cfcd42523e3dd173708ffc0ce99ec42b9de4fbeae63969765690d2068070"
+    }
+  },
+  "selection_snapshot": {
+    "source_id": "483d7c92f8871bb1e84d45883d9a6ea0705afe1265615146ece1b2c9fbef90ad",
+    "selected_record_index": 751,
+    "kind": "text",
+    "format": "html",
+    "endpoint_host": "m.myxzm.com",
+    "endpoint_sha256": "b01a233d6cdbd310ffee8a8f6da1a594d3c7bc756fff629530327c1f92e67e90",
+    "selected_raw_record_canonical_sha256": "de253991cccd80e1086477f2ba4b98198baaba15d38ae221510f234c5af9fa95",
+    "normalized_legado_sha256": "9caa213ccc167eb20ca20d95731af27dd6b260494932d7727dc0505747e46d92"
+  },
+  "recorded_observations": {
+    "schema_version": 1,
+    "scope": "Two anonymous samples from the currently selected bundled text source. Work titles, authors, paths, chapter identifiers, page bodies and body digests are deliberately omitted.",
+    "source": {
+      "source_id": "483d7c92f8871bb1e84d45883d9a6ea0705afe1265615146ece1b2c9fbef90ad",
+      "selected_record_index": 751,
+      "host": "m.myxzm.com",
+      "old_search_rule_sha256": "5b94eb307b1c1daa58f4e7fad72d030991dfc833f6676a2a0c06bcd50da20f52",
+      "old_search_list_sha256": "59f3362b7d20c3ea20af7896d647669d7ade264e71f0c0251f3d10e8d9ec632b",
+      "old_content_rule_sha256": "d48c8db1549d45364ef71ecffa2d46d2ce36efe924b9fe697075ccc9b6114db3"
+    },
+    "method": {
+      "network": "Anonymous same-host HTTPS GET; public DNS validated and pinned to a public IP, verified TLS, no redirect following, no credentials or subresources, 10-second overall deadline and 256 KiB sample limit.",
+      "parser": "Standalone Dart actual LegadoOperation.books, details, toc and content with QuickJS-unavailable stub; selected rule fields were checked for script markers. No webpage or remote scripts were executed.",
+      "privacy": "Bodies were held in memory and passed to Dart via stdin. No page body, work title, author, work/chapter path, chapter name or body digest is retained in this summary. The collector was redacted and disabled after the trial."
+    },
+    "evidence": {
+      "discovery": {
+        "observed_at_utc": "2026-11-15T20:45:19.485113+00:00",
+        "status": 200,
+        "bytes": 25553,
+        "truncated": false,
+        "old_rule_engine_books": 20,
+        "static_search_form": {
+          "method": "GET",
+          "path": "/search/",
+          "named_inputs": [
+            "q"
+          ],
+          "event_handler": false
+        }
+      },
+      "search": {
+        "observed_at_utc": "2026-11-15T20:45:26.162631+00:00",
+        "status": 200,
+        "bytes": 20231,
+        "truncated": false,
+        "returned_service_type": "comic",
+        "old_novel_search_rule_engine_books": 0,
+        "novel_search_endpoint_verified": false
+      },
+      "sample_a": {
+        "detail_observed_at_utc": "2026-11-15T20:45:32.910215+00:00",
+        "detail_status": 200,
+        "detail_bytes": 23281,
+        "old_toc_engine_chapters": 2,
+        "content_observed_at_utc": "2026-11-15T20:45:38.988543+00:00",
+        "content_status": 200,
+        "content_bytes": 7924,
+        "old_content_characters": 0,
+        "two_class_candidate": "class.mrx-cot gtfvws@html",
+        "candidate_nodes": 1,
+        "candidate_characters": 1892,
+        "candidate_cjk_characters": 1466,
+        "container_paragraphs": 74,
+        "container_scripts": 0,
+        "container_iframes": 0,
+        "container_links": 0,
+        "container_images": 0,
+        "known_ad_markers_found": [],
+        "known_pay_markers_found": []
+      },
+      "sample_b": {
+        "detail_observed_at_utc": "2026-11-15T20:45:45.630446+00:00",
+        "detail_status": 200,
+        "detail_bytes": 22116,
+        "detail_engine_books": 1,
+        "old_toc_engine_chapters": 10,
+        "content_observed_at_utc": "2026-11-15T20:45:52.193509+00:00",
+        "content_status": 200,
+        "content_bytes": 14789,
+        "old_content_characters": 0,
+        "two_class_candidate_nodes": 0,
+        "two_class_candidate_characters": 0,
+        "subsequent_static_structure_observed_at_utc": "2026-11-15T20:46:53.200486+00:00",
+        "subsequent_status": 200,
+        "subsequent_same_sample_length": 14789,
+        "substantial_container_class": "mrx-cot ahpuzh",
+        "substantial_container_text_characters": 3915,
+        "substantial_container_paragraphs": 141
+      },
+      "single_class_candidate": {
+        "rule": "class.mrx-cot@html",
+        "actual_engine_tested_on_fetched_samples": false,
+        "sample_a_refetch": {
+          "started_at_utc": "2026-11-15T20:47:53.269781+00:00",
+          "observed_at_utc": "2026-11-15T20:48:03.276630+00:00",
+          "failure": "overall_timeout",
+          "status": null
+        },
+        "sample_b_refetch": {
+          "started_at_utc": "2026-11-15T20:48:03.276732+00:00",
+          "observed_at_utc": "2026-11-15T20:48:13.277257+00:00",
+          "failure": "overall_timeout",
+          "status": null
+        }
+      },
+      "synthetic_advertisement_control": {
+        "old_content_characters": 0,
+        "candidate_nodes": 1,
+        "candidate_kept_advertisement_text": true,
+        "synthetic_script_tags": 1,
+        "synthetic_script_executed": false
+      }
+    },
+    "tools": {
+      "observed_engine_path": "build/legado_myxzm_recheck/engine_observed.dart",
+      "observed_engine_sha256": "5a2f4a67dbbe5bb41d2ae8545621f115854ec1c91b1cba8e3bc7a61a5e54d17f",
+      "experimental_engine_path": "build/legado_myxzm_recheck/engine.dart",
+      "experimental_engine_sha256": "2b809e85818f5c5e4fb81d30a00ac4e875880d182ce60b6b5a12944e655525c1",
+      "redacted_disabled_collector_path": "build/legado_myxzm_recheck/probe.py",
+      "redacted_disabled_collector_sha256": "4da31128baa563a8d6873b4077ed7ca8f0af8249b1cc8ad28d3f26d99453628c"
+    },
+    "limitations": [
+      "No complete novel search-to-reading chain was verified; a search form yielding comic results does not prove the entire novel source is unavailable.",
+      "The two-class candidate succeeded for one fetched chapter and failed for the other; the single-class candidate was not tested on either fetched page.",
+      "Text length, CJK count and absence of a short list of advertisement or paywall markers do not establish the text's meaning, completeness, licence status or absence of advertising.",
+      "The separately observed substantial container is static DOM evidence only. It was not demonstrated to be readable prose or parsed by the candidate rule.",
+      "No original pages or work information are retained; historical network responses and chapter-level parsing cannot be reconstructed from this redacted record.",
+      "Static policy preflight does not inspect user settings, dynamic blacklists, saved risk records or user libraries. No Flutter UI or device verification was run."
+    ]
+  },
+  "provenance": {
+    "redacted_local_summary_sha256": "81154ea9eeb16cbf408865b4058c2a0762bc2c39436401a19eaa2b0e9296f78d",
+    "redacted_observations_canonical_sha256": "d381de0a9086ff79bd1b2102be4841cddbe3bc7f30fdadfc220737b3cf83888c",
+    "original_collector_in_repository": false,
+    "temporary_engine_scripts_in_repository": false,
+    "raw_webpages_in_this_evidence": false,
+    "work_or_chapter_identities_in_this_evidence": false
+  },
+  "limitations": [
+    "The redacted observation record preserves time-bound reported outcomes but does not independently authenticate the network response, reconstruct withheld webpages, or replay the original collector.",
+    "The historical selection depends on the named Git object; shallow clones or source archives without that object cannot perform the complete offline verification.",
+    "The candidate succeeded on one sample and failed on the other. The wider selector was not validated on either fetched sample after both attempts timed out.",
+    "Limited marker checks and text counts are not proof of content, completeness, safety, absence of ads or legal availability. No page scripts, user settings, dynamic blacklist, user library or Flutter UI were examined."
+  ]
+}

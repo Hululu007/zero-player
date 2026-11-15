@@ -1,0 +1,321 @@
+{
+  "schema": 1,
+  "generated_at": "2026-11-15T21:13:04.930827+00:00",
+  "method": {
+    "requests": "Exactly two anonymous HTTPS GET / per fixed host; 8-second deadlines; verified TLS and vetted public destination; no redirects, credentials, cookies, origin, script execution, or linked-resource requests.",
+    "sample": "Only up to 65536 bytes of HTML in memory; scripts, style, templates and comments are not analyzed; raw response, page title, work names, source category text and URLs are not retained.",
+    "signals": "Fixed lexical indicators and counts only; adult-category matches and age gates require interpretation, and ordinary/BL labels do not imply adult content.",
+    "source": "Selected IDs and saved discovery rules from the bundled catalog and historical ledger; this is not a user-installation audit."
+  },
+  "limitations": [
+    "The two observations per host are seconds apart on one network path and may share caches; they are not independent long-term observations.",
+    "Only a bounded homepage sample and fixed lexical indicators were examined. No match does not establish the absence of adult content or any site safety conclusion.",
+    "A mixed discovery rule with an adult category does not by itself establish that the entire source or site is adult-only.",
+    "Orientation labels do not establish adult content. Unclassified category labels remain unknown rather than being counted as general or adult categories.",
+    "An existing adult source classification belongs to that source identity at the historical snapshot; it is not a verdict on another source sharing a host.",
+    "The adult policy values are historical ledger values from the pinned Git commit; they are not current user settings, runtime state, or proof of the current working tree.",
+    "Source code hashes use CRLF-to-LF normalization and refer to the pinned Git snapshot. Offline verification needs Git and the historical object; shallow clones may omit it.",
+    "Raw page responses were not retained. Offline verification checks redacted records and static catalog facts, not the authenticity or completeness of the omitted responses."
+  ],
+  "input_references": {
+    "catalog_archive": {
+      "path": "assets/catalogs/books/legado/catalog.json.bz2",
+      "sha256": "012a0e0d6e6adc8d303c32b578510e14b562088b3e965cb01a1a647b5e7e034d"
+    },
+    "catalog_manifest": {
+      "path": "assets/catalogs/books/legado/manifest.json",
+      "sha256": "59bb9e3551b5a01406c1d720d2b5d5d5f21518eccbb52cd93f8d752c19f7cf66"
+    },
+    "source_ledger_historical_git": {
+      "commit": "a6c7d9986a64a2c7328c5f74c06415a116ef27a9",
+      "path": "docs/implementation/legado-source-ledger-20261115.json",
+      "sha256": "b3962a059b2d577dd88df6d263ce2227c55cf23881eba6e6de7f339bf0885c22"
+    }
+  },
+  "source_code_snapshot": {
+    "commit": "a6c7d9986a64a2c7328c5f74c06415a116ef27a9",
+    "digest_convention": "sha256_crlf_to_lf",
+    "normalized_sha256": {
+      "lib/core/network/cancellation_token.dart": "77ef7b8f4fcce3e8e3fabbb5ce77bda157912ecce2c73b766e2e35297fa34e46",
+      "lib/core/network/document_client.dart": "074f37eea9e5ca8c44f63ca4d216c39f59dbd2cf40be5d1244f0e3ab38155b47",
+      "lib/core/network/document_encoding.dart": "172e2da9ab62964439b147ba9d570e215e44c39ded113de40ba8ec68f022fa28",
+      "lib/core/network/header_policy.dart": "80c21afe38a4ac83a095f2665d7fe2e78eed8039cf45ec4128e315a00c7a10d6",
+      "lib/core/network/lan_access_policy.dart": "9ab4f5a8b67c17e7431ed7ba5dfd35b7de9ac7cb35506c370708a8b1f5c30518",
+      "lib/core/network/media_http_client.dart": "696795c08d2ffad763aad053913b247896decd7bb3ba9a766200b8043d27cb02",
+      "lib/core/network/network_budget.dart": "5748f4ebc67d9a3aeba081ece1139417c0f06e8399297fb9da27596a06cd4080",
+      "lib/core/network/network_target_policy.dart": "b79b7fb7376cc832b956f48cdca7bdc0980b9ba4458a95c363c01904128a01ba",
+      "lib/core/network/request_scheduler.dart": "36e127a9a8bcecdc08325520c0f54eda6e0c8f22d4d55147791662221fd621d0",
+      "lib/core/network/request_trace.dart": "a849a412f365c9bd9c686bd29987baae6167d9cc7c806c6362b3c7c002ab1467",
+      "lib/features/sources/data/jsonc_decoder.dart": "d23e04e11080f67d0cbe3d296e8369dc86537ed6200b93a69ca948f1142df1c4",
+      "lib/features/sources/domain/source_diagnostics.dart": "b700ff6be86517a5b70a2c7d9649989cb5b6a93fbb378ccd8ed971facc744474",
+      "lib/features/sources/domain/source_name.dart": "d3293f836ab57a67d01197fe36c738f9c5332689f197e39092d0472909dddedc",
+      "lib/features/sources/domain/video_source.dart": "90a730cb267792218b6f1911c1e5a88b7bbeccc8b735fef446de47f84458af41",
+      "lib/features/books/data/book_import.dart": "5c27a8cac7806ca8854672f89fcc90d0d98e5ab25b92ec4fc13f094bfe93a629",
+      "lib/features/books/data/book_source_links.dart": "4ba0b45a4138bfb7ea6e66c11986bbfd8ef2e9ed2797bb8531789b8e83408a88",
+      "lib/features/books/data/legado/legado_import.dart": "3d4f0f1fb848c26bf65a0eec25373bc993403576634c60524dc17c5a6e217b69",
+      "lib/features/books/data/legado/legado_discovery.dart": "c4c8039a58e66522547a4d71991be415a8c5ad571bf105c891bace70f2c77c7e",
+      "lib/features/books/data/legado/legado_request.dart": "da65df24e85c72e12e9b6305407612084bd8ea2f6d9197ce66fc96e0bd717914",
+      "lib/features/books/data/legado/legado_rule_tokens.dart": "4833544f325c73292eebf09e9d82d0573a97cf9e5ba16971cc4b3d3576c30333",
+      "lib/features/books/domain/book.dart": "1cb4a72bdbc5358d60837b90858f2cc4ce2ae47005bf5114e1b49897b5a59e3c",
+      "lib/features/books/domain/book_source_risk.dart": "51a6b06a2cc92818f90c646fa405c58cfdc523e547397b50cf0a6918323d59c0",
+      "lib/features/books/domain/com_rdap_legacy_quarantine.dart": "9060d2b95fb5027bb9fd43babcc3bb0125cb226f1f0557ac88d2a842a0c3b2c5",
+      "lib/features/books/domain/fanfanu_legacy_source_fix.dart": "0c3801d4380b8d5c5bab58f0f548725d55699bdf599585156d5894be415c5827",
+      "lib/features/books/domain/net_rdap_legacy_quarantine.dart": "a04eaaad9fe536c20552c8349d6ade7675b5826fa4cfb069df8233665d932913",
+      "lib/features/books/domain/iqiyi_legacy_quarantine.dart": "e87cff1c42533bed307dfd419ccea31acdcbd23b78a708dff91dfd3d861876d0",
+      "lib/features/books/domain/taotaoshu_legacy_quarantine.dart": "201afe93945d4c0d6f5b3fd1da0ed658e54e755577160e5748140db1fa8e3e61",
+      "lib/features/books/domain/legado_source_fingerprint.dart": "46bb8cd624ba136bd3dcea983bd80278b849a46fa340522ac7ac81788249a41a",
+      "lib/features/books/domain/known_untrusted_book_rules.dart": "8caf6f3b50868d858a0bbb461c0f680c70dc60c8673c5a8c24639676f28a8c89",
+      "lib/features/books/domain/legado_source.dart": "5b907923968332090760ecc9f4d6f7e652aa06501ac7981b5f477ef7c0d954d1",
+      "lib/features/books/domain/legado_source_fixes.dart": "5861cc4c175989a116074165f9aa0500cf56e5e82ebe8399833dc84470330f25",
+      "lib/features/books/domain/kuwo_legacy_source_fix.dart": "dfdcad7cced36e68c4f3ac8db7a3697a6b71c84f43787acb0e8ba54a1d55f7e2",
+      "lib/features/books/domain/qq_reading_legacy_source_fix.dart": "8b536b19cb6d220ee745a02604a6205e8e072300c2a0a8fa8fcea3f0eb67ef00",
+      "lib/features/books/domain/yuque_legacy_source_fix.dart": "bc1f1d63d64010d8b281740a168c9ccf7744ba51ed29d44dae97d44668111f88",
+      "lib/features/books/domain/zhongyi_legacy_source_fix.dart": "86922a9b696b173b00efd4831a9acfc126b10bfd918b94e81222c9055716e164",
+      "lib/features/books/domain/jingzhi_legacy_source_fix.dart": "e6035921a1ac0c5c29835c0c70e8acc340af1363cb613b312fdc4227e71aa925",
+      "lib/features/books/domain/shubang_legacy_source_fix.dart": "1e9e7f8a3db66c470cb00ceba46ebedb0c4b24e3a29a70fbe5174e73afe26f5b",
+      "lib/features/books/domain/yingyu_legacy_source_fix.dart": "a979ed63e5b91a6ff5d992a959e4fc5bcffdf23141ff5586e77da0017c82bb8a",
+      "lib/features/supervision/domain/content_classification.dart": "0f22950b5a1e5696fa1e60bb353c53a24f9b4546314290abab0081ed08e6146a",
+      "lib/features/supervision/domain/adult_source_evidence.dart": "7dd20620b923e14687f8a7c58aafa923ece02172cd38aa260ac9bfe107795206",
+      "tool/audit_book_source_ledger.dart": "9948d8a089038617e29380288de21a357d8e2aba1ebbb8614e17fb048afda265",
+      "tool/book_source_ledger_recent_evidence.dart": "d1048d2426001a992d59095a6cd3bd600a1aa1a07fe470d81b265d8c94b0aeed",
+      "tool/book_source_ledger_nov16_evidence.dart": "a0706371797b1468bc118d32078fd5fbde55c9b1c9aa3839dc5d1ed89edac498",
+      "tool/book_source_ledger_com_rdap.dart": "1b03fa31ca563056802d504bba24621afe79158ffa0225a0b70f34082c0cb431",
+      "tool/book_source_ledger_com_eighteen.dart": "7e07d581917f71348952cd44867b19f9c5855f129d74d17b552011ba91d81012",
+      "tool/book_source_ledger_rdap_nine.dart": "01bddf2c5e43aa840a1334e8a16413dbe9f5c930798e6d7f5ab825eac3a2527c"
+    }
+  },
+  "collection_provenance": {
+    "redacted_build_summary_sha256": "79b2a5c1a39a2ee7f27b934c11fa41d2de87d1ae0e221502a9cd4285a691c211",
+    "redacted_summary_generated_at_utc": "2026-11-15T21:07:36.638342+00:00",
+    "raw_html_retained": false,
+    "page_titles_retained": false,
+    "work_identifiers_retained": false
+  },
+  "source_snapshot": [
+    {
+      "host": "i.12bz.net",
+      "source_id": "04bcb61b79595729a59083d8137d536c9aea56a8b5023a601cbccb9c8e7bd204",
+      "selected_record_index": 4729,
+      "static_adult_policy_snapshot": false,
+      "normalized_legado_sha256": "96ff3c4aac28957b72852e2984faee413cee4f115e2130612197101564bf156f",
+      "endpoint_sha256": "4c6c1c4a8a7cb87b9851b8968aa7cf8b3028e097b197a5d96e70241504a06ac7",
+      "static_discovery_signal_counts": {
+        "category_count": 19,
+        "semantic_class_counts": {
+          "unclassified_label": 14,
+          "general_genre_category": 5
+        }
+      },
+      "kind": "text",
+      "format": "html",
+      "selected_raw_record_canonical_sha256": "900a78e1e2d9636308d7928a82badf4381fb9557dd1866b2ae4ebc65d4304de1",
+      "discovery_sha256": "ff5f33bd369ef1b34f28341e3eb2a5de6371418cf1ed336a58a4391ac9e344bc"
+    },
+    {
+      "host": "i.12bz.net",
+      "source_id": "25209b2554ef51f2360edd02c813a63fd799ad8d9674b091fb68bd4c8c66509f",
+      "selected_record_index": 4740,
+      "static_adult_policy_snapshot": false,
+      "normalized_legado_sha256": "b8bfb253a7d3ca73d7b05c2009337ac5371842be150d57e245b6a531fee8e24c",
+      "endpoint_sha256": "34968290c028c8c192784c21a797f4fb81731c395c08b146eb90775e2627f115",
+      "static_discovery_signal_counts": {
+        "category_count": 19,
+        "semantic_class_counts": {
+          "unclassified_label": 14,
+          "general_genre_category": 5
+        }
+      },
+      "kind": "text",
+      "format": "html",
+      "selected_raw_record_canonical_sha256": "ba7c6988fda36970cfc555822e120cd37907cd54b36802db94429fcef5fd167b",
+      "discovery_sha256": "ff5f33bd369ef1b34f28341e3eb2a5de6371418cf1ed336a58a4391ac9e344bc"
+    },
+    {
+      "host": "m.zhanvxs.cc",
+      "source_id": "63ae1d87e428bc772aed26b531b073f05ec2b07ae32ca1b89e1a466bbad66fc1",
+      "selected_record_index": 4485,
+      "static_adult_policy_snapshot": false,
+      "normalized_legado_sha256": "ac6e818ddb6a6b081d0da67abc653bf852c320836baa44754fc366cbfbda6b27",
+      "endpoint_sha256": "17c49e7f1d474db6091989b136ce80d036a304525ccba15756bfde738aed5b0e",
+      "static_discovery_signal_counts": {
+        "category_count": 8,
+        "semantic_class_counts": {
+          "orientation_category_only": 3,
+          "general_genre_category": 2,
+          "explicit_adult_category": 1,
+          "unclassified_label": 2
+        }
+      },
+      "kind": "text",
+      "format": "html",
+      "selected_raw_record_canonical_sha256": "c9fae18c62e8c5b1b5693fc05e1eeee632318d8b1de90b6fcaa8f0196562f6da",
+      "discovery_sha256": "91808c7b054706c9b134cbbc60716d22751c7c3ab90df157063a3ee263ab469e"
+    },
+    {
+      "host": "i.12bz.net",
+      "source_id": "df954ffc66302d0b7d931af18f0c850a51b72baa03054f3ad59196e2c60f1a5f",
+      "selected_record_index": 1236,
+      "static_adult_policy_snapshot": true,
+      "normalized_legado_sha256": "c14de6417402c7edc9d35b26ccbdb290337b7d08c01e1abf25459c54702e72d1",
+      "endpoint_sha256": "4c6c1c4a8a7cb87b9851b8968aa7cf8b3028e097b197a5d96e70241504a06ac7",
+      "static_discovery_signal_counts": {
+        "category_count": 19,
+        "semantic_class_counts": {
+          "unclassified_label": 14,
+          "general_genre_category": 5
+        }
+      },
+      "kind": "text",
+      "format": "html",
+      "selected_raw_record_canonical_sha256": "102d42f43bf5d01d35f6436c0064465ba7fce5de9d0620f635d7e1d86e501f8b",
+      "discovery_sha256": "a6f82d989a522bc82303aaa2c571012187f06ade4c5bed7f31728b1838b0d11c"
+    },
+    {
+      "host": "m.zhanvxs.cc",
+      "source_id": "e9a26ffe1152c5087487e223a1b328969f5ad54778240052f34daca3b2664804",
+      "selected_record_index": 4494,
+      "static_adult_policy_snapshot": false,
+      "normalized_legado_sha256": "01a8b43322607bb81e0e93ed420b8791df5b73f88ae77b07af069656f0ab0324",
+      "endpoint_sha256": "17c49e7f1d474db6091989b136ce80d036a304525ccba15756bfde738aed5b0e",
+      "static_discovery_signal_counts": {
+        "category_count": 8,
+        "semantic_class_counts": {
+          "orientation_category_only": 3,
+          "general_genre_category": 2,
+          "explicit_adult_category": 1,
+          "unclassified_label": 2
+        }
+      },
+      "kind": "text",
+      "format": "html",
+      "selected_raw_record_canonical_sha256": "672d8a0d7e9e2662f75712bfce3440939181ad5962a71671bc42074593130f0b",
+      "discovery_sha256": "91808c7b054706c9b134cbbc60716d22751c7c3ab90df157063a3ee263ab469e"
+    }
+  ],
+  "observations": [
+    {
+      "host": "m.zhanvxs.cc",
+      "round": 1,
+      "started_at": "2026-11-15T21:07:28.357958+00:00",
+      "http_status": 200,
+      "sample_bytes": 27673,
+      "truncated": false,
+      "classification": "html_sample",
+      "charset": "utf-8",
+      "decoding_replacement_count": 0,
+      "signals": {
+        "title_present": true,
+        "description_present": true,
+        "title_explicit_adult_business_phrase": false,
+        "description_explicit_adult_business_phrase": false,
+        "title_suggestive_word": true,
+        "description_suggestive_word": true,
+        "minor_gate_signal": false,
+        "nav_or_category_link_count": 36,
+        "all_link_count": 180,
+        "nav_category_signal_counts": {
+          "general_genre_category": 1
+        }
+      },
+      "observed_at": "2026-11-15T21:07:29.243038+00:00"
+    },
+    {
+      "host": "i.12bz.net",
+      "round": 1,
+      "started_at": "2026-11-15T21:07:30.243349+00:00",
+      "http_status": 200,
+      "sample_bytes": 12709,
+      "truncated": false,
+      "classification": "html_sample",
+      "charset": "gb18030",
+      "decoding_replacement_count": 0,
+      "signals": {
+        "title_present": true,
+        "description_present": true,
+        "title_explicit_adult_business_phrase": false,
+        "description_explicit_adult_business_phrase": false,
+        "title_suggestive_word": false,
+        "description_suggestive_word": false,
+        "minor_gate_signal": false,
+        "nav_or_category_link_count": 19,
+        "all_link_count": 119,
+        "nav_category_signal_counts": {
+          "general_genre_category": 6
+        }
+      },
+      "observed_at": "2026-11-15T21:07:31.514007+00:00"
+    },
+    {
+      "host": "m.zhanvxs.cc",
+      "round": 2,
+      "started_at": "2026-11-15T21:07:32.514292+00:00",
+      "http_status": 200,
+      "sample_bytes": 27673,
+      "truncated": false,
+      "classification": "html_sample",
+      "charset": "utf-8",
+      "decoding_replacement_count": 0,
+      "signals": {
+        "title_present": true,
+        "description_present": true,
+        "title_explicit_adult_business_phrase": false,
+        "description_explicit_adult_business_phrase": false,
+        "title_suggestive_word": true,
+        "description_suggestive_word": true,
+        "minor_gate_signal": false,
+        "nav_or_category_link_count": 36,
+        "all_link_count": 180,
+        "nav_category_signal_counts": {
+          "general_genre_category": 1
+        }
+      },
+      "observed_at": "2026-11-15T21:07:33.355225+00:00"
+    },
+    {
+      "host": "i.12bz.net",
+      "round": 2,
+      "started_at": "2026-11-15T21:07:34.355424+00:00",
+      "http_status": 200,
+      "sample_bytes": 12709,
+      "truncated": false,
+      "classification": "html_sample",
+      "charset": "gb18030",
+      "decoding_replacement_count": 0,
+      "signals": {
+        "title_present": true,
+        "description_present": true,
+        "title_explicit_adult_business_phrase": false,
+        "description_explicit_adult_business_phrase": false,
+        "title_suggestive_word": false,
+        "description_suggestive_word": false,
+        "minor_gate_signal": false,
+        "nav_or_category_link_count": 19,
+        "all_link_count": 119,
+        "nav_category_signal_counts": {
+          "general_genre_category": 6
+        }
+      },
+      "observed_at": "2026-11-15T21:07:35.638214+00:00"
+    }
+  ],
+  "decisions": {
+    "m.zhanvxs.cc": {
+      "site_adult_status_from_sample": "undetermined",
+      "new_source_classification": "not_supported",
+      "mixed_discovery_source_ids": [
+        "63ae1d87e428bc772aed26b531b073f05ec2b07ae32ca1b89e1a466bbad66fc1",
+        "e9a26ffe1152c5087487e223a1b328969f5ad54778240052f34daca3b2664804"
+      ]
+    },
+    "i.12bz.net": {
+      "site_adult_status_from_sample": "undetermined",
+      "new_source_classification": "not_supported",
+      "historical_adult_source_id": "df954ffc66302d0b7d931af18f0c850a51b72baa03054f3ad59196e2c60f1a5f",
+      "other_historical_source_ids": [
+        "04bcb61b79595729a59083d8137d536c9aea56a8b5023a601cbccb9c8e7bd204",
+        "25209b2554ef51f2360edd02c813a63fd799ad8d9674b091fb68bd4c8c66509f"
+      ],
+      "infer_adult_for_same_host_siblings": false
+    }
+  }
+}

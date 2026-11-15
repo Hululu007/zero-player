@@ -2,6 +2,37 @@ part of 'books_repository.dart';
 
 const _prefix = 'books_site_check:';
 
+Future<BookSiteInspection> _runSiteInspection(
+  Future<BookSiteInspection> Function() inspect,
+  CancellationToken token,
+) async {
+  try {
+    return await inspect();
+  } on RequestCancelled {
+    rethrow;
+  } on FormatException {
+    token.check();
+    return const BookSiteInspection(BookSiteFinding.unsupported);
+  } on Exception {
+    token.check();
+    return const BookSiteInspection(BookSiteFinding.networkError);
+  }
+}
+
+Future<BookSiteCheck?> _readSiteCheck(
+  BookStore store,
+  String key,
+  BookSource source,
+) async {
+  try {
+    return BookSiteCheck.fromJson(await store.read(key), source);
+  } on FormatException {
+    return null;
+  } on TypeError {
+    return null;
+  }
+}
+
 final class BookSiteCheckSummary {
   const BookSiteCheckSummary({
     required this.checked,
@@ -87,7 +118,11 @@ final class BookSiteChecks {
             if (check == null) {
               skipped++;
             } else {
-              checked++;
+              if (check.needsRetry) {
+                failed++;
+              } else {
+                checked++;
+              }
               if (check.inspection.gamblingRisk) quarantined++;
               if (check.inspection.adultRisk) adult++;
             }
@@ -154,7 +189,7 @@ final class BookSiteChecks {
     }
     final inspection = await hostResults.putIfAbsent(
       entry.source.endpoint.host,
-      () => _inspect(entry.source, token),
+      () => _runSiteInspection(() => _inspect(entry.source, token), token),
     );
     _checkPolicy(token, policySnapshot);
     current = await books.sourceEntry(entry.source.kind, entry.source.id);
@@ -176,11 +211,6 @@ final class BookSiteChecks {
       if (!marked) return null;
     }
     _checkPolicy(token, policySnapshot);
-    final check = BookSiteCheck(
-      inspection,
-      DateTime.now(),
-      bookSourceCheckFingerprint(entry.source),
-    );
     try {
       final saved = await books.store.db.atomic(() async {
         _checkPolicy(token, policySnapshot);
@@ -193,17 +223,29 @@ final class BookSiteChecks {
             !_sameSource(current, entry, enabledOnly) ||
             !books.policy.textAllowed('', category: current!.group) ||
             (await books.store.blockedSources()).containsKey(entry.source.id)) {
-          return false;
+          return null;
         }
+        _checkPolicy(token, policySnapshot);
+        final previous = await _readSiteCheck(
+          books.store,
+          '$_prefix${entry.source.id}',
+          entry.source,
+        );
+        final check = BookSiteCheck.after(
+          inspection,
+          DateTime.now(),
+          entry.source,
+          previous,
+        );
         _checkPolicy(token, policySnapshot);
         await books.store.write('$_prefix${entry.source.id}', check.toJson());
         _checkPolicy(token, policySnapshot);
         if (!_configurationCurrent(configurationSnapshot)) {
           throw const _StaleSiteCheck();
         }
-        return true;
+        return check;
       }, tables: {'app_meta'});
-      return saved ? check : null;
+      return saved;
     } on _StaleSiteCheck {
       return null;
     }

@@ -1,0 +1,61 @@
+{
+  "schema_version": 1,
+  "host": "m.woo15.com",
+  "review_scope": "Exact host; adult filtering only",
+  "method": {
+    "requests": "Two anonymous HTTPS GET requests to the root page, public DNS checked and TLS verified",
+    "maximum_sample_bytes": 32768,
+    "timeout_seconds": 8,
+    "followed_redirects": false,
+    "executed_scripts": false,
+    "loaded_subresources": false,
+    "saved_response_body_or_excerpt": false
+  },
+  "catalog_archive_sha256": "012a0e0d6e6adc8d303c32b578510e14b562088b3e965cb01a1a647b5e7e034d",
+  "historical_ledger_sha256": "b3962a059b2d577dd88df6d263ce2227c55cf23881eba6e6de7f339bf0885c22",
+  "selected_sources": [
+    {
+      "record_index": 4218,
+      "source_id": "1b9fbc433c81ac824c2a20ece0332a66c79c7abe8a4da1b28b74f0a26e220763"
+    },
+    {
+      "record_index": 4220,
+      "source_id": "cab07dec6b3f4ab2ece1b1a261aad7e155b9de9bcc4f517f70cd5490011ba393"
+    },
+    {
+      "record_index": 4222,
+      "source_id": "38ff9c4ee9a4b64192f10046721e2c6a2c50c2ec80d3d3b5eccd3ae7e40b6022"
+    }
+  ],
+  "observations": [
+    {
+      "observed_at_utc": "2026-11-15T20:46:01.849571+00:00",
+      "http_status": 200,
+      "content_type": "text/html",
+      "sample_bytes": 32768,
+      "truncated": true,
+      "sample_sha256": "9356ec82f2a347f88c809332d6ab2ae2cb710724ab44fac46085a66510862ab3",
+      "metadata": {
+        "has_title": true,
+        "description_indicates_adult_audience": true,
+        "visible_adult_business_clue": true,
+        "detected_encoding": "utf8"
+      }
+    },
+    {
+      "observed_at_utc": "2026-11-15T20:46:03.771788+00:00",
+      "http_status": 200,
+      "content_type": "text/html",
+      "sample_bytes": 32768,
+      "truncated": true,
+      "sample_sha256": "21f68da1f531cf9d1ae7722fe34f594b7ca915c6de22ba14303d2cc793ede08d",
+      "metadata": {
+        "has_title": true,
+        "description_indicates_adult_audience": true,
+        "visible_adult_business_clue": true,
+        "detected_encoding": "utf8"
+      }
+    }
+  ],
+  "limitations": "Time-bounded root-page samples establish an adult-focused classification for the exact host only. They do not establish malware, parser availability, future behavior, or the nature of sibling hosts. Response bytes were not saved, so hashes cannot be recomputed from this record."
+}

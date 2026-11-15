@@ -45,6 +45,9 @@ const _amsiBefore =
 const _dohReviewed = 'legado-doh-reviewed-20261115.json';
 const _dnsAddressRecheck = 'legado-dns-address-recheck-20261115.json';
 const _importInventory = 'legado-import-inventory-20261115.json';
+const _laterHead = 'legado-unresolved-head-later-20261116.json';
+const _wooHome = 'legado-woo15-home-review-20261116.json';
+const _recoveredAmsi = 'legado-recovered-amsi-20261116.json';
 const _amsiFiles = [
   'legado-amsi-pilot-20261115.json',
   'legado-amsi-prior-html-20261115.json',
@@ -73,6 +76,7 @@ const _evidenceFiles = [
   comRdapEvidenceFile,
   comRdapEighteenEvidenceFile,
   rdapNineEvidenceFile,
+  topCcEvidenceFile,
   _recentRedirect,
   _categoryReview,
   _reading560,
@@ -83,6 +87,14 @@ const _evidenceFiles = [
   _dohReviewed,
   _dnsAddressRecheck,
   _importInventory,
+  _laterHead,
+  _wooHome,
+  _recoveredAmsi,
+  redirectedEvidenceFile,
+  myxzmEvidenceFile,
+  mixedHomeEvidenceFile,
+  novel242EvidenceFile,
+  threeRedirectEvidenceFile,
   ..._amsiFiles,
 ];
 const _codePaths = [
@@ -111,6 +123,7 @@ const _codePaths = [
   'lib/features/books/domain/com_rdap_legacy_quarantine.dart',
   'lib/features/books/domain/fanfanu_legacy_source_fix.dart',
   'lib/features/books/domain/net_rdap_legacy_quarantine.dart',
+  'lib/features/books/domain/novel_242_legacy_quarantine.dart',
   'lib/features/books/domain/iqiyi_legacy_quarantine.dart',
   'lib/features/books/domain/taotaoshu_legacy_quarantine.dart',
   'lib/features/books/domain/legado_source_fingerprint.dart',
@@ -119,6 +132,7 @@ const _codePaths = [
   'lib/features/books/domain/legado_source_fixes.dart',
   'lib/features/books/domain/kuwo_legacy_source_fix.dart',
   'lib/features/books/domain/qq_reading_legacy_source_fix.dart',
+  'lib/features/books/domain/redirected_legacy_quarantine.dart',
   'lib/features/books/domain/yuque_legacy_source_fix.dart',
   'lib/features/books/domain/zhongyi_legacy_source_fix.dart',
   'lib/features/books/domain/jingzhi_legacy_source_fix.dart',
@@ -132,10 +146,26 @@ const _codePaths = [
   'tool/book_source_ledger_com_rdap.dart',
   'tool/book_source_ledger_com_eighteen.dart',
   'tool/book_source_ledger_rdap_nine.dart',
+  'tool/book_source_ledger_top_cc.dart',
+  'tool/verify_legado_unresolved_head.py',
+  'tool/compare_legado_head_get.py',
+  'tool/recheck_legado_failures.py',
+  'tool/triage_legado_eval_candidates.py',
+  'tool/audit_legado_catalog.py',
+  'tool/verify_legado_recovered_amsi.py',
+  'tool/verify_legado_rdap_top_cc.py',
+  'tool/verify_legado_redirected_sources.py',
+  'tool/verify_legado_myxzm_recheck.py',
+  'tool/verify_legado_adult_mixed_home.py',
+  'tool/verify_legado_242xs_recheck.py',
+  'tool/verify_legado_three_redirect_recheck.py',
 ];
 const _runtimePolicyReferencePaths = [
+  'lib/app/app_services.dart',
+  'lib/app/product_app.dart',
   'lib/features/books/application/book_category_policy.dart',
   'lib/features/books/application/book_site_checks.dart',
+  'lib/features/books/application/book_site_monitor.dart',
   'lib/features/books/data/audiobook_files.dart',
   'lib/features/books/data/book_client.dart',
   'lib/features/books/data/bookan_audio_client.dart',
@@ -148,6 +178,10 @@ const _runtimePolicyReferencePaths = [
   'lib/features/books/data/book_repository_probe.dart',
   'lib/features/books/data/book_repository_request_policy.dart',
   'lib/features/books/data/book_repository_site_checks.dart',
+  'lib/features/books/data/book_site_check.dart',
+  'lib/features/books/data/book_site_inspection.dart',
+  'lib/features/books/data/book_source_risk_store.dart',
+  'lib/features/books/data/book_supervised_site_scan.dart',
   'lib/features/books/data/book_request_guard.dart',
   'lib/features/books/data/book_store.dart',
   'lib/features/books/data/books_repository.dart',
@@ -156,6 +190,8 @@ const _runtimePolicyReferencePaths = [
   'lib/features/books/data/shuyin_audio_client.dart',
   'lib/features/books/data/ximalaya_audio_client.dart',
   'lib/features/supervision/application/content_policy.dart',
+  'lib/features/settings/application/settings_controller.dart',
+  'lib/features/settings/domain/settings_validation.dart',
 ];
 
 String _sha(List<int> bytes) => sha256.convert(bytes).toString();
@@ -728,11 +764,127 @@ void _addGet(
 _EvidenceIndex _readEvidence(Map<String, Map> data) {
   final index = _EvidenceIndex();
   _addRootChecks(index, data);
+  _addLaterHeadChecks(index, data[_laterHead]!);
+  _addWooHomeChecks(index, data[_wooHome]!);
+  _addRecoveredAmsi(index, data[_recoveredAmsi]!, data[_laterHead]!);
   _addAmsiRechecks(index, data);
   _addIqiyiChecks(index, data[_iqiyi]!);
   _addTargetedChecks(index, data);
   _addRegistryChecks(index, data[_registry]!);
   return index;
+}
+
+void _addRecoveredAmsi(_EvidenceIndex index, Map evidence, Map headEvidence) {
+  final heads = {
+    for (final row in (headEvidence['results'] as List).cast<Map>())
+      row['host']: row,
+  };
+  final samples = (evidence['results'] as List).cast<Map>();
+  if (samples.length != 40 ||
+      samples.map((r) => r['host']).toSet().length != 40) {
+    throw const FormatException('recovered AMSI host coverage mismatch');
+  }
+  for (final sample in samples) {
+    final head = heads[sample['host']];
+    final ids = _ids(sample['selected_source_ids']);
+    final expectedIds = head == null
+        ? <String>{}
+        : {
+            for (final row in (head['selected_sources'] as List).cast<Map>())
+              row['source_id'] as String,
+          };
+    if (head == null ||
+        (head['latest_head'] as Map)['http_status'] != 200 ||
+        ids.length != expectedIds.length ||
+        !ids.containsAll(expectedIds) ||
+        jsonEncode(sample['record_indices']) !=
+            jsonEncode(head['record_indices'])) {
+      throw const FormatException('recovered AMSI source association mismatch');
+    }
+    _addGet(index, _recoveredAmsi, sample, ids, {}, includeAmsi: true);
+  }
+}
+
+void _addLaterHeadChecks(_EvidenceIndex index, Map evidence) {
+  for (final row in (evidence['results'] as List).cast<Map>()) {
+    final host = row['host'] as String;
+    final head = row['latest_head'] as Map;
+    final dns = row['dns'] as Map;
+    for (final source in (row['selected_sources'] as List).cast<Map>()) {
+      final id = source['source_id'] as String;
+      final selectedIndex = source['record_index'] as int;
+      final identity = {'historical_selected_record_index': selectedIndex};
+      index.add(
+        index.network,
+        host,
+        {id},
+        {},
+        {
+          ...networkObservation(
+            evidence: _laterHead,
+            method: 'HEAD',
+            path: '/',
+            row: head,
+          ),
+          ...identity,
+          'recorded_classification': head['classification'],
+          'redirect_category': head['redirect_category'],
+          'redirect_followed': false,
+          'readability_verified': null,
+          'site_security_verified': null,
+        },
+      );
+      index.add(
+        index.registry,
+        host,
+        {id},
+        {},
+        {
+          'evidence': _laterHead,
+          'observation_kind': 'later_native_dns_exact_endpoint_host',
+          'queried_host': host,
+          ...identity,
+          'verdict': dns['verdict'],
+          'observations': dns['observations'],
+          'permanent_failure_inferred': null,
+        },
+      );
+    }
+  }
+}
+
+void _addWooHomeChecks(_EvidenceIndex index, Map evidence) {
+  final host = evidence['host'] as String;
+  for (final source in (evidence['selected_sources'] as List).cast<Map>()) {
+    for (final sample in (evidence['observations'] as List).cast<Map>()) {
+      final meta = sample['metadata'] as Map;
+      index.add(
+        index.network,
+        host,
+        {source['source_id'] as String},
+        {},
+        {
+          ...networkObservation(
+            evidence: _wooHome,
+            method: 'GET',
+            path: '/',
+            row: {
+              'observed_at': sample['observed_at_utc'],
+              'http_status': sample['http_status'],
+              'sample_bytes': sample['sample_bytes'],
+              'sample_sha256': sample['sample_sha256'],
+              'truncated': sample['truncated'],
+            },
+          ),
+          'historical_selected_record_index': source['record_index'],
+          'adult_text_clue_recorded': meta['visible_adult_business_clue'],
+          'adult_description_clue_recorded':
+              meta['description_indicates_adult_audience'],
+          'site_security_verified': null,
+        },
+      );
+    }
+  }
 }
 
 void _addAmsiRechecks(_EvidenceIndex index, Map<String, Map> data) {
@@ -1096,6 +1248,7 @@ Map<String, Object?> _row(
   ComRdapLedgerEvidence comRdap,
   ComRdapLedgerEvidence comEighteen,
   ComRdapLedgerEvidence rdapNine,
+  ComRdapLedgerEvidence topCc,
   Map<String, Map> data,
 ) {
   final index = catalog.selectedIndex[source.id]!;
@@ -1108,6 +1261,12 @@ Map<String, Object?> _row(
     indices,
     addPathRelation: true,
   );
+  for (final observation in network) {
+    if (observation['historical_selected_record_index'] is int) {
+      observation['matches_current_selected_raw_record'] =
+          observation['historical_selected_record_index'] == index;
+    }
+  }
   final recentNetwork = selectRecentEvidence(
     recent.network,
     source.id,
@@ -1131,6 +1290,12 @@ Map<String, Object?> _row(
   network.addAll(nov16Network);
   final amsi = _matching(evidence.amsi, source, indices);
   final registry = _matching(evidence.registry, source, indices);
+  for (final observation in registry) {
+    if (observation['historical_selected_record_index'] is int) {
+      observation['matches_current_selected_raw_record'] =
+          observation['historical_selected_record_index'] == index;
+    }
+  }
   registry.addAll(
     selectRecentEvidence(
       recent.registry,
@@ -1142,6 +1307,7 @@ Map<String, Object?> _row(
   registry.addAll(selectComRdapEvidence(comRdap, source, index));
   registry.addAll(selectComRdapEvidence(comEighteen, source, index));
   registry.addAll(selectComRdapEvidence(rdapNine, source, index));
+  registry.addAll(selectComRdapEvidence(topCc, source, index));
   final community = communityClues(data[_blocklist]!, source, index);
   final ruleReview = ruleReviewEvidence(data, source, index);
   final searchPilot = searchPilotObservations(
@@ -1206,9 +1372,108 @@ void _verifyArchiveAssociation(
   String digest,
   Map<String, String> inputHashes,
 ) {
+  if (file == threeRedirectEvidenceFile) {
+    final refs = evidence['input_references'] as Map;
+    if (inputHashes['$_evidenceFolder/$file'] !=
+            'fc6fbe7ac43b9d3468d7c633fe55738076afe894f10c6774b9451e540e1e5ac7' ||
+        (refs['catalog_archive'] as Map)['sha256'] != digest ||
+        (refs['catalog_manifest'] as Map)['sha256'] !=
+            inputHashes['$_catalogFolder/manifest.json'] ||
+        (refs['previous_head'] as Map)['path'] !=
+            '$_evidenceFolder/$_laterHead' ||
+        (refs['previous_head'] as Map)['sha256'] !=
+            inputHashes['$_evidenceFolder/$_laterHead']) {
+      throw const FormatException('three-source redirect evidence mismatch');
+    }
+    return;
+  }
+  if (file == _recoveredAmsi) {
+    if (inputHashes['$_evidenceFolder/$file'] !=
+            '050c6913ab5dacd607c68a369206e46ac30bdd226f6729ef6a5c1cb5c3bc6dcc' ||
+        inputHashes['$_evidenceFolder/$_laterHead'] !=
+            '3024ff03581b0de4b286601188974e05cd8f7cf602b8af49e234ce054d2a6ebd' ||
+        evidence['archive_sha256'] != digest ||
+        evidence['import_inventory_sha256'] !=
+            inputHashes['$_evidenceFolder/$_importInventory']) {
+      throw const FormatException('recovered AMSI input association mismatch');
+    }
+    return;
+  }
+  if (file == redirectedEvidenceFile) {
+    if (inputHashes['$_evidenceFolder/$file'] !=
+            'd62fb59112734963179ab0589cb96f36e42b2c70f51b8716db61948c60d12f8c' ||
+        evidence['archive_sha256'] != digest) {
+      throw const FormatException('redirected source evidence mismatch');
+    }
+    return;
+  }
+  if (file == myxzmEvidenceFile) {
+    final refs = evidence['input_references'] as Map;
+    if (inputHashes['$_evidenceFolder/$file'] !=
+            'fec4ea54a602175b36ca557bb191b1343be4a8001416608f27c5344266b534c8' ||
+        (refs['catalog_archive'] as Map)['sha256'] != digest ||
+        (refs['catalog_manifest'] as Map)['sha256'] !=
+            inputHashes['$_catalogFolder/manifest.json']) {
+      throw const FormatException('sampled source evidence mismatch');
+    }
+    return;
+  }
+  if (file == mixedHomeEvidenceFile) {
+    final refs = evidence['input_references'] as Map;
+    if (inputHashes['$_evidenceFolder/$file'] !=
+            '5417cd1014e434b99b846175387dd192c893bf408a06d8bb38a29abecc21e364' ||
+        (refs['catalog_archive'] as Map)['sha256'] != digest ||
+        (refs['catalog_manifest'] as Map)['sha256'] !=
+            inputHashes['$_catalogFolder/manifest.json']) {
+      throw const FormatException('mixed homepage evidence mismatch');
+    }
+    return;
+  }
+  if (file == novel242EvidenceFile) {
+    final refs = evidence['input_references'] as Map;
+    if (inputHashes['$_evidenceFolder/$file'] !=
+            '1bcce500d6f785745930efb6ad67579c4cc1c511498e60f597fe194de483a385' ||
+        (refs['catalog_archive'] as Map)['sha256'] != digest ||
+        (refs['catalog_manifest'] as Map)['sha256'] !=
+            inputHashes['$_catalogFolder/manifest.json']) {
+      throw const FormatException('242 source evidence mismatch');
+    }
+    return;
+  }
+  if (file == topCcEvidenceFile) {
+    if (inputHashes['$_evidenceFolder/$file'] !=
+        'bff7d7109129d16471b9c9e6ade4e372703420d782bbb374665d353e48beb9cb') {
+      throw const FormatException('top/cc evidence digest mismatch');
+    }
+  }
+  if (file == _laterHead) {
+    final references = evidence['input_sha256'] as Map;
+    if (inputHashes['$_evidenceFolder/$file'] !=
+            '3024ff03581b0de4b286601188974e05cd8f7cf602b8af49e234ce054d2a6ebd' ||
+        evidence['archive_sha256'] != digest ||
+        references.isEmpty ||
+        references.entries.any(
+          (entry) => inputHashes[entry.key] != entry.value,
+        )) {
+      throw const FormatException('later HEAD evidence association mismatch');
+    }
+    return;
+  }
+  if (file == _wooHome) {
+    if (inputHashes['$_evidenceFolder/$file'] !=
+            'd7d34bf212a2fce2b1e6c292e058f985af079a40b5a1266551e978f5f2a6da5a' ||
+        evidence['catalog_archive_sha256'] != digest ||
+        evidence['host'] != 'm.woo15.com') {
+      throw const FormatException(
+        'adult homepage evidence association mismatch',
+      );
+    }
+    return;
+  }
   if (file == comRdapEvidenceFile ||
       file == comRdapEighteenEvidenceFile ||
-      file == rdapNineEvidenceFile) {
+      file == rdapNineEvidenceFile ||
+      file == topCcEvidenceFile) {
     final references = evidence['input_references'] as Map;
     if ((references['catalog_archive'] as Map)['sha256'] != digest) {
       throw const FormatException('.com RDAP archive association mismatch');
@@ -1471,6 +1736,33 @@ void main(List<String> args) {
     hashes['$_catalogFolder/manifest.json']!,
     networkObservation,
   );
+  addWooHomeReview(nov16, data[_wooHome]!, catalog.rows);
+  addTargetedSourceReviews(
+    nov16,
+    data[redirectedEvidenceFile]!,
+    data[myxzmEvidenceFile]!,
+    catalog.rows,
+    networkObservation,
+  );
+  addMixedHomeReview(
+    nov16,
+    data[mixedHomeEvidenceFile]!,
+    catalog.rows,
+    networkObservation,
+  );
+  addNovel242Review(
+    nov16,
+    data[novel242EvidenceFile]!,
+    catalog.rows,
+    networkObservation,
+  );
+  addThreeRedirectReview(
+    nov16,
+    data[threeRedirectEvidenceFile]!,
+    data[_laterHead]!,
+    catalog.rows,
+    networkObservation,
+  );
   final comRdap = readComRdapEvidence(
     data[comRdapEvidenceFile]!,
     hashes,
@@ -1495,6 +1787,12 @@ void main(List<String> args) {
     catalog.rows,
     data[_head]!,
   );
+  final topCc = readTopCcEvidence(
+    data[topCcEvidenceFile]!,
+    hashes,
+    data[_dohReviewed]!,
+    catalog.rows,
+  );
   final rows = [
     for (final source in catalog.imported.sources)
       _row(
@@ -1506,6 +1804,7 @@ void main(List<String> args) {
         comRdap,
         comEighteen,
         rdapNine,
+        topCc,
         data,
       ),
   ];
@@ -1582,6 +1881,13 @@ Map<String, Object?> _ledgerDocument(
     'The .com RDAP historical ledger requires the referenced Git object; collector scripts, raw RDAP/DNS response bytes and their intermediate draft are not preserved in the repository.',
     'The eighteen-domain review explicitly records DNS requests skipped after a failed control and provider timeouts as unknown; sibling-host DNS/HTTP responses are contextual counterexamples and do not establish the old host\'s availability or safety.',
     'The nine-domain review uses separate .com and .net controls; DNS SERVFAIL, timeout and skipped requests are not NXDOMAIN, and the sibling 301 was not followed and does not establish old-source availability or safety.',
+    'The later 1023-host HEAD and native-DNS recheck records time-specific responses or failures only; DNS not checked, failed queries and no HTTP response remain unknown.',
+    'The recovered-host AMSI samples are appended independently; their HTML-wrapped test control was missed, and neither non-detection nor an unavailable scan establishes safety.',
+    'The .top/.cc review preserves failed controls, skipped requests and provider timeouts; a single registry 404 is not a repeated 404 and does not establish the exact source host status.',
+    'The mixed-homepage review does not establish whole-site adult status or clear existing source-level evidence, and its policy snapshots describe only the referenced historical Git object.',
+    'The two-source redirect review follows no third-party redirect; the separate two-book rule candidate has counterexamples and timed-out re-fetches, so neither observation establishes maliciousness or complete readability.',
+    'The 242 review concerns one exact historical rule and endpoint; its sampled 404 responses do not imply maliciousness, permanent closure, or a host-wide restriction.',
+    'The three-source redirect recheck uses GET and a possibly different user agent than the earlier HEAD. One old POST search was not submitted, discovery sampled only two entries per source, and fields missing from truncated collector output remain unknown.',
     'Static flags do not include personal settings, enabled state, mutable assessments, user blacklists, supervision, or every private repository policy.',
     'Same-ID historical cache can lack the rule fingerprint needed to attribute old content to a specific source version.',
     'The ledger reports bounded prior pilot observations, but does not itself perform a new live search-detail-chapter-content check.',
@@ -1595,6 +1901,18 @@ Map<String, Object?> _ledgerDocument(
         (data[_categoryReview]!['inputs'] as Map)['source_ledger_git_commit'],
     'path': (data[_categoryReview]!['inputs'] as Map)['source_ledger_path'],
     'sha256': (data[_categoryReview]!['inputs'] as Map)['source_ledger_sha256'],
+    'verified_from_git_object': true,
+  },
+  'woo_home_historical_ledger_reference': {
+    'git_commit': 'a6c7d9986a64a2c7328c5f74c06415a116ef27a9',
+    'path': 'docs/implementation/legado-source-ledger-20261115.json',
+    'sha256': data[_wooHome]!['historical_ledger_sha256'],
+    'verified_from_git_object': true,
+  },
+  'top_cc_historical_ledger_reference': {
+    ...((data[topCcEvidenceFile]!['input_references']
+            as Map)['source_ledger_historical_git']
+        as Map),
     'verified_from_git_object': true,
   },
   'adult_source_historical_references': {

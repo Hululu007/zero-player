@@ -135,6 +135,71 @@ void main() {
     },
   );
 
+  test(
+    'supervised failures persist, back off and detect a recovered host',
+    () async {
+      final f = await _Fixture.create();
+      addTearDown(f.close);
+      await f.supervise();
+      final source = f.first.source;
+      final host = source.endpoint.host;
+      final key = 'books_supervised_site_check:${source.id}';
+      f.server.statuses[host] = HttpStatus.serviceUnavailable;
+      await f.monitor.check().timeout(_timeout);
+      var raw = await f.services.books.store.read(key);
+      var check = BookSiteCheck.fromJson(raw, source)!;
+      expect(check.inspection.finding, BookSiteFinding.httpError);
+      expect(check.consecutiveFailures, 1);
+      expect(check.isDue(DateTime.now()), isFalse);
+
+      await f.services.books.store.write(key, {
+        ...check.toJson(),
+        'checkedAt': DateTime.now()
+            .subtract(const Duration(minutes: 31))
+            .millisecondsSinceEpoch,
+      });
+      await f.monitor.check().timeout(_timeout);
+      raw = await f.services.books.store.read(key);
+      check = BookSiteCheck.fromJson(raw, source)!;
+      expect(check.consecutiveFailures, 2);
+      expect(
+        check.nextDue.difference(check.checkedAt),
+        const Duration(hours: 1),
+      );
+      final count = f.requested.where((uri) => uri.host == host).length;
+
+      await f.restart();
+      await f.monitor.check().timeout(_timeout);
+      expect(f.requested.where((uri) => uri.host == host), hasLength(count));
+      check = BookSiteCheck.fromJson(
+        await f.services.books.store.read(key),
+        source,
+      )!;
+      expect(check.consecutiveFailures, 2);
+      await f.services.books.store.write(key, {
+        ...check.toJson(),
+        'checkedAt': DateTime.now()
+            .subtract(const Duration(hours: 2))
+            .millisecondsSinceEpoch,
+      });
+      f.server.statuses.remove(host);
+      f.server.pages[host] = '<p>在线赌场 立即下注</p>';
+      await f.monitor.check().timeout(_timeout);
+      final risk = await f.services.books.riskStore.get(source.id);
+      expect(risk!.quarantinedHost, isTrue);
+      final recovered = BookSiteCheck.fromJson(
+        await f.services.books.store.read(key),
+        source,
+      )!;
+      expect(recovered.consecutiveFailures, 0);
+      expect(recovered.needsRetry, isFalse);
+      expect(
+        recovered.nextDue.difference(recovered.checkedAt),
+        const Duration(days: 7),
+      );
+    },
+  );
+
   test('blacklisted built-ins are not fetched', () async {
     final f = await _Fixture.create();
     addTearDown(f.close);
@@ -612,6 +677,7 @@ final class _Server {
   _Server(this.server);
   final HttpServer server;
   final pages = <String, String>{};
+  final statuses = <String, int>{};
   final gates = <String, _Gate>{};
   Uri get uri => Uri.parse('http://127.0.0.1:${server.port}/');
 
@@ -627,6 +693,7 @@ final class _Server {
           if (!gate.started.isCompleted) gate.started.complete();
           await gate._release.future;
         }
+        request.response.statusCode = result.statuses[host] ?? HttpStatus.ok;
         request.response.headers.contentType = ContentType.html;
         request.response.write(result.pages[host] ?? '<p>正常阅读</p>');
         await request.response.close();

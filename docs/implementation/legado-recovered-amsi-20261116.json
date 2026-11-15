@@ -1,0 +1,2532 @@
+{
+  "method": "Anonymous HTTPS GET /, all DNS answers must be public and TCP uses a validated IP; TLS hostname checked; no redirects, credentials, scripts or subresources.",
+  "scope": "All previously inventoried bundled Legado hosts, with previously sampled HTML hosts first. A fresh bounded root-page prefix and bounded inline script text are scanned; linked scripts and downloaded files are not fetched. No whole-site malware conclusion.",
+  "privacy": "Page bodies are held in memory only and are not saved by this tool; the installed AMSI antimalware provider may use cloud protection or sample submission under its existing settings. The tool does not submit bookcase data or credentials.",
+  "archive_sha256": "012a0e0d6e6adc8d303c32b578510e14b562088b3e965cb01a1a647b5e7e034d",
+  "prior_audit_sha256": "2e4a00a135281e888daa4aa6871e5e6f4541bf519189ba4383ccb4b398588089",
+  "import_inventory_sha256": "ad4e347888cad71812ee7da9477f027baf0bee5bceb1d4247fc69d6c4df8764c",
+  "total_hosts": 40,
+  "prior_html_hosts": 0,
+  "offset": 0,
+  "requested_hosts": 40,
+  "workers": 4,
+  "minimum_request_start_interval_seconds": 0.6,
+  "network_deadline_seconds": 8.0,
+  "amsi_worker_deadline_seconds": 15,
+  "max_html_bytes": 32768,
+  "max_inline_scripts_per_page": 6,
+  "max_inline_script_bytes": 8192,
+  "inline_script_limitations": "ASCII-compatible HTML parser over the bounded prefix; no external script fetch. Empty tags are counted but not scanned, later scripts and excess bytes are omitted; partial tags/scripts and encodings such as UTF-16 may not be recognized.",
+  "started_at": "2026-11-15T21:00:40.297987+00:00",
+  "defender_status": {
+    "AMRunningMode": "Normal",
+    "AntivirusEnabled": true,
+    "AntivirusSignatureVersion": "1.463.313.0",
+    "AntivirusSignatureLastUpdated": "2026-11-15T07:49:58.0000000Z",
+    "AMProductVersion": "4.18.26100.4"
+  },
+  "controls": {
+    "observed_at": "2026-11-15T21:00:42.322778+00:00",
+    "negative": {
+      "phase": "scan",
+      "hresult": "0x00000000",
+      "amsi_result": 1,
+      "classification": "not_detected"
+    },
+    "eicar": {
+      "phase": "scan",
+      "hresult": "0x00000000",
+      "amsi_result": 32768,
+      "classification": "detected"
+    },
+    "html_wrapped_eicar": {
+      "phase": "scan",
+      "hresult": "0x00000000",
+      "amsi_result": 1,
+      "classification": "not_detected"
+    },
+    "inline_script_with_eicar": {
+      "phase": "scan",
+      "hresult": "0x00000000",
+      "amsi_result": 1,
+      "classification": "not_detected"
+    },
+    "passed": true
+  },
+  "results": [
+    {
+      "host": "69shux.co",
+      "record_indices": [
+        3947,
+        4831
+      ],
+      "selected_source_ids": [
+        "df2bb51ba6eedab8be7554a964e2ecef126fde39e19611f615ed085eb532d2df"
+      ],
+      "started_at": "2026-11-15T21:00:42.322969+00:00",
+      "http_status": 200,
+      "content_type": "text/html",
+      "truncated": false,
+      "sample_bytes": 27422,
+      "sample_sha256": "a11760dae4167e2e68558cc1881996b8342afda8de48a0499144d54d3674573b",
+      "sample_observed_at": "2026-11-15T21:00:43.456733+00:00",
+      "amsi": {
+        "phase": "scan",
+        "hresult": "0x00000000",
+        "amsi_result": 1,
+        "classification": "not_detected"
+      },
+      "inline_scripts": {
+        "script_tags_observed": 4,
+        "nonempty_inline_scripts_observed": 3,
+        "inline_scripts_selected": 3,
+        "inline_scripts_omitted": 0,
+        "samples": [
+          {
+            "ordinal": 2,
+            "has_src_attribute": false,
+            "bytes_seen": 14562,
+            "sample_bytes": 8192,
+            "sample_sha256": "1086c16e34ef9dbe4001a2ebba0d401b8f052dbf1285ee29dbd8a55a91d034cc",
+            "truncated": true,
+            "closing_tag_observed": true,
+            "amsi": {
+              "phase": "scan",
+              "hresult": "0x00000000",
+              "amsi_result": 1,
+              "classification": "not_detected"
+            }
+          },
+          {
+            "ordinal": 3,
+            "has_src_attribute": false,
+            "bytes_seen": 10460,
+            "sample_bytes": 8192,
+            "sample_sha256": "e73093ff0a83fb207e32f7272104c341165727c9e9bfd36f55e746f36225a884",
+            "truncated": true,
+            "closing_tag_observed": true,
+            "amsi": {
+              "phase": "scan",
+              "hresult": "0x00000000",
+              "amsi_result": 1,
+              "classification": "not_detected"
+            }
+          },
+          {
+            "ordinal": 4,
+            "has_src_attribute": false,
+            "bytes_seen": 890,
+            "sample_bytes": 890,
+            "sample_sha256": "f6d913d8cc6843b45142c19dc05fb955905657d37d3ee57075c78eb1b7ecd981",
+            "truncated": false,
+            "closing_tag_observed": true,
+            "amsi": {
+              "phase": "scan",
+              "hresult": "0x00000000",
+              "amsi_result": 1,
+              "classification": "not_detected"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "host": "b.guidaye.com",
+      "record_indices": [
+        876,
+        2890
+      ],
+      "selected_source_ids": [],
+      "started_at": "2026-11-15T21:00:42.923184+00:00",
+      "http_status": 200,
+      "content_type": "text/html",
+      "truncated": true,
+      "sample_bytes": 32768,
+      "sample_sha256": "e8922e6a7b7fe469f3ef7cab92baa17a4ddb4e5f1a9a25926f12f8819060d78b",
+      "sample_observed_at": "2026-11-15T21:00:43.825366+00:00",
+      "amsi": {
+        "phase": "scan",
+        "hresult": "0x00000000",
+        "amsi_result": 1,
+        "classification": "not_detected"
+      },
+      "inline_scripts": {
+        "script_tags_observed": 5,
+        "nonempty_inline_scripts_observed": 3,
+        "inline_scripts_selected": 3,
+        "inline_scripts_omitted": 0,
+        "samples": [
+          {
+            "ordinal": 2,
+            "has_src_attribute": false,
+            "bytes_seen": 2007,
+            "sample_bytes": 2007,
+            "sample_sha256": "a69a32bce61af22a511ffcae335d724cb0910064e5e8c57a547f1d9ac2006d6a",
+            "truncated": false,
+            "closing_tag_observed": true,
+            "amsi": {
+              "phase": "scan",
+              "hresult": "0x00000000",
+              "amsi_result": 1,
+              "classification": "not_detected"
+            }
+          },
+          {
+            "ordinal": 4,
+            "has_src_attribute": false,
+            "bytes_seen": 180,
+            "sample_bytes": 180,
+            "sample_sha256": "c4dd2464025edae324d9a442c38efd5d07a3aadb3283028d2d091b504d786079",
+            "truncated": false,
+            "closing_tag_observed": true,
+            "amsi": {
+              "phase": "scan",
+              "hresult": "0x00000000",
+              "amsi_result": 1,
+              "classification": "not_detected"
+            }
+          },
+          {
+            "ordinal": 5,
+            "has_src_attribute": false,
+            "bytes_seen": 3299,
+            "sample_bytes": 3299,
+            "sample_sha256": "6ec3830f5a54f7016661e9aa1b446387683d696f2f05bf8e187e78fb3eae1b87",
+            "truncated": false,
+            "closing_tag_observed": true,
+            "amsi": {
+              "phase": "scan",
+              "hresult": "0x00000000",
+              "amsi_result": 1,
+              "classification": "not_detected"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "host": "i.12bz.net",
+      "record_indices": [
+        1236,
+        3123,
+        4729,
+        4740
+      ],
+      "selected_source_ids": [
+        "04bcb61b79595729a59083d8137d536c9aea56a8b5023a601cbccb9c8e7bd204",
+        "25209b2554ef51f2360edd02c813a63fd799ad8d9674b091fb68bd4c8c66509f",
+        "df954ffc66302d0b7d931af18f0c850a51b72baa03054f3ad59196e2c60f1a5f"
+      ],
+      "started_at": "2026-11-15T21:00:43.523644+00:00",
+      "http_status": 200,
+      "content_type": "text/html",
+      "truncated": false,
+      "sample_bytes": 12709,
+      "sample_sha256": "a55ab35b37c701851b034a5e14f91c789566689da0be7448d639a7fe6ab4c14a",
+      "sample_observed_at": "2026-11-15T21:00:44.818230+00:00",
+      "amsi": {
+        "phase": "scan",
+        "hresult": "0x00000000",
+        "amsi_result": 1,
+        "classification": "not_detected"
+      },
+      "inline_scripts": {
+        "script_tags_observed": 11,
+        "nonempty_inline_scripts_observed": 7,
+        "inline_scripts_selected": 6,
+        "inline_scripts_omitted": 1,
+        "samples": [
+          {
+            "ordinal": 3,
+            "has_src_attribute": false,
+            "bytes_seen": 32,
+            "sample_bytes": 32,
+            "sample_sha256": "c497de2cde84f7395513f929635816629e0465bb250387ef4ad15f53d61aad21",
+            "truncated": false,
+            "closing_tag_observed": true,
+            "amsi": {
+              "phase": "scan",
+              "hresult": "0x00000000",
+              "amsi_result": 1,
+              "classification": "not_detected"
+            }
+          },
+          {
+            "ordinal": 4,
+            "has_src_attribute": false,
+            "bytes_seen": 214,
+            "sample_bytes": 214,
+            "sample_sha256": "a2da50aea58a828e3f46b7ea0c07ae8afa607ee262c5a1a60512b58876bf6383",
+            "truncated": false,
+            "closing_tag_observed": true,
+            "amsi": {
+              "phase": "scan",
+              "hresult": "0x00000000",
+              "amsi_result": 1,
+              "classification": "not_detected"
+            }
+          },
+          {
+            "ordinal": 5,
+            "has_src_attribute": false,
+            "bytes_seen": 11,
+            "sample_bytes": 11,
+            "sample_sha256": "973abc85cabda1075ffd70fa3b5bccbdb43491968a26f350970c20143d40e6da",
+            "truncated": false,
+            "closing_tag_observed": true,
+            "amsi": {
+              "phase": "scan",
+              "hresult": "0x00000000",
+              "amsi_result": 1,
+              "classification": "not_detected"
+            }
+          },
+          {
+            "ordinal": 6,
+            "has_src_attribute": false,
+            "bytes_seen": 12,
+            "sample_bytes": 12,
+            "sample_sha256": "74c3dd3f6fc4a3b0ad2943e2a80474938583709d8dc9b5db22b9cef7c46ac75c",
+            "truncated": false,
+            "closing_tag_observed": true,
+            "amsi": {
+              "phase": "scan",
+              "hresult": "0x00000000",
+              "amsi_result": 1,
+              "classification": "not_detected"
+            }
+          },
+          {
+            "ordinal": 7,
+            "has_src_attribute": false,
+            "bytes_seen": 12,
+            "sample_bytes": 12,
+            "sample_sha256": "4e1096e815a85be591afd11251e05ceb674f488ccbc00907ca2e341fe4b3eedb",
+            "truncated": false,
+            "closing_tag_observed": true,
+            "amsi": {
+              "phase": "scan",
+              "hresult": "0x00000000",
+              "amsi_result": 1,
+              "classification": "not_detected"
+            }
+          },
+          {
+            "ordinal": 8,
+            "has_src_attribute": false,
+            "bytes_seen": 15,
+            "sample_bytes": 15,
+            "sample_sha256": "0cc6de578497aea594f3eca2936a15fe5a9a44b433e078b3cdcb5c6a46efd6cb",
+            "truncated": false,
+            "closing_tag_observed": true,
+            "amsi": {
+              "phase": "scan",
+              "hresult": "0x00000000",
+              "amsi_result": 1,
+              "classification": "not_detected"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "host": "m.bqg18.cc",
+      "record_indices": [
+        1861
+      ],
+      "selected_source_ids": [
+        "871e784b3a8716e21101f96fedc35287d17b974e7390a6e76c786b46d79f8ddc"
+      ],
+      "started_at": "2026-11-15T21:00:44.124109+00:00",
+      "http_status": 200,
+      "content_type": "text/html",
+      "truncated": false,
+      "sample_bytes": 11292,
+      "sample_sha256": "9792e407a88df14923309ed1864193948d32087cce05cb6c61fc1e1c13744fda",
+      "sample_observed_at": "2026-11-15T21:00:44.979402+00:00",
+      "amsi": {
+        "phase": "scan",
+        "hresult": "0x00000000",
+        "amsi_result": 1,
+        "classification": "not_detected"
+      },
+      "inline_scripts": {
+        "script_tags_observed": 3,
+        "nonempty_inline_scripts_observed": 1,
+        "inline_scripts_selected": 1,
+        "inline_scripts_omitted": 0,
+        "samples": [
+          {
+            "ordinal": 3,
+            "has_src_attribute": false,
+            "bytes_seen": 5,
+            "sample_bytes": 5,
+            "sample_sha256": "5fa08d498872ff4dca2e877ec1c7a86eba4b68b95e1a6d1cba4c0df7209eeff1",
+            "truncated": false,
+            "closing_tag_observed": true,
+            "amsi": {
+              "phase": "scan",
+              "hresult": "0x00000000",
+              "amsi_result": 1,
+              "classification": "not_detected"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "host": "m.cdmdk.com",
+      "record_indices": [
+        2992
+      ],
+      "selected_source_ids": [],
+      "started_at": "2026-11-15T21:00:44.724408+00:00",
+      "http_status": 200,
+      "content_type": "text/html",
+      "truncated": false,
+      "sample_bytes": 13640,
+      "sample_sha256": "e76d45e6188ab98ed3ed02ab55188bdb80583bd64bae4aa1e9606cb2a5318137",
+      "sample_observed_at": "2026-11-15T21:00:45.603305+00:00",
+      "amsi": {
+        "phase": "scan",
+        "hresult": "0x00000000",
+        "amsi_result": 1,
+        "classification": "not_detected"
+      },
+      "inline_scripts": {
+        "script_tags_observed": 6,
+        "nonempty_inline_scripts_observed": 2,
+        "inline_scripts_selected": 2,
+        "inline_scripts_omitted": 0,
+        "samples": [
+          {
+            "ordinal": 2,
+            "has_src_attribute": false,
+            "bytes_seen": 105,
+            "sample_bytes": 105,
+            "sample_sha256": "85bf936e611610373a717cb719835385c9ec58ee13177c68b4327032d008c3c2",
+            "truncated": false,
+            "closing_tag_observed": true,
+            "amsi": {
+              "phase": "scan",
+              "hresult": "0x00000000",
+              "amsi_result": 1,
+              "classification": "not_detected"
+            }
+          },
+          {
+            "ordinal": 3,
+            "has_src_attribute": false,
+            "bytes_seen": 262,
+            "sample_bytes": 262,
+            "sample_sha256": "e45f53b9194313f66e3e0780130fbeb63b9131a155728ec37e71db0df6edba0b",
+            "truncated": false,
+            "closing_tag_observed": true,
+            "amsi": {
+              "phase": "scan",
+              "hresult": "0x00000000",
+              "amsi_result": 1,
+              "classification": "not_detected"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "host": "m.lazhaiwu.com",
+      "record_indices": [
+        440
+      ],
+      "selected_source_ids": [
+        "afcccdde162ca226f8320297fd1d928c3c35f20475c7c5ab1e60baf6de5fcfcd"
+      ],
+      "started_at": "2026-11-15T21:00:45.324449+00:00",
+      "http_status": 200,
+      "content_type": "text/html",
+      "truncated": false,
+      "sample_bytes": 20468,
+      "sample_sha256": "f2efce890d3cf38236cc871b975ab6de2242481314441db100709e8064032b20",
+      "sample_observed_at": "2026-11-15T21:00:47.322948+00:00",
+      "amsi": {
+        "phase": "scan",
+        "hresult": "0x00000000",
+        "amsi_result": 1,
+        "classification": "not_detected"
+      },
+      "inline_scripts": {
+        "script_tags_observed": 10,
+        "nonempty_inline_scripts_observed": 5,
+        "inline_scripts_selected": 5,
+        "inline_scripts_omitted": 0,
+        "samples": [
+          {
+            "ordinal": 3,
+            "has_src_attribute": false,
+            "bytes_seen": 6,
+            "sample_bytes": 6,
+            "sample_sha256": "185bd1245a4a7e206ab9a1bd98745a30136d6f8ead74dfb1001b30c5e67fcc97",
+            "truncated": false,
+            "closing_tag_observed": true,
+            "amsi": {
+              "phase": "scan",
+              "hresult": "0x00000000",
+              "amsi_result": 1,
+              "classification": "not_detected"
+            }
+          },
+          {
+            "ordinal": 4,
+            "has_src_attribute": false,
+            "bytes_seen": 11,
+            "sample_bytes": 11,
+            "sample_sha256": "12570bfa5427f1e89cc4b45741b96bd30db0002e32b778af6ffe8c01b93fc99b",
+            "truncated": false,
+            "closing_tag_observed": true,
+            "amsi": {
+              "phase": "scan",
+              "hresult": "0x00000000",
+              "amsi_result": 1,
+              "classification": "not_detected"
+            }
+          },
+          {
+            "ordinal": 5,
+            "has_src_attribute": false,
+            "bytes_seen": 8,
+            "sample_bytes": 8,
+            "sample_sha256": "e0db30ed34debbc0ea04087dd3c735abfe9a6a2383250bb84649722567a34777",
+            "truncated": false,
+            "closing_tag_observed": true,
+            "amsi": {
+              "phase": "scan",
+              "hresult": "0x00000000",
+              "amsi_result": 1,
+              "classification": "not_detected"
+            }
+          },
+          {
+            "ordinal": 6,
+            "has_src_attribute": false,
+            "bytes_seen": 42,
+            "sample_bytes": 42,
+            "sample_sha256": "b73e857bc9f94f93f625b3105cd7a828bfb608d0e73fb2876af439ce59298cce",
+            "truncated": false,
+            "closing_tag_observed": true,
+            "amsi": {
+              "phase": "scan",
+              "hresult": "0x00000000",
+              "amsi_result": 1,
+              "classification": "not_detected"
+            }
+          },
+          {
+            "ordinal": 8,
+            "has_src_attribute": false,
+            "bytes_seen": 404,
+            "sample_bytes": 404,
+            "sample_sha256": "6520359b93c2e43efd5a58f422af308b43c718769a0989344a10f00b345ca0b2",
+            "truncated": false,
+            "closing_tag_observed": true,
+            "amsi": {
+              "phase": "scan",
+              "hresult": "0x00000000",
+              "amsi_result": 1,
+              "classification": "not_detected"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "host": "m.longtengxiaoshuo.org",
+      "record_indices": [
+        902,
+        3137,
+        4722
+      ],
+      "selected_source_ids": [
+        "fe3bbae11dcbc603cd90368e1e4b21465143215a56b8b70a92def6d7c281fcad"
+      ],
+      "started_at": "2026-11-15T21:00:45.924569+00:00",
+      "http_status": 200,
+      "content_type": "text/html",
+      "truncated": false,
+      "sample_bytes": 27462,
+      "sample_sha256": "70feabe536afe861d93ec2e5180f31b16dbaa368273e8bc5850cc671964cd1e8",
+      "sample_observed_at": "2026-11-15T21:00:46.922854+00:00",
+      "amsi": {
+        "phase": "scan",
+        "hresult": "0x00000000",
+        "amsi_result": 1,
+        "classification": "not_detected"
+      },
+      "inline_scripts": {
+        "script_tags_observed": 7,
+        "nonempty_inline_scripts_observed": 3,
+        "inline_scripts_selected": 3,
+        "inline_scripts_omitted": 0,
+        "samples": [
+          {
+            "ordinal": 2,
+            "has_src_attribute": false,
+            "bytes_seen": 6,
+            "sample_bytes": 6,
+            "sample_sha256": "185bd1245a4a7e206ab9a1bd98745a30136d6f8ead74dfb1001b30c5e67fcc97",
+            "truncated": false,
+            "closing_tag_observed": true,
+            "amsi": {
+              "phase": "scan",
+              "hresult": "0x00000000",
+              "amsi_result": 1,
+              "classification": "not_detected"
+            }
+          },
+          {
+            "ordinal": 3,
+            "has_src_attribute": false,
+            "bytes_seen": 12,
+            "sample_bytes": 12,
+            "sample_sha256": "74c3dd3f6fc4a3b0ad2943e2a80474938583709d8dc9b5db22b9cef7c46ac75c",
+            "truncated": false,
+            "closing_tag_observed": true,
+            "amsi": {
+              "phase": "scan",
+              "hresult": "0x00000000",
+              "amsi_result": 1,
+              "classification": "not_detected"
+            }
+          },
+          {
+            "ordinal": 4,
+            "has_src_attribute": false,
+            "bytes_seen": 15,
+            "sample_bytes": 15,
+            "sample_sha256": "0cc6de578497aea594f3eca2936a15fe5a9a44b433e078b3cdcb5c6a46efd6cb",
+            "truncated": false,
+            "closing_tag_observed": true,
+            "amsi": {
+              "phase": "scan",
+              "hresult": "0x00000000",
+              "amsi_result": 1,
+              "classification": "not_detected"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "host": "m.lulushuwu.com",
+      "record_indices": [
+        4575
+      ],
+      "selected_source_ids": [
+        "4e95bd4a3a986918d25c82e981497b8303deee710b825c32b5da093bbcbfc39d"
+      ],
+      "started_at": "2026-11-15T21:00:46.525008+00:00",
+      "http_status": 200,
+      "content_type": "text/html",
+      "truncated": false,
+      "sample_bytes": 19100,
+      "sample_sha256": "e86841b205921ffc5cc63bf0ff5286a9932dff60a570f93ac2cee063496e883f",
+      "sample_observed_at": "2026-11-15T21:00:47.374107+00:00",
+      "amsi": {
+        "phase": "scan",
+        "hresult": "0x00000000",
+        "amsi_result": 1,
+        "classification": "not_detected"
+      },
+      "inline_scripts": {
+        "script_tags_observed": 8,
+        "nonempty_inline_scripts_observed": 2,
+        "inline_scripts_selected": 2,
+        "inline_scripts_omitted": 0,
+        "samples": [
+          {
+            "ordinal": 1,
+            "has_src_attribute": false,
+            "bytes_seen": 559,
+            "sample_bytes": 559,
+            "sample_sha256": "0d9ca09b52f6ed691f4083e05e5decadfded707b4a0deafa786f4df646b159cb",
+            "truncated": false,
+            "closing_tag_observed": true,
+            "amsi": {
+              "phase": "scan",
+              "hresult": "0x00000000",
+              "amsi_result": 1,
+              "classification": "not_detected"
+            }
+          },
+          {
+            "ordinal": 7,
+            "has_src_attribute": false,
+            "bytes_seen": 234,
+            "sample_bytes": 234,
+            "sample_sha256": "147964dda03f25c4865530a53cd5c992c22935f9ba9b6a8398546e62c06019ac",
+            "truncated": false,
+            "closing_tag_observed": true,
+            "amsi": {
+              "phase": "scan",
+              "hresult": "0x00000000",
+              "amsi_result": 1,
+              "classification": "not_detected"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "host": "m.qinkan.net",
+      "record_indices": [
+        753,
+        2700
+      ],
+      "selected_source_ids": [],
+      "started_at": "2026-11-15T21:00:47.125333+00:00",
+      "http_status": 200,
+      "content_type": "text/html",
+      "truncated": false,
+      "sample_bytes": 8769,
+      "sample_sha256": "bbfb895484cdceecf035c41802222d135914b9c47064be6d95d9b71b7b6ef220",
+      "sample_observed_at": "2026-11-15T21:00:47.963931+00:00",
+      "amsi": {
+        "phase": "scan",
+        "hresult": "0x00000000",
+        "amsi_result": 1,
+        "classification": "not_detected"
+      },
+      "inline_scripts": {
+        "script_tags_observed": 6,
+        "nonempty_inline_scripts_observed": 1,
+        "inline_scripts_selected": 1,
+        "inline_scripts_omitted": 0,
+        "samples": [
+          {
+            "ordinal": 5,
+            "has_src_attribute": false,
+            "bytes_seen": 1097,
+            "sample_bytes": 1097,
+            "sample_sha256": "62dd9017e5a2460f39d0c5a19b52141b436e302c9304c9772f42391358128542",
+            "truncated": false,
+            "closing_tag_observed": true,
+            "amsi": {
+              "phase": "scan",
+              "hresult": "0x00000000",
+              "amsi_result": 1,
+              "classification": "not_detected"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "host": "m.qisexs.com",
+      "record_indices": [
+        1112,
+        3111
+      ],
+      "selected_source_ids": [
+        "72b80a1b9b127164f5d0e3fc7301525827ea3f1347ed688b20d68952993aa299"
+      ],
+      "started_at": "2026-11-15T21:00:47.725522+00:00",
+      "http_status": 200,
+      "content_type": "text/html",
+      "truncated": false,
+      "sample_bytes": 4993,
+      "sample_sha256": "23c3f7060f2e0c04131d61c5be8d12ee68050738dc8c463d7d644a4843fd627c",
+      "sample_observed_at": "2026-11-15T21:00:48.614363+00:00",
+      "amsi": {
+        "phase": "scan",
+        "hresult": "0x00000000",
+        "amsi_result": 1,
+        "classification": "not_detected"
+      },
+      "inline_scripts": {
+        "script_tags_observed": 7,
+        "nonempty_inline_scripts_observed": 3,
+        "inline_scripts_selected": 3,
+        "inline_scripts_omitted": 0,
+        "samples": [
+          {
+            "ordinal": 4,
+            "has_src_attribute": false,
+            "bytes_seen": 4,
+            "sample_bytes": 4,
+            "sample_sha256": "d88f3c559c31057a9d88b45e1b62d7044a7c9e22d072adf7990593d1cbb77d4d",
+            "truncated": false,
+            "closing_tag_observed": true,
+            "amsi": {
+              "phase": "scan",
+              "hresult": "0x00000000",
+              "amsi_result": 1,
+              "classification": "not_detected"
+            }
+          },
+          {
+            "ordinal": 5,
+            "has_src_attribute": false,
+            "bytes_seen": 11,
+            "sample_bytes": 11,
+            "sample_sha256": "a6fda737c7463da4c869199ea1232739c22938ef2ff9ad25791084b1a3997e6a",
+            "truncated": false,
+            "closing_tag_observed": true,
+            "amsi": {
+              "phase": "scan",
+              "hresult": "0x00000000",
+              "amsi_result": 1,
+              "classification": "not_detected"
+            }
+          },
+          {
+            "ordinal": 6,
+            "has_src_attribute": false,
+            "bytes_seen": 25,
+            "sample_bytes": 25,
+            "sample_sha256": "3f2eff476950f2b4ab19d487c3a680f7860b21d9ab8cdc57bd91ecc9f2c5ddbe",
+            "truncated": false,
+            "closing_tag_observed": true,
+            "amsi": {
+              "phase": "scan",
+              "hresult": "0x00000000",
+              "amsi_result": 1,
+              "classification": "not_detected"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "host": "m.woo15.com",
+      "record_indices": [
+        1364,
+        2229,
+        4218,
+        4220,
+        4222
+      ],
+      "selected_source_ids": [
+        "1b9fbc433c81ac824c2a20ece0332a66c79c7abe8a4da1b28b74f0a26e220763",
+        "38ff9c4ee9a4b64192f10046721e2c6a2c50c2ec80d3d3b5eccd3ae7e40b6022",
+        "cab07dec6b3f4ab2ece1b1a261aad7e155b9de9bcc4f517f70cd5490011ba393"
+      ],
+      "started_at": "2026-11-15T21:00:48.325793+00:00",
+      "http_status": 200,
+      "content_type": "text/html",
+      "truncated": true,
+      "sample_bytes": 32768,
+      "sample_sha256": "21f68da1f531cf9d1ae7722fe34f594b7ca915c6de22ba14303d2cc793ede08d",
+      "sample_observed_at": "2026-11-15T21:00:49.324088+00:00",
+      "amsi": {
+        "phase": "scan",
+        "hresult": "0x00000000",
+        "amsi_result": 1,
+        "classification": "not_detected"
+      },
+      "inline_scripts": {
+        "script_tags_observed": 3,
+        "nonempty_inline_scripts_observed": 2,
+        "inline_scripts_selected": 2,
+        "inline_scripts_omitted": 0,
+        "samples": [
+          {
+            "ordinal": 2,
+            "has_src_attribute": false,
+            "bytes_seen": 8,
+            "sample_bytes": 8,
+            "sample_sha256": "5790ee3ddcf4feb858c91a0a4b2b77ef8076c3e45241fcb846250a8d6b31244a",
+            "truncated": false,
+            "closing_tag_observed": true,
+            "amsi": {
+              "phase": "scan",
+              "hresult": "0x00000000",
+              "amsi_result": 1,
+              "classification": "not_detected"
+            }
+          },
+          {
+            "ordinal": 3,
+            "has_src_attribute": false,
+            "bytes_seen": 1187,
+            "sample_bytes": 1187,
+            "sample_sha256": "e437246b747288f8b6d5278fc22003405c951be7f9bed4d0744b3969e4bedc08",
+            "truncated": false,
+            "closing_tag_observed": true,
+            "amsi": {
+              "phase": "scan",
+              "hresult": "0x00000000",
+              "amsi_result": 1,
+              "classification": "not_detected"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "host": "m.zhanvxs.cc",
+      "record_indices": [
+        4485,
+        4494
+      ],
+      "selected_source_ids": [
+        "63ae1d87e428bc772aed26b531b073f05ec2b07ae32ca1b89e1a466bbad66fc1",
+        "e9a26ffe1152c5087487e223a1b328969f5ad54778240052f34daca3b2664804"
+      ],
+      "started_at": "2026-11-15T21:00:48.926180+00:00",
+      "http_status": 200,
+      "content_type": "text/html",
+      "truncated": false,
+      "sample_bytes": 27673,
+      "sample_sha256": "828043e1f42da64e3f7c68af76506a16d5f57da68e6de0416c74c3604236e8e6",
+      "sample_observed_at": "2026-11-15T21:00:49.835947+00:00",
+      "amsi": {
+        "phase": "scan",
+        "hresult": "0x00000000",
+        "amsi_result": 1,
+        "classification": "not_detected"
+      },
+      "inline_scripts": {
+        "script_tags_observed": 10,
+        "nonempty_inline_scripts_observed": 8,
+        "inline_scripts_selected": 6,
+        "inline_scripts_omitted": 2,
+        "samples": [
+          {
+            "ordinal": 2,
+            "has_src_attribute": false,
+            "bytes_seen": 6,
+            "sample_bytes": 6,
+            "sample_sha256": "185bd1245a4a7e206ab9a1bd98745a30136d6f8ead74dfb1001b30c5e67fcc97",
+            "truncated": false,
+            "closing_tag_observed": true,
+            "amsi": {
+              "phase": "scan",
+              "hresult": "0x00000000",
+              "amsi_result": 1,
+              "classification": "not_detected"
+            }
+          },
+          {
+            "ordinal": 3,
+            "has_src_attribute": false,
+            "bytes_seen": 12,
+            "sample_bytes": 12,
+            "sample_sha256": "74c3dd3f6fc4a3b0ad2943e2a80474938583709d8dc9b5db22b9cef7c46ac75c",
+            "truncated": false,
+            "closing_tag_observed": true,
+            "amsi": {
+              "phase": "scan",
+              "hresult": "0x00000000",
+              "amsi_result": 1,
+              "classification": "not_detected"
+            }
+          },
+          {
+            "ordinal": 4,
+            "has_src_attribute": false,
+            "bytes_seen": 15,
+            "sample_bytes": 15,
+            "sample_sha256": "0cc6de578497aea594f3eca2936a15fe5a9a44b433e078b3cdcb5c6a46efd6cb",
+            "truncated": false,
+            "closing_tag_observed": true,
+            "amsi": {
+              "phase": "scan",
+              "hresult": "0x00000000",
+              "amsi_result": 1,
+              "classification": "not_detected"
+            }
+          },
+          {
+            "ordinal": 5,
+            "has_src_attribute": false,
+            "bytes_seen": 15,
+            "sample_bytes": 15,
+            "sample_sha256": "d7b3ff2daff8ad0ab75c1b3a130b70483a50a3d31e44ad612034abb0360385aa",
+            "truncated": false,
+            "closing_tag_observed": true,
+            "amsi": {
+              "phase": "scan",
+              "hresult": "0x00000000",
+              "amsi_result": 1,
+              "classification": "not_detected"
+            }
+          },
+          {
+            "ordinal": 6,
+            "has_src_attribute": false,
+            "bytes_seen": 262,
+            "sample_bytes": 262,
+            "sample_sha256": "0d934212b00b6c6f03351974b0bdc46294542c687c82478dc1d42300485e2686",
+            "truncated": false,
+            "closing_tag_observed": true,
+            "amsi": {
+              "phase": "scan",
+              "hresult": "0x00000000",
+              "amsi_result": 1,
+              "classification": "not_detected"
+            }
+          },
+          {
+            "ordinal": 7,
+            "has_src_attribute": false,
+            "bytes_seen": 315,
+            "sample_bytes": 315,
+            "sample_sha256": "48b5881c688a5288bdfeb6eda4d9c8b1381fae728e4d59fc22d8d323d9b8e998",
+            "truncated": false,
+            "closing_tag_observed": true,
+            "amsi": {
+              "phase": "scan",
+              "hresult": "0x00000000",
+              "amsi_result": 1,
+              "classification": "not_detected"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "host": "rawkuma.com",
+      "record_indices": [
+        4057
+      ],
+      "selected_source_ids": [
+        "b7e451e799dde2f6f3fdfaec90be0dbb387b779e65ef9957d8e4f0d79c1abdff"
+      ],
+      "started_at": "2026-11-15T21:00:49.526656+00:00",
+      "http_status": 200,
+      "content_type": "text/html",
+      "truncated": true,
+      "sample_bytes": 32768,
+      "sample_sha256": "26a2447918a24efd5196f657d9af6c1947ece9d4c55cca3d30c8737bde78ce5f",
+      "sample_observed_at": "2026-11-15T21:00:51.193792+00:00",
+      "amsi": {
+        "phase": "scan",
+        "hresult": "0x00000000",
+        "amsi_result": 1,
+        "classification": "not_detected"
+      },
+      "inline_scripts": {
+        "script_tags_observed": 1,
+        "nonempty_inline_scripts_observed": 1,
+        "inline_scripts_selected": 1,
+        "inline_scripts_omitted": 0,
+        "samples": [
+          {
+            "ordinal": 1,
+            "has_src_attribute": false,
+            "bytes_seen": 4842,
+            "sample_bytes": 4842,
+            "sample_sha256": "fc6c508fa02ab47f0aa60c71ded5efb6ddebb0a4fd2c943327f8154b761b0248",
+            "truncated": false,
+            "closing_tag_observed": true,
+            "amsi": {
+              "phase": "scan",
+              "hresult": "0x00000000",
+              "amsi_result": 1,
+              "classification": "not_detected"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "host": "roum26.xyz",
+      "record_indices": [
+        4828
+      ],
+      "selected_source_ids": [
+        "ec72141258d931cf218be074307cf65af36e8a3f4231d85322cec3ee9aebd7a0"
+      ],
+      "started_at": "2026-11-15T21:00:50.126731+00:00",
+      "http_status": 200,
+      "content_type": "text/html",
+      "truncated": false,
+      "sample_bytes": 4730,
+      "sample_sha256": "2a3a28951d5ad48ee8c6bf8ae5bf9667f11e452837ed6c6de3c9d889d05622d7",
+      "sample_observed_at": "2026-11-15T21:00:55.548141+00:00",
+      "amsi": {
+        "phase": "scan",
+        "hresult": "0x00000000",
+        "amsi_result": 1,
+        "classification": "not_detected"
+      },
+      "inline_scripts": {
+        "script_tags_observed": 3,
+        "nonempty_inline_scripts_observed": 1,
+        "inline_scripts_selected": 1,
+        "inline_scripts_omitted": 0,
+        "samples": [
+          {
+            "ordinal": 3,
+            "has_src_attribute": false,
+            "bytes_seen": 232,
+            "sample_bytes": 232,
+            "sample_sha256": "40657d58eefd7e13d7a820a93ecc2aaf2e6c4f024aacecf528d0c365096b98cf",
+            "truncated": false,
+            "closing_tag_observed": true,
+            "amsi": {
+              "phase": "scan",
+              "hresult": "0x00000000",
+              "amsi_result": 1,
+              "classification": "not_detected"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "host": "www.111bz.cc",
+      "record_indices": [
+        325,
+        3023
+      ],
+      "selected_source_ids": [
+        "bee0f9d6904aca009b59392479c8e205bddf1a0cc3fd1690fb17c2598500e30d"
+      ],
+      "started_at": "2026-11-15T21:00:50.727110+00:00",
+      "http_status": 200,
+      "content_type": "text/html",
+      "truncated": false,
+      "sample_bytes": 31159,
+      "sample_sha256": "27620b497ba54213203aed15889a9b7bf8bf891c43ca3147b84953418241a94f",
+      "sample_observed_at": "2026-11-15T21:00:51.603027+00:00",
+      "amsi": {
+        "phase": "scan",
+        "hresult": "0x00000000",
+        "amsi_result": 1,
+        "classification": "not_detected"
+      },
+      "inline_scripts": {
+        "script_tags_observed": 14,
+        "nonempty_inline_scripts_observed": 8,
+        "inline_scripts_selected": 6,
+        "inline_scripts_omitted": 2,
+        "samples": [
+          {
+            "ordinal": 2,
+            "has_src_attribute": false,
+            "bytes_seen": 33,
+            "sample_bytes": 33,
+            "sample_sha256": "07bb6ee925dd330fdf13cdea19f00c57190f212290af5647550ce33e3286fbae",
+            "truncated": false,
+            "closing_tag_observed": true,
+            "amsi": {
+              "phase": "scan",
+              "hresult": "0x00000000",
+              "amsi_result": 1,
+              "classification": "not_detected"
+            }
+          },
+          {
+            "ordinal": 6,
+            "has_src_attribute": false,
+            "bytes_seen": 33,
+            "sample_bytes": 33,
+            "sample_sha256": "07bb6ee925dd330fdf13cdea19f00c57190f212290af5647550ce33e3286fbae",
+            "truncated": false,
+            "closing_tag_observed": true,
+            "amsi": {
+              "phase": "scan",
+              "hresult": "0x00000000",
+              "amsi_result": 1,
+              "classification": "not_detected"
+            }
+          },
+          {
+            "ordinal": 7,
+            "has_src_attribute": false,
+            "bytes_seen": 8,
+            "sample_bytes": 8,
+            "sample_sha256": "5790ee3ddcf4feb858c91a0a4b2b77ef8076c3e45241fcb846250a8d6b31244a",
+            "truncated": false,
+            "closing_tag_observed": true,
+            "amsi": {
+              "phase": "scan",
+              "hresult": "0x00000000",
+              "amsi_result": 1,
+              "classification": "not_detected"
+            }
+          },
+          {
+            "ordinal": 9,
+            "has_src_attribute": false,
+            "bytes_seen": 12,
+            "sample_bytes": 12,
+            "sample_sha256": "360001cea5cf191d6a2667f9882b136753845c9ba15a8afa27bdd7356794ff99",
+            "truncated": false,
+            "closing_tag_observed": true,
+            "amsi": {
+              "phase": "scan",
+              "hresult": "0x00000000",
+              "amsi_result": 1,
+              "classification": "not_detected"
+            }
+          },
+          {
+            "ordinal": 10,
+            "has_src_attribute": false,
+            "bytes_seen": 8,
+            "sample_bytes": 8,
+            "sample_sha256": "d4fe8d2ff53d9ea7c27309c417ba8c371cd30a0d73de782e87ee0d5073fbbcfe",
+            "truncated": false,
+            "closing_tag_observed": true,
+            "amsi": {
+              "phase": "scan",
+              "hresult": "0x00000000",
+              "amsi_result": 1,
+              "classification": "not_detected"
+            }
+          },
+          {
+            "ordinal": 11,
+            "has_src_attribute": false,
+            "bytes_seen": 8,
+            "sample_bytes": 8,
+            "sample_sha256": "b8be81664adf9b02dbda230284acd42f54a8415e39db077f13308fd5db09b59d",
+            "truncated": false,
+            "closing_tag_observed": true,
+            "amsi": {
+              "phase": "scan",
+              "hresult": "0x00000000",
+              "amsi_result": 1,
+              "classification": "not_detected"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "host": "www.14xsw.com",
+      "record_indices": [
+        2042
+      ],
+      "selected_source_ids": [],
+      "started_at": "2026-11-15T21:00:51.327586+00:00",
+      "failure": "connection_error",
+      "sample_observed_at": "2026-11-15T21:00:51.608193+00:00"
+    },
+    {
+      "host": "www.242xs.info",
+      "record_indices": [
+        2940
+      ],
+      "selected_source_ids": [
+        "67a2a1f1f3cb1fe0abba50885d93798631ac0776df9eaba887ebb6f5c0f55870"
+      ],
+      "started_at": "2026-11-15T21:00:51.928114+00:00",
+      "http_status": 200,
+      "content_type": "text/html",
+      "truncated": false,
+      "sample_bytes": 1509,
+      "sample_sha256": "5cfb758283f0b9940e97855e43caa95a5c8fdddaedd95f7835f65e66abf83fed",
+      "sample_observed_at": "2026-11-15T21:00:52.825849+00:00",
+      "amsi": {
+        "phase": "scan",
+        "hresult": "0x00000000",
+        "amsi_result": 1,
+        "classification": "not_detected"
+      },
+      "inline_scripts": {
+        "script_tags_observed": 3,
+        "nonempty_inline_scripts_observed": 1,
+        "inline_scripts_selected": 1,
+        "inline_scripts_omitted": 0,
+        "samples": [
+          {
+            "ordinal": 2,
+            "has_src_attribute": false,
+            "bytes_seen": 54,
+            "sample_bytes": 54,
+            "sample_sha256": "d48cefeeff66f1f5ff9b941e9266a8a744d8a4cd7d68e97270240b2b3318777e",
+            "truncated": false,
+            "closing_tag_observed": true,
+            "amsi": {
+              "phase": "scan",
+              "hresult": "0x00000000",
+              "amsi_result": 1,
+              "classification": "not_detected"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "host": "www.527txt.com",
+      "record_indices": [
+        4022
+      ],
+      "selected_source_ids": [],
+      "started_at": "2026-11-15T21:00:52.528743+00:00",
+      "http_status": 200,
+      "content_type": "text/html",
+      "truncated": false,
+      "sample_bytes": 607,
+      "sample_sha256": "6c39701e515754a7aa5993cfc94ed02821ee1c0225280a99c714e68367527c82",
+      "sample_observed_at": "2026-11-15T21:00:53.351826+00:00",
+      "amsi": {
+        "phase": "scan",
+        "hresult": "0x00000000",
+        "amsi_result": 1,
+        "classification": "not_detected"
+      },
+      "inline_scripts": {
+        "script_tags_observed": 1,
+        "nonempty_inline_scripts_observed": 0,
+        "inline_scripts_selected": 0,
+        "inline_scripts_omitted": 0,
+        "samples": []
+      }
+    },
+    {
+      "host": "www.aiyinbei.com",
+      "record_indices": [
+        2460
+      ],
+      "selected_source_ids": [
+        "8a402d8196b1c6ef15b0c3c85db3bc357dd7a819dbbc29ee874d8dd23b2d8023"
+      ],
+      "started_at": "2026-11-15T21:00:53.128920+00:00",
+      "http_status": 200,
+      "content_type": "text/html",
+      "truncated": true,
+      "sample_bytes": 32768,
+      "sample_sha256": "980dbdd3ab01bf63663b53c56de7b676aae024202ddaaefe161d33b200065bea",
+      "sample_observed_at": "2026-11-15T21:00:54.096965+00:00",
+      "amsi": {
+        "phase": "scan",
+        "hresult": "0x00000000",
+        "amsi_result": 1,
+        "classification": "not_detected"
+      },
+      "inline_scripts": {
+        "script_tags_observed": 3,
+        "nonempty_inline_scripts_observed": 0,
+        "inline_scripts_selected": 0,
+        "inline_scripts_omitted": 0,
+        "samples": []
+      }
+    },
+    {
+      "host": "www.b520.cc",
+      "record_indices": [
+        2578
+      ],
+      "selected_source_ids": [
+        "926a302f72881a7c6488555dfd0779da9db89c7f1ae35fbb14fbaaa9846caa43"
+      ],
+      "started_at": "2026-11-15T21:00:53.729342+00:00",
+      "http_status": 200,
+      "content_type": "text/html",
+      "truncated": false,
+      "sample_bytes": 27757,
+      "sample_sha256": "e43fa72358a5307c7dc3370e725b3a98fd81fe700841758d419065e09056a38e",
+      "sample_observed_at": "2026-11-15T21:00:54.771647+00:00",
+      "amsi": {
+        "phase": "scan",
+        "hresult": "0x00000000",
+        "amsi_result": 1,
+        "classification": "not_detected"
+      },
+      "inline_scripts": {
+        "script_tags_observed": 12,
+        "nonempty_inline_scripts_observed": 7,
+        "inline_scripts_selected": 6,
+        "inline_scripts_omitted": 1,
+        "samples": [
+          {
+            "ordinal": 4,
+            "has_src_attribute": false,
+            "bytes_seen": 32,
+            "sample_bytes": 32,
+            "sample_sha256": "3e91a2fed85bd8452f29bc7578a94e66e03e3e31e683189d168bdcd0597746dd",
+            "truncated": false,
+            "closing_tag_observed": true,
+            "amsi": {
+              "phase": "scan",
+              "hresult": "0x00000000",
+              "amsi_result": 1,
+              "classification": "not_detected"
+            }
+          },
+          {
+            "ordinal": 5,
+            "has_src_attribute": false,
+            "bytes_seen": 8,
+            "sample_bytes": 8,
+            "sample_sha256": "5790ee3ddcf4feb858c91a0a4b2b77ef8076c3e45241fcb846250a8d6b31244a",
+            "truncated": false,
+            "closing_tag_observed": true,
+            "amsi": {
+              "phase": "scan",
+              "hresult": "0x00000000",
+              "amsi_result": 1,
+              "classification": "not_detected"
+            }
+          },
+          {
+            "ordinal": 6,
+            "has_src_attribute": false,
+            "bytes_seen": 12,
+            "sample_bytes": 12,
+            "sample_sha256": "360001cea5cf191d6a2667f9882b136753845c9ba15a8afa27bdd7356794ff99",
+            "truncated": false,
+            "closing_tag_observed": true,
+            "amsi": {
+              "phase": "scan",
+              "hresult": "0x00000000",
+              "amsi_result": 1,
+              "classification": "not_detected"
+            }
+          },
+          {
+            "ordinal": 7,
+            "has_src_attribute": false,
+            "bytes_seen": 7,
+            "sample_bytes": 7,
+            "sample_sha256": "5480bb3a79cf00ef4c0aef381f7eb67eeaf685b6ecc952593e6dd3f6d2c6f506",
+            "truncated": false,
+            "closing_tag_observed": true,
+            "amsi": {
+              "phase": "scan",
+              "hresult": "0x00000000",
+              "amsi_result": 1,
+              "classification": "not_detected"
+            }
+          },
+          {
+            "ordinal": 8,
+            "has_src_attribute": false,
+            "bytes_seen": 8,
+            "sample_bytes": 8,
+            "sample_sha256": "b8be81664adf9b02dbda230284acd42f54a8415e39db077f13308fd5db09b59d",
+            "truncated": false,
+            "closing_tag_observed": true,
+            "amsi": {
+              "phase": "scan",
+              "hresult": "0x00000000",
+              "amsi_result": 1,
+              "classification": "not_detected"
+            }
+          },
+          {
+            "ordinal": 9,
+            "has_src_attribute": false,
+            "bytes_seen": 22,
+            "sample_bytes": 22,
+            "sample_sha256": "d736f3130b053fd3dec108352f9617aae51ba9ad169b6e73592f9fdf752388d6",
+            "truncated": false,
+            "closing_tag_observed": true,
+            "amsi": {
+              "phase": "scan",
+              "hresult": "0x00000000",
+              "amsi_result": 1,
+              "classification": "not_detected"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "host": "www.biquge7.xyz",
+      "record_indices": [
+        817,
+        828,
+        3002,
+        3044,
+        3091
+      ],
+      "selected_source_ids": [
+        "03ce53f0b6632695058a7553e513b103e5aae06c34979992769d32e06af05fa8",
+        "ad35798f5b42bac39ba862133be63224081484921a86a8e8e6b5570e65ca63a3"
+      ],
+      "started_at": "2026-11-15T21:00:54.329403+00:00",
+      "http_status": 200,
+      "content_type": "text/html",
+      "truncated": true,
+      "sample_bytes": 32768,
+      "sample_sha256": "869ca35a61697655dd5cf92c9aabeec13631d8ba0c35bf6397763953ed985b82",
+      "sample_observed_at": "2026-11-15T21:00:55.721034+00:00",
+      "amsi": {
+        "phase": "scan",
+        "hresult": "0x00000000",
+        "amsi_result": 1,
+        "classification": "not_detected"
+      },
+      "inline_scripts": {
+        "script_tags_observed": 0,
+        "nonempty_inline_scripts_observed": 0,
+        "inline_scripts_selected": 0,
+        "inline_scripts_omitted": 0,
+        "samples": []
+      }
+    },
+    {
+      "host": "www.bixia66.cc",
+      "record_indices": [
+        183
+      ],
+      "selected_source_ids": [
+        "baa276b8bec3490c2b8108984025ef71d3045c9c0ce5f2816cb6f9ad2ee6a8e8"
+      ],
+      "started_at": "2026-11-15T21:00:54.929469+00:00",
+      "http_status": 200,
+      "content_type": "text/html",
+      "truncated": true,
+      "sample_bytes": 32768,
+      "sample_sha256": "71f1076dfb47f010325b78999ce322264b166b8d2701eabc5484c4a46e2fba5f",
+      "sample_observed_at": "2026-11-15T21:00:55.850379+00:00",
+      "amsi": {
+        "phase": "scan",
+        "hresult": "0x00000000",
+        "amsi_result": 1,
+        "classification": "not_detected"
+      },
+      "inline_scripts": {
+        "script_tags_observed": 4,
+        "nonempty_inline_scripts_observed": 1,
+        "inline_scripts_selected": 1,
+        "inline_scripts_omitted": 0,
+        "samples": [
+          {
+            "ordinal": 4,
+            "has_src_attribute": false,
+            "bytes_seen": 231,
+            "sample_bytes": 231,
+            "sample_sha256": "d7c1a45b022e03c1a9688f62fb8fcbf2fc8f263153f0c6ef7eacba09e1a05026",
+            "truncated": false,
+            "closing_tag_observed": true,
+            "amsi": {
+              "phase": "scan",
+              "hresult": "0x00000000",
+              "amsi_result": 1,
+              "classification": "not_detected"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "host": "www.bixiange.top",
+      "record_indices": [
+        1535,
+        4652,
+        4672
+      ],
+      "selected_source_ids": [
+        "50cb2cbb5aae52469319ee65cb70257f1a0cdc95cd85847bb8b63ca9cafb7b77",
+        "5b4cfae432dcbbd1bd63406a2e66e07b289ddb8ff4f74e6583827b226c6828a2"
+      ],
+      "started_at": "2026-11-15T21:00:55.529933+00:00",
+      "http_status": 200,
+      "content_type": "text/html",
+      "truncated": false,
+      "sample_bytes": 29335,
+      "sample_sha256": "7f29f6f3829c2693fabbb1403b6ba7e2c5056a555486acdf2d90246656787f56",
+      "sample_observed_at": "2026-11-15T21:00:56.390282+00:00",
+      "amsi": {
+        "phase": "scan",
+        "hresult": "0x00000000",
+        "amsi_result": 1,
+        "classification": "not_detected"
+      },
+      "inline_scripts": {
+        "script_tags_observed": 7,
+        "nonempty_inline_scripts_observed": 5,
+        "inline_scripts_selected": 5,
+        "inline_scripts_omitted": 0,
+        "samples": [
+          {
+            "ordinal": 1,
+            "has_src_attribute": false,
+            "bytes_seen": 638,
+            "sample_bytes": 638,
+            "sample_sha256": "5cd0723827dd1720ec693ee13bc84b32b09fb7e0c0d34c5709e1ecf085da5f88",
+            "truncated": false,
+            "closing_tag_observed": true,
+            "amsi": {
+              "phase": "scan",
+              "hresult": "0x00000000",
+              "amsi_result": 1,
+              "classification": "not_detected"
+            }
+          },
+          {
+            "ordinal": 2,
+            "has_src_attribute": false,
+            "bytes_seen": 109,
+            "sample_bytes": 109,
+            "sample_sha256": "38080c83d1855704a1571f4510835a8571fa07e47ff697ae638efda36b892a43",
+            "truncated": false,
+            "closing_tag_observed": true,
+            "amsi": {
+              "phase": "scan",
+              "hresult": "0x00000000",
+              "amsi_result": 1,
+              "classification": "not_detected"
+            }
+          },
+          {
+            "ordinal": 3,
+            "has_src_attribute": false,
+            "bytes_seen": 2,
+            "sample_bytes": 2,
+            "sample_sha256": "7eb70257593da06f682a3ddda54a9d260d4fc514f645237f5ca74b08f8da61a6",
+            "truncated": false,
+            "closing_tag_observed": true,
+            "amsi": {
+              "phase": "scan",
+              "hresult": "0x00000000",
+              "amsi_result": 1,
+              "classification": "not_detected"
+            }
+          },
+          {
+            "ordinal": 4,
+            "has_src_attribute": false,
+            "bytes_seen": 512,
+            "sample_bytes": 512,
+            "sample_sha256": "392566ed389cc86a87ea0943776e2162c780ec1df71e2d498f403c4f6b8416df",
+            "truncated": false,
+            "closing_tag_observed": true,
+            "amsi": {
+              "phase": "scan",
+              "hresult": "0x00000000",
+              "amsi_result": 1,
+              "classification": "not_detected"
+            }
+          },
+          {
+            "ordinal": 5,
+            "has_src_attribute": false,
+            "bytes_seen": 685,
+            "sample_bytes": 685,
+            "sample_sha256": "195568825224f96e854483f733eb1367df229013279b073b888301c75c5f9b1d",
+            "truncated": false,
+            "closing_tag_observed": true,
+            "amsi": {
+              "phase": "scan",
+              "hresult": "0x00000000",
+              "amsi_result": 1,
+              "classification": "not_detected"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "host": "www.dushuzhe.com",
+      "record_indices": [
+        2984
+      ],
+      "selected_source_ids": [],
+      "started_at": "2026-11-15T21:00:56.129966+00:00",
+      "http_status": 200,
+      "content_type": "text/html",
+      "truncated": true,
+      "sample_bytes": 32768,
+      "sample_sha256": "9c27ebc6d812c4786961dc0c1bf6328447b857357e697b3870919fd7f98fef93",
+      "sample_observed_at": "2026-11-15T21:00:57.571798+00:00",
+      "amsi": {
+        "phase": "scan",
+        "hresult": "0x00000000",
+        "amsi_result": 1,
+        "classification": "not_detected"
+      },
+      "inline_scripts": {
+        "script_tags_observed": 1,
+        "nonempty_inline_scripts_observed": 0,
+        "inline_scripts_selected": 0,
+        "inline_scripts_omitted": 0,
+        "samples": []
+      }
+    },
+    {
+      "host": "www.esjzone.one",
+      "record_indices": [
+        4786
+      ],
+      "selected_source_ids": [
+        "865aa457ac8b2ba4fe7678029af5a2db19d6017fa434c1d5f86b553adb45ad16"
+      ],
+      "started_at": "2026-11-15T21:00:56.730054+00:00",
+      "http_status": 200,
+      "content_type": "text/html",
+      "truncated": false,
+      "sample_bytes": 12345,
+      "sample_sha256": "7680eb5d77359e6f1280edb540d8363bb74699019966474d0ae6ba001cab5655",
+      "sample_observed_at": "2026-11-15T21:00:57.809599+00:00",
+      "amsi": {
+        "phase": "scan",
+        "hresult": "0x00000000",
+        "amsi_result": 1,
+        "classification": "not_detected"
+      },
+      "inline_scripts": {
+        "script_tags_observed": 28,
+        "nonempty_inline_scripts_observed": 4,
+        "inline_scripts_selected": 4,
+        "inline_scripts_omitted": 0,
+        "samples": [
+          {
+            "ordinal": 5,
+            "has_src_attribute": false,
+            "bytes_seen": 153,
+            "sample_bytes": 153,
+            "sample_sha256": "11c11add639bb26ef55eaccb0b1c5abfce43d82f506f20d0226072fcfb3a9179",
+            "truncated": false,
+            "closing_tag_observed": true,
+            "amsi": {
+              "phase": "scan",
+              "hresult": "0x00000000",
+              "amsi_result": 1,
+              "classification": "not_detected"
+            }
+          },
+          {
+            "ordinal": 6,
+            "has_src_attribute": false,
+            "bytes_seen": 62,
+            "sample_bytes": 62,
+            "sample_sha256": "bd16b6b0f810b184c44a1a3ed3bbd8857482cc11381d3711315ebc5b252b2bec",
+            "truncated": false,
+            "closing_tag_observed": true,
+            "amsi": {
+              "phase": "scan",
+              "hresult": "0x00000000",
+              "amsi_result": 1,
+              "classification": "not_detected"
+            }
+          },
+          {
+            "ordinal": 8,
+            "has_src_attribute": false,
+            "bytes_seen": 101,
+            "sample_bytes": 101,
+            "sample_sha256": "19f28837b8d2cc848836daa63b3fab4e9365635fde7dba3465164d10b542cb68",
+            "truncated": false,
+            "closing_tag_observed": true,
+            "amsi": {
+              "phase": "scan",
+              "hresult": "0x00000000",
+              "amsi_result": 1,
+              "classification": "not_detected"
+            }
+          },
+          {
+            "ordinal": 9,
+            "has_src_attribute": false,
+            "bytes_seen": 41,
+            "sample_bytes": 41,
+            "sample_sha256": "6a31a3a39783d09cc53dd9e9baeb4a4fa49be602eef90f6bbb9f78af02688064",
+            "truncated": false,
+            "closing_tag_observed": true,
+            "amsi": {
+              "phase": "scan",
+              "hresult": "0x00000000",
+              "amsi_result": 1,
+              "classification": "not_detected"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "host": "www.fuxiaoshu.com",
+      "record_indices": [
+        4295
+      ],
+      "selected_source_ids": [
+        "d65adfbd157810170090c946d4af57bcedaa9d67d1d0655cb06004290584c1ff"
+      ],
+      "started_at": "2026-11-15T21:00:57.330612+00:00",
+      "http_status": 200,
+      "content_type": "text/html",
+      "truncated": true,
+      "sample_bytes": 32768,
+      "sample_sha256": "5f5f030ead598b827b4556c982a299d5dc03706989a8c8c9d63b447893130930",
+      "sample_observed_at": "2026-11-15T21:00:58.405362+00:00",
+      "amsi": {
+        "phase": "scan",
+        "hresult": "0x00000000",
+        "amsi_result": 1,
+        "classification": "not_detected"
+      },
+      "inline_scripts": {
+        "script_tags_observed": 1,
+        "nonempty_inline_scripts_observed": 1,
+        "inline_scripts_selected": 1,
+        "inline_scripts_omitted": 0,
+        "samples": [
+          {
+            "ordinal": 1,
+            "has_src_attribute": false,
+            "bytes_seen": 500,
+            "sample_bytes": 500,
+            "sample_sha256": "4850b93d4291ff9c92fa70929bf462f1da829eb24bc079d5c3140739bf33def6",
+            "truncated": false,
+            "closing_tag_observed": true,
+            "amsi": {
+              "phase": "scan",
+              "hresult": "0x00000000",
+              "amsi_result": 1,
+              "classification": "not_detected"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "host": "www.fuxs1.com",
+      "record_indices": [
+        2751
+      ],
+      "selected_source_ids": [],
+      "started_at": "2026-11-15T21:00:57.930669+00:00",
+      "http_status": 200,
+      "content_type": "text/html",
+      "truncated": true,
+      "sample_bytes": 32768,
+      "sample_sha256": "c4d3a8bc7f6ca43fc7053dd0266d5d99edd3ce76e0cf1cd0fd9d31ba89d9050e",
+      "sample_observed_at": "2026-11-15T21:00:59.094544+00:00",
+      "amsi": {
+        "phase": "scan",
+        "hresult": "0x00000000",
+        "amsi_result": 1,
+        "classification": "not_detected"
+      },
+      "inline_scripts": {
+        "script_tags_observed": 1,
+        "nonempty_inline_scripts_observed": 1,
+        "inline_scripts_selected": 1,
+        "inline_scripts_omitted": 0,
+        "samples": [
+          {
+            "ordinal": 1,
+            "has_src_attribute": false,
+            "bytes_seen": 511,
+            "sample_bytes": 511,
+            "sample_sha256": "79c174de344969bf109732304eef1ccd9e5afe99174cf833409ebf4b860621aa",
+            "truncated": false,
+            "closing_tag_observed": true,
+            "amsi": {
+              "phase": "scan",
+              "hresult": "0x00000000",
+              "amsi_result": 1,
+              "classification": "not_detected"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "host": "www.fxshu.cc",
+      "record_indices": [
+        4276
+      ],
+      "selected_source_ids": [
+        "a8ab7fbe1df5ba8cbf622958009ec4be6145e217194cb0d897b1d543d0bd6d32"
+      ],
+      "started_at": "2026-11-15T21:00:58.530753+00:00",
+      "http_status": 200,
+      "content_type": "text/html",
+      "truncated": true,
+      "sample_bytes": 32768,
+      "sample_sha256": "5f5f030ead598b827b4556c982a299d5dc03706989a8c8c9d63b447893130930",
+      "sample_observed_at": "2026-11-15T21:00:59.707766+00:00",
+      "amsi": {
+        "phase": "scan",
+        "hresult": "0x00000000",
+        "amsi_result": 1,
+        "classification": "not_detected"
+      },
+      "inline_scripts": {
+        "script_tags_observed": 1,
+        "nonempty_inline_scripts_observed": 1,
+        "inline_scripts_selected": 1,
+        "inline_scripts_omitted": 0,
+        "samples": [
+          {
+            "ordinal": 1,
+            "has_src_attribute": false,
+            "bytes_seen": 500,
+            "sample_bytes": 500,
+            "sample_sha256": "4850b93d4291ff9c92fa70929bf462f1da829eb24bc079d5c3140739bf33def6",
+            "truncated": false,
+            "closing_tag_observed": true,
+            "amsi": {
+              "phase": "scan",
+              "hresult": "0x00000000",
+              "amsi_result": 1,
+              "classification": "not_detected"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "host": "www.fxsw.cc",
+      "record_indices": [
+        1355,
+        3547
+      ],
+      "selected_source_ids": [
+        "87d398aba568c0d4f582e4513d4ed5846e8602418a41bb8cd4caa4c1cef76280"
+      ],
+      "started_at": "2026-11-15T21:00:59.131013+00:00",
+      "http_status": 200,
+      "content_type": "text/html",
+      "truncated": true,
+      "sample_bytes": 32768,
+      "sample_sha256": "c4d3a8bc7f6ca43fc7053dd0266d5d99edd3ce76e0cf1cd0fd9d31ba89d9050e",
+      "sample_observed_at": "2026-11-15T21:01:00.323665+00:00",
+      "amsi": {
+        "phase": "scan",
+        "hresult": "0x00000000",
+        "amsi_result": 1,
+        "classification": "not_detected"
+      },
+      "inline_scripts": {
+        "script_tags_observed": 1,
+        "nonempty_inline_scripts_observed": 1,
+        "inline_scripts_selected": 1,
+        "inline_scripts_omitted": 0,
+        "samples": [
+          {
+            "ordinal": 1,
+            "has_src_attribute": false,
+            "bytes_seen": 511,
+            "sample_bytes": 511,
+            "sample_sha256": "79c174de344969bf109732304eef1ccd9e5afe99174cf833409ebf4b860621aa",
+            "truncated": false,
+            "closing_tag_observed": true,
+            "amsi": {
+              "phase": "scan",
+              "hresult": "0x00000000",
+              "amsi_result": 1,
+              "classification": "not_detected"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "host": "www.jiqinw.com",
+      "record_indices": [
+        194,
+        513,
+        1759,
+        2295,
+        3821
+      ],
+      "selected_source_ids": [
+        "7136df08824e58c0f75159c97fbb534ddd0dfebd5b0ef1cc7cca96e7bf284432",
+        "f1f5b1c35a50696a194b54b39d6b20bc865966d6b2bef2d17b83c8b2b8df0b64"
+      ],
+      "started_at": "2026-11-15T21:00:59.731523+00:00",
+      "http_status": 200,
+      "content_type": "text/html",
+      "truncated": true,
+      "sample_bytes": 32768,
+      "sample_sha256": "5f5f030ead598b827b4556c982a299d5dc03706989a8c8c9d63b447893130930",
+      "sample_observed_at": "2026-11-15T21:01:00.945161+00:00",
+      "amsi": {
+        "phase": "scan",
+        "hresult": "0x00000000",
+        "amsi_result": 1,
+        "classification": "not_detected"
+      },
+      "inline_scripts": {
+        "script_tags_observed": 1,
+        "nonempty_inline_scripts_observed": 1,
+        "inline_scripts_selected": 1,
+        "inline_scripts_omitted": 0,
+        "samples": [
+          {
+            "ordinal": 1,
+            "has_src_attribute": false,
+            "bytes_seen": 500,
+            "sample_bytes": 500,
+            "sample_sha256": "4850b93d4291ff9c92fa70929bf462f1da829eb24bc079d5c3140739bf33def6",
+            "truncated": false,
+            "closing_tag_observed": true,
+            "amsi": {
+              "phase": "scan",
+              "hresult": "0x00000000",
+              "amsi_result": 1,
+              "classification": "not_detected"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "host": "www.kkkkkkkkk.com",
+      "record_indices": [
+        2613
+      ],
+      "selected_source_ids": [],
+      "started_at": "2026-11-15T21:01:00.331565+00:00",
+      "http_status": 200,
+      "content_type": "text/html",
+      "truncated": true,
+      "sample_bytes": 32768,
+      "sample_sha256": "9c3d608f17e1895ee8024269f1937eaf163988d3bf1439ffbf5382020c39d56b",
+      "sample_observed_at": "2026-11-15T21:01:01.378426+00:00",
+      "amsi": {
+        "phase": "scan",
+        "hresult": "0x00000000",
+        "amsi_result": 1,
+        "classification": "not_detected"
+      },
+      "inline_scripts": {
+        "script_tags_observed": 6,
+        "nonempty_inline_scripts_observed": 5,
+        "inline_scripts_selected": 5,
+        "inline_scripts_omitted": 0,
+        "samples": [
+          {
+            "ordinal": 1,
+            "has_src_attribute": false,
+            "bytes_seen": 352,
+            "sample_bytes": 352,
+            "sample_sha256": "990f233bab650c747d0af086aca9c19833234ce66d05a4bb6cedb3272cdf53f9",
+            "truncated": false,
+            "closing_tag_observed": true,
+            "amsi": {
+              "phase": "scan",
+              "hresult": "0x00000000",
+              "amsi_result": 1,
+              "classification": "not_detected"
+            }
+          },
+          {
+            "ordinal": 3,
+            "has_src_attribute": false,
+            "bytes_seen": 153,
+            "sample_bytes": 153,
+            "sample_sha256": "9325992b966ebbbc7226a401016951299b4d95ccc69d706439c838e04be320e8",
+            "truncated": false,
+            "closing_tag_observed": true,
+            "amsi": {
+              "phase": "scan",
+              "hresult": "0x00000000",
+              "amsi_result": 1,
+              "classification": "not_detected"
+            }
+          },
+          {
+            "ordinal": 4,
+            "has_src_attribute": false,
+            "bytes_seen": 309,
+            "sample_bytes": 309,
+            "sample_sha256": "d0e48e18ea694e99c97ee14da90110eadce22cacd34cac98d437b0d2b9d07410",
+            "truncated": false,
+            "closing_tag_observed": true,
+            "amsi": {
+              "phase": "scan",
+              "hresult": "0x00000000",
+              "amsi_result": 1,
+              "classification": "not_detected"
+            }
+          },
+          {
+            "ordinal": 5,
+            "has_src_attribute": false,
+            "bytes_seen": 2371,
+            "sample_bytes": 2371,
+            "sample_sha256": "098c413b42e52330e0ba96cdef96e03b33c877e4c8684f8f6a133505af88f36c",
+            "truncated": false,
+            "closing_tag_observed": true,
+            "amsi": {
+              "phase": "scan",
+              "hresult": "0x00000000",
+              "amsi_result": 1,
+              "classification": "not_detected"
+            }
+          },
+          {
+            "ordinal": 6,
+            "has_src_attribute": false,
+            "bytes_seen": 620,
+            "sample_bytes": 620,
+            "sample_sha256": "fc154566b68692074bc5c6897c16b2ab72d7478c38e2dfd1b9b6b6cc56a7b514",
+            "truncated": false,
+            "closing_tag_observed": true,
+            "amsi": {
+              "phase": "scan",
+              "hresult": "0x00000000",
+              "amsi_result": 1,
+              "classification": "not_detected"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "host": "www.kuuai.com",
+      "record_indices": [
+        4507
+      ],
+      "selected_source_ids": [
+        "c1e8886578da3d19d8a4025c2269de9d0caa665e759763c24dd367c54ce78727"
+      ],
+      "started_at": "2026-11-15T21:01:00.931816+00:00",
+      "http_status": 200,
+      "content_type": "text/html",
+      "truncated": true,
+      "sample_bytes": 32768,
+      "sample_sha256": "f5047e8e9ad20bc2966bb7e6bd0ad8958ce399b051b86ed49a0a5a93ee135279",
+      "sample_observed_at": "2026-11-15T21:01:01.988679+00:00",
+      "amsi": {
+        "phase": "scan",
+        "hresult": "0x00000000",
+        "amsi_result": 1,
+        "classification": "not_detected"
+      },
+      "inline_scripts": {
+        "script_tags_observed": 1,
+        "nonempty_inline_scripts_observed": 0,
+        "inline_scripts_selected": 0,
+        "inline_scripts_omitted": 0,
+        "samples": []
+      }
+    },
+    {
+      "host": "www.qsyz.net",
+      "record_indices": [
+        4489
+      ],
+      "selected_source_ids": [
+        "357967df12bbb43f3eefaa99a95d7bbbdc67e299b5f21faddfdf8218496a7ac2"
+      ],
+      "started_at": "2026-11-15T21:01:01.531987+00:00",
+      "http_status": 200,
+      "content_type": "text/html",
+      "truncated": true,
+      "sample_bytes": 32768,
+      "sample_sha256": "11c4beb90080b763d2f3c1396a87b329e100f16b81423718d7ff5176c9ea2ca9",
+      "sample_observed_at": "2026-11-15T21:01:02.538606+00:00",
+      "amsi": {
+        "phase": "scan",
+        "hresult": "0x00000000",
+        "amsi_result": 1,
+        "classification": "not_detected"
+      },
+      "inline_scripts": {
+        "script_tags_observed": 6,
+        "nonempty_inline_scripts_observed": 1,
+        "inline_scripts_selected": 1,
+        "inline_scripts_omitted": 0,
+        "samples": [
+          {
+            "ordinal": 6,
+            "has_src_attribute": false,
+            "bytes_seen": 9,
+            "sample_bytes": 9,
+            "sample_sha256": "28a0242972676113347e564fff610e65f0909946b1f0ca712b919f5a7e3b173f",
+            "truncated": false,
+            "closing_tag_observed": true,
+            "amsi": {
+              "phase": "scan",
+              "hresult": "0x00000000",
+              "amsi_result": 1,
+              "classification": "not_detected"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "host": "www.sfwx.com",
+      "record_indices": [
+        3984,
+        4580,
+        4760
+      ],
+      "selected_source_ids": [
+        "0723af128aa8adacd3e3a9efe03b622fa660d2f78a21b72cbe2bfe7d32ce8b75",
+        "9f004a19d12200c68d88fd5bafd4d34615b347d27e26322dbfa26142983cd295"
+      ],
+      "started_at": "2026-11-15T21:01:02.132142+00:00",
+      "http_status": 200,
+      "content_type": "text/html",
+      "truncated": true,
+      "sample_bytes": 32768,
+      "sample_sha256": "957e489c12353ee0d05515f054122520f0b64461d8443340197ee486db3adb12",
+      "sample_observed_at": "2026-11-15T21:01:03.614415+00:00",
+      "amsi": {
+        "phase": "scan",
+        "hresult": "0x00000000",
+        "amsi_result": 1,
+        "classification": "not_detected"
+      },
+      "inline_scripts": {
+        "script_tags_observed": 1,
+        "nonempty_inline_scripts_observed": 0,
+        "inline_scripts_selected": 0,
+        "inline_scripts_omitted": 0,
+        "samples": []
+      }
+    },
+    {
+      "host": "www.xn--7dv141d.com",
+      "record_indices": [
+        3914
+      ],
+      "selected_source_ids": [
+        "262c6a593dd39a7481d93915f9e36482686c00ff301bef3154fa17a1a3f8d38c"
+      ],
+      "started_at": "2026-11-15T21:01:02.732626+00:00",
+      "http_status": 200,
+      "content_type": "text/html",
+      "truncated": false,
+      "sample_bytes": 22854,
+      "sample_sha256": "7da35fc5202c4b0d819115e0585f741ce60a44f235f4a3a42f48528ab66a48c1",
+      "sample_observed_at": "2026-11-15T21:01:04.536064+00:00",
+      "amsi": {
+        "phase": "scan",
+        "hresult": "0x00000000",
+        "amsi_result": 1,
+        "classification": "not_detected"
+      },
+      "inline_scripts": {
+        "script_tags_observed": 11,
+        "nonempty_inline_scripts_observed": 4,
+        "inline_scripts_selected": 4,
+        "inline_scripts_omitted": 0,
+        "samples": [
+          {
+            "ordinal": 4,
+            "has_src_attribute": false,
+            "bytes_seen": 8,
+            "sample_bytes": 8,
+            "sample_sha256": "5790ee3ddcf4feb858c91a0a4b2b77ef8076c3e45241fcb846250a8d6b31244a",
+            "truncated": false,
+            "closing_tag_observed": true,
+            "amsi": {
+              "phase": "scan",
+              "hresult": "0x00000000",
+              "amsi_result": 1,
+              "classification": "not_detected"
+            }
+          },
+          {
+            "ordinal": 6,
+            "has_src_attribute": false,
+            "bytes_seen": 243,
+            "sample_bytes": 243,
+            "sample_sha256": "aaf75a63edde990104f7e01419c3964b4a793dca173d48f64d5fa5651d22cf56",
+            "truncated": false,
+            "closing_tag_observed": true,
+            "amsi": {
+              "phase": "scan",
+              "hresult": "0x00000000",
+              "amsi_result": 1,
+              "classification": "not_detected"
+            }
+          },
+          {
+            "ordinal": 7,
+            "has_src_attribute": false,
+            "bytes_seen": 243,
+            "sample_bytes": 243,
+            "sample_sha256": "26b3cb755093b7e1a032427a9c9387f1ae483848eb547bdfbe3decbd4ba7521a",
+            "truncated": false,
+            "closing_tag_observed": true,
+            "amsi": {
+              "phase": "scan",
+              "hresult": "0x00000000",
+              "amsi_result": 1,
+              "classification": "not_detected"
+            }
+          },
+          {
+            "ordinal": 10,
+            "has_src_attribute": false,
+            "bytes_seen": 151,
+            "sample_bytes": 151,
+            "sample_sha256": "54d9ee5d7e5fd52136a8a734619042214f834f2110da492b67baf2e8213ea77c",
+            "truncated": false,
+            "closing_tag_observed": true,
+            "amsi": {
+              "phase": "scan",
+              "hresult": "0x00000000",
+              "amsi_result": 1,
+              "classification": "not_detected"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "host": "www.xsabc.com",
+      "record_indices": [
+        4256
+      ],
+      "selected_source_ids": [
+        "4b0a5cbbc912b34e1d4b84cacbbf8fc768bbf1865c67d88e6068d940afe93f20"
+      ],
+      "started_at": "2026-11-15T21:01:03.332958+00:00",
+      "http_status": 200,
+      "content_type": "text/html",
+      "truncated": true,
+      "sample_bytes": 32768,
+      "sample_sha256": "a1852c742d59157925f694470033f599cab51696c4b287e310550d016dcc6fb7",
+      "sample_observed_at": "2026-11-15T21:01:04.371906+00:00",
+      "amsi": {
+        "phase": "scan",
+        "hresult": "0x00000000",
+        "amsi_result": 1,
+        "classification": "not_detected"
+      },
+      "inline_scripts": {
+        "script_tags_observed": 1,
+        "nonempty_inline_scripts_observed": 0,
+        "inline_scripts_selected": 0,
+        "inline_scripts_omitted": 0,
+        "samples": []
+      }
+    },
+    {
+      "host": "www.ycydu.com",
+      "record_indices": [
+        2848
+      ],
+      "selected_source_ids": [],
+      "started_at": "2026-11-15T21:01:03.933087+00:00",
+      "http_status": 200,
+      "content_type": "text/html",
+      "truncated": false,
+      "sample_bytes": 20947,
+      "sample_sha256": "ed6abee8db2af0c66b65b3164564d3ad76b78cbc79531e49351c99250ee272f1",
+      "sample_observed_at": "2026-11-15T21:01:04.749351+00:00",
+      "amsi": {
+        "phase": "scan",
+        "hresult": "0x00000000",
+        "amsi_result": 1,
+        "classification": "not_detected"
+      },
+      "inline_scripts": {
+        "script_tags_observed": 6,
+        "nonempty_inline_scripts_observed": 3,
+        "inline_scripts_selected": 3,
+        "inline_scripts_omitted": 0,
+        "samples": [
+          {
+            "ordinal": 2,
+            "has_src_attribute": false,
+            "bytes_seen": 6,
+            "sample_bytes": 6,
+            "sample_sha256": "185bd1245a4a7e206ab9a1bd98745a30136d6f8ead74dfb1001b30c5e67fcc97",
+            "truncated": false,
+            "closing_tag_observed": true,
+            "amsi": {
+              "phase": "scan",
+              "hresult": "0x00000000",
+              "amsi_result": 1,
+              "classification": "not_detected"
+            }
+          },
+          {
+            "ordinal": 3,
+            "has_src_attribute": false,
+            "bytes_seen": 255,
+            "sample_bytes": 255,
+            "sample_sha256": "0354b2f114a406995a9f9424e4a0e86232537ccb1c71d8c3084e87aebc99618e",
+            "truncated": false,
+            "closing_tag_observed": true,
+            "amsi": {
+              "phase": "scan",
+              "hresult": "0x00000000",
+              "amsi_result": 1,
+              "classification": "not_detected"
+            }
+          },
+          {
+            "ordinal": 6,
+            "has_src_attribute": false,
+            "bytes_seen": 1097,
+            "sample_bytes": 1097,
+            "sample_sha256": "e47d3a7bc9318cca303f217eb3b9aae5f0ba0179ae8e3ab4c56776f104759130",
+            "truncated": false,
+            "closing_tag_observed": true,
+            "amsi": {
+              "phase": "scan",
+              "hresult": "0x00000000",
+              "amsi_result": 1,
+              "classification": "not_detected"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "host": "www.yunxuange.cc",
+      "record_indices": [
+        4520,
+        4842
+      ],
+      "selected_source_ids": [
+        "8a476e4d0f27ace5571cb2d591662574186cefc6b82311e5127c6db26fac01bd"
+      ],
+      "started_at": "2026-11-15T21:01:04.533313+00:00",
+      "http_status": 200,
+      "content_type": "text/html",
+      "truncated": true,
+      "sample_bytes": 32768,
+      "sample_sha256": "c27a06ca14ef2cfdea76de727c77df1672229f2d56680307b70752b18cb99495",
+      "sample_observed_at": "2026-11-15T21:01:06.272557+00:00",
+      "amsi": {
+        "phase": "scan",
+        "hresult": "0x00000000",
+        "amsi_result": 1,
+        "classification": "not_detected"
+      },
+      "inline_scripts": {
+        "script_tags_observed": 1,
+        "nonempty_inline_scripts_observed": 0,
+        "inline_scripts_selected": 0,
+        "inline_scripts_omitted": 0,
+        "samples": []
+      }
+    },
+    {
+      "host": "www.zzdushu.com",
+      "record_indices": [
+        4598
+      ],
+      "selected_source_ids": [
+        "089311765dca43cef1d05aba5505064b80d60d85fa0bd1c3bdc18a92b5661ba5"
+      ],
+      "started_at": "2026-11-15T21:01:05.133511+00:00",
+      "http_status": 200,
+      "content_type": "text/html",
+      "truncated": true,
+      "sample_bytes": 32768,
+      "sample_sha256": "dc5a88aca8f6c63087f476b686eda1a3655b016179e6380e6d214d83fa1e78a9",
+      "sample_observed_at": "2026-11-15T21:01:06.130393+00:00",
+      "amsi": {
+        "phase": "scan",
+        "hresult": "0x00000000",
+        "amsi_result": 1,
+        "classification": "not_detected"
+      },
+      "inline_scripts": {
+        "script_tags_observed": 1,
+        "nonempty_inline_scripts_observed": 0,
+        "inline_scripts_selected": 0,
+        "inline_scripts_omitted": 0,
+        "samples": []
+      }
+    },
+    {
+      "host": "wzdhm.cc",
+      "record_indices": [
+        4175
+      ],
+      "selected_source_ids": [],
+      "started_at": "2026-11-15T21:01:05.733652+00:00",
+      "http_status": 200,
+      "content_type": "text/html",
+      "truncated": true,
+      "sample_bytes": 32768,
+      "sample_sha256": "bdd9525b3cfefe768334ecc79894cbf219339b55b878b902b486c46f21348e72",
+      "sample_observed_at": "2026-11-15T21:01:07.774068+00:00",
+      "amsi": {
+        "phase": "scan",
+        "hresult": "0x00000000",
+        "amsi_result": 1,
+        "classification": "not_detected"
+      },
+      "inline_scripts": {
+        "script_tags_observed": 9,
+        "nonempty_inline_scripts_observed": 5,
+        "inline_scripts_selected": 5,
+        "inline_scripts_omitted": 0,
+        "samples": [
+          {
+            "ordinal": 3,
+            "has_src_attribute": false,
+            "bytes_seen": 790,
+            "sample_bytes": 790,
+            "sample_sha256": "87af1f27c9c31a5aa66cb86f9038e7741cf1ac8b258ed84e5771b976b7a94f3b",
+            "truncated": false,
+            "closing_tag_observed": true,
+            "amsi": {
+              "phase": "scan",
+              "hresult": "0x00000000",
+              "amsi_result": 1,
+              "classification": "not_detected"
+            }
+          },
+          {
+            "ordinal": 4,
+            "has_src_attribute": false,
+            "bytes_seen": 216,
+            "sample_bytes": 216,
+            "sample_sha256": "5c2b9de2623c2bd9310e48dc102b61b192e20df1509a0247c709ee62c3053014",
+            "truncated": false,
+            "closing_tag_observed": true,
+            "amsi": {
+              "phase": "scan",
+              "hresult": "0x00000000",
+              "amsi_result": 1,
+              "classification": "not_detected"
+            }
+          },
+          {
+            "ordinal": 5,
+            "has_src_attribute": false,
+            "bytes_seen": 362,
+            "sample_bytes": 362,
+            "sample_sha256": "d409a2727cc6806700e80372f43d24a2fd3afe0ccd4e0f6c64f6a73418c83afa",
+            "truncated": false,
+            "closing_tag_observed": true,
+            "amsi": {
+              "phase": "scan",
+              "hresult": "0x00000000",
+              "amsi_result": 1,
+              "classification": "not_detected"
+            }
+          },
+          {
+            "ordinal": 8,
+            "has_src_attribute": false,
+            "bytes_seen": 57,
+            "sample_bytes": 57,
+            "sample_sha256": "1b60af0ce49d65e8b1006457c16883d60e53a0054bb157c57c3b03a82ee9964d",
+            "truncated": false,
+            "closing_tag_observed": true,
+            "amsi": {
+              "phase": "scan",
+              "hresult": "0x00000000",
+              "amsi_result": 1,
+              "classification": "not_detected"
+            }
+          },
+          {
+            "ordinal": 9,
+            "has_src_attribute": false,
+            "bytes_seen": 426,
+            "sample_bytes": 426,
+            "sample_sha256": "8b6a20688d16a5a94c3a50bfae0826eb99ccae65db1ebfc54b601468cab2dc51",
+            "truncated": false,
+            "closing_tag_observed": true,
+            "amsi": {
+              "phase": "scan",
+              "hresult": "0x00000000",
+              "amsi_result": 1,
+              "classification": "not_detected"
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "completed_at": "2026-11-15T21:01:07.988760+00:00",
+  "outcomes": {
+    "not_detected": 39,
+    "connection_error": 1
+  },
+  "inline_script_outcomes": {
+    "not_detected": 85
+  }
+}

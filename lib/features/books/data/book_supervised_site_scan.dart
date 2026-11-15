@@ -104,33 +104,27 @@ final class _SupervisedSiteRun {
     final available = await books.sources(BookKind.text, enabledOnly: true);
     _requireCurrent();
     final now = DateTime.now();
-    final due = <({BookSourceEntry entry, int checkedAt})>[];
+    final due = <({BookSourceEntry entry, int dueAt})>[];
     for (final entry in available) {
       _requireCurrent();
       if (!entry.source.builtin ||
           books._verifiedSources[entry.source.id] == null) {
         continue;
       }
-      BookSiteCheck? previous;
-      try {
-        previous = BookSiteCheck.fromJson(
-          await books.store.read('$_supervisedCheckPrefix${entry.source.id}'),
-          entry.source,
-        );
-      } on FormatException {
-        // Damaged metadata is not a completed inspection.
-      } on TypeError {
-        // Preserve the original record until a real inspection replaces it.
-      }
+      final previous = await _readSiteCheck(
+        books.store,
+        '$_supervisedCheckPrefix${entry.source.id}',
+        entry.source,
+      );
       _requireCurrent();
       if (previous == null || previous.isDue(now)) {
         due.add((
           entry: entry,
-          checkedAt: previous?.checkedAt.millisecondsSinceEpoch ?? 0,
+          dueAt: previous?.nextDue.millisecondsSinceEpoch ?? 0,
         ));
       }
     }
-    due.sort((a, b) => a.checkedAt.compareTo(b.checkedAt));
+    due.sort((a, b) => a.dueAt.compareTo(b.dueAt));
     final hosts = <String>{};
     return due
         .where((item) => hosts.add(item.entry.source.endpoint.host))
@@ -172,15 +166,11 @@ final class _SupervisedSiteRun {
     if (current == null) return;
     // No injectable parser or caller-provided finding can reach the privileged
     // write: the repository uses its own HTTP client.
-    final inspection = await BookSiteInspector(
-      books._http,
-    ).inspect(current.source, token);
-    _requireCurrent();
-    final check = BookSiteCheck(
-      inspection,
-      DateTime.now(),
-      bookSourceCheckFingerprint(current.source),
+    final inspection = await _runSiteInspection(
+      () => BookSiteInspector(books._http).inspect(current.source, token),
+      token,
     );
+    _requireCurrent();
 
     Future<void> persist() async {
       BookSourceAssessment? assessment;
@@ -197,6 +187,18 @@ final class _SupervisedSiteRun {
             rootPageEvidence: true,
           );
         }
+        _requireCurrent();
+        final previous = await _readSiteCheck(
+          books.store,
+          '$_supervisedCheckPrefix${latest.source.id}',
+          latest.source,
+        );
+        final check = BookSiteCheck.after(
+          inspection,
+          DateTime.now(),
+          latest.source,
+          previous,
+        );
         _requireCurrent();
         await books.store.write(
           '$_supervisedCheckPrefix${latest.source.id}',

@@ -24,6 +24,7 @@ void main() {
   _riskRetentionTests();
   _monitorLifecycleTests();
   _monitorPolicyTests();
+  _monitorRetryTests();
 }
 
 void _riskCommitRaceTests() {
@@ -540,6 +541,74 @@ void _storedCheckTests() {
     expect(updated.id, source.id);
     expect(BookSiteCheck.fromJson(check.toJson(), updated), isNull);
   });
+
+  test('unconfirmed results back off and legacy records retry promptly', () {
+    final source = _source('one', 'retry.example');
+    final now = DateTime.utc(2026, 11, 16);
+    const failures = [
+      BookSiteFinding.sameSiteRedirect,
+      BookSiteFinding.externalRedirect,
+      BookSiteFinding.httpError,
+      BookSiteFinding.timeout,
+      BookSiteFinding.networkError,
+      BookSiteFinding.unsupported,
+    ];
+    for (final finding in failures) {
+      final old = BookSiteCheck(
+        BookSiteInspection(finding),
+        now,
+        bookSourceCheckFingerprint(source),
+      ).toJson()..remove('consecutiveFailures');
+      final legacy = BookSiteCheck.fromJson(old, source)!;
+      expect(legacy.needsRetry, isTrue, reason: finding.name);
+      expect(legacy.isDue(now.add(const Duration(minutes: 29))), isFalse);
+      expect(legacy.isDue(now.add(const Duration(minutes: 30))), isTrue);
+      expect(legacy.isDue(now.subtract(const Duration(minutes: 6))), isTrue);
+      final next = BookSiteCheck.after(legacy.inspection, now, source, legacy);
+      expect(next.consecutiveFailures, 2);
+      expect(next.nextDue, now.add(const Duration(hours: 1)));
+    }
+
+    var check = BookSiteCheck.after(
+      const BookSiteInspection(BookSiteFinding.timeout),
+      now,
+      source,
+      null,
+    );
+    for (var i = 0; i < 20; i++) {
+      check = BookSiteCheck.after(check.inspection, now, source, check);
+    }
+    expect(check.consecutiveFailures, 7);
+    expect(check.nextDue, now.add(const Duration(hours: 24)));
+    final saved = check.toJson();
+    for (final count in [999999999, -1, 'invalid']) {
+      final restored = BookSiteCheck.fromJson({
+        ...saved,
+        'consecutiveFailures': count,
+      }, source)!;
+      expect(
+        restored.nextDue.difference(now),
+        lessThanOrEqualTo(bookSiteMaxRetryInterval),
+      );
+      expect(restored.isDue(now.add(const Duration(hours: 24))), isTrue);
+    }
+    final recovered = BookSiteCheck.after(
+      const BookSiteInspection(BookSiteFinding.sampled),
+      now,
+      source,
+      check,
+    );
+    expect(recovered.consecutiveFailures, 0);
+    expect(recovered.nextDue, now.add(const Duration(days: 7)));
+    final changed = BookSource.fromJson({...source.toJson(), 'name': '新版来源'});
+    final newVersion = BookSiteCheck.after(
+      check.inspection,
+      now,
+      changed,
+      check,
+    );
+    expect(newVersion.consecutiveFailures, 1);
+  });
 }
 
 void _batchRiskTests() {
@@ -637,10 +706,13 @@ void _batchFailureTests() {
       final result = await checks.run(entries, CancellationToken());
       expect(result.failed, 1);
       expect(result.checked, 1);
-      expect(
+      final failed = BookSiteCheck.fromJson(
         await fixture.services.books.store.read('books_site_check:${one.id}'),
-        isNull,
+        one,
       );
+      expect(failed!.inspection.finding, BookSiteFinding.unsupported);
+      expect(failed.needsRetry, isTrue);
+      expect(failed.consecutiveFailures, 1);
       expect(
         await fixture.services.books.store.read('books_site_check:${two.id}'),
         isNotNull,
@@ -989,6 +1061,97 @@ void _monitorPolicyTests() {
     );
     await monitor.close();
   });
+}
+
+void _monitorRetryTests() {
+  test(
+    'due failures do not starve older samples and a recovered host is blocked',
+    () async {
+      final fixture = await _Fixture.create();
+      addTearDown(fixture.close);
+      final repo = fixture.services.books;
+      final failing = List.generate(
+        25,
+        (i) => _source('retry-$i', 'retry-$i.example'),
+      );
+      final normal = _source('normal-due', 'normal-due.example');
+      final sources = [...failing, normal];
+      await fixture.add(sources);
+      final ids = sources.map((source) => source.id).toSet();
+      for (final kind in BookKind.values) {
+        final others = (await repo.sources(kind, enabledOnly: true))
+            .where((entry) => !ids.contains(entry.source.id))
+            .map((entry) => entry.source.id)
+            .toSet();
+        await repo.setSourcesEnabled(kind, others, false);
+      }
+      final now = DateTime.now();
+      for (final source in failing) {
+        await repo.store.write(
+          'books_site_check:${source.id}',
+          BookSiteCheck(
+            const BookSiteInspection(BookSiteFinding.timeout),
+            now.subtract(const Duration(minutes: 31)),
+            bookSourceCheckFingerprint(source),
+            consecutiveFailures: 1,
+          ).toJson(),
+        );
+      }
+      await repo.store.write(
+        'books_site_check:${normal.id}',
+        BookSiteCheck(
+          const BookSiteInspection(BookSiteFinding.sampled),
+          now.subtract(const Duration(days: 8)),
+          bookSourceCheckFingerprint(normal),
+        ).toJson(),
+      );
+      final requested = <String>[];
+      var recovered = false;
+      final monitor = BookSiteMonitor(
+        BookSiteChecks(
+          repo,
+          inspect: (source, _) async {
+            requested.add(source.id);
+            if (source.id == normal.id) {
+              return const BookSiteInspection(BookSiteFinding.sampled);
+            }
+            if (source.id == failing.first.id && recovered) {
+              return const BookSiteInspection(
+                BookSiteFinding.gamblingClue,
+                gamblingRisk: true,
+              );
+            }
+            return const BookSiteInspection(BookSiteFinding.timeout);
+          },
+        ),
+        fixture.services.settings,
+        startDelay: const Duration(hours: 1),
+        interval: const Duration(hours: 1),
+      );
+      addTearDown(monitor.close);
+      monitor.start();
+      await monitor.check().timeout(const Duration(seconds: 10));
+      expect(requested, hasLength(20));
+      expect(requested, contains(normal.id));
+      await monitor.check().timeout(const Duration(seconds: 10));
+      expect(requested, hasLength(26));
+      expect(requested.toSet(), ids);
+
+      final raw = await repo.store.read('books_site_check:${failing.first.id}');
+      final failed = BookSiteCheck.fromJson(raw, failing.first)!;
+      expect(failed.consecutiveFailures, 2);
+      expect(failed.needsRetry, isTrue);
+      await repo.store.write('books_site_check:${failing.first.id}', {
+        ...failed.toJson(),
+        'checkedAt': now
+            .subtract(const Duration(hours: 2))
+            .millisecondsSinceEpoch,
+      });
+      recovered = true;
+      await monitor.check().timeout(const Duration(seconds: 10));
+      expect((await repo.riskStore.get(failing.first.id))!.quarantined, isTrue);
+    },
+  );
 }
 
 BookSource _source(String key, String host) => BookSource.fromJson({

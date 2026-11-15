@@ -91,6 +91,15 @@ migrate_working_dir/
 !/docs/implementation/legado-rdap-nine-20261116.json
 !/docs/implementation/legado-adult-category-recheck-20261115.json
 !/docs/implementation/legado-uaa-adult-id-review-20261116.json
+!/docs/implementation/legado-woo15-home-review-20261116.json
+!/docs/implementation/legado-unresolved-head-later-20261116.json
+!/docs/implementation/legado-rdap-top-cc-20261116.json
+!/docs/implementation/legado-redirected-sources-20261116.json
+!/docs/implementation/legado-myxzm-recheck-20261116.json
+!/docs/implementation/legado-recovered-amsi-20261116.json
+!/docs/implementation/legado-adult-mixed-home-recheck-20261116.json
+!/docs/implementation/legado-242xs-recheck-20261116.json
+!/docs/implementation/legado-three-redirect-recheck-20261116.json
 !/docs/implementation/legado-equivalent-adult-ids-20261116.json
 !/docs/implementation/legado-two-chain-pilot-20261116.json
 !/docs/implementation/legado-import-inventory-20261115.json

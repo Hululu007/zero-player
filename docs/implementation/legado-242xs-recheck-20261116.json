@@ -1,0 +1,56 @@
+{
+  "schema_version": 1,
+  "scope": "One selected bundled novel-source version. No website body, credentials or user data is retained.",
+  "input_references": {
+    "catalog_archive": {"path": "assets/catalogs/books/legado/catalog.json.bz2", "sha256": "012a0e0d6e6adc8d303c32b578510e14b562088b3e965cb01a1a647b5e7e034d"},
+    "catalog_manifest": {"path": "assets/catalogs/books/legado/manifest.json", "sha256": "59bb9e3551b5a01406c1d720d2b5d5d5f21518eccbb52cd93f8d752c19f7cf66"},
+    "source_ledger_historical_git": {"commit": "df798cc773dd09722214cdced6eded5a2d2431ea", "path": "docs/implementation/legado-source-ledger-20261115.json", "sha256": "7e53cfcd42523e3dd173708ffc0ce99ec42b9de4fbeae63969765690d2068070"}
+  },
+  "source": {
+    "source_id": "67a2a1f1f3cb1fe0abba50885d93798631ac0776df9eaba887ebb6f5c0f55870",
+    "selected_record_index": 2940,
+    "kind": "text",
+    "format": "html",
+    "endpoint_host": "www.242xs.info",
+    "endpoint_sha256": "ac1cfa9ff836f606dc46bfdb026d35b090959e3f5e9cf529b9df629bc2ae86ee",
+    "selected_raw_record_canonical_sha256": "6e3bfed0b4e6cd41d205f4e4152606995ea02a798d451895782e395067bfdb07",
+    "normalized_legado_sha256": "20ee8d7bb248e4657460b7b95eb51da6810e7a4d83ccc4e55992d899696642d5",
+    "raw_search_sha256": "1c05f115d7c16f7b07e36145600547755c589955c1980dd64d3b64f882e3f0d9",
+    "raw_explore_sha256": "a60eb5fe917ab2fbae59d5ece1ba952817a90286df03273e866d3ab51d098a0e",
+    "raw_search_list_sha256": "27810ef2d8679ed646a920fb8726062dfbe59b08491ad0cb82f96267ece3bc05",
+    "raw_explore_list_sha256": "e8b37af8a5d28f1d4c5e5dd0c847f2d91939bf7a2b632767f76870b6c5ef1394",
+    "same_host_selected_sources_in_historical_ledger": 1,
+    "same_domain_raw_source_records_in_archive": 1
+  },
+  "method": {
+    "requests": "Anonymous HTTPS GET with public DNS validation and pinned public address, TLS hostname verification, 8-second total request deadline, no redirects, credentials, page scripts or subresources; sequential requests.",
+    "sampling": "For HTTP 200 HTML only, read up to 128 KiB plus one byte and derive a title, limited static text signals and digest in memory. For HTTP 404 only headers/status were recorded, not the response body.",
+    "search": "The existing search path used one fixed synthetic keyword, not user data; the actual query string is not retained. The existing first category path used page 1."
+  },
+  "observations": [
+    {"round": 1, "target": "root", "path": "/", "started_at_utc": "2026-11-15T21:16:40.539531+00:00", "observed_at_utc": "2026-11-15T21:16:41.489790+00:00", "http_status": 200, "sample_bytes": 1509, "truncated": false, "sample_sha256": "5cfb758283f0b9940e97855e43caa95a5c8fdddaedd95f7835f65e66abf83fed", "title": "最新视频", "video_term_counts": {"视频": 7, "播放": 1}, "novel_term_counts": {}, "old_search_selector_nodes": 0, "old_category_selector_nodes": 0},
+    {"round": 1, "target": "old_search", "path": "/search/result.html", "synthetic_query": true, "started_at_utc": "2026-11-15T21:16:41.990345+00:00", "observed_at_utc": "2026-11-15T21:16:42.909221+00:00", "http_status": 404, "response_body_sampled": false},
+    {"round": 1, "target": "old_category", "path": "/category/xuanhuan/1.html", "started_at_utc": "2026-11-15T21:16:43.409388+00:00", "observed_at_utc": "2026-11-15T21:16:44.323814+00:00", "http_status": 404, "response_body_sampled": false},
+    {"round": 2, "target": "root", "path": "/", "started_at_utc": "2026-11-15T21:16:44.824101+00:00", "observed_at_utc": "2026-11-15T21:16:45.707176+00:00", "http_status": 200, "sample_bytes": 1509, "truncated": false, "sample_sha256": "5cfb758283f0b9940e97855e43caa95a5c8fdddaedd95f7835f65e66abf83fed", "title": "最新视频", "video_term_counts": {"视频": 7, "播放": 1}, "novel_term_counts": {}, "old_search_selector_nodes": 0, "old_category_selector_nodes": 0},
+    {"round": 2, "target": "old_search", "path": "/search/result.html", "synthetic_query": true, "started_at_utc": "2026-11-15T21:16:46.207362+00:00", "observed_at_utc": "2026-11-15T21:16:47.083599+00:00", "http_status": 404, "response_body_sampled": false},
+    {"round": 2, "target": "old_category", "path": "/category/xuanhuan/1.html", "started_at_utc": "2026-11-15T21:16:47.583762+00:00", "observed_at_utc": "2026-11-15T21:16:48.439743+00:00", "http_status": 404, "response_body_sampled": false}
+  ],
+  "provenance": {
+    "recorded_observations_canonical_sha256": "4dae1bf1eb231b8b98d802653b315d7a471c451b3a7db90fc218f231990699c7",
+    "raw_http_bodies_in_evidence": false,
+    "original_collector_in_repository": false
+  },
+  "policy_scope": {
+    "matches": "Only this ID, full normalized endpoint, text/HTML kind, and full normalized Legado fingerprint.",
+    "host_wide": false,
+    "orphan_history_id": false,
+    "claims_malware": false,
+    "claims_permanent_failure": false
+  },
+  "limitations": [
+    "The two rounds were seconds apart through the same network and do not prove permanent unavailability or independent geography.",
+    "A video-oriented title and old HTTP 404 paths establish only a time-bound old-rule mismatch, not malicious content or ownership changes.",
+    "No original response body or collection script was preserved; recorded HTTP outcomes and page digest cannot be independently reconstructed from this file.",
+    "A revised source or a different same-host source requires separate review; this observation does not quarantine the entire host or orphaned historical books."
+  ]
+}

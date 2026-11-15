@@ -40,6 +40,20 @@ void checkCommunityRelations() {
     !observation.matches(collision, {17}),
     'ID collision must not cross hosts',
   );
+  final sameHostOtherId = BookSource.fromJson({
+    ...current.toJson(),
+    'sourceKey': 'fixture:other-id',
+  });
+  final idOnly = ledger.HostObservation(
+    current.endpoint.host,
+    {current.id},
+    {},
+    {},
+  );
+  check(
+    sameHostOtherId.id != current.id && !idOnly.matches(sameHostOtherId, {}),
+    'same host must not substitute for the selected source ID',
+  );
   final indexOnly = ledger.HostObservation('www.example.com', {}, {17}, {});
   check(
     !indexOnly.matches(current, {18}),
@@ -968,12 +982,250 @@ void checkActualReplay() {
     checkReplayRecent(rows, document);
     checkReplayNov16(rows, document);
     checkReplayComRdap(rows, document);
+    checkReplayLaterHeadAndTopCc(rows, document);
+    checkReplayTargetedAndRecovered(rows);
+    checkReplayThreeRedirects(rows);
   } finally {
     for (final output in outputs) {
       if (output.existsSync()) output.deleteSync();
     }
     root.deleteSync();
   }
+}
+
+void checkReplayThreeRedirects(List<Map> rows) {
+  final byId = {for (final row in rows) row['source_id']: row};
+  const ids = {
+    '8331f056d5f55d30f06d402a554628b75a8d0b3225b633a78e95b3187fd895ea': 6,
+    '823e542023d25223e7e3726237ff427b0ae0e204977553859408d457a78c472a': 8,
+    '28ca4bcd9d92f3557a0ac54bd4bcb2751f66fb7b15bacb53c5fadffff68d6be2': 8,
+  };
+  final associated = <String, List<Map>>{};
+  for (final entry in ids.entries) {
+    final row = byId[entry.key]!;
+    final evidence = (row['specialized_reading_observations'] as List)
+        .cast<Map>()
+        .where((item) => item['evidence'] == nov16.threeRedirectEvidenceFile)
+        .toList();
+    final scopes = evidence
+        .where(
+          (item) =>
+              item['observation_kind'] == 'bounded_redirect_recheck_scope',
+        )
+        .toList();
+    final samples = evidence
+        .where(
+          (item) => item['observation_kind'] == 'bounded_redirect_recheck_get',
+        )
+        .toList();
+    check(
+      scopes.length == 1 &&
+          samples.length == entry.value &&
+          scopes.single['previous_head_user_agent'] == 'not_recorded' &&
+          scopes.single['sampled_discovery_entry_count'] == 2 &&
+          samples.every(
+            (item) =>
+                item['method'] == 'GET' &&
+                item['matches_current_selected_raw_record'] == true &&
+                item['matches_current_normalized_legado_rule'] == true &&
+                item['full_readability_verified'] == null &&
+                item['site_security_verified'] == null &&
+                item['permanent_failure_verified'] == null,
+          ),
+      'three-source review must preserve exact identity and limited evidence',
+    );
+    associated[entry.key] = evidence;
+  }
+  final liquge = associated[ids.keys.first]!;
+  final liqugeScope = liquge.singleWhere(
+    (row) => row['observation_kind'] == 'bounded_redirect_recheck_scope',
+  );
+  final unknownStatus = liquge.singleWhere(
+    (row) => row['round'] == 2 && row['target'] == 'root',
+  );
+  check(
+    liqugeScope['search_mode'] == 'POST_not_sent' &&
+        liqugeScope['original_search_post_submitted'] == false &&
+        unknownStatus['http_status'] == null &&
+        unknownStatus['body_read'] == null &&
+        (unknownStatus['missing_fields'] as List).contains('http_status'),
+    'unsubmitted POST and truncated root status must remain unknown',
+  );
+  final quge = associated[ids.keys.elementAt(1)]!;
+  final qugeScope = quge.singleWhere(
+    (row) => row['observation_kind'] == 'bounded_redirect_recheck_scope',
+  );
+  check(
+    qugeScope['current_get_user_agent_profile'] == 'bundled_mobile' &&
+        qugeScope['previous_head_status'] == 302 &&
+        DateTime.parse(
+          quge.firstWhere(
+                (row) =>
+                    row['observation_kind'] == 'bounded_redirect_recheck_get',
+              )['observed_at_utc']
+              as String,
+        ).isAfter(
+          DateTime.parse(qugeScope['previous_head_observed_at_utc'] as String),
+        ) &&
+        qugeScope['webview_rendered'] == false &&
+        quge
+            .where(
+              (row) =>
+                  row['observation_kind'] == 'bounded_redirect_recheck_get',
+            )
+            .every(
+              (row) => row['http_status'] == 200 && row['body_read'] == false,
+            ),
+    'different GET user agent and unrendered WebView must be retained',
+  );
+  final yq = associated[ids.keys.elementAt(2)]!;
+  final yqScope = yq.singleWhere(
+    (row) => row['observation_kind'] == 'bounded_redirect_recheck_scope',
+  );
+  final unknownRedirect = yq.singleWhere(
+    (row) => row['round'] == 1 && row['target'] == 'discovery_library',
+  );
+  check(
+    yqScope['declared_discovery_entry_count'] == 47 &&
+        yqScope['sampled_discovery_entry_count'] == 2 &&
+        yqScope['declared_login_used'] == false &&
+        unknownRedirect['http_status'] == 302 &&
+        unknownRedirect['redirect_category'] == null &&
+        unknownRedirect['observed_at_utc'] == null &&
+        unknownRedirect['body_read'] == null,
+    'untested discovery and incomplete redirect fields must stay unknown',
+  );
+}
+
+void checkReplayTargetedAndRecovered(List<Map> rows) {
+  final byId = {for (final row in rows) row['source_id']: row};
+  const redirected = {
+    '579f77abbbbe0d480ebcf75b9aca291c573954fac9496263f2747ac0dd2e0156': 6,
+    'd4b04ca5fb5f99ec4197fa67c2555cbac933b04534fd16f41eefec29c21d3d29': 10,
+  };
+  for (final entry in redirected.entries) {
+    final source = byId[entry.key]!;
+    final samples = (source['specialized_reading_observations'] as List)
+        .cast<Map>()
+        .where((row) => row['evidence'] == nov16.redirectedEvidenceFile)
+        .toList();
+    check(
+      samples.length == entry.value &&
+          samples.every(
+            (row) =>
+                row['http_status'] == 302 &&
+                row['redirect_category'] == 'other_host' &&
+                row['redirect_followed'] == false &&
+                row['same_third_party_for_both_sources'] == true &&
+                row['maliciousness_verified'] == null &&
+                row['matches_current_normalized_legado_rule'] == true,
+          ),
+      'targeted redirects must stay exact-rule historical observations',
+    );
+  }
+  final myx =
+      byId['483d7c92f8871bb1e84d45883d9a6ea0705afe1265615146ece1b2c9fbef90ad']!;
+  final review = (myx['specialized_reading_observations'] as List)
+      .cast<Map>()
+      .singleWhere((row) => row['evidence'] == nov16.myxzmEvidenceFile);
+  check(
+    review['historical_selected_record_index'] == 751 &&
+        (review['search'] as Map)['novel_search_endpoint_verified'] == false &&
+        (review['sample_a'] as Map)['candidate_nodes'] == 1 &&
+        (review['sample_b'] as Map)['candidate_nodes'] == 0 &&
+        review['single_class_candidate_tested_on_both_samples'] == false &&
+        (review['single_class_candidate_refetches'] as List).length == 2 &&
+        (review['single_class_candidate_refetches'] as List).every(
+          (row) =>
+              row['failure'] == 'overall_timeout' && row['http_status'] == null,
+        ) &&
+        review['candidate_retained_synthetic_advertisement'] == true &&
+        review['readability_verified'] == null,
+    'two-sample counterexample must remain unresolved',
+  );
+  final recovered =
+      jsonDecode(
+            File(
+              'docs/implementation/legado-recovered-amsi-20261116.json',
+            ).readAsStringSync(),
+          )
+          as Map;
+  var linked = 0;
+  for (final sample in (recovered['results'] as List).cast<Map>()) {
+    for (final id in (sample['selected_source_ids'] as List).cast<String>()) {
+      final source = byId[id];
+      if (source == null || source['endpoint_host'] != sample['host']) continue;
+      final scans = (source['amsi_observations'] as List)
+          .cast<Map>()
+          .where(
+            (row) => row['evidence'] == 'legado-recovered-amsi-20261116.json',
+          )
+          .toList();
+      check(
+        scans.length == 1,
+        'recovered AMSI sample must be additive and exact-host',
+      );
+      final scan = sample['amsi'] as Map?;
+      check(
+        scans.single['root_scan_classification'] ==
+            (scan?['classification'] ?? 'not_scanned_or_unknown'),
+        'unscanned and not-detected outcomes must stay distinct',
+      );
+      linked++;
+    }
+  }
+  check(
+    linked == 39,
+    'all 39 matching IDs retain the recovered AMSI observation',
+  );
+  const mixedIds = [
+    '04bcb61b79595729a59083d8137d536c9aea56a8b5023a601cbccb9c8e7bd204',
+    '25209b2554ef51f2360edd02c813a63fd799ad8d9674b091fb68bd4c8c66509f',
+    '63ae1d87e428bc772aed26b531b073f05ec2b07ae32ca1b89e1a466bbad66fc1',
+    'df954ffc66302d0b7d931af18f0c850a51b72baa03054f3ad59196e2c60f1a5f',
+    'e9a26ffe1152c5087487e223a1b328969f5ad54778240052f34daca3b2664804',
+  ];
+  for (final id in mixedIds) {
+    final source = byId[id]!;
+    final item = (source['historical_adult_source_review_observations'] as List)
+        .cast<Map>()
+        .singleWhere((row) => row['evidence'] == nov16.mixedHomeEvidenceFile);
+    check(
+      item['site_adult_status_from_sample'] == 'undetermined' &&
+          item['new_source_classification'] == 'not_supported' &&
+          item['source_risk_cleared'] == false &&
+          item['site_security_verified'] == null,
+      'mixed homepage evidence must not become a safety or clearing verdict',
+    );
+    if (id ==
+        'df954ffc66302d0b7d931af18f0c850a51b72baa03054f3ad59196e2c60f1a5f') {
+      check(
+        item['historical_adult_policy_snapshot'] == true &&
+            (source['static_policy'] as Map)['adult_source_classified'] == true,
+        'same-host historical adult source classification must survive',
+      );
+    }
+  }
+  final novel242 =
+      byId['67a2a1f1f3cb1fe0abba50885d93798631ac0776df9eaba887ebb6f5c0f55870']!;
+  final oldRuleSamples = (novel242['specialized_reading_observations'] as List)
+      .cast<Map>()
+      .where((row) => row['evidence'] == nov16.novel242EvidenceFile)
+      .toList();
+  check(
+    oldRuleSamples.length == 6 &&
+        oldRuleSamples.where((row) => row['http_status'] == 404).length == 4 &&
+        oldRuleSamples.where((row) => row['http_status'] == 200).length == 2 &&
+        oldRuleSamples.every(
+          (row) =>
+              row['historical_selected_record_index'] == 2940 &&
+              row['matches_current_normalized_legado_rule'] == true &&
+              row['maliciousness_verified'] == null &&
+              row['permanent_failure_verified'] == null,
+        ) &&
+        (novel242['static_policy'] as Map)['fixed_unavailable_rule'] == true,
+    '242 old-rule evidence must stay exact and time limited',
+  );
 }
 
 void checkReplaySelection(List<Map> rows) {
@@ -1320,10 +1572,108 @@ void checkReplayNov16(List<Map> rows, Map document) {
   check(
     (document['overlapping_summary']
             as Map)['sources_with_historical_adult_source_review_observations'] ==
-        10,
-    'adult review must associate exactly the ten documented source identities',
+        18,
+    'adult review must include precise and unresolved mixed-host observations',
   );
   checkReplayTwoChain(rows);
+}
+
+void checkReplayLaterHeadAndTopCc(List<Map> rows, Map document) {
+  final byId = {for (final row in rows) row['source_id']: row};
+  final evidence =
+      jsonDecode(
+            File(
+              'docs/implementation/legado-unresolved-head-later-20261116.json',
+            ).readAsStringSync(),
+          )
+          as Map;
+  var linked = 0;
+  for (final host in (evidence['results'] as List).cast<Map>()) {
+    for (final identity in (host['selected_sources'] as List).cast<Map>()) {
+      final source = byId[identity['source_id']];
+      if (source == null || source['endpoint_host'] != host['host']) continue;
+      final hits = (source['network_observations'] as List)
+          .cast<Map>()
+          .where(
+            (item) =>
+                item['evidence'] ==
+                'legado-unresolved-head-later-20261116.json',
+          )
+          .toList();
+      check(hits.length == 1, 'later HEAD must match one exact ID and host');
+      final latest = host['latest_head'] as Map;
+      check(
+        hits.single['http_status'] == latest['http_status'] &&
+            hits.single['recorded_classification'] ==
+                latest['classification'] &&
+            hits.single['historical_selected_record_index'] ==
+                identity['record_index'] &&
+            hits.single['site_security_verified'] == null,
+        'later HEAD observation changed or implied safety',
+      );
+      final dns = (source['registry_and_doh_observations'] as List)
+          .cast<Map>()
+          .where(
+            (item) =>
+                item['evidence'] ==
+                'legado-unresolved-head-later-20261116.json',
+          )
+          .toList();
+      check(
+        dns.length == 1 &&
+            dns.single['verdict'] == (host['dns'] as Map)['verdict'],
+        'DNS observation missing or assigned to another host',
+      );
+      linked++;
+    }
+  }
+  check(linked == 990, 'all 990 matching selected source IDs must be linked');
+  const wooIds = [
+    '1b9fbc433c81ac824c2a20ece0332a66c79c7abe8a4da1b28b74f0a26e220763',
+    'cab07dec6b3f4ab2ece1b1a261aad7e155b9de9bcc4f517f70cd5490011ba393',
+    '38ff9c4ee9a4b64192f10046721e2c6a2c50c2ec80d3d3b5eccd3ae7e40b6022',
+  ];
+  for (final id in wooIds) {
+    final source = byId[id]!;
+    final samples = (source['network_observations'] as List).cast<Map>().where(
+      (row) => row['evidence'] == 'legado-woo15-home-review-20261116.json',
+    );
+    check(
+      source['endpoint_host'] == 'm.woo15.com' &&
+          samples.length == 2 &&
+          (source['static_policy'] as Map)['adult_source_classified'] == true,
+      'exact adult homepage evidence was not retained',
+    );
+  }
+  final top = rows
+      .expand(
+        (row) => (row['registry_and_doh_observations'] as List).cast<Map>(),
+      )
+      .where((item) => item['evidence'] == com.topCcEvidenceFile)
+      .toList();
+  check(
+    top.where((item) => item['classification'] == 'not_queried').length == 28,
+    'all skipped top/cc queries must stay unknown',
+  );
+  check(
+    top
+            .where(
+              (item) =>
+                  item['classification'] == 'provider_timeout' &&
+                  item['round'] != null,
+            )
+            .length ==
+        2,
+    'candidate DNS timeouts must not become negative answers',
+  );
+  final topRef =
+      (document['input_sha256']
+          as Map)['docs/implementation/legado-rdap-top-cc-20261116.json'];
+  check(
+    topRef ==
+        'bff7d7109129d16471b9c9e6ade4e372703420d782bbb374665d353e48beb9cb',
+    'top/cc evidence digest missing',
+  );
 }
 
 void checkReplayTwoChain(List<Map> rows) {

@@ -733,7 +733,8 @@ final class _BookSourcesPageState extends State<BookSourcesPage> {
       const Padding(
         padding: EdgeInsets.symmetric(horizontal: 16),
         child: Text(
-          '启用后台检测时，每 30 分钟抽查最多 20 个 7 天未查的已启用源；'
+          '启用后台检测时，每 30 分钟抽查最多 20 个已启用源；'
+          '已采样页面 7 天复查；未确认结果的重试间隔从 30 分钟递增至 24 小时，排队可能更久。'
           '监管期间仅检查策略允许的可信内置文字源，不检查外部书源。'
           '只查首页部分静态文字和跳转，不验证解析、网页脚本、木马或安全性。'
           '“动态求值”和 2026-11-15 的历史检出仅是复核线索，不代表恶意或安全。',

@@ -4,6 +4,8 @@ import 'com_rdap_legacy_quarantine.dart';
 import 'iqiyi_legacy_quarantine.dart';
 import 'known_untrusted_book_rules.dart';
 import 'net_rdap_legacy_quarantine.dart';
+import 'novel_242_legacy_quarantine.dart';
+import 'redirected_legacy_quarantine.dart';
 import 'taotaoshu_legacy_quarantine.dart';
 
 // These hosts have specifically adult-labelled entries in the bundled Legado
@@ -30,6 +32,7 @@ const _adultExactBookHosts = {
   'm.3322t.com', // Homepage describes adult novels as a primary offering
   'm.xyuzhaiwu5.com', // Homepage explicitly promotes adult novels
   'm.aaread.club', // Homepage explicitly labels itself an adult-novel site
+  'm.woo15.com', // Exact homepage independently identified as adult-focused
 };
 
 // Preserve explicit adult evidence hidden by deduplication or corroborated by
@@ -190,7 +193,9 @@ bool knownUnavailableBookRule(BookSource source) =>
     unavailableIqiyiLegacySource(source) ||
     unavailableTaotaoshuLegacySource(source) ||
     unavailableNetRdapLegacySource(source) ||
-    unavailableComRdapLegacySource(source);
+    unavailableComRdapLegacySource(source) ||
+    unavailable242NovelLegacySource(source) ||
+    unavailableRedirectedLegacySource(source);
 
 bool _hasKnownRemoteCodeRule(BookSource source) {
   final legado = source.legado;

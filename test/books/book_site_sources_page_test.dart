@@ -128,6 +128,7 @@ void _quarantineReviewPageTests() {
       expect(find.text('网页抽查'), findsOneWidget);
       expect(find.text('风险记录'), findsOneWidget);
       expect(find.textContaining('不验证解析、网页脚本、木马或安全性'), findsOneWidget);
+      expect(find.textContaining('未确认结果的重试间隔从 30 分钟递增'), findsOneWidget);
       expect(find.textContaining('网页：疑似博彩文字线索'), findsOneWidget);
       expect(tester.takeException(), isNull);
       await tester.tap(find.text('风险记录'));

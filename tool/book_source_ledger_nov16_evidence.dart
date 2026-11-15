@@ -13,10 +13,16 @@ import 'book_source_ledger_recent_evidence.dart';
 const uaaEvidenceFile = 'legado-uaa-adult-id-review-20261116.json';
 const equivalentEvidenceFile = 'legado-equivalent-adult-ids-20261116.json';
 const twoChainEvidenceFile = 'legado-two-chain-pilot-20261116.json';
+const redirectedEvidenceFile = 'legado-redirected-sources-20261116.json';
+const myxzmEvidenceFile = 'legado-myxzm-recheck-20261116.json';
+const mixedHomeEvidenceFile = 'legado-adult-mixed-home-recheck-20261116.json';
+const novel242EvidenceFile = 'legado-242xs-recheck-20261116.json';
+const threeRedirectEvidenceFile = 'legado-three-redirect-recheck-20261116.json';
 const _historicalLedgerPath =
     'docs/implementation/legado-source-ledger-20261115.json';
 const _historicalLabelsPath =
     'docs/implementation/legado-adult-label-evidence-20261115.json';
+const _catalogArchivePath = 'assets/catalogs/books/legado/catalog.json.bz2';
 
 String _sha(List<int> bytes) => sha256.convert(bytes).toString();
 String _textSha(String text) => _sha(utf8.encode(text));
@@ -168,6 +174,621 @@ Nov16LedgerEvidence readNov16Evidence(
   _addEquivalents(output, equivalent, ledger, labels, rows);
   _addPilot(output, pilot, rows, normalize);
   return output;
+}
+
+/// This is a bounded exact-host observation; no page excerpts are retained.
+void addWooHomeReview(Nov16LedgerEvidence output, Map evidence, List rows) {
+  final host = evidence['host'];
+  _require(host == 'm.woo15.com', 'adult homepage host mismatch');
+  final history = verifiedHistoricalGitObject({
+    'git_commit': 'a6c7d9986a64a2c7328c5f74c06415a116ef27a9',
+    'path': _historicalLedgerPath,
+    'sha256': evidence['historical_ledger_sha256'],
+  }, _historicalLedgerPath);
+  _require(
+    (history['input_sha256'] as Map)[_catalogArchivePath] ==
+        evidence['catalog_archive_sha256'],
+    'adult homepage historical archive mismatch',
+  );
+  final historical = {
+    for (final row in (history['sources'] as List).cast<Map>())
+      row['source_id']: row,
+  };
+  final observations = (evidence['observations'] as List).cast<Map>();
+  _require(observations.length == 2, 'adult homepage observation count');
+  for (final entry in (evidence['selected_sources'] as List).cast<Map>()) {
+    final index = entry['record_index'];
+    _require(
+      index is int && index >= 0 && index < rows.length,
+      'invalid index',
+    );
+    final source = parseBookSourceRecord(rows[index as int]);
+    final old = historical[source.id];
+    _require(
+      source.id == entry['source_id'] &&
+          source.endpoint.host == host &&
+          old != null &&
+          old['endpoint_host'] == host &&
+          old['selected_record_index'] == index,
+      'adult homepage selected identity mismatch',
+    );
+    output.add(output.adultReview, source.id, host, index, {
+      'evidence': 'legado-woo15-home-review-20261116.json',
+      'classification': 'exact_host_adult_audience_and_static_clues',
+      'observation_count': observations.length,
+      'observed_at_utc': [
+        for (final row in observations) row['observed_at_utc'],
+      ],
+      'adult_description_clue_recorded': true,
+      'adult_visible_clue_recorded': true,
+      'site_security_verified': null,
+    });
+  }
+}
+
+void addNovel242Review(
+  Nov16LedgerEvidence output,
+  Map evidence,
+  List rows,
+  NetworkNormalizer normalize,
+) {
+  final refs = evidence['input_references'] as Map;
+  final history = _targetedHistory(refs['source_ledger_historical_git'] as Map);
+  _require(
+    (history['input_sha256'] as Map)[_catalogArchivePath] ==
+        (refs['catalog_archive'] as Map)['sha256'],
+    '242 source historical archive mismatch',
+  );
+  final snapshot = evidence['source'] as Map;
+  final index = snapshot['selected_record_index'];
+  _require(
+    index is int && index >= 0 && index < rows.length,
+    'invalid 242 index',
+  );
+  final source = parseBookSourceRecord(rows[index as int]);
+  final matches = (history['sources'] as List)
+      .cast<Map>()
+      .where((item) => item['source_id'] == snapshot['source_id'])
+      .toList();
+  final old = matches.length == 1 ? matches.single : null;
+  _require(
+    old != null &&
+        source.id == snapshot['source_id'] &&
+        source.endpoint.host == snapshot['endpoint_host'] &&
+        old['selected_record_index'] == index &&
+        old['endpoint_host'] == snapshot['endpoint_host'] &&
+        old['endpoint_sha256'] == snapshot['endpoint_sha256'] &&
+        old['selected_raw_record_canonical_sha256'] ==
+            snapshot['selected_raw_record_canonical_sha256'] &&
+        old['normalized_legado_canonical_sha256'] ==
+            snapshot['normalized_legado_sha256'],
+    '242 source historical identity mismatch',
+  );
+  final observations = (evidence['observations'] as List).cast<Map>();
+  _require(observations.length == 6, '242 source observation count');
+  final identities = {
+    for (final sample in observations) '${sample['round']}:${sample['target']}',
+  };
+  _require(
+    identities.length == 6 &&
+        identities.containsAll({
+          '1:root',
+          '1:old_search',
+          '1:old_category',
+          '2:root',
+          '2:old_search',
+          '2:old_category',
+        }),
+    '242 source observation coverage mismatch',
+  );
+  for (final sample in observations) {
+    final target = sample['target'];
+    _require(
+      (target == 'root' && sample['http_status'] == 200) ||
+          ((target == 'old_search' || target == 'old_category') &&
+              sample['http_status'] == 404),
+      '242 source observation classification mismatch',
+    );
+    output.add(output.reading, source.id, source.endpoint.host, index, {
+      'evidence': novel242EvidenceFile,
+      'observation_kind': 'bounded_legacy_source_request',
+      'round': sample['round'],
+      'target': target,
+      'observed_at_utc': sample['observed_at_utc'],
+      'http_status': sample['http_status'],
+      'sample_bytes': sample['sample_bytes'],
+      'sample_sha256': sample['sample_sha256'],
+      'truncated': sample['truncated'],
+      'old_search_selector_nodes': sample['old_search_selector_nodes'],
+      'old_category_selector_nodes': sample['old_category_selector_nodes'],
+      'homepage_video_signals_recorded': target == 'root'
+          ? (sample['video_term_counts'] as Map).values.any(
+              (n) => n is int && n > 0,
+            )
+          : null,
+      'historical_normalized_legado_sha256':
+          snapshot['normalized_legado_sha256'],
+      'maliciousness_verified': null,
+      'permanent_failure_verified': null,
+    });
+    if (target == 'root') {
+      output.add(output.network, source.id, source.endpoint.host, index, {
+        ...normalize(
+          evidence: novel242EvidenceFile,
+          method: 'GET',
+          path: '/',
+          row: {
+            'observed_at': sample['observed_at_utc'],
+            'http_status': sample['http_status'],
+            'sample_bytes': sample['sample_bytes'],
+            'sample_sha256': sample['sample_sha256'],
+            'truncated': sample['truncated'],
+          },
+        ),
+        'historical_normalized_legado_sha256':
+            snapshot['normalized_legado_sha256'],
+        'site_security_verified': null,
+      });
+    }
+  }
+}
+
+Map _targetedHistory(Map reference) => verifiedHistoricalGitObject({
+  'git_commit': reference['commit'],
+  'path': reference['path'],
+  'sha256': reference['sha256'],
+}, _historicalLedgerPath);
+
+/// Preserve the observed method/UA and missing values for the three candidates.
+void addThreeRedirectReview(
+  Nov16LedgerEvidence output,
+  Map evidence,
+  Map priorHead,
+  List rows,
+  NetworkNormalizer normalize,
+) {
+  final refs = evidence['input_references'] as Map;
+  final history = _targetedHistory(refs['source_ledger_historical_git'] as Map);
+  _require(
+    (history['input_sha256'] as Map)[_catalogArchivePath] ==
+        (refs['catalog_archive'] as Map)['sha256'],
+    'three-source historical archive mismatch',
+  );
+  final oldSources = {
+    for (final row in (history['sources'] as List).cast<Map>())
+      row['source_id']: row,
+  };
+  final priorRows = {
+    for (final row in (priorHead['results'] as List).cast<Map>())
+      row['host']: row,
+  };
+  final sources = (evidence['sources'] as List).cast<Map>();
+  final previous = (evidence['previous_head_observations'] as List).cast<Map>();
+  final samples = (evidence['get_observations'] as List).cast<Map>();
+  _require(
+    sources.length == 3 && previous.length == 3 && samples.length == 22,
+    'three-source observation coverage mismatch',
+  );
+  for (final snapshot in sources) {
+    final id = snapshot['source_id'];
+    final host = snapshot['host'];
+    final index = snapshot['selected_record_index'];
+    _require(
+      index is int && index >= 0 && index < rows.length,
+      'invalid source index',
+    );
+    final source = parseBookSourceRecord(rows[index as int]);
+    final old = oldSources[id];
+    _require(
+      old != null &&
+          source.id == id &&
+          source.endpoint.host == host &&
+          source.kind.name == snapshot['kind'] &&
+          source.format.name == snapshot['format'] &&
+          old['selected_record_index'] == index &&
+          old['endpoint_host'] == host &&
+          old['endpoint_sha256'] == snapshot['endpoint_sha256'] &&
+          old['selected_raw_record_canonical_sha256'] ==
+              snapshot['selected_raw_record_canonical_sha256'] &&
+          old['normalized_legado_canonical_sha256'] ==
+              snapshot['normalized_legado_sha256'],
+      'three-source historical identity mismatch',
+    );
+    final oldHead = previous.where((row) => row['host'] == host).toList();
+    final prior = priorRows[host];
+    _require(
+      oldHead.length == 1 &&
+          prior != null &&
+          oldHead.single['method'] == 'HEAD' &&
+          oldHead.single['user_agent'] == 'not_recorded' &&
+          oldHead.single['observed_at_utc'] ==
+              (prior['latest_head'] as Map)['observed_at'] &&
+          oldHead.single['http_status'] ==
+              (prior['latest_head'] as Map)['http_status'],
+      'three-source prior HEAD mismatch',
+    );
+    final current = samples.where((sample) => sample['host'] == host).toList();
+    final discovery = current
+        .map((r) => r['target'])
+        .whereType<String>()
+        .where((target) => target.startsWith('discovery_'))
+        .toSet();
+    _require(
+      discovery.length == 2,
+      'three-source discovery sample scope mismatch',
+    );
+    final mode = snapshot['search_mode'];
+    output.add(output.reading, id, host, index, {
+      'evidence': threeRedirectEvidenceFile,
+      'observation_kind': 'bounded_redirect_recheck_scope',
+      'historical_normalized_legado_sha256':
+          snapshot['normalized_legado_sha256'],
+      'previous_head_observed_at_utc': oldHead.single['observed_at_utc'],
+      'previous_head_status': oldHead.single['http_status'],
+      'previous_head_user_agent': oldHead.single['user_agent'],
+      'current_get_user_agent_profile': snapshot['ua_profile'],
+      'search_mode': mode,
+      'original_search_post_submitted': mode == 'POST_not_sent' ? false : null,
+      'declared_login_used': mode == 'GET_declared_login_not_used'
+          ? false
+          : null,
+      'webview_rendered': mode == 'GET_webview_option_not_rendered'
+          ? false
+          : null,
+      'declared_discovery_entry_count': snapshot['declared_nonempty_entries'],
+      'sampled_discovery_entry_count': discovery.length,
+      'full_readability_verified': null,
+      'site_security_verified': null,
+      'permanent_failure_verified': null,
+    });
+    for (final sample in current) {
+      final item = <String, Object?>{
+        'evidence': threeRedirectEvidenceFile,
+        'observation_kind': 'bounded_redirect_recheck_get',
+        'historical_normalized_legado_sha256':
+            snapshot['normalized_legado_sha256'],
+        'round': sample['round'],
+        'target': sample['target'],
+        'method': 'GET',
+        'user_agent_profile': snapshot['ua_profile'],
+        'observed_at_utc': sample['observed_at_utc'],
+        'http_status': sample['http_status'],
+        'redirect_category': sample['redirect_category'],
+        'body_read': sample['body_read'],
+        'missing_fields': sample['missing_fields'],
+        'redirect_followed': false,
+        'full_readability_verified': null,
+        'site_security_verified': null,
+        'permanent_failure_verified': null,
+      };
+      output.add(output.reading, id, host, index, item);
+      if (sample['target'] == 'root') {
+        output.add(output.network, id, host, index, {
+          ...normalize(
+            evidence: threeRedirectEvidenceFile,
+            method: 'GET',
+            path: '/',
+            row: {
+              'observed_at': sample['observed_at_utc'],
+              'http_status': sample['http_status'],
+            },
+          ),
+          'historical_normalized_legado_sha256':
+              snapshot['normalized_legado_sha256'],
+          'user_agent_profile': snapshot['ua_profile'],
+          'redirect_category': sample['redirect_category'],
+          'body_read': sample['body_read'],
+          'missing_fields': sample['missing_fields'],
+          'redirect_followed': false,
+          'site_security_verified': null,
+        });
+      }
+    }
+  }
+}
+
+void addTargetedSourceReviews(
+  Nov16LedgerEvidence output,
+  Map redirected,
+  Map myxzm,
+  List rows,
+  NetworkNormalizer normalize,
+) {
+  _addRedirectedReview(output, redirected, rows, normalize);
+  _addMyxzmReview(output, myxzm, rows);
+}
+
+void _addRedirectedReview(
+  Nov16LedgerEvidence output,
+  Map redirected,
+  List rows,
+  NetworkNormalizer normalize,
+) {
+  final history = _targetedHistory(redirected['historical_ledger'] as Map);
+  _require(
+    (history['input_sha256'] as Map)[_catalogArchivePath] ==
+        redirected['archive_sha256'],
+    'redirect review historical archive mismatch',
+  );
+  final historicalById = {
+    for (final row in (history['sources'] as List).cast<Map>())
+      row['source_id']: row,
+  };
+  final rounds = (redirected['rounds'] as List).cast<Map>();
+  final sources = (redirected['sources'] as List).cast<Map>();
+  _require(rounds.length == 2 && sources.length == 2, 'redirect review size');
+  final redirectTargets = {
+    for (final round in rounds)
+      for (final item in (round['observations'] as List).cast<Map>())
+        item['redirect_host'],
+  };
+  _require(
+    redirectTargets.length == 1 && redirectTargets.single is String,
+    'redirect targets are not a single recorded third party',
+  );
+  for (final target in sources) {
+    final id = target['source_id'];
+    final index = target['selected_record_index'];
+    final host = target['host'];
+    _require(
+      index is int && index >= 0 && index < rows.length,
+      'invalid source index',
+    );
+    final source = parseBookSourceRecord(rows[index as int]);
+    final old = historicalById[id];
+    _require(
+      old != null &&
+          source.id == id &&
+          source.endpoint.host == host &&
+          old['selected_record_index'] == index &&
+          old['endpoint_host'] == host &&
+          old['selected_raw_record_canonical_sha256'] ==
+              target['selected_raw_record_canonical_sha256'] &&
+          old['normalized_legado_canonical_sha256'] ==
+              target['normalized_legado_canonical_sha256'],
+      'redirect source historical identity mismatch',
+    );
+    for (final round in rounds) {
+      final items = (round['observations'] as List)
+          .cast<Map>()
+          .where((r) => r['host'] == host)
+          .toList();
+      final expected = <String>{
+        'root:HEAD',
+        'search:HEAD',
+        'search:GET',
+        if (host == 'www.3ubook.com') ...{'category:HEAD', 'category:GET'},
+      };
+      final actual = {
+        for (final item in items) '${item['purpose']}:${item['method']}',
+      };
+      _require(
+        items.length == expected.length && actual.containsAll(expected),
+        'redirect observation coverage mismatch',
+      );
+      for (final item in items) {
+        _require(
+          item['status'] == 302 && item['redirect'] == 'other_host',
+          'redirect observation mismatch',
+        );
+        final observation = <String, Object?>{
+          'evidence': redirectedEvidenceFile,
+          'observation_kind': 'bounded_source_request_redirect',
+          'round': round['round'],
+          'purpose': item['purpose'],
+          'method': item['method'],
+          'observed_at': item['observed_at'],
+          'request_sha256': item['request_sha256'],
+          'http_status': item['status'],
+          'redirect_category': item['redirect'],
+          'redirect_followed': false,
+          'same_third_party_for_both_sources': true,
+          'historical_normalized_legado_sha256':
+              target['normalized_legado_canonical_sha256'],
+          'maliciousness_verified': null,
+          'readability_verified': null,
+        };
+        output.add(output.reading, id, host, index, observation);
+        if (item['purpose'] == 'root') {
+          output.add(output.network, id, host, index, {
+            ...normalize(
+              evidence: redirectedEvidenceFile,
+              method: item['method'] as String,
+              path: '/',
+              row: item,
+            ),
+            'redirect_category': item['redirect'],
+            'redirect_followed': false,
+            'historical_normalized_legado_sha256':
+                target['normalized_legado_canonical_sha256'],
+          });
+        }
+      }
+    }
+  }
+}
+
+void _addMyxzmReview(Nov16LedgerEvidence output, Map myxzm, List rows) {
+  final myxzmHistory =
+      (myxzm['input_references'] as Map)['source_ledger_historical_git'] as Map;
+  final target = myxzm['selection_snapshot'] as Map;
+  final index = target['selected_record_index'];
+  _require(
+    index is int && index >= 0 && index < rows.length,
+    'invalid sample index',
+  );
+  final source = parseBookSourceRecord(rows[index as int]);
+  final myxzmLedger = _targetedHistory(myxzmHistory);
+  _require(
+    (myxzmLedger['input_sha256'] as Map)[_catalogArchivePath] ==
+        ((myxzm['input_references'] as Map)['catalog_archive']
+            as Map)['sha256'],
+    'sampled source historical archive mismatch',
+  );
+  final myxzmMatches = (myxzmLedger['sources'] as List)
+      .cast<Map>()
+      .where((row) => row['source_id'] == target['source_id'])
+      .toList();
+  final old = myxzmMatches.length == 1 ? myxzmMatches.single : null;
+  _require(
+    old != null &&
+        source.id == target['source_id'] &&
+        source.endpoint.host == target['endpoint_host'] &&
+        old['selected_record_index'] == index &&
+        old['endpoint_host'] == target['endpoint_host'] &&
+        old['endpoint_sha256'] == target['endpoint_sha256'] &&
+        old['selected_raw_record_canonical_sha256'] ==
+            target['selected_raw_record_canonical_sha256'] &&
+        old['normalized_legado_canonical_sha256'] ==
+            target['normalized_legado_sha256'],
+    'sample source historical identity mismatch',
+  );
+  final evidence = ((myxzm['recorded_observations'] as Map)['evidence']) as Map;
+  final search = evidence['search'] as Map;
+  final a = evidence['sample_a'] as Map;
+  final b = evidence['sample_b'] as Map;
+  final candidate = evidence['single_class_candidate'] as Map;
+  final control = evidence['synthetic_advertisement_control'] as Map;
+  output.add(output.reading, source.id, source.endpoint.host, index, {
+    'evidence': myxzmEvidenceFile,
+    'observation_kind': 'bounded_two_sample_source_rule_review',
+    'historical_normalized_legado_sha256': target['normalized_legado_sha256'],
+    'search': {
+      'observed_at_utc': search['observed_at_utc'],
+      'http_status': search['status'],
+      'old_rule_result_count': search['old_novel_search_rule_engine_books'],
+      'novel_search_endpoint_verified':
+          search['novel_search_endpoint_verified'],
+    },
+    'sample_a': {
+      'detail_observed_at_utc': a['detail_observed_at_utc'],
+      'detail_status': a['detail_status'],
+      'chapter_count': a['old_toc_engine_chapters'],
+      'content_observed_at_utc': a['content_observed_at_utc'],
+      'content_status': a['content_status'],
+      'old_rule_characters': a['old_content_characters'],
+      'candidate_nodes': a['candidate_nodes'],
+      'candidate_characters': a['candidate_characters'],
+    },
+    'sample_b': {
+      'detail_observed_at_utc': b['detail_observed_at_utc'],
+      'detail_status': b['detail_status'],
+      'chapter_count': b['old_toc_engine_chapters'],
+      'content_observed_at_utc': b['content_observed_at_utc'],
+      'content_status': b['content_status'],
+      'old_rule_characters': b['old_content_characters'],
+      'candidate_nodes': b['two_class_candidate_nodes'],
+      'candidate_characters': b['two_class_candidate_characters'],
+      'later_other_container_characters':
+          b['substantial_container_text_characters'],
+      'later_structure_observed_at_utc':
+          b['subsequent_static_structure_observed_at_utc'],
+    },
+    'single_class_candidate_tested_on_both_samples':
+        candidate['actual_engine_tested_on_fetched_samples'],
+    'single_class_candidate_refetches': [
+      for (final key in ['sample_a_refetch', 'sample_b_refetch'])
+        {
+          'sample': key,
+          'observed_at_utc': (candidate[key] as Map)['observed_at_utc'],
+          'http_status': (candidate[key] as Map)['status'],
+          'failure': (candidate[key] as Map)['failure'],
+        },
+    ],
+    'candidate_retained_synthetic_advertisement':
+        control['candidate_kept_advertisement_text'],
+    'synthetic_script_executed': control['synthetic_script_executed'],
+    'readability_verified': null,
+    'site_security_verified': null,
+  });
+}
+
+void addMixedHomeReview(
+  Nov16LedgerEvidence output,
+  Map evidence,
+  List rows,
+  NetworkNormalizer normalize,
+) {
+  final refs = evidence['input_references'] as Map;
+  final history = _targetedHistory(refs['source_ledger_historical_git'] as Map);
+  _require(
+    (history['input_sha256'] as Map)[_catalogArchivePath] ==
+        (refs['catalog_archive'] as Map)['sha256'],
+    'mixed source historical archive mismatch',
+  );
+  final previous = {
+    for (final row in (history['sources'] as List).cast<Map>())
+      row['source_id']: row,
+  };
+  final snapshots = (evidence['source_snapshot'] as List).cast<Map>();
+  final observations = (evidence['observations'] as List).cast<Map>();
+  final decisions = evidence['decisions'] as Map;
+  _require(
+    snapshots.length == 5 && observations.length == 4,
+    'mixed evidence size',
+  );
+  for (final snapshot in snapshots) {
+    final id = snapshot['source_id'];
+    final host = snapshot['host'];
+    final index = snapshot['selected_record_index'];
+    _require(
+      index is int && index >= 0 && index < rows.length,
+      'invalid mixed source index',
+    );
+    final source = parseBookSourceRecord(rows[index as int]);
+    final old = previous[id];
+    final decision = decisions[host] as Map;
+    _require(
+      old != null &&
+          source.id == id &&
+          source.endpoint.host == host &&
+          old['selected_record_index'] == index &&
+          old['endpoint_host'] == host &&
+          old['endpoint_sha256'] == snapshot['endpoint_sha256'] &&
+          old['selected_raw_record_canonical_sha256'] ==
+              snapshot['selected_raw_record_canonical_sha256'] &&
+          old['normalized_legado_canonical_sha256'] ==
+              snapshot['normalized_legado_sha256'] &&
+          (old['static_policy'] as Map)['adult_source_classified'] ==
+              snapshot['static_adult_policy_snapshot'] &&
+          decision['site_adult_status_from_sample'] == 'undetermined' &&
+          decision['new_source_classification'] == 'not_supported',
+      'mixed source historical identity or classification mismatch',
+    );
+    final samples = observations.where((row) => row['host'] == host).toList();
+    _require(samples.length == 2, 'mixed homepage sample count');
+    output.add(output.adultReview, id, host, index, {
+      'evidence': mixedHomeEvidenceFile,
+      'classification': 'insufficient_site_wide_adult_evidence',
+      'site_adult_status_from_sample': 'undetermined',
+      'new_source_classification': 'not_supported',
+      'historical_adult_policy_snapshot':
+          snapshot['static_adult_policy_snapshot'],
+      'historical_normalized_legado_sha256':
+          snapshot['normalized_legado_sha256'],
+      'historical_same_host_adult_source_recorded': host == 'i.12bz.net',
+      'source_risk_cleared': false,
+      'site_security_verified': null,
+    });
+    for (final sample in samples) {
+      output.add(output.network, id, host, index, {
+        ...normalize(
+          evidence: mixedHomeEvidenceFile,
+          method: 'GET',
+          path: '/',
+          row: {
+            'observed_at': sample['observed_at'],
+            'http_status': sample['http_status'],
+            'sample_bytes': sample['sample_bytes'],
+            'truncated': sample['truncated'],
+          },
+        ),
+        'site_adult_status_from_sample': 'undetermined',
+        'adult_text_clue_recorded': null,
+        'site_security_verified': null,
+      });
+    }
+  }
 }
 
 void _verifyHistoricalCode(Map uaa, Map equivalent, Map ledger, Map reference) {

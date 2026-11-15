@@ -1,0 +1,252 @@
+{
+  "method": "Public HTTPS with pinned public DNS; root HEAD and fixed search/category HEAD/GET; no redirects or scripts.",
+  "limitations": [
+    "The two rounds share one network and may share caches.",
+    "Redirects do not establish malicious content or permanent closure.",
+    "Only the recorded old source versions and request paths were checked.",
+    "Raw pages, redirect paths and queries, IPs and credentials are not retained."
+  ],
+  "archive_sha256": "012a0e0d6e6adc8d303c32b578510e14b562088b3e965cb01a1a647b5e7e034d",
+  "historical_ledger": {
+    "commit": "a6c7d9986a64a2c7328c5f74c06415a116ef27a9",
+    "path": "docs/implementation/legado-source-ledger-20261115.json",
+    "sha256": "b3962a059b2d577dd88df6d263ce2227c55cf23881eba6e6de7f339bf0885c22"
+  },
+  "collector_source_sha256": "87418b5a3f1b7a17449cc9f54d8e75dfbb2152f50f8a6966aaeb2d3261824f0f",
+  "transport_source_sha256": "36f5359259ba259e84ae10875be6383884ad0cc71e829f029dd96b6dc9976563",
+  "sources": [
+    {
+      "host": "m.newbiquge.org",
+      "source_id": "579f77abbbbe0d480ebcf75b9aca291c573954fac9496263f2747ac0dd2e0156",
+      "selected_record_index": 3107,
+      "endpoint": "https://m.newbiquge.org",
+      "selected_raw_record_canonical_sha256": "6728918e08b995ce79f523365f9cbc4a8688a6bb50a892bb89ab9be64529aac7",
+      "normalized_legado_canonical_sha256": "c9fdc25ee7e1a4cabee2d83860b0d38b5d92bbdeb0a5627490ee8c9613cbf181"
+    },
+    {
+      "host": "www.3ubook.com",
+      "source_id": "d4b04ca5fb5f99ec4197fa67c2555cbac933b04534fd16f41eefec29c21d3d29",
+      "selected_record_index": 3041,
+      "endpoint": "https://www.3ubook.com",
+      "selected_raw_record_canonical_sha256": "ecbb38ad097cd44db1266c9de25667923bc9474e20309fea7a2bbb6765425901",
+      "normalized_legado_canonical_sha256": "384f712065d76ffc451e03883e1b56bb1f76f427d29f3f9cce3363d7c55af81c"
+    }
+  ],
+  "rounds": [
+    {
+      "round": 1,
+      "control": {
+        "started_at": "2026-11-15T20:49:50.582490+00:00",
+        "request_sha256": "0f115db062b7c0dd030b16878c99dea5c354b49dc37b38eb8846179c7783e9d7",
+        "status": 200,
+        "observed_at": "2026-11-15T20:49:51.506700+00:00"
+      },
+      "observations": [
+        {
+          "host": "m.newbiquge.org",
+          "purpose": "root",
+          "method": "HEAD",
+          "started_at": "2026-11-15T20:49:51.506714+00:00",
+          "request_sha256": "a4e936322166514c5cd0a5b9a87a7c4a79576dab037bd187719533d3f66fbe01",
+          "status": 302,
+          "redirect": "other_host",
+          "redirect_host": "2026-10-10.urldance.com",
+          "redirect_scheme": "https",
+          "observed_at": "2026-11-15T20:49:52.371252+00:00"
+        },
+        {
+          "host": "m.newbiquge.org",
+          "purpose": "search",
+          "method": "HEAD",
+          "started_at": "2026-11-15T20:49:52.871698+00:00",
+          "request_sha256": "0fe81a5aeeb6b4af1be5a9209a93da0d2e08f258fdba90202c1a96b45d959141",
+          "status": 302,
+          "redirect": "other_host",
+          "redirect_host": "2026-10-10.urldance.com",
+          "redirect_scheme": "https",
+          "observed_at": "2026-11-15T20:49:53.724835+00:00"
+        },
+        {
+          "host": "m.newbiquge.org",
+          "purpose": "search",
+          "method": "GET",
+          "started_at": "2026-11-15T20:49:54.225361+00:00",
+          "request_sha256": "0fe81a5aeeb6b4af1be5a9209a93da0d2e08f258fdba90202c1a96b45d959141",
+          "status": 302,
+          "redirect": "other_host",
+          "redirect_host": "2026-10-10.urldance.com",
+          "redirect_scheme": "https",
+          "observed_at": "2026-11-15T20:49:55.066952+00:00"
+        },
+        {
+          "host": "www.3ubook.com",
+          "purpose": "root",
+          "method": "HEAD",
+          "started_at": "2026-11-15T20:49:55.567483+00:00",
+          "request_sha256": "2856e5c67f25b886982357f7351dee24bbe9e031fca89658806593740a4aa8da",
+          "status": 302,
+          "redirect": "other_host",
+          "redirect_host": "2026-10-10.urldance.com",
+          "redirect_scheme": "https",
+          "observed_at": "2026-11-15T20:49:56.444108+00:00"
+        },
+        {
+          "host": "www.3ubook.com",
+          "purpose": "search",
+          "method": "HEAD",
+          "started_at": "2026-11-15T20:49:56.944821+00:00",
+          "request_sha256": "18d68139f4d91683e3e0db8bf26da4198f02db8e1338dc14f6e87bf6950cfec1",
+          "status": 302,
+          "redirect": "other_host",
+          "redirect_host": "2026-10-10.urldance.com",
+          "redirect_scheme": "https",
+          "observed_at": "2026-11-15T20:49:57.813732+00:00"
+        },
+        {
+          "host": "www.3ubook.com",
+          "purpose": "search",
+          "method": "GET",
+          "started_at": "2026-11-15T20:49:58.314206+00:00",
+          "request_sha256": "18d68139f4d91683e3e0db8bf26da4198f02db8e1338dc14f6e87bf6950cfec1",
+          "status": 302,
+          "redirect": "other_host",
+          "redirect_host": "2026-10-10.urldance.com",
+          "redirect_scheme": "https",
+          "observed_at": "2026-11-15T20:49:59.187083+00:00"
+        },
+        {
+          "host": "www.3ubook.com",
+          "purpose": "category",
+          "method": "HEAD",
+          "started_at": "2026-11-15T20:49:59.687179+00:00",
+          "request_sha256": "4627c266c27781f44e57456a9bbe88b7b51d6e82cb2913e5bfd6f9ce3f3c0ae6",
+          "status": 302,
+          "redirect": "other_host",
+          "redirect_host": "2026-10-10.urldance.com",
+          "redirect_scheme": "https",
+          "observed_at": "2026-11-15T20:50:00.552766+00:00"
+        },
+        {
+          "host": "www.3ubook.com",
+          "purpose": "category",
+          "method": "GET",
+          "started_at": "2026-11-15T20:50:01.053232+00:00",
+          "request_sha256": "4627c266c27781f44e57456a9bbe88b7b51d6e82cb2913e5bfd6f9ce3f3c0ae6",
+          "status": 302,
+          "redirect": "other_host",
+          "redirect_host": "2026-10-10.urldance.com",
+          "redirect_scheme": "https",
+          "observed_at": "2026-11-15T20:50:01.893828+00:00"
+        }
+      ]
+    },
+    {
+      "round": 2,
+      "control": {
+        "started_at": "2026-11-15T20:50:02.394005+00:00",
+        "request_sha256": "0f115db062b7c0dd030b16878c99dea5c354b49dc37b38eb8846179c7783e9d7",
+        "status": 200,
+        "observed_at": "2026-11-15T20:50:03.198849+00:00"
+      },
+      "observations": [
+        {
+          "host": "m.newbiquge.org",
+          "purpose": "root",
+          "method": "HEAD",
+          "started_at": "2026-11-15T20:50:03.198864+00:00",
+          "request_sha256": "a4e936322166514c5cd0a5b9a87a7c4a79576dab037bd187719533d3f66fbe01",
+          "status": 302,
+          "redirect": "other_host",
+          "redirect_host": "2026-10-10.urldance.com",
+          "redirect_scheme": "https",
+          "observed_at": "2026-11-15T20:50:04.053234+00:00"
+        },
+        {
+          "host": "m.newbiquge.org",
+          "purpose": "search",
+          "method": "HEAD",
+          "started_at": "2026-11-15T20:50:04.553398+00:00",
+          "request_sha256": "0fe81a5aeeb6b4af1be5a9209a93da0d2e08f258fdba90202c1a96b45d959141",
+          "status": 302,
+          "redirect": "other_host",
+          "redirect_host": "2026-10-10.urldance.com",
+          "redirect_scheme": "https",
+          "observed_at": "2026-11-15T20:50:05.405890+00:00"
+        },
+        {
+          "host": "m.newbiquge.org",
+          "purpose": "search",
+          "method": "GET",
+          "started_at": "2026-11-15T20:50:05.906154+00:00",
+          "request_sha256": "0fe81a5aeeb6b4af1be5a9209a93da0d2e08f258fdba90202c1a96b45d959141",
+          "status": 302,
+          "redirect": "other_host",
+          "redirect_host": "2026-10-10.urldance.com",
+          "redirect_scheme": "https",
+          "observed_at": "2026-11-15T20:50:06.740577+00:00"
+        },
+        {
+          "host": "www.3ubook.com",
+          "purpose": "root",
+          "method": "HEAD",
+          "started_at": "2026-11-15T20:50:07.241055+00:00",
+          "request_sha256": "2856e5c67f25b886982357f7351dee24bbe9e031fca89658806593740a4aa8da",
+          "status": 302,
+          "redirect": "other_host",
+          "redirect_host": "2026-10-10.urldance.com",
+          "redirect_scheme": "https",
+          "observed_at": "2026-11-15T20:50:08.121338+00:00"
+        },
+        {
+          "host": "www.3ubook.com",
+          "purpose": "search",
+          "method": "HEAD",
+          "started_at": "2026-11-15T20:50:08.621437+00:00",
+          "request_sha256": "18d68139f4d91683e3e0db8bf26da4198f02db8e1338dc14f6e87bf6950cfec1",
+          "status": 302,
+          "redirect": "other_host",
+          "redirect_host": "2026-10-10.urldance.com",
+          "redirect_scheme": "https",
+          "observed_at": "2026-11-15T20:50:09.510495+00:00"
+        },
+        {
+          "host": "www.3ubook.com",
+          "purpose": "search",
+          "method": "GET",
+          "started_at": "2026-11-15T20:50:10.010649+00:00",
+          "request_sha256": "18d68139f4d91683e3e0db8bf26da4198f02db8e1338dc14f6e87bf6950cfec1",
+          "status": 302,
+          "redirect": "other_host",
+          "redirect_host": "2026-10-10.urldance.com",
+          "redirect_scheme": "https",
+          "observed_at": "2026-11-15T20:50:10.839100+00:00"
+        },
+        {
+          "host": "www.3ubook.com",
+          "purpose": "category",
+          "method": "HEAD",
+          "started_at": "2026-11-15T20:50:11.339669+00:00",
+          "request_sha256": "4627c266c27781f44e57456a9bbe88b7b51d6e82cb2913e5bfd6f9ce3f3c0ae6",
+          "status": 302,
+          "redirect": "other_host",
+          "redirect_host": "2026-10-10.urldance.com",
+          "redirect_scheme": "https",
+          "observed_at": "2026-11-15T20:50:12.230958+00:00"
+        },
+        {
+          "host": "www.3ubook.com",
+          "purpose": "category",
+          "method": "GET",
+          "started_at": "2026-11-15T20:50:12.731334+00:00",
+          "request_sha256": "4627c266c27781f44e57456a9bbe88b7b51d6e82cb2913e5bfd6f9ce3f3c0ae6",
+          "status": 302,
+          "redirect": "other_host",
+          "redirect_host": "2026-10-10.urldance.com",
+          "redirect_scheme": "https",
+          "observed_at": "2026-11-15T20:50:13.573253+00:00"
+        }
+      ]
+    }
+  ],
+  "completed_at": "2026-11-15T20:50:14.073744+00:00"
+}
