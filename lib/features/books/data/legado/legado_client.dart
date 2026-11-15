@@ -4,6 +4,7 @@ import '../../domain/book.dart';
 import '../../domain/book_search.dart';
 import '../../domain/legado_source.dart';
 import 'legado_request.dart';
+import 'kuwo_discovery.dart';
 import 'legado_rule_tokens.dart';
 import 'legado_script.dart';
 import 'legado_worker.dart';
@@ -18,6 +19,21 @@ final class LegadoBookClient {
   ) async {
     final spec = source.legado!;
     if (!spec.enabledExplore || source.format == BookFormat.feed) return [];
+    if (isKuwoAuditedDiscovery(source)) {
+      final request = LegadoRequest.parse(
+        source,
+        source.endpoint,
+        spec.categories.single.address,
+      );
+      final document = await _fetch(
+        source,
+        request,
+        token,
+        maxBytes: 512 * 1024,
+      );
+      token.check();
+      return parseKuwoCategories(document.text);
+    }
     final categories = <(String, String), LegadoCategory>{};
     Exception? failure;
     for (final category in spec.categories) {
@@ -486,14 +502,16 @@ final class LegadoBookClient {
   Future<Document> _fetch(
     BookSource source,
     LegadoRequest request,
-    CancellationToken token,
-  ) {
+    CancellationToken token, {
+    int maxBytes = 2 * 1024 * 1024,
+  }) {
     final uri = source.requestTarget(request.uri);
     if (request.json case final Map<String, Object?> body) {
       return network.postJson(
         uri,
         body,
         headers: request.headers,
+        maxBytes: maxBytes,
         cancellation: token,
       );
     }
@@ -502,6 +520,7 @@ final class LegadoBookClient {
         uri,
         body,
         headers: request.headers,
+        maxBytes: maxBytes,
         cancellation: token,
         encoding: request.encoding,
       );
@@ -509,6 +528,7 @@ final class LegadoBookClient {
     return network.get(
       uri,
       headers: request.headers,
+      maxBytes: maxBytes,
       networkTimeout: const Duration(seconds: 12),
       cancellation: token,
       validateTarget: source.requestTarget,

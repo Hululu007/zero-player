@@ -6,7 +6,7 @@
 
 上述导入统计是在成人标签去重合并修复**之前**于北京时间 10:32:19 生成的基线；其实际导入代码摘要保存在清单的 `import_code_sha256`，不能当作修复后行为。每个包的数组位置、原始记录索引、逐记录实际来源 ID、被选中版本及主机均可从 [导入清单](legado-import-inventory-20261115.json) 追溯。被拒原因包括缺搜索或发现入口、跨域规则、缺正文等，不能全部解释为网站失效。其他统计引用 4845 条原始记录时同样不等于应用可导入的 2139 个 ID。
 
-修复后重新运行实际导入器，仍解析出 2139 个唯一 ID。全项目回归的默认成人过滤场景中，2027 个随包来源新增且默认停用，106 个被内容策略或隔离限制，另有 6 个与已存在来源重复；此数字仅是该测试条件下的导入结果，不代表它们已完成安全或阅读验证。
+修复后重新运行实际导入器，仍解析出 2139 个唯一 ID。全项目回归的默认成人过滤场景中，2026 个随包来源新增且默认停用，107 个被内容策略或隔离限制，另有 6 个与已存在来源重复；此数字仅是该测试条件下的导入结果，不代表它们已完成安全或阅读验证。
 
 静态提取了 2010 个可构造 HTTPS 入口主机；另有 81 条原始记录的入口无法由本探针静态构造，原因可能是动态规则、无效格式或本工具不支持，不能直接视为失效。对全部 2010 个主机完成无跳转 HEAD 根路径核查；初轮 2009 个主机后，因发现身份片段空格导致漏记，又补核 1 个主机并重新关联记录索引。最终每主机的状态、时间（UTC）、原始记录索引、跳转目标主机及类别、GET 抽样结果与归档摘要见 [逐主机结果](legado-host-audit-20261115.json)。结果不保存网页正文、跳转路径参数、媒体或脚本；部分标题与固定词命中用于人工研判。
 
@@ -20,6 +20,29 @@
 | 其他 HTTP 状态 | 63 | 包括 405、429、5xx 等，见逐主机结果。 |
 
 对 HEAD 200 的主机进行独立 GET：460 次返回 200，其中 416 次为可抽样 HTML，44 次因类型或内容编码跳过；另有 6 次 GET 302、36 次 GET 失败。HEAD 与 GET 可能变化，GET 失败保留在 `sample.error`，不覆盖先前成功的 HEAD。网页可能因地区、时间、TLS 或反爬返回不同结果；抽样仅覆盖最多 32 KiB HTML 的标题及可见文本，不能据此排除博彩、木马或成人内容。`www.favcomic.xyz` 的标题明确写有成人漫画，现有原始记录未能导入；`www.zongcaixiaoshuow.com` 样本可见文本含“色情小说”，可能只是站内分类或链接，应继续按实际作品和内容过滤，不能只凭这一词将整站定性。
+
+## 未取得 HEAD 的来源二次复核（2026-11-15）
+
+只选取首轮未取得 HEAD 的 1134 个主机，覆盖修复前导入基线中 1095 个不同来源 ID；未重扫首轮已取得 HTTP 响应的其他主机。本轮 HTTPS HEAD 开始于北京时间 12:01:33–12:03:45，DNS 返回码复核于 12:04:34 完成；24 个并发、每次请求总时限 6 秒，不跟随跳转、不执行脚本，HEAD 200 后最多读取 32 KiB HTML。逐主机首轮／二轮错误、状态、时间、原始索引、来源 ID 和 DNS 返回码见 [二轮主机结果](legado-host-recheck-20261115.json)。关联的是 2139 ID 的导入清单基线，不是实际已安装或当前启用数量。
+
+| 二轮 HEAD 分类 | 主机数 | 对应基线唯一 ID 数 | 解释 |
+| --- | ---: | ---: | --- |
+| HTTP 200 | 38 | 36 | 本次拿到根路径响应，不证明书源规则可解析或站点安全。 |
+| 301/302 | 29 | 30 | 25 个指向其他主机、4 个同主机；不跟随，也不把普通迁移定为恶意。 |
+| HTTP 403 | 11 | 13 | 属于拒绝访问或环境限制，不推断永久失效。 |
+| 其他 HTTP 状态 | 10 | 7 | 含 405、444 和 5xx 等，不直接推断永久失效。 |
+| 连接／读取超时 | 334 | 331 | 本次无法区分全部连接、TLS 握手或响应读取阶段。 |
+| 连接拒绝、重置或中断 | 213 | 227 | 本次连接失败，不能认定站点永久关闭。 |
+| TLS 证书或握手错误 | 161 | 176 | 当前环境无法建立受信任连接，不代表其他网络或未来状态。 |
+| 解析出的非公网地址被拒 | 47 | 17 | 网络安全边界正常生效，不访问该地址。 |
+| 系统解析主机不存在／无数据 | 261 | 220 | 分别为 151 个 `11001`、110 个 `11004`；必须结合下方原始 DNS 结果，不能直接称作 NXDOMAIN。 |
+| DNS 等待超时 | 30 | 38 | 此为系统解析阶段的截止时间，不等于域名不存在。 |
+
+以上 88 个主机（86 个 ID）本轮重新得到某种 HTTP 状态；其中 403、错误页和普通跳转也计作“得到状态”，不能称作恢复可读。对本轮系统 DNS 失败／超时的 291 个主机，用 Windows `DnsQuery_W` 查询 A 和 AAAA，绕过本机缓存及 hosts 文件；对出现名称不存在或完全无记录的结果再查询一次。98 个主机两轮均出现解析器返回 `9003`（NXDOMAIN）且无 A／AAAA 成功，对应 87 个 ID；其中 97 个首轮系统解析已报告找不到主机。47 个主机两轮均为 `9501`（无记录），对应 24 个 ID；38 个 DNS 查询到期仍不确定，另有 2 个状态不一致。106 个主机至少一次 DNS 查询返回成功，需要另查答案类型。
+
+上述 106 个主机又在 12:10:39–12:10:40 只查询两轮 A／AAAA 地址**类别**，不连接或保存具体地址，见 [DNS 地址类别复核](legado-dns-address-recheck-20261115.json)：103 个两轮仅返回未指定地址 `0.0.0.0`／`::`（94 个 ID），2 个出现其他非公网地址（1 个 ID），1 个出现公网地址（5 个 ID）。它们应归为解析结果异常或环境限制，不自动永久移除。该公网答案对应的 `www.bgwxc.com` 随后一次受限 HTTPS HEAD 仍被拒绝连接，也不能凭此判定永久失效。本机 DNS 返回码可能受递归解析器、缓存或网络策略影响，短时间两次查询并非独立地区或权威注册状态证明；重复 NXDOMAIN 仅为优先人工复查和暂时停用的证据。
+
+具体的规则失配候选是原始记录 1803：来源名明确说明 `newsmiss.lofter.com1` 用于制造不同源地址，实际搜索脚本声明 `api.lofter.com`。本地调用当前导入器成功得到文字 HTML 源，`sourceKey` 为空，其 ID 为 SHA-256(`text:html:newsmiss.lofter.com1`) 的 `9671fd3cfe8189b9abdcb097cbff01609ff14c7ab43dcf7aa10d48a34a526a05`；该身份主机两次 DNS 名称不存在。导入器不会在导入阶段执行以 `@js:` 开头的搜索规则；将规则声明的 API 地址交给 `LegadoRequest.parse` 时，实际因跨域边界被拒。未执行原规则，故也可能更早因脚本接口不兼容失败。现按这一具体来源身份和入口阻止新导入及历史访问，保留既有离线数据；没有扩大封禁正常 Lofter 域，也不能断言某个用户安装已有该记录。
 
 ## 已核实异常和反例
 
@@ -59,6 +82,8 @@
 
 按 30 个选中记录的静态证据细分，12 个含网络脚本或网页脚本片段求值，2 个含第三方 Base64 脚本模板，1 个将页面属性提取结果交给 `eval`，13 个把预期的 JSONP／对象字面量作为表达式解析，3 个把页面或 JSON 响应字段拼入代码表达式；类别可能重叠，数量不可相加为来源总数。比如酷我规则中 `freetype` 来自 `JSON.parse(java.ajax(...))`，又被拼入 `eval('sort'+type2+'.push(json)')`，未看到数值白名单；这表明表达式注入面，不证明实际收到或执行恶意响应。JSONP 等预期数据可优先研究有界解析替换；从远端获取完整脚本并求值的规则应单独复核或隔离。
 
+两条匹配原始脚本 SHA 和站点规则的酷我文字源，现将该分类脚本替换为有界 JSON 解析与固定分类白名单，并修正章节地址；其他来源和自定义规则不套用。Windows 原生应用对两条来源分别获取 26 个分类、20 本分类结果、28 个搜索结果、1651 章目录和 3192 字免费正文（`.dart_tool/native-64d721ae/legado_kuwo_native_test.log`）。分类出现未审核的 ID 或名称时会报错，需重新核对，不能将此次样本作为长期可用保证。
+
 应用已按规范化字段的确切 SHA-256 对上述 12 个远端脚本片段和 1 个页面属性求值旧版本实施隔离；涉及注释的规则还需同时匹配已确认的调用字段，单独的注释不触发隔离。对应无来源信息的旧书也会受限；若之后导入同 ID 的不同规则版本，旧缓存并不携带规则指纹，不能由新版本的可用性推断旧缓存已经审核。JSONP／对象表达式和响应字段拼接仍是待处理候选，不因本次分类自动判恶意或全部删除。
 
 使用当前应用导入器对上述选中版本做本地规范化复核，结果及导入代码摘要见 [规范化字段结果](legado-eval-normalized-20261115.json)：26 个 ID 的相应 `legado.rules` 或发现分类地址仍含 `eval`；另 4 个的危险数据流出现在 `legado.comment` 中，并有规则显式调用 `eval(source.bookSourceComment)`；还有 1 个 ID 同时具备上述两类，故 26 + 4 = 30。`comment` 本身是元数据，不是独立执行入口；结果单列了实际规范化后引用它的规则字段和摘要。静态代码存在和接口能够执行是两回事：部分原规则依赖本应用未提供的 Java／Android 接口或特定分支，此处没有运行来源脚本，也未证明运行可达。
@@ -72,9 +97,11 @@ python tool/audit_legado_catalog.py build/legado-audit.json --workers 48 --timeo
 dart --packages=.dart_tool/package_config.json tool/inventory_legado_import.dart build/legado-import.json
 python tool/audit_legado_adult_metadata.py build/legado-import.json build/legado-adult-evidence.json
 python tool/audit_legado_rule_patterns.py build/legado-import.json build/legado-rule-patterns.json
+python tool/recheck_legado_failures.py docs/implementation/legado-host-audit-20261115.json docs/implementation/legado-import-inventory-20261115.json build/legado-host-recheck.json --workers 24 --timeout 6 --dns-timeout 8 --sample-html
+python tool/recheck_legado_dns_answers.py build/legado-host-recheck.json build/legado-dns-address-recheck.json --timeout 8
 python tool/triage_legado_eval_candidates.py docs/implementation/legado-rule-patterns-20261115.json docs/implementation/legado-import-inventory-20261115.json build/legado-eval-triage.json
 dart --packages=.dart_tool/package_config.json tool/inventory_legado_eval_normalized.dart build/legado-eval-triage.json build/legado-eval-normalized.json
-python -m unittest -v tool.test_audit_legado_catalog
+python -m unittest -v tool.test_recheck_legado_failures tool.test_audit_legado_catalog
 ```
 
 探针仅读取已校验摘要的随包静态数据，不执行来源规则或页面脚本，不加载图片、媒体和其他外链，不跟随跳转。DNS 使用固定数量后台线程及独立等待上限；每次请求要求解析结果全部为公网地址，直接连接已校验的 IP 并用原域名验证 TLS，禁止代理和内网访问。HEAD 和 GET 各自有一个涵盖 DNS、连接、TLS、响应头和正文读取的整体截止时间，慢速持续响应也不能无限延长；该限时修正在上述首轮主机数据生成之后。只请求 HTTPS 443，默认只查根路径；指定 `--host` 后可用 `--path` 检查不含查询参数的已知静态路径。GET 仅在 HEAD 200 后执行，非 HTML 或带内容编码的响应跳过，读取上限 32 KiB；不下载可执行文件或保存页面正文。

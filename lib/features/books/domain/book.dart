@@ -4,6 +4,7 @@ import '../../../core/network/network_target_policy.dart';
 import '../../sources/domain/video_source.dart';
 import 'legado_source.dart';
 import 'legado_source_fixes.dart';
+import 'kuwo_legacy_source_fix.dart';
 
 enum BookKind { text, audio, comic }
 
@@ -71,7 +72,10 @@ final class BookSource {
       legado = data['legado'] == null
           ? null
           : LegadoSource.fromJson(
-              repairDushuLegadoSource(data, _comicLegadoRules(data)),
+              repairKuwoLegadoSource(
+                data,
+                repairDushuLegadoSource(data, _comicLegadoRules(data)),
+              ),
             ),
       mediaHosts = _hosts(_comicMediaHosts(data)),
       originNote = bookLabel(data['originNote'], 240),

@@ -84,8 +84,25 @@ const _quarantinedBookHistoryIds = {
   'e4478855eb2b4b0fea080a6ec8db6768baf313d957c15eb2d206e0de2a8855ae', // 4826
 };
 
+// Bundled record 1803: the exact source entry has no DNS answer and its
+// search rules require a different, undeclared host. This is an unavailable
+// legacy source, not a malware finding about Lofter or its real domains.
+const _unavailableLegacySourceId =
+    '9671fd3cfe8189b9abdcb097cbff01609ff14c7ab43dcf7aa10d48a34a526a05';
+
 bool quarantinedBookSourceId(String id) =>
-    _quarantinedBookHistoryIds.contains(id);
+    _quarantinedBookHistoryIds.contains(id) || id == _unavailableLegacySourceId;
+
+bool _unavailableLegacySource(BookSource source) {
+  final uri = source.endpoint;
+  return source.id == _unavailableLegacySourceId &&
+      source.kind == BookKind.text &&
+      source.format == BookFormat.html &&
+      uri.scheme == 'https' &&
+      uri.host == 'newsmiss.lofter.com1' &&
+      (uri.path.isEmpty || uri.path == '/') &&
+      !uri.hasQuery;
+}
 
 bool _hasKnownRemoteCodeRule(BookSource source) {
   final legado = source.legado;
@@ -115,10 +132,13 @@ bool quarantinedBookHost(String host) =>
     _matchesHost(host, _quarantinedBookHosts) ||
     _quarantinedExactBookHosts.contains(_normalizedHost(host));
 
+bool knownUnsafeBookRule(BookSource source) =>
+    _hasKnownRemoteCodeRule(source) || knownUntrustedBookRule(source);
+
 bool quarantinedBookSource(BookSource source) =>
     quarantinedBookHost(source.endpoint.host) ||
-    _hasKnownRemoteCodeRule(source) ||
-    knownUntrustedBookRule(source);
+    _unavailableLegacySource(source) ||
+    knownUnsafeBookRule(source);
 
 bool quarantinedComicSource(BookSource source) =>
     source.kind == BookKind.comic && quarantinedComicHost(source.endpoint.host);

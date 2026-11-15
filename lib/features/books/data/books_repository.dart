@@ -840,6 +840,7 @@ final class BooksRepository {
     var updated = 0;
     var duplicates = 0;
     var skipped = 0;
+    var recoveredQuarantine = false;
     final retainedAssessments = <String, BookSourceAssessment>{};
     await store.db.atomic(() async {
       final current = await store.sources(builtins);
@@ -906,6 +907,45 @@ final class BooksRepository {
           continue;
         }
         if (previous != null) {
+          // A previously installed, reviewed unsafe rule is hidden from normal
+          // management. A user can explicitly import a different rule for the
+          // exact same source without silently re-enabling its old preference.
+          // Automatic catalog/subscription refreshes never perform this repair.
+          if (knownUnsafeBookRule(previous.source)) {
+            final manualReplacement =
+                subscriptionId == null &&
+                !fromCatalog &&
+                !previous.source.builtin &&
+                !policy.supervision.enabled &&
+                !policy.supervision.corrupted &&
+                previous.source.kind == source.kind &&
+                previous.source.endpoint == source.endpoint &&
+                !quarantinedBookSource(source);
+            if (!manualReplacement) {
+              skipped++;
+              continue;
+            }
+            await flush();
+            policy.supervision.require(SensitiveOperation.channels);
+            if (policy.supervision.enabled || !sourceAllowed(source)) {
+              throw const ContentBlocked();
+            }
+            // Update only the rule and enabled state. The original group,
+            // favorite and ownership metadata remain available for the user.
+            await store.saveSource(previous.source, {
+              'source': source.toJson(),
+              'enabled': false,
+              'health': '',
+              'checkedAt': null,
+            });
+            policy.supervision.require(SensitiveOperation.channels);
+            if (policy.supervision.enabled || !sourceAllowed(source)) {
+              throw const ContentBlocked();
+            }
+            updated++;
+            recoveredQuarantine = true;
+            continue;
+          }
           final owned =
               subscriptionId != null &&
               previous.subscriptionId == subscriptionId;
@@ -950,7 +990,7 @@ final class BooksRepository {
       _riskGeneration++;
       await refreshSourceRisks();
     }
-    if (retainedAssessments.isNotEmpty) {
+    if (retainedAssessments.isNotEmpty || recoveredQuarantine) {
       policy.refresh();
     }
     return (
