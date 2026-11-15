@@ -782,11 +782,17 @@ final class BookStore {
   Future<String?> readingCache(Book book, BookChapter chapter) async =>
       await read(_readingCacheKey(book, chapter)) as String?;
 
-  Future<void> cacheReading(Book book, BookChapter chapter, String text) async {
+  Future<void> cacheReading(
+    Book book,
+    BookChapter chapter,
+    String text, {
+    void Function()? validate,
+  }) async {
     final value = jsonEncode(text);
     final size = utf8.encode(value).length;
     if (size > 2 * 1024 * 1024) return;
     await db.atomic(() async {
+      validate?.call();
       final key = _readingCacheKey(book, chapter);
       await db.customStatement(
         'INSERT OR REPLACE INTO app_meta(key,value) VALUES(?,?)',
@@ -805,6 +811,7 @@ final class BookStore {
           ]);
         }
       }
+      validate?.call();
     }, tables: {'app_meta'});
   }
 
@@ -847,8 +854,9 @@ final class BookStore {
   Future<void> cacheMixedReading(
     Book book,
     BookChapter chapter,
-    List<BookChapterSegment> parts,
-  ) async {
+    List<BookChapterSegment> parts, {
+    void Function()? validate,
+  }) async {
     final value = jsonEncode([
       for (final part in parts)
         switch (part) {
@@ -858,6 +866,7 @@ final class BookStore {
     ]);
     if (value.length > 512 * 1024) return;
     await db.atomic(() async {
+      validate?.call();
       await db.customStatement(
         'INSERT OR REPLACE INTO app_meta(key,value) VALUES(?,?)',
         [_mixedKey(book, chapter), value],
@@ -875,6 +884,7 @@ final class BookStore {
           ]);
         }
       }
+      validate?.call();
     }, tables: {'app_meta'});
   }
 
@@ -891,9 +901,15 @@ final class BookStore {
     }
   }
 
-  Future<void> cacheReadingImage(Book book, Uri image, List<int> bytes) async {
+  Future<void> cacheReadingImage(
+    Book book,
+    Uri image,
+    List<int> bytes, {
+    void Function()? validate,
+  }) async {
     if (bytes.length > 4 * 1024 * 1024) return;
     await db.atomic(() async {
+      validate?.call();
       await db.customStatement(
         'INSERT OR REPLACE INTO app_meta(key,value) VALUES(?,?)',
         [_imageCacheKey(book, image), jsonEncode(base64Encode(bytes))],
@@ -911,6 +927,7 @@ final class BookStore {
           ]);
         }
       }
+      validate?.call();
     }, tables: {'app_meta'});
   }
 

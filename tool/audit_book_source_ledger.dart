@@ -43,6 +43,7 @@ const _reading560 = 'legado-560xs-recheck-20261115.json';
 const _amsiBefore =
     'legado-amsi-source-classification-before-fanfanu-20261115.json';
 const _dohReviewed = 'legado-doh-reviewed-20261115.json';
+const _dnsAddressRecheck = 'legado-dns-address-recheck-20261115.json';
 const _importInventory = 'legado-import-inventory-20261115.json';
 const _amsiFiles = [
   'legado-amsi-pilot-20261115.json',
@@ -70,6 +71,8 @@ const _evidenceFiles = [
   _amsi4qoDecoded,
   _netRdap,
   comRdapEvidenceFile,
+  comRdapEighteenEvidenceFile,
+  rdapNineEvidenceFile,
   _recentRedirect,
   _categoryReview,
   _reading560,
@@ -78,6 +81,7 @@ const _evidenceFiles = [
   twoChainEvidenceFile,
   _amsiBefore,
   _dohReviewed,
+  _dnsAddressRecheck,
   _importInventory,
   ..._amsiFiles,
 ];
@@ -126,16 +130,26 @@ const _codePaths = [
   'tool/book_source_ledger_recent_evidence.dart',
   'tool/book_source_ledger_nov16_evidence.dart',
   'tool/book_source_ledger_com_rdap.dart',
+  'tool/book_source_ledger_com_eighteen.dart',
+  'tool/book_source_ledger_rdap_nine.dart',
 ];
 const _runtimePolicyReferencePaths = [
   'lib/features/books/application/book_category_policy.dart',
   'lib/features/books/application/book_site_checks.dart',
+  'lib/features/books/data/audiobook_files.dart',
   'lib/features/books/data/book_client.dart',
   'lib/features/books/data/bookan_audio_client.dart',
+  'lib/features/books/data/book_comic_download.dart',
   'lib/features/books/data/book_discovery_paging.dart',
+  'lib/features/books/data/book_download_coordinator.dart',
   'lib/features/books/data/book_repository_discovery.dart',
+  'lib/features/books/data/book_repository_media_access.dart',
   'lib/features/books/data/book_repository_mutations.dart',
+  'lib/features/books/data/book_repository_probe.dart',
+  'lib/features/books/data/book_repository_request_policy.dart',
   'lib/features/books/data/book_repository_site_checks.dart',
+  'lib/features/books/data/book_request_guard.dart',
+  'lib/features/books/data/book_store.dart',
   'lib/features/books/data/books_repository.dart',
   'lib/features/books/data/legado/legado_client.dart',
   'lib/features/books/data/lit2go_audio_client.dart',
@@ -1080,6 +1094,8 @@ Map<String, Object?> _row(
   RecentLedgerEvidence recent,
   Nov16LedgerEvidence nov16,
   ComRdapLedgerEvidence comRdap,
+  ComRdapLedgerEvidence comEighteen,
+  ComRdapLedgerEvidence rdapNine,
   Map<String, Map> data,
 ) {
   final index = catalog.selectedIndex[source.id]!;
@@ -1124,6 +1140,8 @@ Map<String, Object?> _row(
     ),
   );
   registry.addAll(selectComRdapEvidence(comRdap, source, index));
+  registry.addAll(selectComRdapEvidence(comEighteen, source, index));
+  registry.addAll(selectComRdapEvidence(rdapNine, source, index));
   final community = communityClues(data[_blocklist]!, source, index);
   final ruleReview = ruleReviewEvidence(data, source, index);
   final searchPilot = searchPilotObservations(
@@ -1188,7 +1206,9 @@ void _verifyArchiveAssociation(
   String digest,
   Map<String, String> inputHashes,
 ) {
-  if (file == comRdapEvidenceFile) {
+  if (file == comRdapEvidenceFile ||
+      file == comRdapEighteenEvidenceFile ||
+      file == rdapNineEvidenceFile) {
     final references = evidence['input_references'] as Map;
     if ((references['catalog_archive'] as Map)['sha256'] != digest) {
       throw const FormatException('.com RDAP archive association mismatch');
@@ -1357,6 +1377,19 @@ Map<String, int> _summary(List<Map<String, Object?>> sources) {
           .whereType<Map>()
           .any((observation) => observation['evidence'] == comRdapEvidenceFile),
     ),
+    'sources_with_com_rdap_eighteen_observations': count(
+      (row) =>
+          (row['registry_and_doh_observations'] as List).whereType<Map>().any(
+            (observation) =>
+                observation['evidence'] == comRdapEighteenEvidenceFile,
+          ),
+    ),
+    'sources_with_rdap_nine_observations': count(
+      (row) =>
+          (row['registry_and_doh_observations'] as List).whereType<Map>().any(
+            (observation) => observation['evidence'] == rdapNineEvidenceFile,
+          ),
+    ),
     'sources_with_recent_redirect_observations': count(
       (row) => (row['network_observations'] as List).whereType<Map>().any(
         (observation) => observation['evidence'] == _recentRedirect,
@@ -1444,9 +1477,37 @@ void main(List<String> args) {
     data[_dohReviewed]!,
     catalog.rows,
   );
+  final comEighteen = readComRdapEighteenEvidence(
+    data[comRdapEighteenEvidenceFile]!,
+    hashes,
+    data[_dohReviewed]!,
+    catalog.rows,
+    {
+      'dns_address_recheck': data[_dnsAddressRecheck]!,
+      'host_audit': data[_head]!,
+      'amsi_other': data[_amsiFiles[2]]!,
+    },
+  );
+  final rdapNine = readRdapNineEvidence(
+    data[rdapNineEvidenceFile]!,
+    hashes,
+    data[_dohReviewed]!,
+    catalog.rows,
+    data[_head]!,
+  );
   final rows = [
     for (final source in catalog.imported.sources)
-      _row(source, catalog, evidence, recent, nov16, comRdap, data),
+      _row(
+        source,
+        catalog,
+        evidence,
+        recent,
+        nov16,
+        comRdap,
+        comEighteen,
+        rdapNine,
+        data,
+      ),
   ];
   rows.sort(
     (a, b) => (a['source_id'] as String).compareTo(b['source_id'] as String),
@@ -1519,6 +1580,8 @@ Map<String, Object?> _ledgerDocument(
     'The .net RDAP evidence records a historical working-tree book_source_risk.dart digest whose exact snapshot was not retained, so that historical policy state cannot be fully reconstructed from these inputs.',
     'The .com RDAP and DoH samples distinguish the registered domain from the exact old source host; DNSSEC AD was not validated locally, the nearby rounds may share caches, and registration, 404, DNS answers or timeouts do not establish source or website safety.',
     'The .com RDAP historical ledger requires the referenced Git object; collector scripts, raw RDAP/DNS response bytes and their intermediate draft are not preserved in the repository.',
+    'The eighteen-domain review explicitly records DNS requests skipped after a failed control and provider timeouts as unknown; sibling-host DNS/HTTP responses are contextual counterexamples and do not establish the old host\'s availability or safety.',
+    'The nine-domain review uses separate .com and .net controls; DNS SERVFAIL, timeout and skipped requests are not NXDOMAIN, and the sibling 301 was not followed and does not establish old-source availability or safety.',
     'Static flags do not include personal settings, enabled state, mutable assessments, user blacklists, supervision, or every private repository policy.',
     'Same-ID historical cache can lack the rule fingerprint needed to attribute old content to a specific source version.',
     'The ledger reports bounded prior pilot observations, but does not itself perform a new live search-detail-chapter-content check.',
@@ -1546,6 +1609,18 @@ Map<String, Object?> _ledgerDocument(
   },
   'com_rdap_historical_ledger_reference': {
     ...((data[comRdapEvidenceFile]!['input_references']
+            as Map)['source_ledger_historical_git']
+        as Map),
+    'verified_from_git_object': true,
+  },
+  'com_rdap_eighteen_historical_ledger_reference': {
+    ...((data[comRdapEighteenEvidenceFile]!['input_references']
+            as Map)['source_ledger_historical_git']
+        as Map),
+    'verified_from_git_object': true,
+  },
+  'rdap_nine_historical_ledger_reference': {
+    ...((data[rdapNineEvidenceFile]!['input_references']
             as Map)['source_ledger_historical_git']
         as Map),
     'verified_from_git_object': true,

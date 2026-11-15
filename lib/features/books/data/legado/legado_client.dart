@@ -3,6 +3,7 @@ import '../../../../core/network/document_client.dart';
 import '../../domain/book.dart';
 import '../../domain/book_search.dart';
 import '../../domain/legado_source.dart';
+import '../book_request_guard.dart';
 import 'legado_request.dart';
 import 'kuwo_discovery.dart';
 import 'legado_rule_tokens.dart';
@@ -288,8 +289,9 @@ final class LegadoBookClient {
   Future<List<BookChapter>> chapters(
     BookSource source,
     Book book,
-    CancellationToken token,
-  ) async {
+    CancellationToken token, {
+    BookRequestGuard? requestGuard,
+  }) async {
     final articles = source.format == BookFormat.feed;
     final first = articles
         ? await _firstAddress(source, [
@@ -311,7 +313,12 @@ final class LegadoBookClient {
         page--;
         continue;
       }
-      final document = await _fetch(source, next, token);
+      final document = await _fetch(
+        source,
+        next,
+        token,
+        requestGuard: requestGuard,
+      );
       final result = await _run(
         LegadoJob(
           source,
@@ -322,6 +329,7 @@ final class LegadoBookClient {
           book: book,
         ),
         token,
+        requestGuard: requestGuard,
       );
       for (final item in result.chapters.take(4000 - chapters.length)) {
         chapters.putIfAbsent(item.id, () => item);
@@ -339,12 +347,18 @@ final class LegadoBookClient {
   Future<Book> details(
     BookSource source,
     Book book,
-    CancellationToken token,
-  ) async {
+    CancellationToken token, {
+    BookRequestGuard? requestGuard,
+  }) async {
     final rules = source.legado!.rules;
     if (!rules.keys.any((key) => key.startsWith('info'))) return book;
     final request = _stored(source, book.uri, book.request);
-    final document = await _fetch(source, request, token);
+    final document = await _fetch(
+      source,
+      request,
+      token,
+      requestGuard: requestGuard,
+    );
     final result = await _run(
       LegadoJob(
         source,
@@ -355,6 +369,7 @@ final class LegadoBookClient {
         address: book.request,
       ),
       token,
+      requestGuard: requestGuard,
     );
     final details = result.books.firstOrNull;
     return details == null ? book : book.withDetails(details);
@@ -365,6 +380,7 @@ final class LegadoBookClient {
     BookChapter chapter,
     CancellationToken token, {
     Book? book,
+    BookRequestGuard? requestGuard,
   }) async {
     if (chapter.body.isNotEmpty) return chapter.body;
     if (source.format == BookFormat.feed &&
@@ -376,6 +392,7 @@ final class LegadoBookClient {
         source,
         series,
         token,
+        requestGuard: requestGuard,
       )).where((item) => item.id == chapter.id).firstOrNull;
       if (item != null && item.body.isNotEmpty) return item.body;
       throw const FormatException('订阅没有提供此篇正文规则');
@@ -385,7 +402,12 @@ final class LegadoBookClient {
     final parts = <String>[];
     var length = 0;
     for (var page = 1; page <= 10 && visited.add(next.targetKey); page++) {
-      final document = await _fetch(source, next, token);
+      final document = await _fetch(
+        source,
+        next,
+        token,
+        requestGuard: requestGuard,
+      );
       if (document.contentType?.toLowerCase().startsWith('image/') == true) {
         throw const FormatException('章节仅提供图片，文本阅读器无法打开');
       }
@@ -400,6 +422,7 @@ final class LegadoBookClient {
           chapter: chapter,
         ),
         token,
+        requestGuard: requestGuard,
       );
       if (result.content.isEmpty) {
         throw const FormatException('Legado 规则未提取到正文');
@@ -426,17 +449,21 @@ final class LegadoBookClient {
     BookChapter chapter,
     CancellationToken token, {
     Book? book,
+    BookRequestGuard? requestGuard,
   }) async {
     if (RegExp(
       r'\.(?:png|jpe?g|webp|gif)$',
       caseSensitive: false,
     ).hasMatch(chapter.uri.path)) {
-      return [source.requestTarget(chapter.uri, media: true)];
+      final uri = source.requestTarget(chapter.uri, media: true);
+      requestGuard?.call(uri, chapter.request);
+      return [uri];
     }
     final document = await _fetch(
       source,
       _stored(source, chapter.uri, chapter.request),
       token,
+      requestGuard: requestGuard,
     );
     if (document.contentType?.toLowerCase().startsWith('image/') == true) {
       return [source.requestTarget(document.uri, media: true)];
@@ -451,14 +478,19 @@ final class LegadoBookClient {
         chapter: chapter,
       ),
       token,
+      requestGuard: requestGuard,
     );
     final images = <Uri>{};
     for (final address in result.links.take(100)) {
+      Uri image;
       try {
-        images.add(source.resolve(document.uri, address, media: true));
+        image = source.resolve(document.uri, address, media: true);
       } on FormatException {
         // A rule cannot authorize an undeclared media host.
+        continue;
       }
+      requestGuard?.call(image, null);
+      images.add(image);
     }
     return images.toList();
   }
@@ -468,14 +500,18 @@ final class LegadoBookClient {
     BookChapter chapter,
     CancellationToken token, {
     Book? book,
+    BookRequestGuard? requestGuard,
   }) async {
     if ((source.legado!.rules['content'] ?? '').isEmpty) {
-      return source.requestTarget(chapter.uri, media: true);
+      final uri = source.requestTarget(chapter.uri, media: true);
+      requestGuard?.call(uri, chapter.request);
+      return uri;
     }
     final document = await _fetch(
       source,
       _stored(source, chapter.uri, chapter.request),
       token,
+      requestGuard: requestGuard,
     );
     final result = await _run(
       LegadoJob(
@@ -487,11 +523,17 @@ final class LegadoBookClient {
         chapter: chapter,
       ),
       token,
+      requestGuard: requestGuard,
     );
     if (result.links.isEmpty) {
       throw const FormatException('Legado 规则未提取到已授权域名的音频');
     }
-    return source.requestTarget(Uri.parse(result.links.first), media: true);
+    final uri = source.requestTarget(
+      Uri.parse(result.links.first),
+      media: true,
+    );
+    requestGuard?.call(uri, null);
+    return uri;
   }
 
   Future<LegadoRequest?> _firstAddress(
@@ -545,6 +587,7 @@ final class LegadoBookClient {
     LegadoJob job,
     CancellationToken token, {
     bool allowDiscoveryNetworkExpansion = true,
+    BookRequestGuard? requestGuard,
   }) async {
     if (isRepairedYuqueBookList(job.source) &&
         const {
@@ -591,6 +634,7 @@ final class LegadoBookClient {
           job.source,
           request,
           token,
+          requestGuard: requestGuard,
         )).text;
       }
     }
@@ -602,8 +646,10 @@ final class LegadoBookClient {
     CancellationToken token, {
     int maxBytes = 2 * 1024 * 1024,
     bool allowRedirects = true,
+    BookRequestGuard? requestGuard,
   }) {
     final uri = source.requestTarget(request.uri);
+    requestGuard?.call(uri, request.targetKey);
     if (request.json case final Map<String, Object?> body) {
       return network.postJson(
         uri,
@@ -629,7 +675,10 @@ final class LegadoBookClient {
       maxBytes: maxBytes,
       networkTimeout: const Duration(seconds: 12),
       cancellation: token,
-      validateTarget: source.requestTarget,
+      validateTarget: (target) {
+        source.requestTarget(target);
+        requestGuard?.call(target, null);
+      },
       mapRedirect: allowRedirects
           ? null
           : (_) => throw const FormatException('成人过滤期间不跟随发现页面重定向'),

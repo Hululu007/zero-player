@@ -365,6 +365,130 @@ void _revisionAndConcurrencyTests() {
     },
   );
 
+  test('caller cancellation remains cancellation during download', () async {
+    final started = Completer<void>();
+    final release = Completer<void>();
+    final f = await _Fixture.create(
+      fetch: (_, _, _, token) async {
+        started.complete();
+        await release.future;
+        token.check();
+        return '不应保存';
+      },
+    );
+    addTearDown(() async {
+      if (!release.isCompleted) release.complete();
+      await f.close();
+    });
+    final token = CancellationToken();
+    final pending = expectLater(
+      f.books.download(f.target, f.targetChapter, token),
+      throwsA(isA<RequestCancelled>()),
+    );
+    await started.future.timeout(const Duration(seconds: 5));
+    token.cancel();
+    release.complete();
+    await pending.timeout(const Duration(seconds: 5));
+    expect(await f.books.store.provenText(f.target, f.targetChapter), isNull);
+  });
+
+  for (final change in ['filter', 'source']) {
+    test('$change ABA invalidates download even after restoration', () async {
+      final started = Completer<void>();
+      final release = Completer<void>();
+      final f = await _Fixture.create(
+        adultAccess: true,
+        fetch: (_, _, _, token) async {
+          started.complete();
+          await release.future;
+          token.check();
+          return '不应保存';
+        },
+      );
+      addTearDown(() async {
+        if (!release.isCompleted) release.complete();
+        await f.close();
+      });
+      final pending = expectLater(
+        f.downloadFromOrigin(),
+        throwsA(isA<ContentBlocked>()),
+      );
+      await started.future.timeout(const Duration(seconds: 5));
+      if (change == 'filter') {
+        await f.services.settings.update({'filterAdult': false});
+        await f.services.settings.update({'filterAdult': true});
+      } else {
+        await f.books.saveSource(f.originSource, {'enabled': false});
+        await f.books.saveSource(f.originSource, {'enabled': true});
+      }
+      release.complete();
+      await pending.timeout(const Duration(seconds: 5));
+      expect(await f.books.store.provenText(f.target, f.targetChapter), isNull);
+    });
+  }
+
+  test('a revoked source does not continue to the fallback source', () async {
+    final started = Completer<void>();
+    final release = Completer<void>();
+    final visited = <String>[];
+    final f = await _Fixture.create(
+      fetch: (source, _, _, token) async {
+        visited.add(source.id);
+        if (!started.isCompleted) started.complete();
+        await release.future;
+        token.check();
+        return '不应保存';
+      },
+    );
+    addTearDown(() async {
+      if (!release.isCompleted) release.complete();
+      await f.close();
+    });
+    final pending = expectLater(
+      f.books.download(
+        f.target,
+        f.targetChapter,
+        CancellationToken(),
+        alternatives: [
+          (book: f.origin, chapters: [f.originChapter]),
+        ],
+      ),
+      throwsA(isA<ContentBlocked>()),
+    );
+    await started.future.timeout(const Duration(seconds: 5));
+    await f.books.markSourceRisk(f.targetSource, adult: true);
+    release.complete();
+    await pending.timeout(const Duration(seconds: 5));
+    expect(visited, [f.targetSource.id]);
+    expect(await f.books.store.provenText(f.target, f.targetChapter), isNull);
+  });
+
+  test('repository shutdown remains cancellation', () async {
+    final started = Completer<void>();
+    final release = Completer<void>();
+    final f = await _Fixture.create(
+      fetch: (_, _, _, token) async {
+        started.complete();
+        await release.future;
+        token.check();
+        return '不应保存';
+      },
+    );
+    addTearDown(() async {
+      if (!release.isCompleted) release.complete();
+      await f.close();
+    });
+    final pending = expectLater(
+      f.downloadFromOrigin(),
+      throwsA(isA<RequestCancelled>()),
+    );
+    await started.future.timeout(const Duration(seconds: 5));
+    await f.books.close().timeout(const Duration(seconds: 5));
+    release.complete();
+    await pending.timeout(const Duration(seconds: 5));
+    expect(await f.books.store.provenText(f.target, f.targetChapter), isNull);
+  });
+
   test(
     'mixed layout stays with its proven source and never reuses old A data',
     () async {

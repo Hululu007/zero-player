@@ -62,15 +62,12 @@ void main() {
               expect(imported.updated, 0, reason: item.name);
               expect(imported.duplicates, 0, reason: item.name);
               expect(imported.skipped, 0, reason: item.name);
-              final saved = await repository.sourceEntry(
-                BookKind.text,
-                item.id,
-              );
+              final saved = await repository.sourceEntry(item.kind, item.id);
               expect(saved, isNotNull, reason: item.name);
               expect(saved!.source.endpoint, item.endpoint, reason: item.name);
               await repository.saveSource(item, {'enabled': true});
               expect(
-                (await repository.sourceEntry(BookKind.text, item.id))!.enabled,
+                (await repository.sourceEntry(item.kind, item.id))!.enabled,
                 isTrue,
                 reason: item.name,
               );
@@ -164,10 +161,11 @@ void main() {
               Map<String, String> rules, {
               String search = '',
               String pattern = '',
+              BookKind kind = BookKind.text,
             }) => BookSource.fromJson({
               'name': '发现脚本 $key',
               'url': 'https://$key.dynamic.example/',
-              'kind': 'text',
+              'kind': kind.name,
               'format': 'html',
               'legado': {
                 'explore': categories,
@@ -265,6 +263,192 @@ void main() {
             );
             expect(direct.books, isEmpty);
             expect(requests.map((request) => request.$2.path), ['/book/1']);
+
+            final detailChain = scriptSource(
+              'detail-chain',
+              [
+                {'title': '肉文', 'url': '/adult'},
+                {'title': '普通', 'url': '/normal'},
+              ],
+              {'infoTitle': "@js:java.ajax('/adult')"},
+            );
+            await install(detailChain);
+            final detailBook = Book(
+              detailChain.id,
+              BookKind.text,
+              '普通作品',
+              '作者',
+              detailChain.endpoint.resolve('/book/1'),
+            );
+            requests.clear();
+            await expectLater(
+              repository.details(detailBook, CancellationToken()),
+              throwsA(anything),
+            );
+            expect(requests.map((request) => request.$2.path), ['/book/1']);
+
+            final safeDetail = scriptSource(
+              'safe-detail',
+              [
+                {'title': '肉文', 'url': '/adult'},
+                {'title': '普通', 'url': '/normal'},
+              ],
+              {'infoTitle': "@js:java.ajax('/helper')"},
+            );
+            await install(safeDetail);
+            final safeBook = Book(
+              safeDetail.id,
+              BookKind.text,
+              '普通作品',
+              '作者',
+              safeDetail.endpoint.resolve('/book/1'),
+            );
+            requests.clear();
+            await repository.details(safeBook, CancellationToken());
+            expect(requests.map((request) => request.$2.path), [
+              '/book/1',
+              '/helper',
+            ]);
+
+            final tocChain = scriptSource(
+              'toc-chain',
+              [
+                {'title': '肉文', 'url': '/adult'},
+                {'title': '普通', 'url': '/normal'},
+              ],
+              {'toc': "@js:java.ajax('/adult')"},
+            );
+            await install(tocChain);
+            final tocBook = Book(
+              tocChain.id,
+              BookKind.text,
+              '普通作品',
+              '作者',
+              tocChain.endpoint.resolve('/book/1'),
+            );
+            requests.clear();
+            await expectLater(
+              repository.chapters(tocBook, CancellationToken()),
+              throwsA(anything),
+            );
+            expect(requests.map((request) => request.$2.path), ['/book/1']);
+
+            final textChain = scriptSource(
+              'text-chain',
+              [
+                {'title': '肉文', 'url': '/adult'},
+                {'title': '普通', 'url': '/normal'},
+              ],
+              {'content': "@js:java.ajax('/adult')"},
+            );
+            await install(textChain);
+            final textBook = Book(
+              textChain.id,
+              BookKind.text,
+              '普通作品',
+              '作者',
+              textChain.endpoint.resolve('/book/1'),
+            );
+            final textChapter = BookChapter(
+              '第一章',
+              textChain.endpoint.resolve('/chapter/1'),
+            );
+            requests.clear();
+            await expectLater(
+              repository.readText(textBook, textChapter, CancellationToken()),
+              throwsA(anything),
+            );
+            expect(requests.map((request) => request.$2.path), ['/chapter/1']);
+            expect(
+              await repository.store.readingCache(textBook, textChapter),
+              isNull,
+            );
+
+            final probeChain = scriptSource(
+              'probe-chain',
+              [
+                {'title': '肉文', 'url': '/adult'},
+                {'title': '普通', 'url': '/normal'},
+              ],
+              {
+                'searchList': '.bookbox',
+                'searchTitle': '.bookname a@text',
+                'searchLink': '.bookname a@href',
+                'infoTitle': "@js:java.ajax('/adult')",
+              },
+              search: '/search?key={{key}}',
+            );
+            await install(probeChain);
+            requests.clear();
+            await repository.probe(probeChain, '星际', CancellationToken());
+            expect(requests.map((request) => request.$2.path), [
+              '/search',
+              '/book/1',
+            ]);
+
+            final comicScript = scriptSource(
+              'comic-ajax',
+              [
+                {'title': '肉文', 'url': '/adult'},
+                {'title': '普通', 'url': '/normal'},
+              ],
+              {'content': "@js:java.ajax('/adult')"},
+              kind: BookKind.comic,
+            );
+            await install(comicScript);
+            final comicBook = Book(
+              comicScript.id,
+              BookKind.comic,
+              '普通作品',
+              '作者',
+              comicScript.endpoint.resolve('/book/1'),
+            );
+            final comicChapter = BookChapter(
+              '第一话',
+              comicScript.endpoint.resolve('/chapter/1'),
+            );
+            requests.clear();
+            await expectLater(
+              repository.chapterImages(
+                comicBook,
+                comicChapter,
+                CancellationToken(),
+              ),
+              throwsA(anything),
+            );
+            expect(requests.map((request) => request.$2.path), ['/chapter/1']);
+
+            final audioScript = scriptSource(
+              'audio-ajax',
+              [
+                {'title': '肉文', 'url': '/adult'},
+                {'title': '普通', 'url': '/normal'},
+              ],
+              {'content': "@js:java.ajax('/adult')"},
+              kind: BookKind.audio,
+            );
+            await install(audioScript);
+            final audioBook = Book(
+              audioScript.id,
+              BookKind.audio,
+              '普通作品',
+              '作者',
+              audioScript.endpoint.resolve('/book/1'),
+            );
+            final audioChapter = BookChapter(
+              '第一章',
+              audioScript.endpoint.resolve('/chapter/1'),
+            );
+            requests.clear();
+            await expectLater(
+              repository.download(audioBook, audioChapter, CancellationToken()),
+              throwsA(anything),
+            );
+            expect(requests.map((request) => request.$2.path), ['/chapter/1']);
+            expect(
+              await repository.store.provenAudio(audioBook, audioChapter),
+              isNull,
+            );
 
             final searchScript = scriptSource('search-ajax', [], {
               'searchList': "@js:java.ajax('/helper')",

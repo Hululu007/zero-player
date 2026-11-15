@@ -7,6 +7,7 @@ import 'package:zero_player/core/persistence/app_database.dart';
 import 'package:zero_player/features/books/data/book_download_coordinator.dart';
 import 'package:zero_player/features/books/domain/book.dart';
 import 'package:zero_player/features/books/domain/book_download_plan.dart';
+import 'package:zero_player/features/supervision/domain/supervision_rules.dart';
 
 void main() {
   test(
@@ -60,6 +61,7 @@ void main() {
       immediate.pause();
       await immediate.done;
       expect(immediate.status, BookDownloadStatus.paused);
+      expect(immediate.error, isNull);
       expect(
         await services.books.store.read('books_download:${book.id}'),
         isNotNull,
@@ -70,9 +72,11 @@ void main() {
       expect(coordinator.active(book), same(first));
       expect(peak, 3);
       first.pause();
+      services.contentPolicy.refresh();
       gate.complete();
       await first.done;
       expect(first.status, BookDownloadStatus.paused);
+      expect(first.error, isNull);
       expect(coordinator.active(book), isNull);
       expect(
         await services.books.store.read('books_download:${book.id}'),
@@ -96,4 +100,156 @@ void main() {
       expect(coordinator.active(book), isNull);
     },
   );
+
+  test(
+    'policy revocation identifies the pause without changing user pause',
+    () async {
+      TestWidgetsFlutterBinding.ensureInitialized();
+      final root = await Directory.systemTemp.createTemp('book-policy-pause-');
+      final services = AppServices.scoped(root, AppDatabase.memory());
+      addTearDown(() async {
+        await services.close();
+        await root.delete(recursive: true);
+      });
+      await services.settings.load();
+      await services.supervision.load();
+      final book = Book(
+        'source',
+        BookKind.text,
+        '测试',
+        '作者',
+        Uri.parse('https://fixture.test/book'),
+      );
+      final chapter = BookChapter('第一章', Uri.parse('https://fixture.test/1'));
+      final started = Completer<void>();
+      final release = Completer<void>();
+      final coordinator = BookDownloadCoordinator(
+        services.books,
+        downloadChapter: (_, _, token) async {
+          started.complete();
+          await release.future;
+          token.check();
+        },
+      );
+      addTearDown(() async {
+        if (!release.isCompleted) release.complete();
+        await coordinator.close();
+      });
+      final task = coordinator.start(book, [
+        chapter,
+      ], const BookDownloadPlan(1, 1, false));
+      await started.future.timeout(const Duration(seconds: 5));
+      services.contentPolicy.refresh();
+      release.complete();
+      await task.done.timeout(const Duration(seconds: 5));
+      expect(task.status, BookDownloadStatus.paused);
+      expect(task.error, '内容策略已改变，下载已暂停');
+      expect(await services.books.store.text(book, chapter), isNull);
+    },
+  );
+
+  test(
+    'a blocked worker keeps the policy reason when another is cancelled',
+    () async {
+      TestWidgetsFlutterBinding.ensureInitialized();
+      final root = await Directory.systemTemp.createTemp(
+        'book-concurrent-block-',
+      );
+      final services = AppServices.scoped(root, AppDatabase.memory());
+      addTearDown(() async {
+        await services.close();
+        await root.delete(recursive: true);
+      });
+      await services.settings.load();
+      await services.supervision.load();
+      final book = Book(
+        'source',
+        BookKind.text,
+        '测试',
+        '作者',
+        Uri.parse('https://fixture.test/book'),
+      );
+      final chapters = [
+        BookChapter('受限', Uri.parse('https://fixture.test/1')),
+        BookChapter('并发', Uri.parse('https://fixture.test/2')),
+      ];
+      final bothStarted = Completer<void>();
+      var count = 0;
+      final visited = <String>[];
+      final coordinator = BookDownloadCoordinator(
+        services.books,
+        downloadChapter: (_, chapter, token) async {
+          visited.add(chapter.title);
+          if (++count == 2) bothStarted.complete();
+          await bothStarted.future;
+          if (chapter.title == '受限') throw const ContentBlocked();
+          final cancelled = Completer<void>();
+          final unlink = token.listen(() => cancelled.complete());
+          try {
+            await cancelled.future;
+            token.check();
+          } finally {
+            unlink();
+          }
+        },
+      );
+      addTearDown(() async {
+        if (!bothStarted.isCompleted) bothStarted.complete();
+        await coordinator.close();
+      });
+      final task = coordinator.start(
+        book,
+        chapters,
+        const BookDownloadPlan(1, 2, true),
+      );
+      await task.done.timeout(const Duration(seconds: 5));
+      expect(task.status, BookDownloadStatus.paused);
+      expect(task.error, '内容策略已改变，下载已暂停');
+      expect(visited, containsAll(['受限', '并发']));
+      expect(visited, hasLength(2));
+    },
+  );
+
+  test('closing the download service does not report a policy block', () async {
+    TestWidgetsFlutterBinding.ensureInitialized();
+    final root = await Directory.systemTemp.createTemp('book-close-pause-');
+    final services = AppServices.scoped(root, AppDatabase.memory());
+    addTearDown(() async {
+      await services.close();
+      await root.delete(recursive: true);
+    });
+    await services.settings.load();
+    await services.supervision.load();
+    final book = Book(
+      'source',
+      BookKind.text,
+      '测试',
+      '作者',
+      Uri.parse('https://fixture.test/book'),
+    );
+    final chapter = BookChapter('第一章', Uri.parse('https://fixture.test/1'));
+    final started = Completer<void>();
+    final release = Completer<void>();
+    final coordinator = BookDownloadCoordinator(
+      services.books,
+      downloadChapter: (_, _, token) async {
+        started.complete();
+        await release.future;
+        token.check();
+      },
+    );
+    addTearDown(() async {
+      if (!release.isCompleted) release.complete();
+      await coordinator.close();
+    });
+    final task = coordinator.start(book, [
+      chapter,
+    ], const BookDownloadPlan(1, 1, false));
+    await started.future.timeout(const Duration(seconds: 5));
+    final closing = coordinator.close();
+    release.complete();
+    await closing.timeout(const Duration(seconds: 5));
+    expect(task.status, BookDownloadStatus.paused);
+    expect(task.error, isNull);
+  });
 }

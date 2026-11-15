@@ -210,6 +210,53 @@ class EvidenceVerifier:
         reference = references['source_ledger_historical_git']
         path = 'docs/implementation/' + filename('legado-source-ledger')
         self.git_snapshot(reference['commit'], reference['path'], reference['sha256'], path)
+        nine = json.loads(self.read(self.docs / 'legado-rdap-nine-20261116.json'))
+        references = nine['input_references']
+        expected = {
+            'catalog_archive': archive_key,
+            'catalog_manifest': manifest_key,
+            'host_recheck': 'docs/implementation/' + filename('legado-host-recheck'),
+            'doh_reviewed': 'docs/implementation/' + filename('legado-doh-reviewed'),
+            'previous_rdap_com': 'docs/implementation/' + filename('legado-rdap-sample'),
+            'previous_rdap_net': 'docs/implementation/' + filename('legado-rdap-net-sample'),
+            'previous_rdap_com_six': 'docs/implementation/legado-rdap-com-six-20261116.json',
+            'previous_rdap_com_eighteen': 'docs/implementation/legado-rdap-com-eighteen-20261116.json',
+            'host_audit': 'docs/implementation/' + filename('legado-host-audit'),
+        }
+        if set(references) != set(expected) | {'source_ledger_historical_git'}:
+            raise ValueError('unexpected nine-domain RDAP evidence inputs')
+        for name, path in expected.items():
+            reference = references[name]
+            if reference['path'] != path:
+                raise ValueError(f'unexpected nine-domain RDAP {name} path')
+            self.check_digest(self.root / path, reference['sha256'])
+        reference = references['source_ledger_historical_git']
+        path = 'docs/implementation/' + filename('legado-source-ledger')
+        self.git_snapshot(reference['commit'], reference['path'], reference['sha256'], path)
+        eighteen = json.loads(self.read(self.docs / 'legado-rdap-com-eighteen-20261116.json'))
+        references = eighteen['input_references']
+        expected = {
+            'catalog_archive': archive_key,
+            'catalog_manifest': manifest_key,
+            'host_recheck': 'docs/implementation/' + filename('legado-host-recheck'),
+            'doh_reviewed': 'docs/implementation/' + filename('legado-doh-reviewed'),
+            'previous_rdap_com': 'docs/implementation/' + filename('legado-rdap-sample'),
+            'previous_rdap_net': 'docs/implementation/' + filename('legado-rdap-net-sample'),
+            'previous_rdap_com_six': 'docs/implementation/legado-rdap-com-six-20261116.json',
+            'dns_address_recheck': 'docs/implementation/' + filename('legado-dns-address-recheck'),
+            'host_audit': 'docs/implementation/' + filename('legado-host-audit'),
+            'amsi_other': 'docs/implementation/' + filename('legado-amsi-other-hosts'),
+        }
+        if set(references) != set(expected) | {'source_ledger_historical_git'}:
+            raise ValueError('unexpected eighteen-domain RDAP evidence inputs')
+        for name, path in expected.items():
+            reference = references[name]
+            if reference['path'] != path:
+                raise ValueError(f'unexpected eighteen-domain RDAP {name} path')
+            self.check_digest(self.root / path, reference['sha256'])
+        reference = references['source_ledger_historical_git']
+        path = 'docs/implementation/' + filename('legado-source-ledger')
+        self.git_snapshot(reference['commit'], reference['path'], reference['sha256'], path)
 
     def verify(self):
         for source, key, target in DIRECT_LINKS:

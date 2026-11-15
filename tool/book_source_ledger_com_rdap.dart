@@ -9,6 +9,9 @@ import 'package:zero_player/features/books/domain/legado_source_fingerprint.dart
 
 import 'book_source_ledger_nov16_evidence.dart';
 
+part 'book_source_ledger_com_eighteen.dart';
+part 'book_source_ledger_rdap_nine.dart';
+
 const comRdapEvidenceFile = 'legado-rdap-com-six-20261116.json';
 const _ledgerPath = 'docs/implementation/legado-source-ledger-20261115.json';
 const _references = <String, String>{
@@ -150,7 +153,11 @@ void _verifyObservationSummaries(Map evidence, List<Map> candidates) {
   }
 }
 
-void _verifyCandidateSummary(Map candidate, List<Map> rounds) {
+void _verifyCandidateSummary(
+  Map candidate,
+  List<Map> rounds, {
+  String registryService = 'verisign_com',
+}) {
   final domain = candidate['registry_domain'];
   final oldHost = candidate['old_source_host'];
   final summary = candidate['current_summary'] as Map;
@@ -164,7 +171,7 @@ void _verifyCandidateSummary(Map candidate, List<Map> rounds) {
         .cast<Map>()
         .where(
           (item) =>
-              item['service'] == 'verisign_com' && item['domain'] == domain,
+              item['service'] == registryService && item['domain'] == domain,
         )
         .toList();
     final reported = reportedRdap
@@ -206,9 +213,13 @@ void _verifyCandidateSummary(Map candidate, List<Map> rounds) {
   }
 }
 
-Map _verifyInputs(Map evidence, Map<String, String> hashes) {
+Map _verifyInputs(
+  Map evidence,
+  Map<String, String> hashes, {
+  Map<String, String> references = _references,
+}) {
   final inputs = evidence['input_references'] as Map;
-  for (final entry in _references.entries) {
+  for (final entry in references.entries) {
     final reference = inputs[entry.key] as Map;
     _require(
       reference['path'] == entry.value &&
@@ -230,7 +241,13 @@ Map _verifyInputs(Map evidence, Map<String, String> hashes) {
   return ledger;
 }
 
-void _verifyHistoricalSource(Map source, String host, Map ledger, List rows) {
+void _verifyHistoricalSource(
+  Map source,
+  String host,
+  Map ledger,
+  List rows, {
+  bool rawUrlRetained = true,
+}) {
   final index = source['selected_record_index'];
   _require(
     index is int && index >= 0 && index < rows.length,
@@ -254,8 +271,9 @@ void _verifyHistoricalSource(Map source, String host, Map ledger, List rows) {
             source['normalized_legado_sha256'] &&
         historical['selected_raw_record_canonical_sha256'] ==
             source['selected_raw_record_canonical_sha256'] &&
-        (rows[index as int] as Map)['bookSourceUrl'] ==
-            source['raw_book_source_url'],
+        (!rawUrlRetained ||
+            (rows[index as int] as Map)['bookSourceUrl'] ==
+                source['raw_book_source_url']),
     '.com RDAP historical source or rule evidence mismatch',
   );
   final raw = parseBookSourceRecord(rows[index]);
@@ -267,7 +285,11 @@ void _verifyHistoricalSource(Map source, String host, Map ledger, List rows) {
   );
 }
 
-void _verifyPreviousDoh(Map candidate, Map priorDoh) {
+void _verifyPreviousDoh(
+  Map candidate,
+  Map priorDoh, {
+  String field = 'previous_public_doh',
+}) {
   final host = candidate['old_source_host'];
   final matches = (priorDoh['results'] as List)
       .cast<Map>()
@@ -275,7 +297,7 @@ void _verifyPreviousDoh(Map candidate, Map priorDoh) {
       .toList();
   _require(matches.length == 1, '.com RDAP previous DoH host mismatch');
   final expected = (matches.single['observations'] as List).cast<Map>();
-  final actual = (candidate['previous_public_doh'] as List).cast<Map>();
+  final actual = (candidate[field] as List).cast<Map>();
   String identity(Map row) => jsonEncode([
     row['provider'],
     row['query_type'],
@@ -299,13 +321,21 @@ void _addPreviousDoh(
   ComRdapLedgerEvidence output,
   Map candidate,
   Map source,
-  String host,
-) {
-  for (final sample in (candidate['previous_public_doh'] as List).cast<Map>()) {
+  String host, {
+  String field = 'previous_public_doh',
+  String evidenceFile = comRdapEvidenceFile,
+}) {
+  for (final sample in (candidate[field] as List).cast<Map>()) {
     output.add(
       source,
       host,
-      _dohObservation(sample, host, exact: true, previous: true),
+      _dohObservation(
+        sample,
+        host,
+        exact: true,
+        previous: true,
+        evidenceFile: evidenceFile,
+      ),
     );
   }
 }
@@ -379,7 +409,12 @@ void _addRoundObservations(
   _require(roundIds.containsAll({1, 2}), '.com RDAP round IDs mismatch');
 }
 
-Map<String, Object?> _rdapObservation(Map sample, String domain, int round) {
+Map<String, Object?> _rdapObservation(
+  Map sample,
+  String domain,
+  int round, {
+  String evidenceFile = comRdapEvidenceFile,
+}) {
   final classification = sample['classification'];
   final validRegistered =
       classification == 'matching_domain_object' &&
@@ -396,7 +431,7 @@ Map<String, Object?> _rdapObservation(Map sample, String domain, int round) {
     '.com RDAP result classification mismatch',
   );
   return {
-    'evidence': comRdapEvidenceFile,
+    'evidence': evidenceFile,
     'observation_kind': 'official_rdap_registered_domain_context',
     'registry_domain': domain,
     'round': round,
@@ -416,6 +451,7 @@ Map<String, Object?> _dohObservation(
   String host, {
   required bool exact,
   required bool previous,
+  String evidenceFile = comRdapEvidenceFile,
 }) {
   final classification = sample['classification'];
   final status = sample['http_status'];
@@ -424,12 +460,13 @@ Map<String, Object?> _dohObservation(
       ? status == null && rcode == null
       : status == 200 &&
             ((classification == 'nxdomain' && rcode == 3) ||
+                (classification == 'servfail' && rcode == 2) ||
                 ((classification == 'noerror_addresses' ||
                         classification == 'noerror_no_address') &&
                     rcode == 0));
   _require(valid, '.com RDAP DoH result classification mismatch');
   return {
-    'evidence': comRdapEvidenceFile,
+    'evidence': evidenceFile,
     'observation_kind': previous
         ? 'previous_public_doh_exact_endpoint_host'
         : exact

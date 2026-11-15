@@ -33,6 +33,7 @@ import 'book_discovery_paging.dart';
 import 'book_import.dart';
 import 'book_image_payload.dart';
 import 'book_mixed_content.dart';
+import 'book_request_guard.dart';
 import 'book_site_check.dart';
 import 'book_site_inspection.dart';
 import 'book_source_risk_store.dart';
@@ -45,6 +46,9 @@ import 'rich_book.dart';
 part 'book_comic_download.dart';
 part 'book_repository_discovery.dart';
 part 'book_repository_mutations.dart';
+part 'book_repository_media_access.dart';
+part 'book_repository_request_policy.dart';
+part 'book_repository_probe.dart';
 part 'book_repository_site_checks.dart';
 part 'book_supervised_site_scan.dart';
 
@@ -131,6 +135,7 @@ final class BooksRepository {
   bool get sourceRisksSuspended => _riskSuspended;
   bool get sourceRiskMutationPending =>
       _evidenceMutations > 0 || _evidenceClosing;
+  bool get closing => _evidenceClosing;
   int get sourceConfigurationRevision => _sourceConfigurationRevision;
   bool get sourceConfigurationChanging => _sourceConfigurationMutations != 0;
   final BookCoverCache coverCache;
@@ -768,13 +773,16 @@ final class BooksRepository {
 
   Future<void> _saveSource(
     BookSource source,
-    Map<String, Object?> updates,
-  ) async {
+    Map<String, Object?> updates, {
+    void Function()? validate,
+  }) async {
+    validate?.call();
     policy.supervision.require(SensitiveOperation.channels);
     await ensureSourceRiskLoaded();
     if (!sourceAllowed(source)) throw const ContentBlocked();
     BookSourceAssessment? retainedEvidence;
     await store.db.atomic(() async {
+      validate?.call();
       policy.supervision.require(SensitiveOperation.channels);
       if (await _blocked(source.id)) throw const ContentBlocked();
       policy.supervision.require(SensitiveOperation.channels);
@@ -799,6 +807,7 @@ final class BooksRepository {
       if (!sourceAllowed(source)) throw const ContentBlocked();
       await store.saveSource(source, updates);
       policy.supervision.require(SensitiveOperation.channels);
+      validate?.call();
     }, tables: {'app_meta'});
     if (retainedEvidence != null) _rememberAssessment(retainedEvidence!);
     if (updates.keys.any(
@@ -1280,91 +1289,8 @@ final class BooksRepository {
   Future<void> probe(
     BookSource source,
     String query,
-    CancellationToken token,
-  ) async {
-    policy.supervision.require(SensitiveOperation.channels);
-    await ensureSourceRiskLoaded();
-    if (!sourceAllowed(source) || await _blocked(source.id)) {
-      throw const ContentBlocked();
-    }
-    final watch = Stopwatch()..start();
-    var status = '';
-    var stage = '搜索';
-    try {
-      final books = await _booksWithDiscoveryPolicy(
-        source,
-        query,
-        token,
-        bookAddress: _bookAddress(query),
-        allowDisabled: true,
-      );
-      final book = books.where(bookAllowed).firstOrNull;
-      if (book == null) throw const FormatException('没有匹配作品，试试该源中已知的书名');
-      stage = '详情';
-      final details = await client.details(source, book, token);
-      if (!bookAllowed(details)) throw const ContentBlocked();
-      stage = '目录';
-      final chapters = await client.chapters(source, details, token);
-      final chapter = chapters
-          .where((c) => policy.textAllowed(c.title))
-          .firstOrNull;
-      if (chapter == null) throw const FormatException('目录没有可用章节');
-      stage = source.kind == BookKind.text
-          ? '正文'
-          : source.kind == BookKind.comic
-          ? '图片'
-          : '音频';
-      if (source.kind == BookKind.text) {
-        final body = await client.text(source, chapter, token, book: book);
-        if (body.trim().length < 40 || !policy.textAllowed(body)) {
-          throw const FormatException('正文为空、过短或被内容策略拦截');
-        }
-      } else if (source.kind == BookKind.comic) {
-        final images = await client.chapterImages(
-          source,
-          chapter,
-          token,
-          book: details,
-        );
-        if (images.isEmpty) throw const FormatException('章节没有可阅读的图片');
-        final sample = await client.fetch(
-          source,
-          images.first,
-          token,
-          media: true,
-          maxBytes: 4 * 1024 * 1024,
-        );
-        if (sample.contentType?.toLowerCase().startsWith('image/') != true) {
-          throw const FormatException('章节图片地址未返回图片');
-        }
-        await validateReadableBookImage(images.first, sample.bytes);
-        token.check();
-      } else {
-        final (uri, bytes) = await client.sampleAudio(
-          source,
-          chapter,
-          token,
-          book: book,
-        );
-        audiobookExtension(
-          bytes,
-          isM4b: uri.path.toLowerCase().endsWith('.m4b'),
-        );
-      }
-      status = '可用 · ${watch.elapsedMilliseconds} ms';
-    } on FormatException catch (error) {
-      status = '$stage · ${error.message}';
-    } on RemoteFailure catch (error) {
-      status = '$stage · ${error.message}';
-    } on Exception {
-      status = '$stage · 检测失败';
-    }
-    token.check();
-    await saveSource(source, {
-      'health': status,
-      'checkedAt': DateTime.now().millisecondsSinceEpoch,
-    });
-  }
+    CancellationToken cancellation,
+  ) => _probe(source, query, cancellation);
 
   Future<({List<Book> books, int failed})> find(
     BookKind kind,
@@ -1562,22 +1488,15 @@ final class BooksRepository {
     }
     token.check();
     if (saved != null && saved.chapters.isNotEmpty && !refresh) {
-      return saved.chapters.where((c) => policy.textAllowed(c.title)).toList();
+      return saved.chapters
+          .where(
+            (c) =>
+                policy.textAllowed(c.title) && _chapterTargetAllowed(book, c),
+          )
+          .toList();
     }
     final source = await _active(book);
-    final chapters = (await client.chapters(
-      source,
-      book,
-      token,
-    )).where((c) => policy.textAllowed(c.title)).toList();
-    token.check();
-    if (!sourceAllowed(source) ||
-        !bookAllowed(book) ||
-        await _blocked(book.sourceId)) {
-      throw const ContentBlocked();
-    }
-    token.check();
-    return chapters;
+    return _guardedBookChapters(source, book, token);
   }
 
   Future<Book> details(Book book, CancellationToken token) async {
@@ -1586,15 +1505,7 @@ final class BooksRepository {
     if (!bookAllowed(book)) throw const ContentBlocked();
     if (book.sourceId == 'local') return book;
     final source = await _active(book);
-    final result = await client.details(source, book, token);
-    token.check();
-    if (!sourceAllowed(source) ||
-        !bookAllowed(result) ||
-        await _blocked(book.sourceId)) {
-      throw const ContentBlocked();
-    }
-    token.check();
-    return result;
+    return _guardedBookDetails(source, book, token);
   }
 
   Future<void> checkFollowing(BookKind kind, CancellationToken token) async {
@@ -1702,7 +1613,9 @@ final class BooksRepository {
   }
 
   void requireBook(Book book, BookChapter chapter) {
-    if (!bookAllowed(book) || !policy.textAllowed(chapter.title)) {
+    if (!bookAllowed(book) ||
+        !policy.textAllowed(chapter.title) ||
+        !_chapterTargetAllowed(book, chapter)) {
       throw const ContentBlocked();
     }
   }
@@ -1865,46 +1778,61 @@ final class BooksRepository {
     var body = offline;
     List<BookChapterSegment>? mixed;
     body ??= await store.readingCache(book, chapter);
-    if (body == null) {
-      final source = await _active(book);
-      body = await client.text(
-        source,
-        chapter,
-        token,
-        book: book,
-        onSegments: (parts) => mixed = parts,
-      );
-      if (!sourceAllowed(source)) throw const ContentBlocked();
-    }
-    token.check();
-    if (await _blocked(book.sourceId)) throw const ContentBlocked();
-    token.check();
-    requireBook(book, chapter);
-    requireDownloadEvidence(saved.evidence);
-    if (!policy.textAllowed(body)) throw const ContentBlocked();
-    if (body.trim().isEmpty) throw const FormatException('章节正文为空');
-    if (offline == null) {
-      token.check();
-      try {
-        await store.cacheReading(book, chapter, body);
-      } on Exception {
-        // Cache storage is best effort; a full or unavailable DB must not block reading.
+    Future<String> finish(String text, CancellationToken active) async {
+      void validate() {
+        active.check();
+        requireBook(book, chapter);
+        requireDownloadEvidence(saved.evidence);
+        if (!policy.textAllowed(text)) throw const ContentBlocked();
       }
-      token.check();
-    }
-    if (mixed != null && !policy.supervision.enabled) {
-      final parts = mixed!;
-      if (parts.whereType<BookTextSegment>().every(
-        (part) => policy.textAllowed(part.text),
-      )) {
+
+      validate();
+      if (await _blocked(book.sourceId)) throw const ContentBlocked();
+      validate();
+      if (text.trim().isEmpty) throw const FormatException('章节正文为空');
+      if (offline == null) {
         try {
-          await store.cacheMixedReading(book, chapter, parts);
+          await store.cacheReading(book, chapter, text, validate: validate);
         } on Exception {
-          // Mixed layout is optional if storage is unavailable.
+          // Cache storage is best effort; policy is checked again below.
+        }
+        validate();
+      }
+      if (mixed != null && !policy.supervision.enabled) {
+        final parts = mixed!;
+        if (parts.whereType<BookTextSegment>().every(
+          (part) => policy.textAllowed(part.text),
+        )) {
+          try {
+            await store.cacheMixedReading(
+              book,
+              chapter,
+              parts,
+              validate: validate,
+            );
+          } on Exception {
+            // Mixed layout is optional if storage is unavailable.
+          }
         }
       }
+      validate();
+      return text;
     }
-    return body;
+
+    if (body != null) return finish(body, token);
+    final source = await _active(book);
+    return _withBookRequestGuard(source, book, token, (active, guard) async {
+      final fresh = await client.text(
+        source,
+        chapter,
+        active,
+        book: book,
+        onSegments: (parts) => mixed = parts,
+        requestGuard: guard,
+      );
+      if (!sourceAllowed(source)) throw const ContentBlocked();
+      return finish(fresh, active);
+    });
   }
 
   Future<List<BookChapterSegment>> mixedReading(
@@ -2055,37 +1983,7 @@ final class BooksRepository {
     Book book,
     BookChapter chapter,
     CancellationToken token,
-  ) async {
-    await ensureSourceRiskLoaded();
-    if (policy.supervision.enabled) throw const ContentBlocked();
-    requireBook(book, chapter);
-    final offline = await store.offlineImageAddresses(book, chapter);
-    if (offline != null) {
-      token.check();
-      if (policy.supervision.enabled ||
-          !bookAllowed(book) ||
-          await _blocked(book.sourceId)) {
-        throw const ContentBlocked();
-      }
-      return offline;
-    }
-    final source = await _active(book);
-    final images = await client.chapterImages(
-      source,
-      chapter,
-      token,
-      book: book,
-    );
-    token.check();
-    if (policy.supervision.enabled ||
-        !sourceAllowed(source) ||
-        !bookAllowed(book) ||
-        await _blocked(book.sourceId)) {
-      throw const ContentBlocked();
-    }
-    token.check();
-    return images;
-  }
+  ) => _guardedChapterImages(book, chapter, token);
 
   Future<List<Uri>> imageAddressesInText(
     Book book,
@@ -2096,15 +1994,22 @@ final class BooksRepository {
     await ensureSourceRiskLoaded();
     requireBook(book, chapter);
     final source = await _active(book);
-    final images = parseBookImageAddresses(source, chapter.uri, body);
-    token.check();
-    if ((policy.supervision.enabled && images.isNotEmpty) ||
-        !sourceAllowed(source) ||
-        !bookAllowed(book) ||
-        await _blocked(book.sourceId)) {
-      throw const ContentBlocked();
-    }
-    return images;
+    return _withBookRequestGuard(source, book, token, (active, guard) async {
+      final images = parseBookImageAddresses(source, chapter.uri, body);
+      for (final image in images) {
+        guard?.call(image, null);
+      }
+      active.check();
+      if ((policy.supervision.enabled && images.isNotEmpty) ||
+          !sourceAllowed(source) ||
+          !bookAllowed(book) ||
+          await _blocked(book.sourceId)) {
+        throw const ContentBlocked();
+      }
+      active.check();
+      requireBook(book, chapter);
+      return images;
+    });
   }
 
   Future<List<int>> chapterImageBytes(
@@ -2112,65 +2017,7 @@ final class BooksRepository {
     Uri image,
     CancellationToken token, {
     BookChapter? chapter,
-  }) async {
-    await ensureSourceRiskLoaded();
-    if (policy.supervision.enabled || !bookAllowed(book)) {
-      throw const ContentBlocked();
-    }
-    final offlineBytes = chapter == null
-        ? null
-        : await store.offlineImageBytes(book, chapter, image);
-    if (offlineBytes != null) {
-      token.check();
-      if (policy.supervision.enabled ||
-          !bookAllowed(book) ||
-          await _blocked(book.sourceId)) {
-        throw const ContentBlocked();
-      }
-      return readableBookImageBytes(image, offlineBytes);
-    }
-    final source = await _active(book);
-    final uri = source.requestTarget(image, media: true);
-    final cached = await store.readingImage(book, uri);
-    final document = cached == null
-        ? await client.fetch(
-            source,
-            uri,
-            token,
-            media: true,
-            maxBytes: 4 * 1024 * 1024,
-          )
-        : null;
-    token.check();
-    if (policy.supervision.enabled ||
-        !sourceAllowed(source) ||
-        !bookAllowed(book) ||
-        await _blocked(book.sourceId)) {
-      throw const ContentBlocked();
-    }
-    if (document != null &&
-        document.contentType?.toLowerCase().startsWith('image/') != true) {
-      throw const FormatException('章节图片地址未返回图片');
-    }
-    final bytes = cached == null
-        ? readableBookImageBytes(uri, document!.bytes)
-        : readableBookImageBytes(uri, cached);
-    if (document != null) {
-      try {
-        await store.cacheReadingImage(book, uri, bytes);
-      } on Exception {
-        // Reading continues if the optional image cache is unavailable.
-      }
-    }
-    token.check();
-    if (policy.supervision.enabled ||
-        !sourceAllowed(source) ||
-        !bookAllowed(book) ||
-        await _blocked(book.sourceId)) {
-      throw const ContentBlocked();
-    }
-    return bytes;
-  }
+  }) => _guardedChapterImageBytes(book, image, token, chapter: chapter);
 
   Future<void> download(
     Book book,
@@ -2219,70 +2066,75 @@ final class BooksRepository {
 
         await validate();
         if (book.kind == BookKind.text) {
-          // Legacy caches have no origin. Fetch fresh bytes so an old C→B
-          // fallback cannot be relabelled as a verified B→A download.
-          final freshChapter = BookChapter(
-            part.title,
-            part.uri,
-            request: part.request,
-          );
-          List<BookChapterSegment>? mixed;
-          final body = downloadText == null
-              ? await client.text(
-                  source,
-                  freshChapter,
-                  token,
-                  book: candidate,
-                  onSegments: (segments) => mixed = segments,
-                )
-              : await downloadText!(source, candidate, freshChapter, token);
-          await validate();
-          if (!policy.textAllowed(body)) throw const ContentBlocked();
-          if (body.trim().isEmpty) throw const FormatException('章节正文为空');
-          final segments =
-              candidate.sourceId == book.sourceId &&
-                  mixed != null &&
-                  mixed!.whereType<BookTextSegment>().every(
-                    (part) => policy.textAllowed(part.text),
-                  ) &&
-                  jsonEncode([
-                        for (final part in mixed!)
-                          switch (part) {
-                            BookTextSegment text => {'text': text.text},
-                            BookImageSegment image => {
-                              'image': image.address.toString(),
-                            },
-                          },
-                      ]).length <=
-                      512 * 1024
-              ? mixed!
-              : const <BookChapterSegment>[];
-          await store.saveProvenText(book, chapter, body, evidence, () async {
+          await _withBookRequestGuard(source, candidate, token, (
+            active,
+            guard,
+          ) async {
+            // Legacy caches have no origin. Fetch fresh bytes so an old C→B
+            // fallback cannot be relabelled as a verified B→A download.
+            final freshChapter = BookChapter(
+              part.title,
+              part.uri,
+              request: part.request,
+            );
+            List<BookChapterSegment>? mixed;
+            final body = downloadText == null
+                ? await client.text(
+                    source,
+                    freshChapter,
+                    active,
+                    book: candidate,
+                    onSegments: (segments) => mixed = segments,
+                    requestGuard: guard,
+                  )
+                : await downloadText!(source, candidate, freshChapter, active);
+            active.check();
             await validate();
-            if (!policy.textAllowed(body) ||
-                !segments.whereType<BookTextSegment>().every(
-                  (part) => policy.textAllowed(part.text),
-                )) {
-              throw const ContentBlocked();
-            }
-          }, segments: segments);
+            active.check();
+            if (!policy.textAllowed(body)) throw const ContentBlocked();
+            if (body.trim().isEmpty) throw const FormatException('章节正文为空');
+            final segments =
+                candidate.sourceId == book.sourceId &&
+                    mixed != null &&
+                    mixed!.whereType<BookTextSegment>().every(
+                      (part) => policy.textAllowed(part.text),
+                    ) &&
+                    jsonEncode([
+                          for (final part in mixed!)
+                            switch (part) {
+                              BookTextSegment text => {'text': text.text},
+                              BookImageSegment image => {
+                                'image': image.address.toString(),
+                              },
+                            },
+                        ]).length <=
+                        512 * 1024
+                ? mixed!
+                : const <BookChapterSegment>[];
+            await store.saveProvenText(book, chapter, body, evidence, () async {
+              active.check();
+              await validate();
+              active.check();
+              if (!policy.textAllowed(body) ||
+                  !segments.whereType<BookTextSegment>().every(
+                    (part) => policy.textAllowed(part.text),
+                  )) {
+                throw const ContentBlocked();
+              }
+            }, segments: segments);
+            active.check();
+          }, invalidationIsBlocked: true);
         } else {
-          await audioFiles.download(
+          await _guardedAudioDownload(
             source,
             book,
+            chapter,
+            candidate,
             part,
+            evidence,
             token,
             authorize,
-            targetChapter: chapter,
-            originBook: candidate,
-            evidence: evidence,
-            publish: (directory) => store.saveProvenAudio(
-              book,
-              chapter,
-              directory,
-              evidence,
-              validate,
-            ),
+            validate,
           );
         }
         return;

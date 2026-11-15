@@ -11,6 +11,7 @@ import '../../downloads/application/mp4_download.dart';
 import '../domain/book.dart';
 import 'audiobook_format.dart';
 import 'book_client.dart';
+import 'book_request_guard.dart';
 import 'book_download_evidence.dart';
 
 export 'audiobook_format.dart';
@@ -101,6 +102,7 @@ final class AudiobookFiles {
     Book? originBook,
     BookDownloadEvidence? evidence,
     Future<void> Function(String directory)? publish,
+    BookRequestGuard? requestGuard,
   }) {
     if (_closed) throw StateError('音频存储已关闭');
     return _enqueue(
@@ -114,6 +116,7 @@ final class AudiobookFiles {
         originBook ?? book,
         evidence,
         publish,
+        requestGuard,
       ),
     );
   }
@@ -151,6 +154,7 @@ final class AudiobookFiles {
     Book originBook,
     BookDownloadEvidence? evidence,
     Future<void> Function(String directory)? publish,
+    BookRequestGuard? requestGuard,
   ) async {
     if (_closed) throw StateError('音频存储已关闭');
     token.check();
@@ -167,7 +171,13 @@ final class AudiobookFiles {
     _running.add(token);
     Directory? staging;
     try {
-      final uri = await client.audio(source, chapter, token, book: originBook);
+      final uri = await client.audio(
+        source,
+        chapter,
+        token,
+        book: originBook,
+        requestGuard: requestGuard,
+      );
       authorize();
       await root.create(recursive: true);
       final budget = await _downloadBudget();
@@ -189,6 +199,7 @@ final class AudiobookFiles {
               validateTarget: (target) {
                 authorize();
                 source.requestTarget(target, media: true);
+                requestGuard?.call(target, null);
               },
               progress: (_, _, _) async => authorize(),
               validate: (file, cancellation) async {

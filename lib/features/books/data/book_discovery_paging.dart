@@ -62,6 +62,14 @@ bool bookDiscoveryStaticBookDenied(
   BookSource source,
   Book book,
   Iterable<LegadoCategory> denied,
+) => bookDiscoveryStaticTargetDenied(source, book.uri, book.request, denied);
+
+/// Match only concrete source categories against the actual request target.
+bool bookDiscoveryStaticTargetDenied(
+  BookSource source,
+  Uri uri,
+  String? reference,
+  Iterable<LegadoCategory> denied,
 ) {
   if (source.format != BookFormat.html) return false;
   try {
@@ -71,13 +79,19 @@ bool bookDiscoveryStaticBookDenied(
       if (restricted != null) known.add((restricted, category.paginated));
     }
     if (known.isEmpty) return false;
-    var target = book.request.isEmpty
+    var target = reference == null || reference.isEmpty
         ? null
-        : _request(source, book.request, 1);
-    if (target == null || target.uri != source.requestTarget(book.uri)) {
-      target = _request(source, book.uri.toString(), 1);
+        : _request(source, reference, 1);
+    if (target == null || target.uri != source.requestTarget(uri)) {
+      target = _request(source, uri.toString(), 1);
     }
     if (target == null) return false;
+    if (_encodedPathSeparator.hasMatch(_rawPath(target.uri)) &&
+        known.any((item) => item.$1.uri.host == target!.uri.host)) {
+      // Servers disagree about encoded separators and dot segments. When a
+      // restricted category is known on this host, do not guess the target.
+      return true;
+    }
     for (final (restricted, paginated) in known) {
       if (_deniesBook(restricted, target, paginated)) {
         return true;

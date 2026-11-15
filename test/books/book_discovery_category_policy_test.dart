@@ -12,10 +12,31 @@ import 'package:zero_player/features/books/data/books_repository.dart';
 import 'package:zero_player/features/books/data/book_import.dart';
 import 'package:zero_player/features/books/domain/book.dart';
 import 'package:zero_player/features/books/domain/legado_source.dart';
+import 'package:zero_player/features/supervision/domain/supervision_rules.dart';
+
+part 'book_discovery_category_reading_cases.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
+  _mixedBookAccessTests();
+  _staticBookAccessTests();
+  _detailsTargetTests();
+  _directoryTargetTests();
+  _textAndStoredTargetTests();
+  _inFlightPolicyTests();
+  _nonLegadoTargetTests();
+  _comicTargetTests();
+  _audioTargetTests();
+  _mediaProbeTargetTests();
+  _restrictedDiscoveryTests();
+  _discoveryPaginationTests();
+  _discoveryChangeTests();
+  _discoveryAliasTests();
+  _bundledAndAdapterTests();
+  _directAddressTests();
+}
 
+void _mixedBookAccessTests() {
   test(
     'mixed sources filter categories and books without labeling the source',
     () async {
@@ -129,7 +150,9 @@ void main() {
       expect(f.requests, isEmpty);
     });
   });
+}
 
+void _staticBookAccessTests() {
   test(
     'static non-Legado categories only block the matching book path',
     () async {
@@ -203,7 +226,9 @@ void main() {
       });
     },
   );
+}
 
+void _restrictedDiscoveryTests() {
   test(
     'all restricted categories and their scripts are not requested',
     () async {
@@ -277,7 +302,9 @@ void main() {
       });
     },
   );
+}
 
+void _discoveryPaginationTests() {
   test(
     'category identity and pagination stay bound across retry and changes',
     () async {
@@ -415,7 +442,9 @@ void main() {
       });
     },
   );
+}
 
+void _discoveryChangeTests() {
   test('policy or source changes cancel in-flight discovery', () async {
     await _withFixture((f) async {
       final source = _mixed();
@@ -510,7 +539,9 @@ void main() {
       expect(f.requests, isEmpty);
     });
   });
+}
 
+void _discoveryAliasTests() {
   test('unknown restricted scripts block ordinary category aliases', () async {
     await _withFixture((f) async {
       final source = _source('unknown-adult.example', [
@@ -594,7 +625,9 @@ void main() {
       });
     },
   );
+}
 
+void _bundledAndAdapterTests() {
   test('bundled mixed catalog record hides its global category', () async {
     final compressed = await File(
       'assets/catalogs/books/legado/catalog.json.bz2',
@@ -673,7 +706,9 @@ void main() {
       });
     },
   );
+}
 
+void _directAddressTests() {
   test('filtered discovery never follows a same-host redirect', () async {
     await _withFixture((f) async {
       final source = _source('redirect.example', [
@@ -789,6 +824,60 @@ BookSource _mixed() => _source('mixed.example', [
   {'title': 'BL', 'url': '/bl'},
 ]);
 
+BookSource _readingSource(String host) => BookSource.fromJson({
+  'name': '普通阅读源',
+  'url': 'https://$host/',
+  'kind': 'text',
+  'format': 'html',
+  'legado': {
+    'explore': [
+      {'title': '肉文', 'url': '/adult'},
+      {'title': '成人', 'url': '/list,{"method":"POST","body":"kind=adult"}'},
+      {'title': '普通', 'url': '/normal'},
+    ],
+    'rules': {
+      'infoTitle': '.bookname a@text',
+      'toc': '.toc@href',
+      'chapters': '.chapter',
+      'chapterTitle': '@text',
+      'chapterUrl': '@href',
+      'nextToc': '.nexttoc@href',
+      'content': '.body@text',
+      'nextContent': '.next@href',
+    },
+  },
+});
+
+Book _readingBook(BookSource source) => Book(
+  source.id,
+  BookKind.text,
+  '普通作品',
+  '作者',
+  source.endpoint.resolve('/book/1'),
+);
+
+BookSource _mediaSource(String host, BookKind kind) => BookSource.fromJson({
+  'name': '普通媒体源',
+  'url': 'https://$host/',
+  'kind': kind.name,
+  'format': 'html',
+  'legado': {
+    'explore': [
+      {'title': '肉文', 'url': '/adult'},
+      {'title': '普通', 'url': '/normal'},
+    ],
+    'rules': {'content': kind == BookKind.comic ? 'img@src' : 'audio@src'},
+  },
+});
+
+Book _mediaBook(BookSource source) => Book(
+  source.id,
+  source.kind,
+  '普通作品',
+  '作者',
+  source.endpoint.resolve('/book/1'),
+);
+
 BookSource _source(String host, List<Map<String, String>> categories) =>
     BookSource.fromJson({
       'name': '普通混合书源',
@@ -831,6 +920,8 @@ Future<void> _withFixture(Future<void> Function(_Fixture) body) async {
   final gates = <String, _Gate>{};
   final nextLinks = <String, String>{};
   final redirects = <String, String>{};
+  final pages = <String, String>{};
+  final media = <String, (ContentType, List<int>)>{};
   final shuyinNavigation = <Map<String, String>>[];
   final formRequests = <Map<String, String>>[];
   server.listen((request) async {
@@ -872,12 +963,23 @@ Future<void> _withFixture(Future<void> Function(_Fixture) body) async {
         if (!gate.started.isCompleted) gate.started.complete();
         await gate.released.future;
       }
+      if (request.method == 'POST') await request.drain<void>();
+      final payload = media[request.uri.path];
+      if (payload != null) {
+        request.response.headers.contentType = payload.$1;
+        request.response.add(payload.$2);
+        await request.response.close();
+        return;
+      }
       request.response.headers.contentType = ContentType.html;
-      request.response.write('''
+      request.response.write(
+        pages[request.uri.path] ??
+            '''
         <div class="bookbox"><div class="bookname">
           <a href="/book/1">星际普通</a></div><span class="kind">玄幻</span></div>
         ${request.uri.queryParameters['page'] == '2' ? '' : '<div class="pages"><a class="next" href="${nextLinks[request.uri.path] ?? '/normal?page=2'}">下一页</a></div>'}
-      ''');
+      ''',
+      );
       await request.response.close();
     } on Object {
       // A cancelled request may close the loopback socket before the reply.
@@ -907,6 +1009,8 @@ Future<void> _withFixture(Future<void> Function(_Fixture) body) async {
               gates,
               nextLinks,
               redirects,
+              pages,
+              media,
               shuyinNavigation,
               formRequests,
             ),
@@ -941,6 +1045,8 @@ final class _Fixture {
     this.gates,
     this.nextLinks,
     this.redirects,
+    this.pages,
+    this.media,
     this.shuyinNavigation,
     this.formRequests,
   );
@@ -949,6 +1055,8 @@ final class _Fixture {
   final Map<String, _Gate> gates;
   final Map<String, String> nextLinks;
   final Map<String, String> redirects;
+  final Map<String, String> pages;
+  final Map<String, (ContentType, List<int>)> media;
   final List<Map<String, String>> shuyinNavigation, formRequests;
   BooksRepository get repo => services.books;
 

@@ -5,6 +5,59 @@ import 'package:zero_player/features/books/data/book_mixed_content.dart';
 import 'package:zero_player/features/books/domain/book.dart';
 
 void main() {
+  test(
+    'policy revocation inside a cache transaction preserves old data',
+    () async {
+      final db = AppDatabase.memory();
+      addTearDown(db.close);
+      final store = BookStore(db);
+      final book = Book(
+        'test',
+        BookKind.text,
+        '测试',
+        '',
+        Uri.parse('https://fixture.test/book'),
+      );
+      final chapter = BookChapter('第一章', Uri.parse('https://fixture.test/1'));
+      await store.cacheReading(book, chapter, '旧正文');
+      await store.cacheMixedReading(book, chapter, [
+        const BookTextSegment('旧混排'),
+      ]);
+      var checks = 0;
+      void revoked() {
+        if (++checks == 2) throw StateError('policy changed');
+      }
+
+      await expectLater(
+        store.cacheReading(book, chapter, '新正文', validate: revoked),
+        throwsStateError,
+      );
+      expect(await store.readingCache(book, chapter), '旧正文');
+      checks = 0;
+      await expectLater(
+        store.cacheMixedReading(book, chapter, [
+          const BookTextSegment('新混排'),
+        ], validate: revoked),
+        throwsStateError,
+      );
+      expect(
+        (await store.mixedReading(
+          book,
+          chapter,
+        )).whereType<BookTextSegment>().single.text,
+        '旧混排',
+      );
+      final image = Uri.parse('https://fixture.test/1.png');
+      await store.cacheReadingImage(book, image, [1, 2, 3]);
+      checks = 0;
+      await expectLater(
+        store.cacheReadingImage(book, image, [4, 5, 6], validate: revoked),
+        throwsStateError,
+      );
+      expect(await store.readingImage(book, image), [1, 2, 3]);
+    },
+  );
+
   test('reading cache clears without removing offline chapters', () async {
     final db = AppDatabase.memory();
     addTearDown(db.close);

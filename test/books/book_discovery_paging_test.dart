@@ -68,6 +68,48 @@ void main() {
     expect(bookDiscoveryCategoryDenied(source, alias, [restricted]), isTrue);
   });
 
+  test('encoded separators are uncertain when restricted paths exist', () {
+    const adult = LegadoCategory('肉文', '/adult');
+    for (final address in [
+      'https://mixed.example/%2Fadult',
+      'https://mixed.example/%5Cadult',
+      'https://mixed.example/safe%2Fother',
+    ]) {
+      expect(
+        bookDiscoveryStaticTargetDenied(source, Uri.parse(address), null, [
+          adult,
+        ]),
+        isTrue,
+        reason: address,
+      );
+    }
+    expect(
+      bookDiscoveryStaticTargetDenied(
+        source,
+        Uri.parse('https://mixed.example/safe'),
+        null,
+        [adult],
+      ),
+      isFalse,
+    );
+    expect(
+      bookDiscoveryStaticTargetDenied(
+        source,
+        Uri.parse('https://mixed.example/%2Fadult'),
+        null,
+        [],
+      ),
+      isFalse,
+    );
+    // Dart normalizes encoded dot segments before a request is constructed.
+    final dotSegment = Uri.parse('https://mixed.example/a/%2e%2e/adult');
+    expect(dotSegment.path, '/adult');
+    expect(
+      bookDiscoveryStaticTargetDenied(source, dotSegment, null, [adult]),
+      isTrue,
+    );
+  });
+
   test('numeric siblings of restricted paths are treated as aliases', () {
     const adult = LegadoCategory('肉文', '/adult/1');
     for (final candidate in [

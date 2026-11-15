@@ -22,6 +22,7 @@ final class BookDownloadTask extends ChangeNotifier {
   int finished = 0;
   int total = 0;
   int failures = 0;
+  bool _stoppedByPolicy = false;
   final Set<String> savedChapterIds = {};
   String? error;
 
@@ -134,6 +135,7 @@ final class BookDownloadCoordinator extends ChangeNotifier {
             );
             task.savedChapterIds.add(chapter.id);
           } on ContentBlocked {
+            if (!token.isCancelled) task._stoppedByPolicy = true;
             token.cancel();
             rethrow;
           } on Exception {
@@ -158,6 +160,7 @@ final class BookDownloadCoordinator extends ChangeNotifier {
       task.status = BookDownloadStatus.completed;
     } on RequestCancelled {
       task.status = BookDownloadStatus.paused;
+      if (task._stoppedByPolicy) task.error = '内容策略已改变，下载已暂停';
     } on ContentBlocked {
       task.status = BookDownloadStatus.paused;
       task.error = '内容策略已改变，下载已暂停';
@@ -200,7 +203,11 @@ final class BookDownloadCoordinator extends ChangeNotifier {
 
   void _policyChanged() {
     for (final task in _tasks.values) {
-      task.pause();
+      if (task.status == BookDownloadStatus.running &&
+          !task.token.isCancelled) {
+        if (!repository.closing) task._stoppedByPolicy = true;
+        task.pause();
+      }
     }
   }
 

@@ -87,6 +87,8 @@ migrate_working_dir/
 !/docs/implementation/legado-amsi-source-classification-before-fanfanu-20261115.json
 !/docs/implementation/legado-rdap-net-sample-20261115.json
 !/docs/implementation/legado-rdap-com-six-20261116.json
+!/docs/implementation/legado-rdap-com-eighteen-20261116.json
+!/docs/implementation/legado-rdap-nine-20261116.json
 !/docs/implementation/legado-adult-category-recheck-20261115.json
 !/docs/implementation/legado-uaa-adult-id-review-20261116.json
 !/docs/implementation/legado-equivalent-adult-ids-20261116.json

@@ -13,6 +13,7 @@ import '../domain/book_search.dart';
 import '../domain/legado_source.dart';
 import 'book_html.dart';
 import 'book_mixed_content.dart';
+import 'book_request_guard.dart';
 import 'bookan_audio_client.dart';
 import 'lit2go_audio_client.dart';
 import 'legado/legado_client.dart';
@@ -96,8 +97,9 @@ final class BookClient {
   Future<Book> details(
     BookSource source,
     Book book,
-    CancellationToken token,
-  ) async {
+    CancellationToken token, {
+    BookRequestGuard? requestGuard,
+  }) async {
     _requireNovelSource(source);
     if (source.format == BookFormat.shuyin) {
       return _shuyin.details(source, book, token);
@@ -106,9 +108,16 @@ final class BookClient {
     if (source.format == BookFormat.ximalaya) return book;
     if (source.format == BookFormat.lit2go) return book;
     if (source.format != BookFormat.html) return book;
-    if (source.legado != null) return _legado.details(source, book, token);
+    if (source.legado != null) {
+      return _legado.details(source, book, token, requestGuard: requestGuard);
+    }
     if (!source.rules.keys.any((key) => key.startsWith('info'))) return book;
-    final response = await fetch(source, book.uri, token);
+    final response = await fetch(
+      source,
+      book.uri,
+      token,
+      requestGuard: requestGuard,
+    );
     token.check();
     final document = parseBookHtml(response.text);
     String info(String key, [int limit = 160]) =>
@@ -167,13 +176,18 @@ final class BookClient {
     bool media = false,
     int maxBytes = 2 * 1024 * 1024,
     bool allowRedirects = true,
+    BookRequestGuard? requestGuard,
   }) {
+    requestGuard?.call(uri, null);
     return network.get(
       uri,
       cancellation: token,
       maxBytes: maxBytes,
       networkTimeout: Duration(seconds: media ? 90 : 12),
-      validateTarget: (target) => source.requestTarget(target, media: media),
+      validateTarget: (target) {
+        source.requestTarget(target, media: media);
+        requestGuard?.call(target, null);
+      },
       mapRedirect: allowRedirects
           ? null
           : (_) => throw const FormatException('成人过滤期间不跟随发现页面重定向'),
@@ -418,8 +432,9 @@ final class BookClient {
   Future<List<BookChapter>> chapters(
     BookSource source,
     Book book,
-    CancellationToken token,
-  ) async {
+    CancellationToken token, {
+    BookRequestGuard? requestGuard,
+  }) async {
     _requireNovelSource(source);
     if (source.format == BookFormat.shuyin) {
       return _shuyin.chapters(source, book, token);
@@ -433,7 +448,9 @@ final class BookClient {
     if (source.format == BookFormat.lit2go) {
       return _lit2go.chapters(source, book, token);
     }
-    if (_hasLegadoRules(source)) return _legado.chapters(source, book, token);
+    if (_hasLegadoRules(source)) {
+      return _legado.chapters(source, book, token, requestGuard: requestGuard);
+    }
     if (source.format == BookFormat.feed) {
       return (await _feed(source, token)).$2;
     }
@@ -441,7 +458,12 @@ final class BookClient {
     final visited = <Uri>{};
     var next = book.uri;
     for (var page = 0; page < 12 && visited.add(next); page++) {
-      final response = await fetch(source, next, token);
+      final response = await fetch(
+        source,
+        next,
+        token,
+        requestGuard: requestGuard,
+      );
       final document = parseBookHtml(response.text);
       final toc = page == 0
           ? bookField(document, source.rules['toc'] ?? '')
@@ -484,9 +506,16 @@ final class BookClient {
     CancellationToken token, {
     Book? book,
     void Function(List<BookChapterSegment>)? onSegments,
+    BookRequestGuard? requestGuard,
   }) async {
     if (_hasLegadoRules(source)) {
-      return _legado.text(source, chapter, token, book: book);
+      return _legado.text(
+        source,
+        chapter,
+        token,
+        book: book,
+        requestGuard: requestGuard,
+      );
     }
     if (source.format == BookFormat.feed) {
       if (chapter.body.isNotEmpty) return chapter.body;
@@ -502,7 +531,12 @@ final class BookClient {
     final visited = <Uri>{};
     var next = chapter.uri;
     for (var page = 0; page < 10 && visited.add(next); page++) {
-      final response = await fetch(source, next, token);
+      final response = await fetch(
+        source,
+        next,
+        token,
+        requestGuard: requestGuard,
+      );
       if (response.contentType?.toLowerCase().startsWith('image/') == true) {
         throw const FormatException('章节仅提供图片，文本阅读器无法打开');
       }
@@ -557,6 +591,7 @@ final class BookClient {
     BookChapter chapter,
     CancellationToken token, {
     Book? book,
+    BookRequestGuard? requestGuard,
   }) async {
     if (source.kind == BookKind.audio || source.format != BookFormat.html) {
       return const [];
@@ -565,16 +600,25 @@ final class BookClient {
       r'\.(?:png|jpe?g|webp|gif)$',
       caseSensitive: false,
     ).hasMatch(chapter.uri.path)) {
-      return [source.requestTarget(chapter.uri, media: true)];
+      final uri = source.requestTarget(chapter.uri, media: true);
+      requestGuard?.call(uri, chapter.request);
+      return [uri];
     }
     if (source.legado != null) {
-      return _legado.images(source, chapter, token, book: book);
+      return _legado.images(
+        source,
+        chapter,
+        token,
+        book: book,
+        requestGuard: requestGuard,
+      );
     }
     final response = await fetch(
       source,
       chapter.uri,
       token,
       maxBytes: 4 * 1024 * 1024,
+      requestGuard: requestGuard,
     );
     token.check();
     if (response.contentType?.toLowerCase().startsWith('image/') == true) {
@@ -582,7 +626,16 @@ final class BookClient {
     }
     final rule = source.legado?.rules['content'] ?? source.rules['content'];
     if (rule == null || rule.isEmpty) return const [];
-    return extractBookChapterImages(source, response.uri, response.text, rule);
+    final images = extractBookChapterImages(
+      source,
+      response.uri,
+      response.text,
+      rule,
+    );
+    for (final image in images) {
+      requestGuard?.call(image, null);
+    }
+    return images;
   }
 
   Future<Uri> audio(
@@ -590,6 +643,7 @@ final class BookClient {
     BookChapter chapter,
     CancellationToken token, {
     Book? book,
+    BookRequestGuard? requestGuard,
   }) async {
     if (source.format == BookFormat.shuyin) {
       return _shuyin.audio(source, chapter, token);
@@ -604,22 +658,37 @@ final class BookClient {
       return _lit2go.audio(source, chapter, token);
     }
     if (_hasLegadoRules(source)) {
-      return _legado.audio(source, chapter, token, book: book);
+      return _legado.audio(
+        source,
+        chapter,
+        token,
+        book: book,
+        requestGuard: requestGuard,
+      );
     }
     if (source.format == BookFormat.feed || source.directAudio) {
-      return source.resolve(
+      final uri = source.resolve(
         source.endpoint,
         chapter.uri.toString(),
         media: true,
       );
+      requestGuard?.call(uri, chapter.request);
+      return uri;
     }
-    final response = await fetch(source, chapter.uri, token);
+    final response = await fetch(
+      source,
+      chapter.uri,
+      token,
+      requestGuard: requestGuard,
+    );
     final address = bookField(
       parseBookHtml(response.text),
       source.rules['content']!,
     );
     if (address.isEmpty) throw const FormatException('来源未提供直连音频');
-    return source.resolve(response.uri, address, media: true);
+    final uri = source.resolve(response.uri, address, media: true);
+    requestGuard?.call(uri, null);
+    return uri;
   }
 
   Future<(Uri, List<int>)> sampleAudio(
@@ -627,14 +696,24 @@ final class BookClient {
     BookChapter chapter,
     CancellationToken token, {
     Book? book,
+    BookRequestGuard? requestGuard,
   }) async {
-    final uri = await audio(source, chapter, token, book: book);
+    final uri = await audio(
+      source,
+      chapter,
+      token,
+      book: book,
+      requestGuard: requestGuard,
+    );
     final payload = await network.http.open(
       uri,
       policy: HeaderPolicy({uri: const {}}),
       range: 'bytes=0-127',
       cancellation: token,
-      validateTarget: (target) => source.requestTarget(target, media: true),
+      validateTarget: (target) {
+        source.requestTarget(target, media: true);
+        requestGuard?.call(target, null);
+      },
     );
     if (!{200, 206}.contains(payload.response.statusCode)) {
       await payload.body.take(0).drain<void>();
