@@ -3,12 +3,9 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../../../app/app_services.dart';
-import '../../../core/network/cancellation_token.dart';
-import '../../../core/network/document_client.dart';
-import '../../../media/gateway/offline_server.dart';
-import '../../playback/domain/player_engine.dart';
-import '../data/books_repository.dart';
+import '../application/audiobook_controller.dart';
 import '../domain/book.dart';
+import 'book_page_route.dart';
 
 final class AudiobookPlayerPage extends StatefulWidget {
   const AudiobookPlayerPage({
@@ -28,199 +25,24 @@ final class AudiobookPlayerPage extends StatefulWidget {
 }
 
 final class _AudiobookPlayerPageState extends State<AudiobookPlayerPage> {
-  late BookChapter _chapter = widget.initial;
-  PlayerEngine? _engine;
-  OfflineSession? _session;
-  CancellationToken? _token;
-  StreamSubscription<PlaybackSnapshot>? _states;
-  StreamSubscription<String>? _errors;
-  Future<void>? _loading;
-  Future<void>? _shutdown;
-  BookChapter? _pendingChapter;
-  final _playback = ValueNotifier(const PlaybackSnapshot());
-  String? _error;
-  bool _busy = true;
-  double _rate = 1;
-  double? _resumeMs;
-  int _savedAt = 0;
-  bool _autoNext = true;
-  Timer? _sleepTimer;
-  DateTime? _sleepUntil;
-  String? _completedChapter;
-  int get _index => widget.chapters.indexOf(_chapter);
-  BooksRepository get _books => widget.services.books;
+  late final AudiobookController player = widget.services.audiobookPlayer;
 
   @override
   void initState() {
     super.initState();
-    _books.policy.addListener(_policyChanged);
-    widget.services.setAudiobookControls(pause: _pause, close: _close);
-    _start(widget.initial, resume: true);
-  }
-
-  void _policyChanged() {
-    if (_books.kindAllowed(BookKind.audio) &&
-        _books.bookAllowed(widget.book) &&
-        _books.policy.textAllowed(_chapter.title)) {
-      return;
-    }
-    _token?.cancel();
-    unawaited(_pause());
-    if (mounted) setState(() => _error = '当前内容策略限制播放该章节');
-  }
-
-  Future<void> _pause() async {
-    if (_busy) _token?.cancel();
-    final engine = _engine;
-    if (engine != null) await engine.pause();
-  }
-
-  void _start(BookChapter chapter, {bool resume = false}) {
-    if (_shutdown != null) return;
-    if (_loading != null) {
-      _pendingChapter = chapter;
-      _token?.cancel();
-      return;
-    }
-    _completedChapter = null;
-    final pending = _open(chapter, resume: resume);
-    _loading = pending;
-    unawaited(
-      pending.whenComplete(() {
-        _loading = null;
-        if (!mounted || _shutdown != null) return;
-        setState(() => _busy = false);
-        final next = _pendingChapter;
-        _pendingChapter = null;
-        if (next != null) _start(next);
-      }),
-    );
-  }
-
-  Future<void> _open(BookChapter chapter, {required bool resume}) async {
-    _save();
-    final token = _token = CancellationToken();
-    setState(() {
-      _chapter = chapter;
-      _error = null;
-      _busy = true;
+    player.addListener(_refresh);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) player.start(widget.book, widget.chapters, widget.initial);
     });
-    _playback.value = const PlaybackSnapshot();
-    _resumeMs = null;
-    try {
-      await _engine?.stop();
-      _session?.close();
-      _session = null;
-      _books.requireBook(widget.book, chapter);
-      final old = await _books.store.entry(widget.book);
-      if (!await _books.audioFiles.contains(widget.book, chapter)) {
-        await _books.download(widget.book, chapter, token);
-      }
-      token.check();
-      _books.requireBook(widget.book, chapter);
-      final session = _session = await _books.audioFiles.open(
-        widget.book,
-        chapter,
-      );
-      token.check();
-      await widget.services.pauseForAudiobook();
-      token.check();
-      _books.requireBook(widget.book, chapter);
-      final engine = _engine ??= _createEngine();
-      await engine.open(session.uri);
-      token.check();
-      _books.requireBook(widget.book, chapter);
-      await engine.setRate(_rate);
-      if (resume && old?.last == chapter.id && old!.position > 0) {
-        _resumeMs = old.position;
-        _restorePosition(engine.snapshot);
-      }
-      await _books.store.saveBook(
-        widget.book,
-        chapters: widget.chapters,
-        last: chapter,
-        position: old?.last == chapter.id ? old?.position ?? 0 : 0,
-      );
-    } on RequestCancelled {
-      if (mounted && _error == null) setState(() => _error = '已取消加载音频');
-    } on FormatException catch (error) {
-      if (mounted && !token.isCancelled) setState(() => _error = error.message);
-    } on RemoteFailure catch (error) {
-      if (mounted && !token.isCancelled) setState(() => _error = error.message);
-    } catch (_) {
-      if (mounted && !token.isCancelled) setState(() => _error = '无法打开音频或内容受限');
-    }
   }
 
-  PlayerEngine _createEngine() {
-    final engine = widget.services.createAudiobookEngine();
-    _states = engine.states.listen((value) {
-      if (!mounted || _shutdown != null) return;
-      _playback.value = value;
-      if (_busy) return;
-      _restorePosition(value);
-      if (value.completed && _completedChapter != _chapter.id) {
-        _completedChapter = _chapter.id;
-        _save();
-        if (_autoNext && _index + 1 < widget.chapters.length) {
-          _start(widget.chapters[_index + 1]);
-        }
-        return;
-      }
-      final seconds = value.position.inSeconds;
-      if ((seconds - _savedAt).abs() >= 5) {
-        _savedAt = seconds;
-        _save();
-      }
-    });
-    _errors = engine.errors.listen((_) {
-      if (mounted) setState(() => _error = '音频解码失败，请换源或重新下载');
-    });
-    return engine;
-  }
-
-  void _restorePosition(PlaybackSnapshot state) {
-    final position = _resumeMs;
-    if (position == null || state.duration <= Duration.zero) return;
-    _resumeMs = null;
-    final target = position.round().clamp(0, state.duration.inMilliseconds);
-    unawaited(_engine?.seek(Duration(milliseconds: target)));
-  }
-
-  void _save() {
-    if (_session == null || _engine == null || _busy) return;
-    final position = _engine!.snapshot.position.inMilliseconds.toDouble();
-    unawaited(
-      _books.store
-          .saveBook(widget.book, last: _chapter, position: position)
-          .onError((_, _) {}),
-    );
-  }
-
-  Future<void> _close() => _shutdown ??= _release();
-
-  Future<void> _release() async {
-    _sleepTimer?.cancel();
-    _pendingChapter = null;
-    _token?.cancel();
-    await _loading;
-    await _states?.cancel();
-    await _errors?.cancel();
-    try {
-      await _engine?.dispose();
-    } finally {
-      _session?.close();
-    }
+  void _refresh() {
+    if (mounted) setState(() {});
   }
 
   @override
   void dispose() {
-    _sleepTimer?.cancel();
-    _save();
-    widget.services.setAudiobookControls();
-    _books.policy.removeListener(_policyChanged);
-    unawaited(_close());
-    _playback.dispose();
+    player.removeListener(_refresh);
     super.dispose();
   }
 
@@ -231,20 +53,6 @@ final class _AudiobookPlayerPageState extends State<AudiobookPlayerPage> {
     return '${hours == 0 ? '' : '$hours:'}$minutes:$seconds';
   }
 
-  void _setSleep(Duration? duration) {
-    _sleepTimer?.cancel();
-    setState(
-      () =>
-          _sleepUntil = duration == null ? null : DateTime.now().add(duration),
-    );
-    if (duration == null) return;
-    _sleepTimer = Timer(duration, () {
-      if (!mounted) return;
-      setState(() => _sleepUntil = null);
-      unawaited(_pause());
-    });
-  }
-
   Future<void> _chooseChapter() async {
     final chapter = await showModalBottomSheet<BookChapter>(
       context: context,
@@ -253,11 +61,11 @@ final class _AudiobookPlayerPageState extends State<AudiobookPlayerPage> {
         child: SizedBox(
           height: MediaQuery.sizeOf(context).height * .7,
           child: ListView.builder(
-            itemCount: widget.chapters.length,
+            itemCount: player.chapters.length,
             itemBuilder: (context, index) {
-              final item = widget.chapters[index];
+              final item = player.chapters[index];
               return ListTile(
-                selected: item.id == _chapter.id,
+                selected: item.id == player.chapter?.id,
                 leading: Text('${index + 1}'),
                 title: Text(item.title, maxLines: 2),
                 onTap: () => Navigator.pop(context, item),
@@ -267,30 +75,26 @@ final class _AudiobookPlayerPageState extends State<AudiobookPlayerPage> {
         ),
       ),
     );
-    if (chapter != null && mounted && chapter.id != _chapter.id) {
-      _start(chapter);
-    }
+    if (chapter != null && mounted) player.choose(chapter);
   }
 
   void _skip(Duration offset) {
-    final state = _playback.value;
-    if (_busy || _session == null || state.duration <= Duration.zero) return;
+    final state = player.snapshot;
+    if (player.loading || state.duration <= Duration.zero) return;
     final target = (state.position.inMilliseconds + offset.inMilliseconds)
         .clamp(0, state.duration.inMilliseconds);
-    unawaited(_engine?.seek(Duration(milliseconds: target)));
+    unawaited(player.seek(Duration(milliseconds: target)));
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final chapter = player.chapter;
+    final state = player.snapshot;
+    final active = player.active && !player.loading && player.error == null;
+    final duration = state.duration.inMilliseconds;
     return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          widget.book.title,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-        ),
-      ),
+      appBar: AppBar(title: Text(player.book?.title ?? widget.book.title)),
       body: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 560),
@@ -305,11 +109,11 @@ final class _AudiobookPlayerPageState extends State<AudiobookPlayerPage> {
               ),
               const SizedBox(height: 24),
               Text(
-                _chapter.title,
+                chapter?.title ?? '播放已停止',
                 textAlign: TextAlign.center,
                 style: theme.textTheme.headlineSmall,
               ),
-              if (_busy)
+              if (player.loading)
                 const Padding(
                   padding: EdgeInsets.symmetric(vertical: 20),
                   child: Column(
@@ -320,24 +124,100 @@ final class _AudiobookPlayerPageState extends State<AudiobookPlayerPage> {
                     ],
                   ),
                 ),
-              if (_error != null)
+              if (player.error != null)
                 Padding(
                   padding: const EdgeInsets.all(10),
-                  child: Text(_error!, textAlign: TextAlign.center),
+                  child: Text(player.error!, textAlign: TextAlign.center),
                 ),
-              ValueListenableBuilder<PlaybackSnapshot>(
-                valueListenable: _playback,
-                builder: (_, state, _) => _controls(state),
+              Slider(
+                value: state.position.inMilliseconds
+                    .clamp(0, duration)
+                    .toDouble(),
+                max: duration > 0 ? duration.toDouble() : 1,
+                onChanged: !active || duration <= 0
+                    ? null
+                    : (value) =>
+                          player.seek(Duration(milliseconds: value.round())),
+              ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(_time(state.position)),
+                  Text(_time(state.duration)),
+                ],
+              ),
+              Wrap(
+                spacing: 12,
+                runSpacing: 8,
+                alignment: WrapAlignment.center,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                children: [
+                  IconButton(
+                    tooltip: '上一章',
+                    icon: const Icon(Icons.skip_previous),
+                    onPressed: !player.loading && player.index > 0
+                        ? () => player.choose(player.chapters[player.index - 1])
+                        : null,
+                  ),
+                  IconButton.filled(
+                    tooltip: state.playing ? '暂停' : '播放',
+                    icon: Icon(state.playing ? Icons.pause : Icons.play_arrow),
+                    onPressed: active ? player.toggle : null,
+                  ),
+                  IconButton(
+                    tooltip: '后退 15 秒',
+                    icon: const Icon(Icons.fast_rewind),
+                    onPressed: active
+                        ? () => _skip(const Duration(seconds: -15))
+                        : null,
+                  ),
+                  IconButton(
+                    tooltip: '前进 30 秒',
+                    icon: const Icon(Icons.forward_30),
+                    onPressed: active
+                        ? () => _skip(const Duration(seconds: 30))
+                        : null,
+                  ),
+                  IconButton(
+                    tooltip: '下一章',
+                    icon: const Icon(Icons.skip_next),
+                    onPressed:
+                        !player.loading &&
+                            player.index >= 0 &&
+                            player.index + 1 < player.chapters.length
+                        ? () => player.choose(player.chapters[player.index + 1])
+                        : null,
+                  ),
+                  DropdownButton<double>(
+                    value: player.rate,
+                    items: [
+                      for (final rate in [.75, 1.0, 1.25, 1.5, 2.0])
+                        DropdownMenuItem(
+                          value: rate,
+                          child: Text(
+                            '${rate.toStringAsFixed(rate == 1 || rate == 2 ? 0 : 2)}×',
+                          ),
+                        ),
+                    ],
+                    onChanged: !active
+                        ? null
+                        : (value) {
+                            if (value != null) unawaited(player.setRate(value));
+                          },
+                  ),
+                ],
               ),
               TextButton.icon(
-                onPressed: _busy ? null : _chooseChapter,
+                onPressed: player.loading || !player.active
+                    ? null
+                    : _chooseChapter,
                 icon: const Icon(Icons.format_list_numbered),
-                label: Text('章节 ${_index + 1}/${widget.chapters.length}'),
+                label: Text('章节 ${player.index + 1}/${player.chapters.length}'),
               ),
               SwitchListTile(
                 title: const Text('自动播放下一章'),
-                value: _autoNext,
-                onChanged: (value) => setState(() => _autoNext = value),
+                value: player.autoNext,
+                onChanged: player.setAutoNext,
               ),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -345,7 +225,7 @@ final class _AudiobookPlayerPageState extends State<AudiobookPlayerPage> {
                   const Icon(Icons.bedtime_outlined),
                   const SizedBox(width: 8),
                   DropdownButton<int>(
-                    value: _sleepUntil == null ? 0 : null,
+                    value: player.sleepUntil == null ? 0 : null,
                     hint: const Text('定时关闭已设置'),
                     items: const [
                       DropdownMenuItem(value: 0, child: Text('不定时')),
@@ -353,7 +233,7 @@ final class _AudiobookPlayerPageState extends State<AudiobookPlayerPage> {
                       DropdownMenuItem(value: 30, child: Text('30 分钟后')),
                       DropdownMenuItem(value: 60, child: Text('60 分钟后')),
                     ],
-                    onChanged: (minutes) => _setSleep(
+                    onChanged: (minutes) => player.setSleep(
                       minutes == null || minutes == 0
                           ? null
                           : Duration(minutes: minutes),
@@ -361,12 +241,12 @@ final class _AudiobookPlayerPageState extends State<AudiobookPlayerPage> {
                   ),
                 ],
               ),
-              if (!_busy &&
-                  _error != null &&
-                  _books.kindAllowed(BookKind.audio))
+              if (!player.loading && player.error != null && player.active)
                 Center(
                   child: OutlinedButton(
-                    onPressed: () => _start(_chapter, resume: true),
+                    onPressed: chapter == null
+                        ? null
+                        : () => player.choose(chapter),
                     child: const Text('重试'),
                   ),
                 ),
@@ -376,94 +256,96 @@ final class _AudiobookPlayerPageState extends State<AudiobookPlayerPage> {
       ),
     );
   }
+}
 
-  Widget _controls(PlaybackSnapshot state) {
-    final active = !_busy && _error == null && _session != null;
-    final duration = state.duration.inMilliseconds;
-    return Column(
-      children: [
-        Slider(
-          value: state.position.inMilliseconds.clamp(0, duration).toDouble(),
-          max: duration > 0 ? duration.toDouble() : 1,
-          onChanged: !active || duration <= 0
-              ? null
-              : (value) => _engine?.seek(Duration(milliseconds: value.round())),
+final class AudiobookMiniPlayer extends StatelessWidget {
+  const AudiobookMiniPlayer({super.key, required this.services});
+  final AppServices services;
+
+  void _expand(BuildContext context, AudiobookController player) {
+    final book = player.book;
+    final chapter = player.chapter;
+    if (book == null || chapter == null) return;
+    Navigator.of(context, rootNavigator: true).push(
+      BookPageRoute<void>(
+        builder: (_) => AudiobookPlayerPage(
+          services: services,
+          book: book,
+          chapters: player.chapters,
+          initial: chapter,
         ),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [Text(_time(state.position)), Text(_time(state.duration))],
-        ),
-        Wrap(
-          spacing: 12,
-          runSpacing: 8,
-          crossAxisAlignment: WrapCrossAlignment.center,
-          alignment: WrapAlignment.center,
-          children: [
-            IconButton(
-              tooltip: '上一章',
-              icon: const Icon(Icons.skip_previous),
-              onPressed: !_busy && _index > 0
-                  ? () => _start(widget.chapters[_index - 1])
-                  : null,
-            ),
-            IconButton.filled(
-              tooltip: state.playing ? '暂停' : '播放',
-              icon: Icon(state.playing ? Icons.pause : Icons.play_arrow),
-              onPressed: active
-                  ? () async {
-                      _books.requireBook(widget.book, _chapter);
-                      if (!state.playing) {
-                        await widget.services.pauseForAudiobook();
-                      }
-                      if (mounted && _books.kindAllowed(BookKind.audio)) {
-                        await _engine?.playOrPause();
-                      }
-                    }
-                  : null,
-            ),
-            IconButton(
-              tooltip: '后退 15 秒',
-              icon: const Icon(Icons.fast_rewind),
-              onPressed: active
-                  ? () => _skip(const Duration(seconds: -15))
-                  : null,
-            ),
-            IconButton(
-              tooltip: '前进 30 秒',
-              icon: const Icon(Icons.forward_30),
-              onPressed: active
-                  ? () => _skip(const Duration(seconds: 30))
-                  : null,
-            ),
-            IconButton(
-              tooltip: '下一章',
-              icon: const Icon(Icons.skip_next),
-              onPressed: !_busy && _index + 1 < widget.chapters.length
-                  ? () => _start(widget.chapters[_index + 1])
-                  : null,
-            ),
-            DropdownButton<double>(
-              value: _rate,
-              items: [
-                for (final rate in [.75, 1.0, 1.25, 1.5, 2.0])
-                  DropdownMenuItem(
-                    value: rate,
-                    child: Text(
-                      '${rate.toStringAsFixed(rate == 1 || rate == 2 ? 0 : 2)}×',
-                    ),
-                  ),
-              ],
-              onChanged: !active
-                  ? null
-                  : (value) {
-                      if (value == null) return;
-                      setState(() => _rate = value);
-                      unawaited(_engine?.setRate(value));
-                    },
-            ),
-          ],
-        ),
-      ],
+      ),
     );
   }
+
+  @override
+  Widget build(BuildContext context) => ListenableBuilder(
+    listenable: services.audiobookPlayer,
+    builder: (context, _) {
+      final player = services.audiobookPlayer;
+      if (!player.active) return const SizedBox.shrink();
+      return Material(
+        color: Theme.of(context).colorScheme.surfaceContainerHigh,
+        child: SafeArea(
+          top: false,
+          bottom: false,
+          child: Row(
+            children: [
+              const Padding(
+                padding: EdgeInsets.all(12),
+                child: Icon(Icons.headphones_outlined),
+              ),
+              Expanded(
+                child: InkWell(
+                  onTap: () => _expand(context, player),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          player.book?.title ?? '',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        Text(
+                          player.error ??
+                              (player.loading
+                                  ? '正在准备音频…'
+                                  : player.playing
+                                  ? '${player.chapter?.title} · 后台播放中'
+                                  : '${player.chapter?.title} · 已暂停'),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: Theme.of(context).textTheme.bodySmall,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              IconButton(
+                tooltip: '展开听书播放器',
+                onPressed: () => _expand(context, player),
+                icon: const Icon(Icons.keyboard_arrow_up),
+              ),
+              IconButton(
+                tooltip: player.playing ? '暂停听书' : '播放听书',
+                onPressed: player.loading || player.error != null
+                    ? null
+                    : player.toggle,
+                icon: Icon(player.playing ? Icons.pause : Icons.play_arrow),
+              ),
+              IconButton(
+                tooltip: '停止听书',
+                onPressed: player.stop,
+                icon: const Icon(Icons.close),
+              ),
+            ],
+          ),
+        ),
+      );
+    },
+  );
 }

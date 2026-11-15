@@ -101,4 +101,21 @@ void main() {
       throwsFormatException,
     );
   });
+
+  test('Lit2Go adapter is bound to the reviewed publisher endpoint', () {
+    Map<String, Object> source(String url) => {
+      'name': 'Lit2Go 公版有声书',
+      'kind': 'audio',
+      'format': 'lit2go',
+      'url': url,
+    };
+    expect(
+      BookSource.fromJson(source('https://etc.usf.edu/lit2go/books/')).format,
+      BookFormat.lit2go,
+    );
+    expect(
+      () => BookSource.fromJson(source('https://example.test/lit2go/books/')),
+      throwsFormatException,
+    );
+  });
 }

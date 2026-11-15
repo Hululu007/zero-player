@@ -6,7 +6,7 @@ import 'legado_source.dart';
 
 enum BookKind { text, audio, comic }
 
-enum BookFormat { html, feed, featured, shuyin, bookan, ximalaya }
+enum BookFormat { html, feed, featured, shuyin, bookan, ximalaya, lit2go }
 
 String bookLabel(Object? value, [int limit = 160]) {
   final text = value is String
@@ -105,6 +105,9 @@ final class BookSource {
             (kind != BookKind.audio ||
                 endpoint.toString() !=
                     'https://mobile.ximalaya.com/mobile/v1/album/track')) ||
+        (format == BookFormat.lit2go &&
+            (kind != BookKind.audio ||
+                endpoint.toString() != 'https://etc.usf.edu/lit2go/books/')) ||
         !const {'utf-8', 'gbk', 'gb2312', 'gb18030'}.contains(searchCharset) ||
         (searchForm.isNotEmpty && searchCharset != 'utf-8') ||
         (directAudio && kind != BookKind.audio) ||
@@ -126,6 +129,7 @@ final class BookSource {
             format != BookFormat.shuyin &&
             format != BookFormat.bookan &&
             format != BookFormat.ximalaya &&
+            format != BookFormat.lit2go &&
             [
               'chapters',
               'chapterTitle',

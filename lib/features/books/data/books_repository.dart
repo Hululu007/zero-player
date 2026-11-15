@@ -19,12 +19,14 @@ import '../../supervision/domain/adult_source_evidence.dart';
 import '../../supervision/domain/supervision_rules.dart';
 import '../domain/book.dart';
 import '../domain/book_search.dart';
+import '../domain/book_source_risk.dart';
 import '../domain/legado_source.dart';
 import 'aoaostar_book_catalog.dart';
 import 'audiobook_files.dart';
 import 'book_client.dart';
 import 'book_cover_cache.dart';
 import 'book_import.dart';
+import 'book_image_payload.dart';
 import 'book_mixed_content.dart';
 import 'book_source_links.dart';
 import 'book_store.dart';
@@ -170,10 +172,15 @@ final class BooksRepository {
 
   bool sourceAllowed(BookSource source) =>
       kindAllowed(source.kind) &&
+      !quarantinedComicSource(source) &&
       (source.kind != BookKind.text ||
           !_retiredNewsHost(source.endpoint.host)) &&
       !(policy.filterAdult &&
-          ([source.endpoint.host, ...source.mediaHosts].any(knownAdultHost))) &&
+          (adultComicSource(source) ||
+              [
+                source.endpoint.host,
+                ...source.mediaHosts,
+              ].any(knownAdultHost))) &&
       policy.textAllowed(
         '${source.name} ${source.endpoint.host}',
         category: source.group,
@@ -183,10 +190,14 @@ final class BooksRepository {
   bool bookAllowed(Book book) {
     final verified = _verifiedSources[book.sourceId];
     return kindAllowed(book.kind) &&
+        !(book.kind == BookKind.comic && quarantinedComicHost(book.uri.host)) &&
         (book.kind != BookKind.text || !_retiredNewsHost(book.uri.host)) &&
         (!policy.supervision.enabled ||
             (verified != null && sourceAllowed(verified))) &&
-        !(policy.filterAdult && knownAdultHost(book.uri.host)) &&
+        !(policy.filterAdult &&
+            (knownAdultHost(book.uri.host) ||
+                (book.kind == BookKind.comic &&
+                    adultComicHost(book.uri.host)))) &&
         policy.textAllowed(
           '${book.title} ${book.author} ${book.description} ${book.category} '
           '${book.latestChapter} ${book.updatedLabel} ${book.rankLabel} ${book.uri.host}',
@@ -638,6 +649,8 @@ final class BooksRepository {
         if (sample.contentType?.toLowerCase().startsWith('image/') != true) {
           throw const FormatException('章节图片地址未返回图片');
         }
+        await validateReadableBookImage(images.first, sample.bytes);
+        token.check();
       } else {
         final (uri, bytes) = await client.sampleAudio(
           source,
@@ -1227,7 +1240,7 @@ final class BooksRepository {
           await _blocked(book.sourceId)) {
         throw const ContentBlocked();
       }
-      return offlineBytes;
+      return readableBookImageBytes(image, offlineBytes);
     }
     final source = await _active(book);
     final uri = source.requestTarget(image, media: true);
@@ -1252,9 +1265,12 @@ final class BooksRepository {
         document.contentType?.toLowerCase().startsWith('image/') != true) {
       throw const FormatException('章节图片地址未返回图片');
     }
+    final bytes = cached == null
+        ? readableBookImageBytes(uri, document!.bytes)
+        : readableBookImageBytes(uri, cached);
     if (document != null) {
       try {
-        await store.cacheReadingImage(book, uri, document.bytes);
+        await store.cacheReadingImage(book, uri, bytes);
       } on Exception {
         // Reading continues if the optional image cache is unavailable.
       }
@@ -1266,7 +1282,7 @@ final class BooksRepository {
         await _blocked(book.sourceId)) {
       throw const ContentBlocked();
     }
-    return cached ?? document!.bytes;
+    return bytes;
   }
 
   Future<void> download(

@@ -11,6 +11,7 @@ import 'navigation_guide.dart';
 import 'module_sources.dart';
 import '../features/radio/presentation/radio_mini_player.dart';
 import '../features/music/presentation/music_player.dart';
+import '../features/books/presentation/audiobook_player_page.dart';
 
 const _destinations = [
   ('/', '影院', Icons.movie_outlined),
@@ -139,6 +140,7 @@ final class _AppShellState extends State<AppShell> {
                     controller: widget.services.musicPlayer,
                     compact: true,
                   ),
+                AudiobookMiniPlayer(services: widget.services),
               ],
             ),
           ),

@@ -36,6 +36,7 @@ import '../features/live/data/live_repository.dart';
 import '../features/live/data/live_audit_defaults.dart';
 import '../features/radio/data/radio_repository.dart';
 import '../features/radio/application/radio_controller.dart';
+import '../features/books/application/audiobook_controller.dart';
 import '../core/platform/background_audio_group.dart';
 import '../features/music/data/myfreemp3_client.dart';
 import '../features/music/data/music_repository.dart';
@@ -135,7 +136,7 @@ final class AppServices {
         ),
     beforePlay: () async {
       await _radioPlayer?.pause();
-      await _pauseAudiobook?.call();
+      await _audiobookPlayer?.pause();
     },
     libraryFactory: () => musicLibrary,
     downloadsFactory: () => musicDownloads,
@@ -148,13 +149,13 @@ final class AppServices {
     policy: contentPolicy,
     beforePlay: () async {
       await _musicPlayer?.pause();
-      await _pauseAudiobook?.call();
+      await _audiobookPlayer?.pause();
     },
   );
   Future<void> pauseAudioForVideo() async {
     await _radioPlayer?.pause();
     await _musicPlayer?.pause();
-    await _pauseAudiobook?.call();
+    await _audiobookPlayer?.pause();
   }
 
   BooksRepository? _books;
@@ -169,15 +170,9 @@ final class AppServices {
   BookDownloadCoordinator? _bookDownloads;
   BookDownloadCoordinator get bookDownloads =>
       _bookDownloads ??= BookDownloadCoordinator(books);
-  Future<void> Function()? _pauseAudiobook;
-  Future<void> Function()? _closeAudiobook;
-  void setAudiobookControls({
-    Future<void> Function()? pause,
-    Future<void> Function()? close,
-  }) {
-    _pauseAudiobook = pause;
-    _closeAudiobook = close;
-  }
+  AudiobookController? _audiobookPlayer;
+  AudiobookController get audiobookPlayer => _audiobookPlayer ??=
+      AudiobookController(books, createAudiobookEngine, pauseForAudiobook);
 
   Future<void> pauseForAudiobook() async {
     await _radioPlayer?.pause();
@@ -426,6 +421,7 @@ final class AppServices {
       services._backgroundAudio = BackgroundAudioGroup([
         services.radioPlayer,
         services.musicPlayer,
+        services.audiobookPlayer,
       ]),
     );
     await services.gateway.start();
@@ -517,7 +513,7 @@ final class AppServices {
           await _musicBrowser?.close();
         },
         () => _musicRecommendations?.close(),
-        () => _closeAudiobook?.call(),
+        () => _audiobookPlayer?.close(),
         () => _bookDownloads?.close(),
         () => _books?.close(),
         () async {

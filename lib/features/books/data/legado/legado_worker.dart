@@ -452,11 +452,16 @@ final class _LegadoEvaluation {
       }
     }
 
-    if (rule.endsWith('@html')) {
-      final selector = rule.substring(0, rule.length - '@html'.length);
+    final selectorRule = splitLegadoRule(rule, '##').first.trim();
+    if (selectorRule.endsWith('@html') || selectorRule.endsWith('@all')) {
+      final selector = selectorRule.substring(0, selectorRule.lastIndexOf('@'));
+      final hasReplacement = splitLegadoRule(rule, '##').length > 1;
       for (final element
           in evaluator.elements(selector, evaluator.root).take(100)) {
-        if (element is dom.Element) addElement(element);
+        if (element is dom.Element &&
+            (!hasReplacement || element.localName == 'img')) {
+          addElement(element);
+        }
       }
     }
 

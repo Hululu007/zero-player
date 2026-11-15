@@ -8,13 +8,14 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   _importTest();
   _imageRuleTest();
-  _verifiedSourceTest();
+  _imageReplacementRuleTest();
+  _mappedSourceTest();
   _xinmanhuaTest();
   _manmanVariantsTest();
 }
 
 void _manmanVariantsTest() {
-  test('older Manman variants use the current search and image CDN', () async {
+  test('older Manman variants retain the mapped search and image CDN', () async {
     for (final contentRule in ['class.man_img@html', '.man_img@html']) {
       final source = parseBookSourceRecord({
         'bookSourceName': '漫漫漫画旧规则',
@@ -215,9 +216,61 @@ void _imageRuleTest() {
   });
 }
 
-void _verifiedSourceTest() {
+void _imageReplacementRuleTest() {
   test(
-    'verified Manman comic uses current search and declared image CDN',
+    'image element rule retains image URLs with Legado replacement',
+    () async {
+      final source = parseBookSourceRecord({
+        'bookSourceName': '图片替换规则',
+        'bookSourceUrl': 'https://comic.example.test',
+        'bookSourceType': 2,
+        'searchUrl': '/search?key={{key}}',
+        'ruleContent': {
+          'content': 'class.main-container@li@img@html##data-original##src',
+        },
+      });
+      final result = await runLegadoJob(
+        LegadoJob(
+          source,
+          Uri.parse('https://comic.example.test/chapter'),
+          LegadoOperation.images,
+          input:
+              '<div class="main-container"><li>'
+              '<img data-original="/1.jpg"><img data-original="/2.jpg">'
+              '</li></div>',
+        ),
+        CancellationToken(),
+      );
+      expect(result.links, ['/1.jpg', '/2.jpg']);
+    },
+  );
+
+  test('container replacement still excludes removed images', () async {
+    final source = parseBookSourceRecord({
+      'bookSourceName': '容器图片替换规则',
+      'bookSourceUrl': 'https://comic.example.test',
+      'bookSourceType': 2,
+      'searchUrl': '/search?key={{key}}',
+      'ruleContent': {'content': 'class.pages@html##<img class="ad"[^>]*>##'},
+    });
+    final result = await runLegadoJob(
+      LegadoJob(
+        source,
+        Uri.parse('https://comic.example.test/chapter'),
+        LegadoOperation.images,
+        input:
+            '<div class="pages"><img class="ad" src="/ad.jpg">'
+            '<img src="/page.jpg"></div>',
+      ),
+      CancellationToken(),
+    );
+    expect(result.links, ['/page.jpg']);
+  });
+}
+
+void _mappedSourceTest() {
+  test(
+    'Manman rule maps the search URL and declared image CDN',
     () async {
       final source = parseBookSourceRecord({
         'bookSourceName': '🎨漫漫漫画',

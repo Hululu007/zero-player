@@ -539,6 +539,15 @@
     "originNote": "freefly22/tingshu-free-jar 的 XiMaLaYa DEX 协议参考；仅接入免费专辑与免费音轨，音频限同域 HTTPS"
   },
   {
+    "name": "Lit2Go 公版有声书",
+    "group": "公版经典",
+    "kind": "audio",
+    "format": "lit2go",
+    "url": "https://etc.usf.edu/lit2go/books/",
+    "sample": "Alice",
+    "originNote": "zihao-wangx/tingshu-backup 的 english.jar 中 Lit2Go 静态页面协议参考；本项目独立适配同域 HTTPS 书目、目录和 MP3"
+  },
+  {
     "name": "古龙全集",
     "group": "武侠经典",
     "kind": "text",

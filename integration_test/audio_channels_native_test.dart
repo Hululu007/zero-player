@@ -31,6 +31,7 @@ void main() {
           (BookFormat.shuyin, '西游记', 100),
           (BookFormat.bookan, '三国演义', 2),
           (BookFormat.ximalaya, '三国演义', 2),
+          (BookFormat.lit2go, 'Alice', 2),
         ]) {
           final source = entries
               .singleWhere((entry) => entry.source.format == format)
@@ -48,6 +49,10 @@ void main() {
           final work = format == BookFormat.ximalaya
               ? found.firstWhere(
                   (entry) => entry.uri.queryParameters['albumId'] == '20665610',
+                )
+              : format == BookFormat.lit2go
+              ? found.firstWhere(
+                  (entry) => entry.uri.path.startsWith('/lit2go/1/'),
                 )
               : found.first;
           final details = await books.details(work, token);

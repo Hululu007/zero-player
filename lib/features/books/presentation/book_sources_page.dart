@@ -459,8 +459,7 @@ final class _BookSourcesPageState extends State<BookSourcesPage> {
     ],
   );
 
-  @override
-  Widget build(BuildContext context) {
+  List<BookSourceEntry> _visibleEntries() {
     final query = _query.trim().toLowerCase();
     final list =
         _entries
@@ -478,9 +477,19 @@ final class _BookSourcesPageState extends State<BookSourcesPage> {
             if (a.favorite != b.favorite) return a.favorite ? -1 : 1;
             return a.source.name.compareTo(b.source.name);
           });
+    return list;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final list = _visibleEntries();
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.kind == BookKind.audio ? '听书源' : '网络小说渠道'),
+        title: Text(switch (widget.kind) {
+          BookKind.text => '网络小说渠道',
+          BookKind.audio => '听书源',
+          BookKind.comic => '网络漫画渠道',
+        }),
         actions: [
           IconButton(
             tooltip: _selecting ? '退出批量选择' : '批量选择',
@@ -515,20 +524,24 @@ final class _BookSourcesPageState extends State<BookSourcesPage> {
               _SourceAction.link => _importAddress(),
               _SourceAction.feed => _addFeed(),
             },
-            itemBuilder: (_) => const [
-              PopupMenuItem(
+            itemBuilder: (_) => [
+              const PopupMenuItem(
                 value: _SourceAction.catalog,
                 child: Text('内置 Legado 书源包'),
               ),
-              PopupMenuItem(value: _SourceAction.file, child: Text('导入来源文件')),
-              PopupMenuItem(
+              const PopupMenuItem(
+                value: _SourceAction.file,
+                child: Text('导入来源文件'),
+              ),
+              const PopupMenuItem(
                 value: _SourceAction.link,
                 child: Text('导入 Legado 链接'),
               ),
-              PopupMenuItem(
-                value: _SourceAction.feed,
-                child: Text('添加 RSS / Atom'),
-              ),
+              if (widget.kind != BookKind.comic)
+                const PopupMenuItem(
+                  value: _SourceAction.feed,
+                  child: Text('添加 RSS / Atom'),
+                ),
             ],
           ),
           IconButton(

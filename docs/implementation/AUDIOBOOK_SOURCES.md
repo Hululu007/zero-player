@@ -1,5 +1,7 @@
 # 听书渠道核对（2026-11-14）
 
+2026-11-15 续核：`english.jar` 的 Lit2Go 已恢复独立接入，应用 Windows 原生单独书目请求及四渠道连续搜索、目录、MP3 下载和离线解码通过（`.dart_tool/native-1bafc3ff/audio_channels_native_test.log`）。前轮两次原生超时未稳定复现，长期可用性仍待观察。听15 可取得书目、目录和播放接口，但抽样四章媒体返回 404、另两部作品媒体返回 400；乐听搜索返回 429；念听与有听使用 WebView 播放规则，未内置。
+
 本项目的渠道需在 Windows 与 Android/TV 上以相同规则工作。内置前需用本项目的客户端逐项验证发现或搜索、详情、完整目录、音频地址、容器校验和离线解码；去重以站点和实际媒体链路为准，不能把不同 JAR 的同一站点算作多个渠道。上游 README 所称“可用”仅是上游测试结果。
 
 | 仓库 | 发布形式与候选 | 当前结论 |
@@ -22,7 +24,7 @@
 - **已移植并原生验证**：书音FM（m1ngzer 公开源码协议）、博看有声和喜马拉雅免费音轨（freefly22 JAR 中 BoKanYouSheng、XiMaLaYa 的公开接口协议）。只纳入本项目自己实现的 HTTPS 请求与解析规则。博看有声使用 `es.bookan.com.cn` 搜索、`api.bookan.com.cn` 分类及目录，音频只接受 `audio.bookan.com.cn`；上游给出 HTTP 文件地址时仅尝试同域 HTTPS，样本返回 206 和标准 M4A。喜马拉雅使用独立的搜索、分类、目录和播放接口，书目与音轨均过滤付费标记，音频只接受 `aod.cos.tx.xmcdn.com`，HTTP 地址仅升级同域 HTTPS；样本返回 206 和 MP3。三个中文渠道的分类、发现、搜索、详情、目录、下载和离线解码均通过 Windows 原生专项（`.dart_tool/native-e89f5cf9/audio_channels_native_test.log`）。
 - **已解析、未收录**：恋听网可按 DEX 中 `_c`、`_b`、`_p`、`_cp` 元数据向 `/glink` 提交请求并取得地址，但样本 CDN `pp.ting55.com` 的 HTTPS 证书主机名不匹配；275 听书样本媒体只提供 HTTP，HTTPS 证书失败；29 移动站返回 429。酷我 FM 的 JAR 规则依赖 HTTP 搜索及音频转换接口；云图有声也依赖 HTTP 接口。听友 FM 规则含加密负载及设备标识，尚无本项目可验证的自由音频链路。上述渠道不通过放宽 TLS、执行 JAR 或绕过认证方式收录。
 
-目前内置为 [verified.json](../../assets/catalogs/books/verified.json) 中的书音FM、博看有声、喜马拉雅免费有声、Gutenberg 公版朗读及两路机核播客。书音FM通过 `POST` 获取书目、分类与目录；其 `GET` 搜索在实测中出现跨关键词缓存，因此不使用。2026-11-14 用“西游记”样本取得 182 章目录、完整 19,593,734 字节 MP3；“三国演义”样本验证博看有声 M4A 和喜马拉雅免费 MP3。三个中文渠道均通过本项目 Windows 原生分类、发现、搜索、详情、目录、下载、校验及离线解码（`.dart_tool/native-e89f5cf9/audio_channels_native_test.log`）。喜马拉雅搜索仍可能列出已下架专辑，例如本次 `30515044` 的目录返回 `ret=924`，不能由搜索成功推断每个专辑可播。懒人接口实测返回 `apiStatus=485`，要求登录；LibriVox 的书目和目录可读取，但 Archive.org 章节媒体域本机连接超时，均未收录。其他作品、Android/TV 和长期稳定性尚未验收。Gutenberg 近期有大文件传输中断记录，不能据旧记录宣称当前全链路稳定。
+目前内置为 [verified.json](../../assets/catalogs/books/verified.json) 中的书音FM、博看有声、喜马拉雅免费有声、Lit2Go 公版有声书、Gutenberg 公版朗读及两路机核播客。书音FM通过 `POST` 获取书目、分类与目录；其 `GET` 搜索在实测中出现跨关键词缓存，因此不使用。2026-11-14 用“西游记”样本取得 182 章目录、完整 19,593,734 字节 MP3；“三国演义”样本验证博看有声 M4A 和喜马拉雅免费 MP3。三个中文渠道均通过本项目 Windows 原生分类、发现、搜索、详情、目录、下载、校验及离线解码（`.dart_tool/native-e89f5cf9/audio_channels_native_test.log`）。喜马拉雅搜索仍可能列出已下架专辑，例如本次 `30515044` 的目录返回 `ret=924`，不能由搜索成功推断每个专辑可播。懒人接口实测返回 `apiStatus=485`，要求登录；LibriVox 的书目和目录可读取，但 Archive.org 章节媒体域本机连接超时，均未收录。其他作品、Android/TV 和长期稳定性尚未验收。Gutenberg 近期有大文件传输中断记录，不能据旧记录宣称当前全链路稳定。
 
 ## 全部 JAR 逐包清单
 
@@ -40,7 +42,7 @@
 | `645ef23e96bdc0a2` | freefly22 `free_all_v11.jar` | 39 类，博看、书音、酷我 FM、悦听吧等；前两者已去重导入。 |
 | `acd19484fd3d2821` | freefly22 `free_all_v12.jar` | 43 类，博看、书音、喜马拉雅、听友、酷我 FM、悦听吧等；前三者已独立导入，听友使用加密负载及设备标识，未完成免费音频验证。 |
 | `ff488c1d8df08b00` | m1ngzer `sources_by_m1ngzer.jar` | 书音FM、听友 FM；书音已独立导入，听友与 free v12 同站点合并。 |
-| `d8e24be8db2f58f6` | zihao `english.jar` | LibriVox、Lit2Go、AudiobookLabs、Audiobooks；LibriVox 媒体域连接超时，AudiobookLabs 搜索返回 526。Lit2Go 书目／章节及 MP3 Range 在独立请求中可用，但应用 Windows 原生书目请求连续两次超时，故撤回试接入，未内置。 |
+| `d8e24be8db2f58f6` | zihao `english.jar` | LibriVox、Lit2Go、AudiobookLabs、Audiobooks；Lit2Go 已独立接入并通过 Windows 原生书目、目录、完整 MP3 下载与离线解码。LibriVox 媒体域连接超时，AudiobookLabs 搜索返回 526。 |
 | `adf70c080f854c5d` | zihao `my_music.jar` | 网易云、51Music、VBus 等音乐入口；非听书包，未导入。 |
 | `f38693a8971601aa` | zihao、wsl `my_sound_01.jar` 完全相同 | Itingshu、Laobai、Mting、Qmtsw、Ts230、Ysts、Yuetingba；多为旧网站或 WebView 嗅探协议，未达到本项目完整 HTTPS 音频验收。 |
 | `1d9b65bdef129ac3` | zihao `my_video.jar` | AcFun、樱花、短剧等视频入口；非听书包，未导入。 |

@@ -106,12 +106,15 @@ void _audiobooks() {
           final shuyin = entry.source.format == BookFormat.shuyin;
           final bookan = entry.source.format == BookFormat.bookan;
           final ximalaya = entry.source.format == BookFormat.ximalaya;
+          final lit2go = entry.source.format == BookFormat.lit2go;
           final library = await books.client.books(
             entry.source,
             shuyin
                 ? '西游记'
                 : bookan || ximalaya
                 ? '三国演义'
+                : lit2go
+                ? 'Alice'
                 : '',
             token,
           );
@@ -122,6 +125,8 @@ void _audiobooks() {
                 )
               : shuyin || bookan
               ? library.take(1)
+              : lit2go
+              ? library.where((book) => book.uri.path.startsWith('/lit2go/1/'))
               : library;
           expect(selected, isNotEmpty, reason: entry.source.name);
           for (final work in selected) {

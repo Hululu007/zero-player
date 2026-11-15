@@ -14,6 +14,7 @@ import '../domain/legado_source.dart';
 import 'book_html.dart';
 import 'book_mixed_content.dart';
 import 'bookan_audio_client.dart';
+import 'lit2go_audio_client.dart';
 import 'legado/legado_client.dart';
 import 'shuyin_audio_client.dart';
 import 'ximalaya_audio_client.dart';
@@ -90,6 +91,7 @@ final class BookClient {
   ShuYinAudioClient get _shuyin => ShuYinAudioClient(network);
   BookanAudioClient get _bookan => BookanAudioClient(network);
   XimalayaAudioClient get _ximalaya => XimalayaAudioClient(network);
+  Lit2GoAudioClient get _lit2go => Lit2GoAudioClient(network);
 
   Future<Book> details(
     BookSource source,
@@ -102,6 +104,7 @@ final class BookClient {
     }
     if (source.format == BookFormat.bookan) return book;
     if (source.format == BookFormat.ximalaya) return book;
+    if (source.format == BookFormat.lit2go) return book;
     if (source.format != BookFormat.html) return book;
     if (source.legado != null) return _legado.details(source, book, token);
     if (!source.rules.keys.any((key) => key.startsWith('info'))) return book;
@@ -144,6 +147,8 @@ final class BookClient {
       ? Future.value(BookanAudioClient.categories)
       : source.format == BookFormat.ximalaya
       ? Future.value(XimalayaAudioClient.categories)
+      : source.format == BookFormat.lit2go
+      ? Future.value(Lit2GoAudioClient.categories)
       : Future.value(source.discoveryCategories);
 
   Future<Document> fetch(
@@ -178,6 +183,9 @@ final class BookClient {
     }
     if (source.format == BookFormat.ximalaya) {
       return _ximalaya.discover(source, token, category: category, page: page);
+    }
+    if (source.format == BookFormat.lit2go) {
+      return _lit2go.discover(source, token, page: page);
     }
     if (_hasLegadoRules(source) && source.format == BookFormat.html) {
       return _legado.discover(
@@ -219,6 +227,9 @@ final class BookClient {
     }
     if (source.format == BookFormat.ximalaya) {
       return _ximalaya.books(source, query, token, page: page);
+    }
+    if (source.format == BookFormat.lit2go) {
+      return _lit2go.books(source, query, token, page: page);
     }
     if (query.isEmpty &&
         bookAddress == null &&
@@ -378,6 +389,9 @@ final class BookClient {
     }
     if (source.format == BookFormat.ximalaya) {
       return _ximalaya.chapters(source, book, token);
+    }
+    if (source.format == BookFormat.lit2go) {
+      return _lit2go.chapters(source, book, token);
     }
     if (_hasLegadoRules(source)) return _legado.chapters(source, book, token);
     if (source.format == BookFormat.feed) {
@@ -545,6 +559,9 @@ final class BookClient {
     }
     if (source.format == BookFormat.ximalaya) {
       return _ximalaya.audio(source, chapter, token);
+    }
+    if (source.format == BookFormat.lit2go) {
+      return _lit2go.audio(source, chapter, token);
     }
     if (_hasLegadoRules(source)) {
       return _legado.audio(source, chapter, token, book: book);
