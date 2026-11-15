@@ -1,0 +1,180 @@
+{
+  "generated_at": "2026-11-15T04:32:22.438780+00:00",
+  "archive_sha256": "012a0e0d6e6adc8d303c32b578510e14b562088b3e965cb01a1a647b5e7e034d",
+  "scope": "bounded root-page HTML metadata only; no redirects or scripts; source-level adult evidence does not classify every work",
+  "results": [
+    {
+      "host": "sesebooks.com",
+      "initial_at_utc": "2026-11-15T02:26:46.846875+00:00",
+      "initial_status": 200,
+      "initial_error": null,
+      "observed_at_utc": "2026-11-15T04:26:32.665312+00:00",
+      "head_status": 200,
+      "get_status": 200,
+      "sample_bytes": 32768,
+      "sample_sha256": "1f3e178fe7607adf216de47391278234b0a1a419a4b691cb2d255ce20ba571ec",
+      "description_excerpt": "免费的在线成人黄色小说站",
+      "sources": [
+        {
+          "id": "6880e76d342cef514047cbfd732d731310582f42c1c58822ddcb4052c5213716",
+          "selected_record_index": 4488,
+          "name": "🔞涩涩小说"
+        },
+        {
+          "id": "8a50f3982968b6a4b1e1ef2be0887fd3f8da48d4405e6eb3d8ef019e1b7b4258",
+          "selected_record_index": 4544,
+          "name": "涩涩小说"
+        },
+        {
+          "id": "0ba76fbf6c748adc69294457359db55320e2e6581a5fe0ef9a0814861e5f0118",
+          "selected_record_index": 4706,
+          "name": "🎃涩涩小说🎃"
+        }
+      ]
+    },
+    {
+      "host": "m.po18wen.xyz",
+      "initial_at_utc": "2026-11-15T02:26:33.714902+00:00",
+      "initial_status": 200,
+      "initial_error": null,
+      "observed_at_utc": "2026-11-15T04:26:32.665596+00:00",
+      "head_status": 200,
+      "get_status": 200,
+      "sample_bytes": 20411,
+      "sample_sha256": "ee017e9b6f89838bb95f5343e36b08c2d9c88ea2a8cfd5c3baea1ce6956737e0",
+      "description_excerpt": "专属18禁情欲类小说",
+      "sources": [
+        {
+          "id": "e136532d94328ec5666e422ef5074e20bd113ec540ec38ebe69c2f36042e52c4",
+          "selected_record_index": 4750,
+          "name": "po18文"
+        }
+      ]
+    },
+    {
+      "host": "m.xyuzhaiwu.xyz",
+      "initial_at_utc": "2026-11-15T02:26:41.459540+00:00",
+      "initial_status": 200,
+      "initial_error": null,
+      "observed_at_utc": "2026-11-15T04:26:32.667270+00:00",
+      "head_status": 200,
+      "get_status": 200,
+      "sample_bytes": 25790,
+      "sample_sha256": "188590095c86c6ec7bc341cde4d9cc86324f8663e9e60a0f23624cac7b113768",
+      "description_excerpt": "主要提供耽美肉文、言情文、百合文",
+      "sources": [
+        {
+          "id": "0f3f868f7933380bf52be58f4c7ed6b9692e55a8b48879ecfa48bc6f5824b562",
+          "selected_record_index": 4182,
+          "name": "新御宅屋"
+        }
+      ]
+    },
+    {
+      "host": "mm.xyuzhaiwu.xyz",
+      "initial_at_utc": "2026-11-15T02:26:45.229307+00:00",
+      "initial_status": 200,
+      "initial_error": null,
+      "observed_at_utc": "2026-11-15T04:26:34.529389+00:00",
+      "head_status": 200,
+      "get_status": 200,
+      "sample_bytes": 26008,
+      "sample_sha256": "c5f92b954046d334cf3ca7e159ca6862606392fa92cc66734cf4146f0e4f917a",
+      "description_excerpt": "主要提供耽美肉文、言情文、百合文",
+      "sources": [
+        {
+          "id": "944a8d50f5f1fac15c971e89902a2a7cd75f28167611b4429bbff7469077abac",
+          "selected_record_index": 773,
+          "name": "🚬 新御宅屋"
+        },
+        {
+          "id": "957611a166cbbb4351a77adc7474254329395e36f12d0d77c92c6b800971dab5",
+          "selected_record_index": 4189,
+          "name": "新御宅屋🎃"
+        },
+        {
+          "id": "8e393bdd08d04c9d2279a2275d985e902475d146e5d254c93849e1763d082a42",
+          "selected_record_index": 4237,
+          "name": "新御宅屋②"
+        }
+      ]
+    },
+    {
+      "host": "m.rousewu.cc",
+      "initial_at_utc": "2026-11-15T02:26:36.389064+00:00",
+      "initial_status": 200,
+      "initial_error": null,
+      "observed_at_utc": "2026-11-15T04:26:34.571423+00:00",
+      "head_status": 200,
+      "get_status": 200,
+      "sample_bytes": 25526,
+      "sample_sha256": "e57110f38c8eb28a08eada1ac92b5f06b7c6a741af997ae8b84904dea684670e",
+      "description_excerpt": "主要提供耽美肉文和高辣文",
+      "sources": [
+        {
+          "id": "319d40fca269b5ccc0d58b1d8869adc14d5c3c37166cce3e5d640c424d642de3",
+          "selected_record_index": 4251,
+          "name": "🎃肉色屋🎃"
+        },
+        {
+          "id": "128b51bdb267603d3b4bf9ddf4868e202548c1715e55afeca08951bb15807327",
+          "selected_record_index": 4732,
+          "name": "肉色屋"
+        }
+      ]
+    },
+    {
+      "host": "m.3322t.com",
+      "initial_at_utc": "2026-11-15T02:26:22.009781+00:00",
+      "initial_status": 200,
+      "initial_error": null,
+      "observed_at_utc": "2026-11-15T04:27:57.671642+00:00",
+      "head_status": 200,
+      "get_status": 200,
+      "sample_bytes": 28048,
+      "sample_sha256": "712a5e062bfa6340a41e4aa661a82cc593a8538ffe9b9756bff4859269d1d2ee",
+      "description_excerpt": "收集了耽美肉文、高辣文、百合文",
+      "sources": [
+        {
+          "id": "b1803f3ab397cb24f36e65c2721cec2355ba5c0e239a4cf07aced32fc494c55f",
+          "selected_record_index": 1237,
+          "name": "👔 御书屋网"
+        }
+      ]
+    },
+    {
+      "host": "m.xyuzhaiwu5.com",
+      "initial_at_utc": "2026-11-15T02:26:41.492248+00:00",
+      "initial_status": null,
+      "initial_error": "TimeoutError: The read operation timed out",
+      "observed_at_utc": "2026-11-15T04:27:57.672958+00:00",
+      "head_status": 200,
+      "get_status": 200,
+      "sample_bytes": 26033,
+      "sample_sha256": "095b91456b4029d3e195bf4657af5a6b987a75d2d61c1b7b37894826b8cb81c4",
+      "description_excerpt": "提供耽美肉文",
+      "sources": [
+        {
+          "id": "a0daa89eb8643ac8fb769df48e53392f56071fac6777dfb4ca8b9499fcbfbdc9",
+          "selected_record_index": 4252,
+          "name": "🚬 御宅屋"
+        }
+      ]
+    },
+    {
+      "host": "m.aaread.club",
+      "initial_at_utc": "2026-11-15T04:01:43.843807+00:00",
+      "initial_status": 200,
+      "observed_at_utc": "2026-11-15T04:38:05.747560+00:00",
+      "head_status": 200,
+      "get_status": 200,
+      "sample_bytes": 2897,
+      "sample_sha256": "8db6616b4ecb7fae20e7d3593af0cd07be763029978c78493b4dd7cefec05a56",
+      "description_excerpt": "免費成人連載小說",
+      "sources": [],
+      "unimportable_record_indices": [
+        3233
+      ]
+    }
+  ]
+}

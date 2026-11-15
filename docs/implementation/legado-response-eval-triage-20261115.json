@@ -1,0 +1,780 @@
+{
+  "archive_sha256": "012a0e0d6e6adc8d303c32b578510e14b562088b3e965cb01a1a647b5e7e034d",
+  "scope": "selected source text inspected statically; no rule executed",
+  "source_profiles": [
+    {
+      "source_id": "4b71a54fd5ba1e8077fd5687e123ef0731b8f4baeef8b75d1ac4b93b9906a3b3",
+      "name": "海普文学",
+      "kind": "text",
+      "host": "www.haipu-xs.com",
+      "classification": "network_data_to_eval",
+      "selected_record_index": 3836,
+      "evidence": [
+        {
+          "record_index": 3836,
+          "field": "ruleContent.content",
+          "field_sha256": "5cde25452e0d6aed7a9dac09b389e75d70f15827e4f6aa92f7fba6f0dd75b2fb",
+          "category": "response_or_script_to_eval",
+          "data_flow_excerpt": "evaluates the complete result supplied to the content rule"
+        }
+      ]
+    },
+    {
+      "source_id": "a5c8022ce65de27681d680432f8b01c2b2e09d22ed4633f372f8d98250912e22",
+      "name": "🗒 非常爱漫",
+      "kind": "comic",
+      "host": "wap.veryim.com",
+      "classification": "network_data_to_eval",
+      "selected_record_index": 1228,
+      "evidence": [
+        {
+          "record_index": 1228,
+          "field": "ruleContent.content",
+          "field_sha256": "b9e35303050e615f95616771254c681625b09b7cd460f1685c16700f303d322b",
+          "category": "response_or_script_to_eval",
+          "data_flow_excerpt": "evaluates a script fragment matched from the result"
+        }
+      ]
+    },
+    {
+      "source_id": "98fcf05ed0532fbc1b454978342e175778dca19487b035e9de343a51db344bde",
+      "name": "🎨 爱看漫画",
+      "kind": "comic",
+      "host": "wap.65dm.com",
+      "classification": "network_data_to_eval",
+      "selected_record_index": 3219,
+      "evidence": [
+        {
+          "record_index": 3219,
+          "field": "ruleContent.content",
+          "field_sha256": "6468bfafec6bb7c45b7319e3ab8f4700993f67f67d9c85714dbb29149b1dadc3",
+          "category": "response_or_script_to_eval",
+          "data_flow_excerpt": "evaluates a script fragment matched from the result"
+        }
+      ]
+    },
+    {
+      "source_id": "b37f63bfa731a939acc214b41916fb8bd0dc4f1c599343f397fc3e779feef2ad",
+      "name": "快看漫画M",
+      "kind": "comic",
+      "host": "m.kuaikanmanhua.com",
+      "classification": "network_data_to_eval",
+      "selected_record_index": 2128,
+      "evidence": [
+        {
+          "record_index": 2128,
+          "field": "ruleToc.chapterList",
+          "field_sha256": "fa794b49a04305aa105da88c3fe56e2fba89fca96973eb0b06f56f6cd4fabd51",
+          "category": "response_or_script_to_eval",
+          "data_flow_excerpt": "evaluates page text from the NUXT marker through the next tag"
+        },
+        {
+          "record_index": 2128,
+          "field": "ruleBookInfo.name",
+          "field_sha256": "fdb69981f90e44c670f6c9fb2480fad82511bc6c3e42f40b96cbe6c00576f7f0",
+          "category": "response_or_script_to_eval",
+          "data_flow_excerpt": "evaluates page text from the NUXT marker through the next tag"
+        },
+        {
+          "record_index": 2128,
+          "field": "ruleBookInfo.author",
+          "field_sha256": "b1291a263a5d30aef6f9f9f1e6527035d7f05b49fe6fbeefe7eab42109bbcef0",
+          "category": "response_or_script_to_eval",
+          "data_flow_excerpt": "evaluates page text from the NUXT marker through the next tag"
+        },
+        {
+          "record_index": 2128,
+          "field": "ruleBookInfo.intro",
+          "field_sha256": "b1345ba7c2c5078ae85dd5781cd630baa9f194b5f26e20cc5686323968d9a258",
+          "category": "response_or_script_to_eval",
+          "data_flow_excerpt": "evaluates page text from the NUXT marker through the next tag"
+        },
+        {
+          "record_index": 2128,
+          "field": "ruleBookInfo.coverUrl",
+          "field_sha256": "513b681971c60d397666f88835a808774f3fbda438fde96a1663ebbb94ad8f97",
+          "category": "response_or_script_to_eval",
+          "data_flow_excerpt": "evaluates page text from the NUXT marker through the next tag"
+        },
+        {
+          "record_index": 2128,
+          "field": "ruleBookInfo.kind",
+          "field_sha256": "2995f6c27187c854f166f2e58b0071403f2a90a4008cf5a1c462c62f10300555",
+          "category": "response_or_script_to_eval",
+          "data_flow_excerpt": "evaluates page text from the NUXT marker through the next tag"
+        },
+        {
+          "record_index": 2128,
+          "field": "ruleBookInfo.lastChapter",
+          "field_sha256": "add2e23155707a9f54cf32dd9d7add34169e589388dab4ba875ef48c7f9e935e",
+          "category": "response_or_script_to_eval",
+          "data_flow_excerpt": "evaluates page text from the NUXT marker through the next tag"
+        }
+      ]
+    },
+    {
+      "source_id": "6925366f12c659540daf91385af2b0d10441116246abd442a2e62417e38d1ae0",
+      "name": "🎨快看漫画",
+      "kind": "text",
+      "host": "m.kuaikanmanhua.com",
+      "classification": "network_data_to_eval",
+      "selected_record_index": 3760,
+      "evidence": [
+        {
+          "record_index": 3760,
+          "field": "ruleToc.chapterList",
+          "field_sha256": "fa794b49a04305aa105da88c3fe56e2fba89fca96973eb0b06f56f6cd4fabd51",
+          "category": "response_or_script_to_eval",
+          "data_flow_excerpt": "evaluates page text from the NUXT marker through the next tag"
+        },
+        {
+          "record_index": 3760,
+          "field": "ruleBookInfo.name",
+          "field_sha256": "fdb69981f90e44c670f6c9fb2480fad82511bc6c3e42f40b96cbe6c00576f7f0",
+          "category": "response_or_script_to_eval",
+          "data_flow_excerpt": "evaluates page text from the NUXT marker through the next tag"
+        },
+        {
+          "record_index": 3760,
+          "field": "ruleBookInfo.author",
+          "field_sha256": "b1291a263a5d30aef6f9f9f1e6527035d7f05b49fe6fbeefe7eab42109bbcef0",
+          "category": "response_or_script_to_eval",
+          "data_flow_excerpt": "evaluates page text from the NUXT marker through the next tag"
+        },
+        {
+          "record_index": 3760,
+          "field": "ruleBookInfo.intro",
+          "field_sha256": "b1345ba7c2c5078ae85dd5781cd630baa9f194b5f26e20cc5686323968d9a258",
+          "category": "response_or_script_to_eval",
+          "data_flow_excerpt": "evaluates page text from the NUXT marker through the next tag"
+        },
+        {
+          "record_index": 3760,
+          "field": "ruleBookInfo.coverUrl",
+          "field_sha256": "513b681971c60d397666f88835a808774f3fbda438fde96a1663ebbb94ad8f97",
+          "category": "response_or_script_to_eval",
+          "data_flow_excerpt": "evaluates page text from the NUXT marker through the next tag"
+        },
+        {
+          "record_index": 3760,
+          "field": "ruleBookInfo.kind",
+          "field_sha256": "2995f6c27187c854f166f2e58b0071403f2a90a4008cf5a1c462c62f10300555",
+          "category": "response_or_script_to_eval",
+          "data_flow_excerpt": "evaluates page text from the NUXT marker through the next tag"
+        },
+        {
+          "record_index": 3760,
+          "field": "ruleBookInfo.lastChapter",
+          "field_sha256": "add2e23155707a9f54cf32dd9d7add34169e589388dab4ba875ef48c7f9e935e",
+          "category": "response_or_script_to_eval",
+          "data_flow_excerpt": "evaluates page text from the NUXT marker through the next tag"
+        }
+      ]
+    },
+    {
+      "source_id": "b707317ac37705c041f1a9bdd3fec93bff4200fe80a0ad1687a924e211173e83",
+      "name": "快看漫画",
+      "kind": "comic",
+      "host": "m.kuaikanmanhua.com",
+      "classification": "network_data_to_eval",
+      "selected_record_index": 4156,
+      "evidence": [
+        {
+          "record_index": 4156,
+          "field": "ruleToc.chapterList",
+          "field_sha256": "fa794b49a04305aa105da88c3fe56e2fba89fca96973eb0b06f56f6cd4fabd51",
+          "category": "response_or_script_to_eval",
+          "data_flow_excerpt": "evaluates page text from the NUXT marker through the next tag"
+        },
+        {
+          "record_index": 4156,
+          "field": "ruleBookInfo.name",
+          "field_sha256": "fdb69981f90e44c670f6c9fb2480fad82511bc6c3e42f40b96cbe6c00576f7f0",
+          "category": "response_or_script_to_eval",
+          "data_flow_excerpt": "evaluates page text from the NUXT marker through the next tag"
+        },
+        {
+          "record_index": 4156,
+          "field": "ruleBookInfo.author",
+          "field_sha256": "b1291a263a5d30aef6f9f9f1e6527035d7f05b49fe6fbeefe7eab42109bbcef0",
+          "category": "response_or_script_to_eval",
+          "data_flow_excerpt": "evaluates page text from the NUXT marker through the next tag"
+        },
+        {
+          "record_index": 4156,
+          "field": "ruleBookInfo.intro",
+          "field_sha256": "b1345ba7c2c5078ae85dd5781cd630baa9f194b5f26e20cc5686323968d9a258",
+          "category": "response_or_script_to_eval",
+          "data_flow_excerpt": "evaluates page text from the NUXT marker through the next tag"
+        },
+        {
+          "record_index": 4156,
+          "field": "ruleBookInfo.coverUrl",
+          "field_sha256": "513b681971c60d397666f88835a808774f3fbda438fde96a1663ebbb94ad8f97",
+          "category": "response_or_script_to_eval",
+          "data_flow_excerpt": "evaluates page text from the NUXT marker through the next tag"
+        },
+        {
+          "record_index": 4156,
+          "field": "ruleBookInfo.kind",
+          "field_sha256": "2995f6c27187c854f166f2e58b0071403f2a90a4008cf5a1c462c62f10300555",
+          "category": "response_or_script_to_eval",
+          "data_flow_excerpt": "evaluates page text from the NUXT marker through the next tag"
+        },
+        {
+          "record_index": 4156,
+          "field": "ruleBookInfo.lastChapter",
+          "field_sha256": "add2e23155707a9f54cf32dd9d7add34169e589388dab4ba875ef48c7f9e935e",
+          "category": "response_or_script_to_eval",
+          "data_flow_excerpt": "evaluates page text from the NUXT marker through the next tag"
+        }
+      ]
+    },
+    {
+      "source_id": "a1e51933faa330fd4664297f43dbfd6cdff594dcf59a1d42bfc2b32a951574c6",
+      "name": "快看漫画",
+      "kind": "comic",
+      "host": "m.kuaikanmanhua.com",
+      "classification": "network_data_to_eval",
+      "selected_record_index": 4159,
+      "evidence": [
+        {
+          "record_index": 4159,
+          "field": "ruleToc.chapterList",
+          "field_sha256": "fa794b49a04305aa105da88c3fe56e2fba89fca96973eb0b06f56f6cd4fabd51",
+          "category": "response_or_script_to_eval",
+          "data_flow_excerpt": "evaluates page text from the NUXT marker through the next tag"
+        },
+        {
+          "record_index": 4159,
+          "field": "ruleBookInfo.name",
+          "field_sha256": "fdb69981f90e44c670f6c9fb2480fad82511bc6c3e42f40b96cbe6c00576f7f0",
+          "category": "response_or_script_to_eval",
+          "data_flow_excerpt": "evaluates page text from the NUXT marker through the next tag"
+        },
+        {
+          "record_index": 4159,
+          "field": "ruleBookInfo.author",
+          "field_sha256": "b1291a263a5d30aef6f9f9f1e6527035d7f05b49fe6fbeefe7eab42109bbcef0",
+          "category": "response_or_script_to_eval",
+          "data_flow_excerpt": "evaluates page text from the NUXT marker through the next tag"
+        },
+        {
+          "record_index": 4159,
+          "field": "ruleBookInfo.intro",
+          "field_sha256": "b1345ba7c2c5078ae85dd5781cd630baa9f194b5f26e20cc5686323968d9a258",
+          "category": "response_or_script_to_eval",
+          "data_flow_excerpt": "evaluates page text from the NUXT marker through the next tag"
+        },
+        {
+          "record_index": 4159,
+          "field": "ruleBookInfo.coverUrl",
+          "field_sha256": "513b681971c60d397666f88835a808774f3fbda438fde96a1663ebbb94ad8f97",
+          "category": "response_or_script_to_eval",
+          "data_flow_excerpt": "evaluates page text from the NUXT marker through the next tag"
+        },
+        {
+          "record_index": 4159,
+          "field": "ruleBookInfo.kind",
+          "field_sha256": "2995f6c27187c854f166f2e58b0071403f2a90a4008cf5a1c462c62f10300555",
+          "category": "response_or_script_to_eval",
+          "data_flow_excerpt": "evaluates page text from the NUXT marker through the next tag"
+        },
+        {
+          "record_index": 4159,
+          "field": "ruleBookInfo.lastChapter",
+          "field_sha256": "add2e23155707a9f54cf32dd9d7add34169e589388dab4ba875ef48c7f9e935e",
+          "category": "response_or_script_to_eval",
+          "data_flow_excerpt": "evaluates page text from the NUXT marker through the next tag"
+        }
+      ]
+    },
+    {
+      "source_id": "c2ec652cb7d1e3eacdee18897a94f498180ffab56185395df6d099d60f72cc59",
+      "name": "大树漫画",
+      "kind": "comic",
+      "host": "www.dashuhuwai.com",
+      "classification": "network_data_to_eval",
+      "selected_record_index": 2136,
+      "evidence": [
+        {
+          "record_index": 2136,
+          "field": "ruleContent.content",
+          "field_sha256": "2bac062eb7f6343ab24901b04c5c8e1aee2e3873ebf8cbc87d66817526ca3bf8",
+          "category": "response_or_script_to_eval",
+          "data_flow_excerpt": "extracts and evaluates an eval expression from the result"
+        }
+      ]
+    },
+    {
+      "source_id": "c45aa7e0e9ad3450d57420b320887208945760a777c7fd1c4a63009bab5ebd5e",
+      "name": "曼哈漫画（优+）",
+      "kind": "comic",
+      "host": "www.mangabz.com",
+      "classification": "network_data_to_eval",
+      "selected_record_index": 4052,
+      "evidence": [
+        {
+          "record_index": 4052,
+          "field": "ruleContent.content",
+          "field_sha256": "1eca465e14604b8f5655de7bc9c7c8b322b1a6838dd0ec22b4b1e49950aa9d3e",
+          "category": "response_or_script_to_eval",
+          "data_flow_excerpt": "extracts and evaluates an eval expression from the result"
+        }
+      ]
+    },
+    {
+      "source_id": "a671019d19e09c5e8342a3a199fb865bcd21356b573e38934a92dad76988affa",
+      "name": "酸奶漫画",
+      "kind": "comic",
+      "host": "m.1kkk.com",
+      "classification": "network_data_to_eval",
+      "selected_record_index": 4161,
+      "evidence": [
+        {
+          "record_index": 4161,
+          "field": "ruleContent.content",
+          "field_sha256": "69b080f669919220f89fbe265315036bb4cd12fa595f054b80e2d82f7572798e",
+          "category": "response_or_script_to_eval",
+          "data_flow_excerpt": "extracts and evaluates an eval expression from the result"
+        }
+      ]
+    },
+    {
+      "source_id": "76c77d9b49f6e4b12b8f5cebc48bb47e4020eac687bb2ef7eb2252c300f60757",
+      "name": "如漫画网（优+）",
+      "kind": "comic",
+      "host": "m.rumanhua1.com",
+      "classification": "network_data_to_eval",
+      "selected_record_index": 4046,
+      "evidence": [
+        {
+          "record_index": 4046,
+          "field": "ruleContent.content",
+          "field_sha256": "1204297cf51eb5a75de21610a922ff607413b04a34c08647128b7c2371e28805",
+          "category": "response_or_script_to_eval",
+          "data_flow_excerpt": "selects script text and evaluates the result"
+        }
+      ]
+    },
+    {
+      "source_id": "7c219f964cd8a9189e9d9597243d1f08866f6155fa1cd8d25ca8fd267b67fb85",
+      "name": "中文看书（优）",
+      "kind": "text",
+      "host": "wap.zwkan.com",
+      "classification": "network_data_to_eval",
+      "selected_record_index": 3995,
+      "evidence": [
+        {
+          "record_index": 3995,
+          "field": "ruleContent.nextContentUrl",
+          "field_sha256": "732047bdd71dcd21df255736e6e1bcf4aa539528000b8e27f2b7544338af98e7",
+          "category": "response_or_script_to_eval",
+          "data_flow_excerpt": "extracts and evaluates a function from the page, then evaluates its result"
+        }
+      ]
+    },
+    {
+      "source_id": "c6a680ad8ca5c05ff54d21a1be6295ee51d5f963018d5f366f6685010c5c657e",
+      "name": "笔趣小说（优）",
+      "kind": "text",
+      "host": "m.bqgcn.net",
+      "classification": "network_data_to_eval",
+      "selected_record_index": 4019,
+      "evidence": [
+        {
+          "record_index": 4019,
+          "field": "ruleContent.nextContentUrl",
+          "field_sha256": "f35e0e9d3653b1affe7a9fca632c3fd91175484d36cc90326d3e56568714a8a2",
+          "category": "response_or_script_to_eval",
+          "data_flow_excerpt": "extracts and evaluates a function from the page, then evaluates its result"
+        }
+      ]
+    },
+    {
+      "source_id": "8075d0bcb1cc3a709cb3fbaa614deec6852eabf05bff1674bf38e92723c0f0b5",
+      "name": "💊 115文学",
+      "kind": "text",
+      "host": "wap.115wx.cc",
+      "classification": "network_data_to_eval",
+      "selected_record_index": 662,
+      "evidence": [
+        {
+          "record_index": 662,
+          "field": "ruleContent.nextContentUrl",
+          "field_sha256": "0424cd5a0af89f66c8263b687c9299c04981b36b176de936e9359b6309ad4685",
+          "category": "response_or_script_to_eval",
+          "data_flow_excerpt": "extracts an eval function from the result and evaluates it"
+        }
+      ]
+    },
+    {
+      "source_id": "4ba1ee353fc2132f9b0c4e13258c320bd3689f37a6b3a5afc7cc276e8f2522a4",
+      "name": "🌐 兔九三网",
+      "kind": "text",
+      "host": "www.tu93.biz",
+      "classification": "network_data_to_eval",
+      "selected_record_index": 1432,
+      "evidence": [
+        {
+          "record_index": 1432,
+          "field": "ruleContent.nextContentUrl",
+          "field_sha256": "c33300939c5aa06113ec4b6d257ebfdcde3f0bed6f18c8060ecc2aff1be6a70e",
+          "category": "response_or_script_to_eval",
+          "data_flow_excerpt": "extracts an eval function from the result and evaluates it"
+        }
+      ]
+    },
+    {
+      "source_id": "7426fb7a612a3315369a52e7176803b1bc2987de78c74fb3a6a660d978e3ec9b",
+      "name": "101言情",
+      "kind": "text",
+      "host": "www.txt101.com",
+      "classification": "network_data_to_eval",
+      "selected_record_index": 3460,
+      "evidence": [
+        {
+          "record_index": 3460,
+          "field": "ruleContent.content",
+          "field_sha256": "e9216096a8566f11a534622e4204bff5452bf1606ec5fe4d57b2d8c37437d96b",
+          "category": "response_or_script_to_eval",
+          "data_flow_excerpt": "evaluates an Array expression matched from the page result"
+        },
+        {
+          "record_index": 3460,
+          "field": "ruleBookInfo.init",
+          "field_sha256": "76449859c45027ce477a8085c4e86f094b4faecd08ce4b1a8ba51f1fb55aaa3d",
+          "category": "response_or_script_to_eval",
+          "data_flow_excerpt": "evaluates an Array expression matched from the page result"
+        },
+        {
+          "record_index": 3460,
+          "field": "ruleSearch.bookList",
+          "field_sha256": "c6402c74d4296b887d964ecea9de943def1893636d1b991f60fde75e1bf9802d",
+          "category": "response_or_script_to_eval",
+          "data_flow_excerpt": "evaluates an Array expression matched from the page result"
+        },
+        {
+          "record_index": 3460,
+          "field": "ruleToc.chapterList",
+          "field_sha256": "ec96c23352d6b8cbcdc36d7771e8a6eea047a27e9d5042541a72949d7d543ba8",
+          "category": "response_or_script_to_eval",
+          "data_flow_excerpt": "evaluates an Array expression matched from the page result"
+        }
+      ]
+    },
+    {
+      "source_id": "00c58ffd3786544397500cc86d6e718e4ca3b5fd569149dd0aea3452bcaa229a",
+      "name": "🎈海棠搜书「PO文」",
+      "kind": "text",
+      "host": "www.haitangsoushu.com",
+      "classification": "network_data_to_eval",
+      "selected_record_index": 189,
+      "evidence": [
+        {
+          "record_index": 189,
+          "field": "ruleContent.content",
+          "field_sha256": "39ece384090e22e08ca7e9a8cc6f884f6098b5443ad564ca25db9114d9e9fd27",
+          "category": "response_or_script_to_eval",
+          "data_flow_excerpt": "evaluates an expression matched from the page result"
+        }
+      ]
+    },
+    {
+      "source_id": "872cc5219ae17bfbc413644baa65b23c21507d7faa4238f269c6ea3ff9dbb179",
+      "name": "废文网",
+      "kind": "text",
+      "host": "www.sosadfun.org",
+      "classification": "network_data_to_eval",
+      "selected_record_index": 627,
+      "evidence": [
+        {
+          "record_index": 627,
+          "field": "ruleContent.content",
+          "field_sha256": "3fdb77bfc0cadddf4caa95585c414c37f0a8eaca58c88fc7d190a816055f9d21",
+          "category": "response_or_script_to_eval",
+          "data_flow_excerpt": "evaluates an expression matched from the page result"
+        }
+      ]
+    },
+    {
+      "source_id": "0c6317e420614be60b383b06e99c8967ed905eb88a604a5c82baf1b25e0d078f",
+      "name": "🚬 鄱阳镇庭",
+      "kind": "text",
+      "host": "www.pyzht.com",
+      "classification": "network_data_to_eval",
+      "selected_record_index": 2247,
+      "evidence": [
+        {
+          "record_index": 2247,
+          "field": "ruleContent.content",
+          "field_sha256": "2d21e8ffa3affa4ecbac39d2b9aeff3db80f6ea09295eaabad8f80777054a858",
+          "category": "response_or_script_to_eval",
+          "data_flow_excerpt": "evaluates an expression matched from the page result"
+        }
+      ]
+    },
+    {
+      "source_id": "75ed9d690c94355f14bafde3be0cbd8c1eda6f03377cea4d226cf3c90359e642",
+      "name": "冷冷文学",
+      "kind": "text",
+      "host": "www7.lenglengbb.com",
+      "classification": "network_data_to_eval",
+      "selected_record_index": 4840,
+      "evidence": [
+        {
+          "record_index": 4840,
+          "field": "ruleContent.content",
+          "field_sha256": "813f933382434733ce626185508128a5135c66da089920d0b2aa66c49e19b4d6",
+          "category": "response_or_script_to_eval",
+          "data_flow_excerpt": "evaluates an expression matched from the page result"
+        },
+        {
+          "record_index": 4840,
+          "field": "ruleToc.chapterList",
+          "field_sha256": "ea79f50590b7d304f031a7fd56601809a6916e1268eb87e82b567d5dce72949f",
+          "category": "response_or_script_to_eval",
+          "data_flow_excerpt": "evaluates a page expression intended to describe chapter order"
+        }
+      ]
+    },
+    {
+      "source_id": "168853d703930d0ba6a36a98171ef4c8358ba5e11a1edeffec024cc267c4d79b",
+      "name": "乐乎文章（优）",
+      "kind": "text",
+      "host": "newsmiss.lofter.com",
+      "classification": "network_data_to_eval",
+      "selected_record_index": 4090,
+      "evidence": [
+        {
+          "record_index": 4090,
+          "field": "ruleContent.content",
+          "field_sha256": "663908ed8d42d5a63236e979e54acaed2ec91c21763a6e357c853a8f2ca90f21",
+          "category": "response_or_script_to_eval",
+          "data_flow_excerpt": "evaluates a photoLinks field selected from the page result"
+        }
+      ]
+    },
+    {
+      "source_id": "81b5e9abb41ac6f954d1463131b8c2eb3dff978ddc8fe41d5576039a8984b493",
+      "name": "腾讯漫画",
+      "kind": "comic",
+      "host": "m.ac.qq.com",
+      "classification": "network_data_to_eval",
+      "selected_record_index": 4152,
+      "evidence": [
+        {
+          "record_index": 4152,
+          "field": "ruleContent.content",
+          "field_sha256": "3a3b58b88fe06502bd4dc8af190c56db87b07e56f6a47ad48153d018d9b30f6e",
+          "category": "response_or_script_to_eval",
+          "data_flow_excerpt": "evaluates a nonce expression extracted from the page"
+        }
+      ]
+    },
+    {
+      "source_id": "9f37dae32a1e887ccd87f99fdd82b03b0f01eaab91a55f39801d3fa645f1d3b3",
+      "name": "腾讯漫画",
+      "kind": "comic",
+      "host": "m.ac.qq.com",
+      "classification": "network_data_to_eval",
+      "selected_record_index": 4153,
+      "evidence": [
+        {
+          "record_index": 4153,
+          "field": "ruleContent.content",
+          "field_sha256": "3a3b58b88fe06502bd4dc8af190c56db87b07e56f6a47ad48153d018d9b30f6e",
+          "category": "response_or_script_to_eval",
+          "data_flow_excerpt": "evaluates a nonce expression extracted from the page"
+        }
+      ]
+    },
+    {
+      "source_id": "05deac0477e3afe63fb2767a1a893a01f7fcc4635a3b22fa11e36e07eb529035",
+      "name": "腾讯漫画",
+      "kind": "comic",
+      "host": "m.ac.qq.com",
+      "classification": "network_data_to_eval",
+      "selected_record_index": 4157,
+      "evidence": [
+        {
+          "record_index": 4157,
+          "field": "ruleContent.content",
+          "field_sha256": "3a3b58b88fe06502bd4dc8af190c56db87b07e56f6a47ad48153d018d9b30f6e",
+          "category": "response_or_script_to_eval",
+          "data_flow_excerpt": "evaluates a nonce expression extracted from the page"
+        }
+      ]
+    },
+    {
+      "source_id": "330b455a1e55345c266e9fd68eb8a0857a686d7df76ddc52616d89a2ea945d85",
+      "name": "腾讯漫画",
+      "kind": "comic",
+      "host": "m.ac.qq.com",
+      "classification": "network_data_to_eval",
+      "selected_record_index": 4158,
+      "evidence": [
+        {
+          "record_index": 4158,
+          "field": "ruleContent.content",
+          "field_sha256": "3a3b58b88fe06502bd4dc8af190c56db87b07e56f6a47ad48153d018d9b30f6e",
+          "category": "response_or_script_to_eval",
+          "data_flow_excerpt": "evaluates a nonce expression extracted from the page"
+        }
+      ]
+    },
+    {
+      "source_id": "31683e41bed33261bc4e6a64b7dd0b256a76bfefc3ea835b39b7e35a596001c4",
+      "name": "全本小说🎃#2",
+      "kind": "text",
+      "host": "www.quanben5.com",
+      "classification": "network_data_to_eval",
+      "selected_record_index": 4221,
+      "evidence": [
+        {
+          "record_index": 4221,
+          "field": "ruleSearch.bookList",
+          "field_sha256": "0b5459197ae724493e2d7aabe6f78a5bc9fcd6d6a753bff6b7319d72ae3ded25",
+          "category": "response_or_script_to_eval",
+          "data_flow_excerpt": "conditionally evaluates the complete search result"
+        }
+      ]
+    },
+    {
+      "source_id": "4b0ec0be6dad7da09ae3d8b549300a0135032595108ff11c5b6910977ae1a592",
+      "name": "️全本小说网",
+      "kind": "text",
+      "host": "www.quanben-xiaoshuo.net",
+      "classification": "network_data_to_eval",
+      "selected_record_index": 4559,
+      "evidence": [
+        {
+          "record_index": 4559,
+          "field": "ruleSearch.bookList",
+          "field_sha256": "78bce775a2f84d9344fbd713d82ac28d698887391a8a12aca7d9c3fd4b9ebc20",
+          "category": "response_or_script_to_eval",
+          "data_flow_excerpt": "conditionally evaluates the complete search result"
+        }
+      ]
+    },
+    {
+      "source_id": "bfc909dad4bafa2c0d84645fae168ffe942e35ac3d7fa55caefb9ed57d236d20",
+      "name": "全本小说",
+      "kind": "text",
+      "host": "www.quanben5.com",
+      "classification": "network_data_to_eval",
+      "selected_record_index": 4579,
+      "evidence": [
+        {
+          "record_index": 4579,
+          "field": "ruleSearch.bookList",
+          "field_sha256": "0b5459197ae724493e2d7aabe6f78a5bc9fcd6d6a753bff6b7319d72ae3ded25",
+          "category": "response_or_script_to_eval",
+          "data_flow_excerpt": "conditionally evaluates the complete search result"
+        }
+      ]
+    },
+    {
+      "source_id": "83842c07ccfa0551e6ecc41f653f7d41339560df994a8d81ccadb48858f92852",
+      "name": "🎃️全本小说网🎃",
+      "kind": "text",
+      "host": "www.quanben-xiaoshuo.net",
+      "classification": "network_data_to_eval",
+      "selected_record_index": 4665,
+      "evidence": [
+        {
+          "record_index": 4665,
+          "field": "ruleSearch.bookList",
+          "field_sha256": "78bce775a2f84d9344fbd713d82ac28d698887391a8a12aca7d9c3fd4b9ebc20",
+          "category": "response_or_script_to_eval",
+          "data_flow_excerpt": "conditionally evaluates the complete search result"
+        }
+      ]
+    },
+    {
+      "source_id": "55bae9ff93543b52d278ed88d5935d16bc64b85b915ff6555f4b5179e87901ac",
+      "name": "看情言小说网🎃",
+      "kind": "text",
+      "host": "www.gaoyuantong.com",
+      "classification": "network_data_to_eval",
+      "selected_record_index": 4712,
+      "evidence": [
+        {
+          "record_index": 4712,
+          "field": "ruleContent.content",
+          "field_sha256": "10e888c21a834a8d84e6bbc2f70584fa2de4757e3a3cf41cdf6aa4c6aae44308",
+          "category": "response_or_script_to_eval",
+          "data_flow_excerpt": "evaluates an expression extracted from page content"
+        }
+      ]
+    },
+    {
+      "source_id": "c7189c3677f1a8769025b6b7fb860965e6062d4d87988829447cb762900023d7",
+      "name": "看情言小说网",
+      "kind": "text",
+      "host": "www.gaoyuantong.com",
+      "classification": "network_data_to_eval",
+      "selected_record_index": 4762,
+      "evidence": [
+        {
+          "record_index": 4762,
+          "field": "ruleContent.content",
+          "field_sha256": "10e888c21a834a8d84e6bbc2f70584fa2de4757e3a3cf41cdf6aa4c6aae44308",
+          "category": "response_or_script_to_eval",
+          "data_flow_excerpt": "evaluates an expression extracted from page content"
+        }
+      ]
+    },
+    {
+      "source_id": "924ae7d6b668f0e1eb7447fec63defd4ddff4163107b3b56697688add09f1ed6",
+      "name": "闲看🎃",
+      "kind": "text",
+      "host": "nav.jijia-co.com",
+      "classification": "network_data_to_eval",
+      "selected_record_index": 4271,
+      "evidence": [
+        {
+          "record_index": 4271,
+          "field": "ruleContent.content",
+          "field_sha256": "97447b6a69e2a673282c69876b889e0439f10bce8021e3e5a4abf700c202e266",
+          "category": "response_or_script_to_eval",
+          "data_flow_excerpt": "inserts a selected response field into a JavaScript expression and evaluates it"
+        }
+      ]
+    },
+    {
+      "source_id": "d711545a4170d4839f9018c07f9fba452fb131f3d5bf0a9fe9aa0793947f3181",
+      "name": "闲看小说",
+      "kind": "text",
+      "host": "nav.jijia-co.com",
+      "classification": "network_data_to_eval",
+      "selected_record_index": 4278,
+      "evidence": [
+        {
+          "record_index": 4278,
+          "field": "ruleContent.content",
+          "field_sha256": "97447b6a69e2a673282c69876b889e0439f10bce8021e3e5a4abf700c202e266",
+          "category": "response_or_script_to_eval",
+          "data_flow_excerpt": "inserts a selected response field into a JavaScript expression and evaluates it"
+        }
+      ]
+    },
+    {
+      "source_id": "0165ccae84fe72d64f57b258b38cd2a30b31d3a910f872f920e9b00efa6ceeb1",
+      "name": "闲看小说",
+      "kind": "text",
+      "host": "nav.jijia-co.com",
+      "classification": "network_data_to_eval",
+      "selected_record_index": 4317,
+      "evidence": [
+        {
+          "record_index": 4317,
+          "field": "ruleContent.content",
+          "field_sha256": "97447b6a69e2a673282c69876b889e0439f10bce8021e3e5a4abf700c202e266",
+          "category": "response_or_script_to_eval",
+          "data_flow_excerpt": "inserts a selected response field into a JavaScript expression and evaluates it"
+        }
+      ]
+    }
+  ]
+}

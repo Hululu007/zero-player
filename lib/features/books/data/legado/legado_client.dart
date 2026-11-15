@@ -8,6 +8,7 @@ import 'kuwo_discovery.dart';
 import 'legado_rule_tokens.dart';
 import 'legado_script.dart';
 import 'legado_worker.dart';
+import 'yuque_book_list.dart';
 
 final class LegadoBookClient {
   const LegadoBookClient(this.network);
@@ -474,6 +475,28 @@ final class LegadoBookClient {
   }
 
   Future<LegadoPage> _run(LegadoJob job, CancellationToken token) async {
+    if (isRepairedYuqueBookList(job.source) &&
+        const {
+          LegadoOperation.books,
+          LegadoOperation.details,
+          LegadoOperation.toc,
+        }.contains(job.operation)) {
+      if (job.uri.toString() != job.source.endpoint.toString()) {
+        throw const FormatException('语雀书单页面地址不符');
+      }
+      job = LegadoJob(
+        job.source,
+        job.uri,
+        job.operation,
+        input: normalizeYuqueBookList(job.input),
+        address: job.address,
+        query: job.query,
+        page: job.page,
+        discovery: job.discovery,
+        book: job.book,
+        chapter: job.chapter,
+      );
+    }
     final documents = <String, String>{};
     for (var attempt = 0; ; attempt++) {
       try {

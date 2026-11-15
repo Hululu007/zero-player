@@ -135,6 +135,8 @@ final class BooksRepository {
   final _riskSourceEntries = <String, BookSourceEntry>{};
   final _sourceAssessments = <String, BookSourceAssessment>{};
   final _blockedSourceIds = <String>{};
+  final _assessedAdultIds = <String>{};
+  final _assessedQuarantinedIds = <String>{};
   final _assessedAdultHosts = <String>{};
   final _assessedQuarantinedHosts = <String>{};
   Future<void>? _riskLoading;
@@ -242,9 +244,13 @@ final class BooksRepository {
   }
 
   void _rebuildAssessmentHosts() {
+    _assessedAdultIds.clear();
+    _assessedQuarantinedIds.clear();
     _assessedAdultHosts.clear();
     _assessedQuarantinedHosts.clear();
     for (final risk in _sourceAssessments.values) {
+      if (risk.adult) _assessedAdultIds.add(risk.sourceId);
+      if (risk.quarantined) _assessedQuarantinedIds.add(risk.sourceId);
       if (risk.host.isEmpty) continue;
       if (risk.adultHost) _assessedAdultHosts.add(risk.host);
       if (risk.quarantinedHost) _assessedQuarantinedHosts.add(risk.host);
@@ -252,11 +258,11 @@ final class BooksRepository {
   }
 
   bool _assessedAdult(String id, String host) =>
-      _sourceAssessments[id]?.adult == true ||
+      _assessedAdultIds.contains(id) ||
       _assessedAdultHosts.contains(host.toLowerCase());
 
   bool _assessedQuarantined(String id, String host) =>
-      _sourceAssessments[id]?.quarantined == true ||
+      _assessedQuarantinedIds.contains(id) ||
       _assessedQuarantinedHosts.contains(host.toLowerCase());
 
   Future<BookSourceAssessment> _addSourceAssessment(
@@ -265,13 +271,17 @@ final class BooksRepository {
     required bool quarantine,
     required bool rootPageEvidence,
   }) async {
-    final previous = await riskStore.get(source.id);
     final host = source.endpoint.host.toLowerCase();
-    if (previous != null &&
-        (previous.adult || previous.quarantined) &&
-        previous.host.isNotEmpty &&
-        previous.host != host) {
-      throw const FormatException('来源地址已改变，请先人工复核原风险记录');
+    final primary = await riskStore.get(source.id);
+    final key = primary == null || primary.host == host
+        ? source.id
+        : BookSourceRiskStore.hostKey(source.id, host);
+    final previous = key == source.id
+        ? primary
+        : await riskStore.getRecord(key);
+    if (previous != null && previous.host != host) {
+      // A damaged record must never be silently replaced by new evidence.
+      throw const FormatException('风险记录损坏，请先人工复核');
     }
     final assessment = BookSourceAssessment(
       sourceId: source.id,
@@ -283,14 +293,17 @@ final class BooksRepository {
       quarantinedHost:
           (quarantine && rootPageEvidence) || previous?.quarantinedHost == true,
       version: (previous?.version ?? 0) + 1,
+      recordKey: key,
     );
     await riskStore.write(assessment);
     return assessment;
   }
 
   void _rememberAssessment(BookSourceAssessment assessment) {
+    final previous = _sourceAssessments[assessment.key];
+    if (previous != null && previous.version > assessment.version) return;
     _riskGeneration++;
-    _sourceAssessments[assessment.sourceId] = assessment;
+    _sourceAssessments[assessment.key] = assessment;
     _rebuildAssessmentHosts();
   }
 
@@ -333,47 +346,130 @@ final class BooksRepository {
   Future<List<BookSourceRiskEntry>> sourceRiskEntries() async {
     _requireSubscriptionAccess();
     await ensureSourceRiskLoaded();
-    final ids = {..._riskSourceEntries.keys, ..._sourceAssessments.keys};
+    final byId = <String, List<BookSourceAssessment>>{};
+    for (final assessment in _sourceAssessments.values) {
+      if (!assessment.adult && !assessment.quarantined) continue;
+      (byId[assessment.sourceId] ??= []).add(assessment);
+    }
+    final ids = {..._riskSourceEntries.keys, ...byId.keys};
     final result = <BookSourceRiskEntry>[];
     for (final id in ids) {
       final sourceEntry = _riskSourceEntries[id];
-      final assessment = _sourceAssessments[id];
-      final source = sourceEntry?.source;
-      final name = source?.name ?? assessment?.name ?? '';
-      final host = source?.endpoint.host ?? assessment?.host ?? '';
-      final adult =
-          (source != null &&
-              (adultBookSource(source) ||
-                  adultBookLabels(source.name, sourceEntry!.group))) ||
-          adultBookHost(host) ||
-          knownAdultHost(host) ||
-          _assessedAdult(id, host);
-      final fixedQuarantine = source == null
-          ? quarantinedBookHost(host) || quarantinedBookSourceId(id)
-          : quarantinedBookSource(source);
-      final quarantined = fixedQuarantine || _assessedQuarantined(id, host);
-      if ((!adult && !quarantined) ||
-          (policy.filterAdult && adult) ||
-          !policy.textAllowed(
-            '$name $host',
-            category: sourceEntry?.group ?? '',
-          )) {
-        continue;
+      final assessments = byId[id] ?? const <BookSourceAssessment>[];
+      for (final assessment in assessments) {
+        final row = _sourceRiskEntry(
+          id,
+          assessment.host,
+          sourceEntry,
+          assessment,
+        );
+        if (row != null) result.add(row);
       }
-      result.add(
-        BookSourceRiskEntry(
-          sourceId: id,
-          name: name,
-          host: host,
-          adult: adult,
-          quarantined: quarantined,
-          fixedQuarantine: fixedQuarantine,
-          version: assessment?.version ?? 0,
-        ),
-      );
+      final currentHost = sourceEntry?.source.endpoint.host.toLowerCase();
+      if (currentHost != null &&
+          !assessments.any((assessment) => assessment.host == currentHost)) {
+        final row = _sourceRiskEntry(id, currentHost, sourceEntry, null);
+        if (row != null) result.add(row);
+      }
     }
     _requireSubscriptionAccess();
     return result..sort((a, b) => a.name.compareTo(b.name));
+  }
+
+  BookSourceRiskEntry? _sourceRiskEntry(
+    String id,
+    String host,
+    BookSourceEntry? sourceEntry,
+    BookSourceAssessment? assessment,
+  ) {
+    final source = sourceEntry?.source;
+    final name = source?.name ?? assessment?.name ?? '';
+    final isCurrentHost = source?.endpoint.host.toLowerCase() == host;
+    final sourceAdult =
+        source != null &&
+        (adultBookSource(source) ||
+            adultBookLabels(source.name, sourceEntry!.group) ||
+            source.mediaHosts.any(
+              (h) =>
+                  adultBookHost(h) ||
+                  knownAdultHost(h) ||
+                  _assessedAdultHosts.contains(h.toLowerCase()),
+            ));
+    final hostAdult =
+        adultBookHost(host) ||
+        knownAdultHost(host) ||
+        _assessedAdultHosts.contains(host);
+    final adultRestricted =
+        sourceAdult || hostAdult || _assessedAdultIds.contains(id);
+    final adult =
+        (assessment?.adult ?? false) ||
+        hostAdult ||
+        (isCurrentHost && sourceAdult) ||
+        (assessment == null && _assessedAdultIds.contains(id));
+    final fixed = _fixedSourceRisk(id, host, source);
+    final quarantined =
+        fixed ||
+        (assessment?.quarantined ?? false) ||
+        _assessedQuarantinedHosts.contains(host) ||
+        (assessment == null && _assessedQuarantinedIds.contains(id));
+    if ((!adult && !quarantined) ||
+        (policy.filterAdult && adultRestricted) ||
+        !policy.textAllowed(
+          '$name $host',
+          category: sourceEntry?.group ?? '',
+        )) {
+      return null;
+    }
+    return BookSourceRiskEntry(
+      sourceId: id,
+      name: name,
+      host: host,
+      adult: adult,
+      adultRestricted: adultRestricted,
+      quarantined: quarantined,
+      fixedQuarantine: fixed,
+      version: assessment?.version ?? 0,
+      recordKey: assessment?.key,
+    );
+  }
+
+  bool _fixedSourceRisk(String id, String host, BookSource? source) =>
+      quarantinedBookHost(host) ||
+      (source == null && quarantinedBookSourceId(id)) ||
+      (source != null &&
+          source.endpoint.host.toLowerCase() == host &&
+          quarantinedBookSource(source));
+
+  /// A review dialog can outlive a policy change or another site's finding.
+  /// Recheck its snapshot instead of displaying stale, now restricted rows.
+  bool sourceRiskEntryAllowed(BookSourceRiskEntry entry) {
+    if (!sourceRisksReady ||
+        policy.supervision.enabled ||
+        policy.supervision.corrupted) {
+      return false;
+    }
+    final assessment = entry.recordKey == null
+        ? null
+        : _sourceAssessments[entry.recordKey];
+    if (entry.recordKey != null &&
+        (assessment == null ||
+            assessment.version != entry.version ||
+            assessment.host != entry.host ||
+            (!assessment.adult && !assessment.quarantined))) {
+      return false;
+    }
+    final current = _sourceRiskEntry(
+      entry.sourceId,
+      entry.host,
+      _riskSourceEntries[entry.sourceId],
+      assessment,
+    );
+    return current != null &&
+        current.name == entry.name &&
+        current.adult == entry.adult &&
+        current.adultRestricted == entry.adultRestricted &&
+        current.quarantined == entry.quarantined &&
+        current.fixedQuarantine == entry.fixedQuarantine;
   }
 
   /// Explicit manual review is required. A stale review cannot clear a newer
@@ -384,27 +480,56 @@ final class BooksRepository {
     late BookSourceAssessment cleared;
     await store.db.atomic(() async {
       _requireSubscriptionAccess();
-      final current = await riskStore.get(entry.sourceId);
-      if (current == null || current.version != entry.version) {
+      final current = await riskStore.getRecord(
+        entry.recordKey ?? entry.sourceId,
+      );
+      if (current == null ||
+          current.sourceId != entry.sourceId ||
+          current.host != entry.host ||
+          current.version != entry.version ||
+          (!current.adult && !current.quarantined)) {
         throw const FormatException('风险记录已变化，请刷新后复核');
       }
-      final sourceEntry = _riskSourceEntries[entry.sourceId];
-      if ((policy.filterAdult &&
-              (current.adult ||
-                  adultBookHost(current.host) ||
-                  knownAdultHost(current.host) ||
-                  (sourceEntry != null &&
-                      (adultBookSource(sourceEntry.source) ||
-                          adultBookLabels(
-                            sourceEntry.source.name,
-                            sourceEntry.group,
-                          ))))) ||
-          !policy.textAllowed(
-            '${current.name} ${current.host}',
-            category: sourceEntry?.group ?? '',
-          )) {
-        throw const ContentBlocked();
+      if (current.key != current.sourceId &&
+          current.key !=
+              BookSourceRiskStore.hostKey(current.sourceId, current.host)) {
+        // The host of a damaged secondary record cannot be reconstructed from
+        // its hash. Do not report a successful clear that would reappear after
+        // restart or discard evidence for an unknown host.
+        throw const FormatException('风险记录损坏，请从备份恢复后复核');
       }
+      final sourceEntry = await store.source(
+        _verifiedSources[entry.sourceId],
+        entry.sourceId,
+      );
+      final assessments = await riskStore.all();
+      void requireReviewAllowed() {
+        _requireSubscriptionAccess();
+        final source = sourceEntry?.source;
+        final hosts = [current.host, if (source != null) ...source.mediaHosts];
+        if (source != null) hosts.add(source.endpoint.host);
+        final adultRestricted =
+            current.adult ||
+            (source != null &&
+                (adultBookSource(source) ||
+                    adultBookLabels(source.name, sourceEntry!.group))) ||
+            hosts.any((host) => adultBookHost(host) || knownAdultHost(host)) ||
+            assessments.values.any(
+              (risk) =>
+                  (risk.sourceId == entry.sourceId && risk.adult) ||
+                  (risk.adultHost && hosts.contains(risk.host)),
+            );
+        if (_fixedSourceRisk(entry.sourceId, current.host, source) ||
+            (policy.filterAdult && adultRestricted) ||
+            !policy.textAllowed(
+              '${source?.name ?? current.name} ${current.host}',
+              category: sourceEntry?.group ?? '',
+            )) {
+          throw const ContentBlocked();
+        }
+      }
+
+      requireReviewAllowed();
       // Retain a revision tombstone so an old review cannot clear a finding
       // that was later rediscovered after an earlier assessment was cleared.
       cleared = BookSourceAssessment(
@@ -416,9 +541,10 @@ final class BooksRepository {
         adultHost: false,
         quarantinedHost: false,
         version: current.version + 1,
+        recordKey: current.key,
       );
       await riskStore.write(cleared);
-      _requireSubscriptionAccess();
+      requireReviewAllowed();
     }, tables: {'app_meta'});
     _rememberAssessment(cleared);
     policy.refresh();
@@ -886,7 +1012,7 @@ final class BooksRepository {
         if (previous != null &&
             policy.filterAdult &&
             adultBookSource(source) &&
-            _sourceAssessments[source.id]?.adult != true &&
+            !_assessedAdultIds.contains(source.id) &&
             !retainedAssessments.containsKey(source.id)) {
           retainedAssessments[source.id] = await _addSourceAssessment(
             previous.source,
@@ -907,11 +1033,12 @@ final class BooksRepository {
           continue;
         }
         if (previous != null) {
-          // A previously installed, reviewed unsafe rule is hidden from normal
-          // management. A user can explicitly import a different rule for the
-          // exact same source without silently re-enabling its old preference.
+          // A previously installed, reviewed unsafe or unavailable rule is
+          // hidden from normal management. A user can explicitly import a
+          // different rule without silently re-enabling its old preference.
           // Automatic catalog/subscription refreshes never perform this repair.
-          if (knownUnsafeBookRule(previous.source)) {
+          if (knownUnsafeBookRule(previous.source) ||
+              knownUnavailableBookRule(previous.source)) {
             final manualReplacement =
                 subscriptionId == null &&
                 !fromCatalog &&

@@ -55,6 +55,12 @@ migrate_working_dir/
 !/docs/implementation/legado-host-audit-20261115.json
 !/docs/implementation/legado-host-recheck-20261115.json
 !/docs/implementation/legado-dns-address-recheck-20261115.json
+!/docs/implementation/legado-response-eval-candidates-20261115.json
+!/docs/implementation/legado-adult-homepages-20261115.json
+!/docs/implementation/legado-response-eval-triage-20261115.json
+!/docs/implementation/legado-response-eval-normalized-20261115.json
+!/docs/implementation/legado-local-eval-review-20261115.json
+!/docs/implementation/legado-fqxs-soft404-20261115.json
 !/docs/implementation/legado-import-inventory-20261115.json
 !/docs/implementation/legado-adult-label-evidence-20261115.json
 !/docs/implementation/legado-targeted-rechecks-20261115.json

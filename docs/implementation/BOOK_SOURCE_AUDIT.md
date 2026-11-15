@@ -6,7 +6,9 @@
 
 上述导入统计是在成人标签去重合并修复**之前**于北京时间 10:32:19 生成的基线；其实际导入代码摘要保存在清单的 `import_code_sha256`，不能当作修复后行为。每个包的数组位置、原始记录索引、逐记录实际来源 ID、被选中版本及主机均可从 [导入清单](legado-import-inventory-20261115.json) 追溯。被拒原因包括缺搜索或发现入口、跨域规则、缺正文等，不能全部解释为网站失效。其他统计引用 4845 条原始记录时同样不等于应用可导入的 2139 个 ID。
 
-修复后重新运行实际导入器，仍解析出 2139 个唯一 ID。全项目回归的默认成人过滤场景中，2026 个随包来源新增且默认停用，107 个被内容策略或隔离限制，另有 6 个与已存在来源重复；此数字仅是该测试条件下的导入结果，不代表它们已完成安全或阅读验证。
+修复后重新运行实际导入器，仍解析出 2139 个唯一 ID。较早一轮全项目回归的默认成人过滤场景中，2026 个随包来源新增且默认停用，107 个被内容策略或隔离限制，另有 6 个与已存在来源重复；后续增加成人来源和失效／危险规则隔离后，这组数字不再代表当前过滤结果。新增数量均不代表来源已完成安全或阅读验证。
+
+最新全项目回归的同一默认过滤场景中，1982 个来源新增且默认停用，151 个被策略或隔离过滤，6 个与已有来源重复（`build/book-source-audit-fourth-round-tests.log`）。这些仍是测试条件下的导入数量，不是已审核安全或实际可读的数量。
 
 静态提取了 2010 个可构造 HTTPS 入口主机；另有 81 条原始记录的入口无法由本探针静态构造，原因可能是动态规则、无效格式或本工具不支持，不能直接视为失效。对全部 2010 个主机完成无跳转 HEAD 根路径核查；初轮 2009 个主机后，因发现身份片段空格导致漏记，又补核 1 个主机并重新关联记录索引。最终每主机的状态、时间（UTC）、原始记录索引、跳转目标主机及类别、GET 抽样结果与归档摘要见 [逐主机结果](legado-host-audit-20261115.json)。结果不保存网页正文、跳转路径参数、媒体或脚本；部分标题与固定词命中用于人工研判。
 
@@ -44,6 +46,8 @@
 
 具体的规则失配候选是原始记录 1803：来源名明确说明 `newsmiss.lofter.com1` 用于制造不同源地址，实际搜索脚本声明 `api.lofter.com`。本地调用当前导入器成功得到文字 HTML 源，`sourceKey` 为空，其 ID 为 SHA-256(`text:html:newsmiss.lofter.com1`) 的 `9671fd3cfe8189b9abdcb097cbff01609ff14c7ab43dcf7aa10d48a34a526a05`；该身份主机两次 DNS 名称不存在。导入器不会在导入阶段执行以 `@js:` 开头的搜索规则；将规则声明的 API 地址交给 `LegadoRequest.parse` 时，实际因跨域边界被拒。未执行原规则，故也可能更早因脚本接口不兼容失败。现按这一具体来源身份和入口阻止新导入及历史访问，保留既有离线数据；没有扩大封禁正常 Lofter 域，也不能断言某个用户安装已有该记录。
 
+原始记录 2451「番茄小说123」的 `m.fqxs123.com` 首页现显示影视站，旧小说分类 `/xuanhuan/` 及第二页 `/xuanhuan/2.html` 均返回 HTTP 200、标题却为 `404`，属于软 404；无凭证搜索路径也观察到同样结果。[首页及两条旧路径的复核](legado-fqxs-soft404-20261115.json)保留了状态、标题、时间和原始记录索引。应用仅隔离这一 ID 和已核对的旧搜索／列表规则，历史孤儿记录受限，原数据保留；修订规则可通过用户主动导入恢复为停用状态。这不是博彩或木马判定，也没有封禁该主机的其他规则。
+
 ## 已核实异常和反例
 
 以下时间均为北京时间；多次观察及原始记录索引见 [定向复核结果](legado-targeted-rechecks-20261115.json)。可导入 ID 数来自上面的修复前清单，域名停放或错站不等于存在木马。
@@ -70,6 +74,8 @@
 
 [成人标签逐 ID 证据](legado-adult-label-evidence-20261115.json) 包含全部 76 个 ID、实际选中版本、原始标记、原始索引与主机；`selected_has_label: false` 的 10 项可逐一复核。导入去重现保留各版本明确成人证据，并对这 10 个已有来源 ID 保留固定证据，覆盖历史安装。成人源与博彩、木马是不同类别；针对单个 ID 的标签不推广到同域其他来源。
 
+进一步读取有界首页的 title／description 后，7 个精确主机自述以成人小说或肉文为主要内容，涉及 12 个选中 ID，其中 10 个此前没有静态成人标记；另一个 `m.aaread.club` 成人站的原始记录本来就不可导入，仅保护未来外部导入。样本时间、状态、大小、摘要、描述片段与关联 ID 见[首页成人证据](legado-adult-homepages-20261115.json)。首轮超时的 `m.xyuzhaiwu5.com` 在后续两次检查中得到 200；对兄弟域名不作外推。来源级限制不表示每本作品都包含成人内容。仅在单本作品列表出现成人标签、或仅以 BL／站点品牌命名的混合站点没有据此整站标记。
+
 ## 来源规则中的远程脚本候选
 
 对全部原始记录递归检查字符串，在同一字段同时出现 `eval(` 与网络相关词的共有 58 条原始记录；其中 53 条可单独导入，涉及 41 个唯一来源 ID。此为宽泛字符串共现，有可能只是正常脚本解包、示例或字段中无关的网络地址，**不能将 58 条直接判为下载后执行，更不能据此断言网站挂马**。
@@ -90,6 +96,16 @@
 
 本范围内未发现 `Function(...)` 或 `new Function(...)` 调用；对全部原始记录的同字段粗扫也未发现 Function 与网络标记同时出现。该扫描不是形式化数据流证明，未覆盖所有可能的拼写、间接调用或不在本候选集合中的跨字段数据流。
 
+### 补扫页面结果到 eval
+
+此前按同一字段同时出现网络词与 `eval` 粗筛，会漏掉直接处理已获取页面的规则。新增的[宽泛候选清单](legado-response-eval-candidates-20261115.json)对选中原始版本检查 `eval` 与 `result`、`src` 等页面变量或 `java.getString` 同字段共现，得到 85 个 ID，其中 51 个不在先前网络词候选中。共现只是筛选信号，可能是本地元数据求值或无关变量，不能直接当成数据流或恶意代码。
+
+其中 34 个选中 ID 的规则经静态逐字段核对，确实包含把网页结果、脚本片段、匹配表达式或响应字段交给 `eval` 的路径；部分原本意图解析图片数组、章节顺序或其他数据。[原始字段证据](legado-response-eval-triage-20261115.json)和[实际导入后的字段摘要](legado-response-eval-normalized-20261115.json)记录了对应版本。应用按精确字段摘要隔离这些旧规则及其无来源信息的历史记录，来源修订后可主动导入且默认停用；不因此封禁整个域名或断言页面已挂马。剩余候选仍需区分本地脚本、预期数据和实际可执行路径，未执行这些规则。
+
+对新增 51 个候选中的其余 17 个，以及两条未命中上述筛选、但对来源元数据求值的规则，静态检查其调用入口和相关字段；当前选中版本中未发现网页或网络响应进入这些 `eval` 的证据，不仅因这一信号隔离。[逐 ID 复核](legado-local-eval-review-20261115.json)记录各字段摘要与结论；固定打包字面量仅作文本替换展开，未执行来源代码。这一结论不代表站点或其他规则安全、可用，也不排除不在本次字段范围内的数据流。
+
+语雀一条旧书单的页面数据求值现替换为有界 JSON／百分号解码，仅接受已审来源和旧规则摘要、同站固定书单 ID 与公开文档。Windows 原生应用实网取得 1 本发现结果、1 本搜索结果、23 个公开章节及 5191 字正文（`.dart_tool/native-3136e721/legado_yuque_native_test.log`）；目录或页面协议变更时可能需要重审。
+
 ## 可重复执行与边界
 
 ```powershell
@@ -98,6 +114,10 @@ dart --packages=.dart_tool/package_config.json tool/inventory_legado_import.dart
 python tool/audit_legado_adult_metadata.py build/legado-import.json build/legado-adult-evidence.json
 python tool/audit_legado_rule_patterns.py build/legado-import.json build/legado-rule-patterns.json
 python tool/recheck_legado_failures.py docs/implementation/legado-host-audit-20261115.json docs/implementation/legado-import-inventory-20261115.json build/legado-host-recheck.json --workers 24 --timeout 6 --dns-timeout 8 --sample-html
+python tool/audit_legado_response_eval.py docs/implementation/legado-import-inventory-20261115.json docs/implementation/legado-eval-triage-20261115.json build/legado-response-eval-candidates.json
+python tool/triage_legado_response_eval.py docs/implementation/legado-import-inventory-20261115.json build/legado-response-eval-triage.json
+python tool/triage_legado_local_eval.py docs/implementation/legado-import-inventory-20261115.json build/legado-local-eval-review.json
+dart --packages=.dart_tool/package_config.json tool/inventory_legado_eval_normalized.dart build/legado-response-eval-triage.json build/legado-response-eval-normalized.json
 python tool/recheck_legado_dns_answers.py build/legado-host-recheck.json build/legado-dns-address-recheck.json --timeout 8
 python tool/triage_legado_eval_candidates.py docs/implementation/legado-rule-patterns-20261115.json docs/implementation/legado-import-inventory-20261115.json build/legado-eval-triage.json
 dart --packages=.dart_tool/package_config.json tool/inventory_legado_eval_normalized.dart build/legado-eval-triage.json build/legado-eval-normalized.json

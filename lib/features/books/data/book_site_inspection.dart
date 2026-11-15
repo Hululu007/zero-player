@@ -226,19 +226,27 @@ final class _Redirect implements Exception {
 }
 
 final _gamblingBusiness = RegExp(
-  r'在线赌场|网络赌场|澳门赌场|真人百家乐|博彩开户|投注平台|体育投注|真人博彩|博彩平台',
+  r'(?:在线|在線|线上|線上|网络|網絡)(?:赌场|賭場|博彩)|'
+  r'(?:澳门|澳門)(?:赌场|賭場)|真人(?:百家乐|百家樂|博彩)|'
+  r'博彩(?:开户|開戶|平台|网站|網站)|投注(?:平台|网站|網站)|'
+  r'(?:体育|體育)(?:投注|博彩)',
   caseSensitive: false,
 );
 final _gamblingPromotion = RegExp(
-  r'立即下注|立即投注|注册(?:领取|赠送|送彩金)|开户(?:送彩金|送|领取)|首存(?:优惠|奖励|赠送)|充值(?:返水|送|赠)',
+  r'立即下注|立即投注|(?:注册|註冊)(?:领取|領取|赠送|贈送|送彩金)|'
+  r'(?:开户|開戶)(?:送彩金|送|领取|領取)|'
+  r'首存(?:优惠|優惠|奖励|獎勵|赠送|贈送)|充值(?:返水|送|赠|贈)',
   caseSensitive: false,
 );
 final _adultBusiness = RegExp(
-  r'成人视频|色情小说|成人小说|情色小说|色情视频|无码视频',
+  r'成人(?:视频|視頻|(?:黄色|黃色)?(?:小说|小說)|漫画|漫畫)|'
+  r'色情(?:小说|小說|视频|視頻|漫画|漫畫)|情色(?:小说|小說)|'
+  r'肉文|肉漫|无码视频',
   caseSensitive: false,
 );
 final _adultGate = RegExp(
-  r'年满\s*18\s*岁|满\s*18\s*岁|未满\s*18\s*岁|未成年人禁止|未成年人请勿|成人专用|成人专区',
+  r'(?:年|未)?(?:满|滿)\s*(?:[1１][8８]|十八)\s*(?:岁|歲)|'
+  r'未成年人(?:禁止|请勿|請勿)|成人(?:专用|專用|专区|專區)',
 );
 
 /// Parse inert HTML only. Do not render, execute scripts or fetch subresources.
@@ -270,11 +278,24 @@ BookSiteInspection inspectBookSiteHtml(
     }
   }
   for (final node in document.querySelectorAll(
-    'script, style, iframe, object, embed, template, svg',
+    'script, style, iframe, object, embed, template, svg, [hidden]',
   )) {
     node.remove();
   }
-  final text = plainBookText(document, limit: BookSiteInspector.maxBytes);
+  // Description is the site's own summary. Keywords are deliberately omitted:
+  // a list of search terms is weaker evidence of the site's actual business.
+  final descriptions = document
+      .querySelectorAll('meta[name]')
+      .where(
+        (meta) =>
+            meta.attributes['name']?.trim().toLowerCase() == 'description',
+      )
+      .map((meta) => meta.attributes['content'] ?? '')
+      .take(2);
+  final text = [
+    plainBookText(document, limit: BookSiteInspector.maxBytes),
+    ...descriptions,
+  ].join('\n');
   final gambling = _gamblingBusiness.hasMatch(text);
   final adult = _adultBusiness.hasMatch(text);
   final bettingRisk = gambling && _gamblingPromotion.hasMatch(text);

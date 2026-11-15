@@ -1,0 +1,1723 @@
+{
+  "generated_at": "2026-11-15T04:49:03.386972+00:00",
+  "archive_sha256": "012a0e0d6e6adc8d303c32b578510e14b562088b3e965cb01a1a647b5e7e034d",
+  "import_code_sha256": {
+    "lib/features/books/data/book_import.dart": "5c27a8cac7806ca8854672f89fcc90d0d98e5ab25b92ec4fc13f094bfe93a629",
+    "lib/features/books/data/legado/legado_import.dart": "3d4f0f1fb848c26bf65a0eec25373bc993403576634c60524dc17c5a6e217b69",
+    "lib/features/books/domain/book.dart": "c0aec8fc6c82eef58dba4047654e8c75a8ef45e6bcfb5e9e185880609b09583f",
+    "lib/features/books/domain/legado_source.dart": "5b907923968332090760ecc9f4d6f7e652aa06501ac7981b5f477ef7c0d954d1"
+  },
+  "scope": "heuristic selected raw fields mentioning eval and page-like variables or java.getString; not proof of data flow; no execution",
+  "profiles": [
+    {
+      "source_id": "747a4ab68107186eb99af464a199e2fae062336106b4fbe5e45790420a1f666c",
+      "selected_record_index": 1,
+      "name": "番茄小说2",
+      "kind": "text",
+      "host": "fqapi.komr.cn",
+      "previous_same_field_network_candidate": true,
+      "candidate_fields": [
+        {
+          "field": "ruleContent.content",
+          "sha256": "fb241816a7742e12a48f970e284c3bd28fa8b149f03d6c915baaf8de3f73fa27",
+          "metadata": false
+        },
+        {
+          "field": "ruleToc.chapterList",
+          "sha256": "25b0b6fa5c3f30375d360778d2dac12c5ab19932e710fae1a2a87500d083f41e",
+          "metadata": false
+        }
+      ]
+    },
+    {
+      "source_id": "b93c0a8a265ceb43b192c5088f8e1f5f66822d7c67f46ac7c1c95ed7d05e0908",
+      "selected_record_index": 12,
+      "name": "来看文学",
+      "kind": "text",
+      "host": "m.laikan9.com",
+      "previous_same_field_network_candidate": true,
+      "candidate_fields": [
+        {
+          "field": "bookSourceComment",
+          "sha256": "b0cececbfa92db3895a02a55c90e112e68f4b74abcecc9ce8b0730d6cfebbd79",
+          "metadata": true
+        },
+        {
+          "field": "ruleContent.content",
+          "sha256": "3cdc030a37e1bdca4e8b748ae4d8f5be29f182ce2575275787f6a8adcb5bbb13",
+          "metadata": false
+        },
+        {
+          "field": "ruleSearch.bookList",
+          "sha256": "5f1f8ac565e82d32973b3b3e76ad1a586ab009767d35b0059ad85e7a15df0127",
+          "metadata": false
+        }
+      ]
+    },
+    {
+      "source_id": "b7967485abce8db0cd0e4c922f3adc3a88d7338cf77a1e96c0ab3d6f5c78bfb4",
+      "selected_record_index": 17,
+      "name": "艾途小说",
+      "kind": "text",
+      "host": "m.aitbooks.com",
+      "previous_same_field_network_candidate": true,
+      "candidate_fields": [
+        {
+          "field": "ruleContent.content",
+          "sha256": "25b7dc9b2c27bb2ab71fe6d2fedb8e6b1ceadab97bbf6a9ef234a756861830ce",
+          "metadata": false
+        }
+      ]
+    },
+    {
+      "source_id": "2ecb4f67377130c47c96eb78997b20e76f88b6e3352dd7bac94a73418b18ad80",
+      "selected_record_index": 27,
+      "name": "9x阅读器",
+      "kind": "text",
+      "host": "novel-api.elklk.cn",
+      "previous_same_field_network_candidate": false,
+      "candidate_fields": [
+        {
+          "field": "ruleContent.content",
+          "sha256": "418d1edfca4f5847c31e35f773a4b6488ffa6135a5e58d6eba9657883e219f74",
+          "metadata": false
+        },
+        {
+          "field": "ruleToc.chapterName",
+          "sha256": "e4018526001e42462f9805c14ad53b3ef5e632a837bca354ed30de4c150858f5",
+          "metadata": false
+        }
+      ]
+    },
+    {
+      "source_id": "7426fb7a612a3315369a52e7176803b1bc2987de78c74fb3a6a660d978e3ec9b",
+      "selected_record_index": 3460,
+      "name": "101言情",
+      "kind": "text",
+      "host": "www.txt101.com",
+      "previous_same_field_network_candidate": false,
+      "candidate_fields": [
+        {
+          "field": "ruleBookInfo.init",
+          "sha256": "76449859c45027ce477a8085c4e86f094b4faecd08ce4b1a8ba51f1fb55aaa3d",
+          "metadata": false
+        },
+        {
+          "field": "ruleContent.content",
+          "sha256": "e9216096a8566f11a534622e4204bff5452bf1606ec5fe4d57b2d8c37437d96b",
+          "metadata": false
+        },
+        {
+          "field": "ruleSearch.bookList",
+          "sha256": "c6402c74d4296b887d964ecea9de943def1893636d1b991f60fde75e1bf9802d",
+          "metadata": false
+        },
+        {
+          "field": "ruleToc.chapterList",
+          "sha256": "ec96c23352d6b8cbcdc36d7771e8a6eea047a27e9d5042541a72949d7d543ba8",
+          "metadata": false
+        }
+      ]
+    },
+    {
+      "source_id": "00c58ffd3786544397500cc86d6e718e4ca3b5fd569149dd0aea3452bcaa229a",
+      "selected_record_index": 189,
+      "name": "🎈海棠搜书「PO文」",
+      "kind": "text",
+      "host": "www.haitangsoushu.com",
+      "previous_same_field_network_candidate": false,
+      "candidate_fields": [
+        {
+          "field": "ruleContent.content",
+          "sha256": "39ece384090e22e08ca7e9a8cc6f884f6098b5443ad564ca25db9114d9e9fd27",
+          "metadata": false
+        }
+      ]
+    },
+    {
+      "source_id": "932d2ee762eb57c7a883693de8365cc3c8c90d3912e308e9f83a27c1c37be847",
+      "selected_record_index": 190,
+      "name": "🎈黑粉小说",
+      "kind": "text",
+      "host": "m.heifenxs.org",
+      "previous_same_field_network_candidate": true,
+      "candidate_fields": [
+        {
+          "field": "ruleContent.content",
+          "sha256": "624834a5f7c05abf712f2066dd8add81c3de77f0e3b1d5921e33d8626855b037",
+          "metadata": false
+        }
+      ]
+    },
+    {
+      "source_id": "7a28639044b5e51d9a10a29af07d3c271f1b6bb669563e76b21b0ea655e08cd0",
+      "selected_record_index": 192,
+      "name": "🎈耽美小说",
+      "kind": "text",
+      "host": "danmeirouwen.net",
+      "previous_same_field_network_candidate": true,
+      "candidate_fields": [
+        {
+          "field": "ruleContent.content",
+          "sha256": "31e2c5cbda1e704bf7790a78da4e32b51f0ead228a857182a71fb8424857a4dc",
+          "metadata": false
+        }
+      ]
+    },
+    {
+      "source_id": "168853d703930d0ba6a36a98171ef4c8358ba5e11a1edeffec024cc267c4d79b",
+      "selected_record_index": 4090,
+      "name": "乐乎文章（优）",
+      "kind": "text",
+      "host": "newsmiss.lofter.com",
+      "previous_same_field_network_candidate": false,
+      "candidate_fields": [
+        {
+          "field": "ruleContent.content",
+          "sha256": "663908ed8d42d5a63236e979e54acaed2ec91c21763a6e357c853a8f2ca90f21",
+          "metadata": false
+        }
+      ]
+    },
+    {
+      "source_id": "65ef3853c6e7de871277fad0f082d2e005be5e98fe32f3c59fd6c629e2e670b9",
+      "selected_record_index": 2725,
+      "name": "移动阅读",
+      "kind": "text",
+      "host": "m.ndlib.cn",
+      "previous_same_field_network_candidate": true,
+      "candidate_fields": [
+        {
+          "field": "ruleSearch.bookUrl",
+          "sha256": "84947ca07cf2ffbd263bffc34b022578845a732f7dae7f1299ded97e18db6038",
+          "metadata": false
+        },
+        {
+          "field": "ruleToc.chapterUrl",
+          "sha256": "dc0ba87c7a2866a609eb6ceb108cd9e61ff6d95b004060dd6910197bd51dc97a",
+          "metadata": false
+        }
+      ]
+    },
+    {
+      "source_id": "e92fee8e52075d310dd8e27ba7ca004626f1f9e739c3efea1c160159d66066ed",
+      "selected_record_index": 231,
+      "name": "🎉路虎小说",
+      "kind": "text",
+      "host": "m.luhubook.com",
+      "previous_same_field_network_candidate": true,
+      "candidate_fields": [
+        {
+          "field": "ruleContent.content",
+          "sha256": "391fac0f7eb63736bf09b9924e13c31de8022214a581e0697db5a02d260b6618",
+          "metadata": false
+        }
+      ]
+    },
+    {
+      "source_id": "c4c7efa3aba609ceb0405f97ef18104f5469fd0aa93045e9422f787fd16f118f",
+      "selected_record_index": 232,
+      "name": "🎉魔爪小说",
+      "kind": "text",
+      "host": "m.wenzhug.com",
+      "previous_same_field_network_candidate": true,
+      "candidate_fields": [
+        {
+          "field": "ruleContent.content",
+          "sha256": "391fac0f7eb63736bf09b9924e13c31de8022214a581e0697db5a02d260b6618",
+          "metadata": false
+        }
+      ]
+    },
+    {
+      "source_id": "f4d413c18531a8999261762809bcb2d2c4ac84b265526b8e7e7216b95cb82025",
+      "selected_record_index": 233,
+      "name": "🎉一品小说",
+      "kind": "text",
+      "host": "m.ypxxs.com",
+      "previous_same_field_network_candidate": true,
+      "candidate_fields": [
+        {
+          "field": "ruleContent.content",
+          "sha256": "391fac0f7eb63736bf09b9924e13c31de8022214a581e0697db5a02d260b6618",
+          "metadata": false
+        }
+      ]
+    },
+    {
+      "source_id": "72f1dd620b9429f30e5e910661301658809636a772e8a900346dc19f6c841c6d",
+      "selected_record_index": 234,
+      "name": "🎉旭日小说",
+      "kind": "text",
+      "host": "m.xuribook.com",
+      "previous_same_field_network_candidate": true,
+      "candidate_fields": [
+        {
+          "field": "ruleContent.content",
+          "sha256": "391fac0f7eb63736bf09b9924e13c31de8022214a581e0697db5a02d260b6618",
+          "metadata": false
+        }
+      ]
+    },
+    {
+      "source_id": "e5044e38adeaa29a5c1e1cec693f715bd27bf869ca2de0864681749795c84cad",
+      "selected_record_index": 243,
+      "name": "我爱电影(搜索+发现)",
+      "kind": "text",
+      "host": "www.5imv.com",
+      "previous_same_field_network_candidate": false,
+      "candidate_fields": [
+        {
+          "field": "ruleContent.content",
+          "sha256": "36159fd9a641306fc3d30427e5a63305d562f707d31c0da6a8f9db2c0fd5a54e",
+          "metadata": false
+        }
+      ]
+    },
+    {
+      "source_id": "1bb7b5de766a681189e536dc20ed90b9fc0a61af9329d481516d8bc565d24ab1",
+      "selected_record_index": 619,
+      "name": "笔墨看书网W[分页]",
+      "kind": "text",
+      "host": "www.bimoks.com",
+      "previous_same_field_network_candidate": true,
+      "candidate_fields": [
+        {
+          "field": "ruleContent.content",
+          "sha256": "4879ba3a4c053151b73c76159b68b0fdc96f3a7c77de72a3c97b18f3200b1efb",
+          "metadata": false
+        }
+      ]
+    },
+    {
+      "source_id": "ff7e139866e58cca701434e83970d6b03bc1f74db38bcb7afa34ff89596f350c",
+      "selected_record_index": 393,
+      "name": "提花小说网",
+      "kind": "text",
+      "host": "m.tihuashu.com",
+      "previous_same_field_network_candidate": true,
+      "candidate_fields": [
+        {
+          "field": "ruleContent.content",
+          "sha256": "dd0c86918cab95af6da3cea2c9bd36df6f1a6c5161c6ad85da9da0720f4e84c3",
+          "metadata": false
+        }
+      ]
+    },
+    {
+      "source_id": "4c7c2d6fc059fbd4e99ab7897f12663a03173d87658d925086c07720045bf916",
+      "selected_record_index": 1030,
+      "name": "精品书城",
+      "kind": "text",
+      "host": "jingpinshucheng.com",
+      "previous_same_field_network_candidate": true,
+      "candidate_fields": [
+        {
+          "field": "bookSourceComment",
+          "sha256": "a1f5b5f0f3fba90edfce8b1a0fce07abe2f6c34d0efdfbafccd4c39a199967ac",
+          "metadata": true
+        },
+        {
+          "field": "ruleContent.content",
+          "sha256": "7213630535b610969baa556a400ef3b40251327d795311717a87d187cc35cde5",
+          "metadata": false
+        },
+        {
+          "field": "ruleToc.chapterList",
+          "sha256": "95d8457f64ab663de6f36e6c8c047635c37c4bf0aae60a5d4297f96f931c7669",
+          "metadata": false
+        },
+        {
+          "field": "searchUrl",
+          "sha256": "7933d2db3c179a79ce29d7ff21438744b9d53d08b779b92278f19d7547e5dc42",
+          "metadata": false
+        }
+      ]
+    },
+    {
+      "source_id": "2eb90bf59ea519b1611311f0c9cd5bd691eead3377ef739ac926f85876ed4b5c",
+      "selected_record_index": 604,
+      "name": "📚 笔墨看书",
+      "kind": "text",
+      "host": "m.bimoks.com",
+      "previous_same_field_network_candidate": true,
+      "candidate_fields": [
+        {
+          "field": "ruleContent.content",
+          "sha256": "4879ba3a4c053151b73c76159b68b0fdc96f3a7c77de72a3c97b18f3200b1efb",
+          "metadata": false
+        }
+      ]
+    },
+    {
+      "source_id": "872cc5219ae17bfbc413644baa65b23c21507d7faa4238f269c6ea3ff9dbb179",
+      "selected_record_index": 627,
+      "name": "废文网",
+      "kind": "text",
+      "host": "www.sosadfun.org",
+      "previous_same_field_network_candidate": false,
+      "candidate_fields": [
+        {
+          "field": "ruleContent.content",
+          "sha256": "3fdb77bfc0cadddf4caa95585c414c37f0a8eaca58c88fc7d190a816055f9d21",
+          "metadata": false
+        }
+      ]
+    },
+    {
+      "source_id": "8075d0bcb1cc3a709cb3fbaa614deec6852eabf05bff1674bf38e92723c0f0b5",
+      "selected_record_index": 662,
+      "name": "💊 115文学",
+      "kind": "text",
+      "host": "wap.115wx.cc",
+      "previous_same_field_network_candidate": false,
+      "candidate_fields": [
+        {
+          "field": "ruleContent.nextContentUrl",
+          "sha256": "0424cd5a0af89f66c8263b687c9299c04981b36b176de936e9359b6309ad4685",
+          "metadata": false
+        }
+      ]
+    },
+    {
+      "source_id": "b3be4a799c097a368cd7aadc22034afce90c6d6d17062273525874de2e19b00c",
+      "selected_record_index": 733,
+      "name": "🗒 夜色韩漫",
+      "kind": "comic",
+      "host": "www.yeseimg.com",
+      "previous_same_field_network_candidate": false,
+      "candidate_fields": [
+        {
+          "field": "ruleBookInfo.init",
+          "sha256": "d57151ce6f61a3438ea6d7eb5c7b56813399ac0a197749f5a4222a763e23c711",
+          "metadata": false
+        },
+        {
+          "field": "searchUrl",
+          "sha256": "a5a3e5627226a05cd7522f96c776624f27f825c396c1d02af6581e118edff7a9",
+          "metadata": false
+        }
+      ]
+    },
+    {
+      "source_id": "e76f2b4aab87c5230acd0cdcf5b505ce245028b5dcb7f95118a4826c161862a6",
+      "selected_record_index": 1066,
+      "name": "博趣中文网",
+      "kind": "text",
+      "host": "www.1bqg.net",
+      "previous_same_field_network_candidate": true,
+      "candidate_fields": [
+        {
+          "field": "ruleContent.content",
+          "sha256": "5008e24edf3ecf547dc0f062fb9090cfb1541321fc7806c630a213b52216ef54",
+          "metadata": false
+        },
+        {
+          "field": "ruleSearch.bookList",
+          "sha256": "31b0a1f9df433c5c8d712873420d0e1f0bad43322f0a114808454b1148edc749",
+          "metadata": false
+        }
+      ]
+    },
+    {
+      "source_id": "abfd798c76037dd73bfb1da7c5c91ff67f2c464c00539c4bbfd342898c8c1d56",
+      "selected_record_index": 3432,
+      "name": "鲲弩小说",
+      "kind": "text",
+      "host": "www.kunnu.com",
+      "previous_same_field_network_candidate": false,
+      "candidate_fields": [
+        {
+          "field": "ruleSearch.bookList",
+          "sha256": "a55cdcac9b8bda9ce1b22ffcf512938fa85d70db7245ae55ac00a87a53c6f445",
+          "metadata": false
+        }
+      ]
+    },
+    {
+      "source_id": "4844827f5d17a25f6978efa8ce0f62924c092927c4601ca454fe79f764bd3706",
+      "selected_record_index": 1160,
+      "name": "🗒 十八禁漫",
+      "kind": "comic",
+      "host": "www.18mh.cc",
+      "previous_same_field_network_candidate": false,
+      "candidate_fields": [
+        {
+          "field": "ruleBookInfo.init",
+          "sha256": "4a6b7ec9988a5628157fbf06c34f15348f5f2516b402b47aa8d01f360e6f45e2",
+          "metadata": false
+        },
+        {
+          "field": "ruleExplore.name",
+          "sha256": "af97c1ef7d061bb294d38ff717c9fb6c966cc6cc037beb6f745b517bbc51ef6c",
+          "metadata": false
+        },
+        {
+          "field": "ruleSearch.name",
+          "sha256": "af97c1ef7d061bb294d38ff717c9fb6c966cc6cc037beb6f745b517bbc51ef6c",
+          "metadata": false
+        }
+      ]
+    },
+    {
+      "source_id": "314a89ecfd4cac7f944a3060f910d0416cd60bbc3974990261b47d5cc8d448f1",
+      "selected_record_index": 1184,
+      "name": "宅阅读",
+      "kind": "text",
+      "host": "m.zydu3.com",
+      "previous_same_field_network_candidate": true,
+      "candidate_fields": [
+        {
+          "field": "ruleContent.content",
+          "sha256": "238082313c3d59c7954148a4c6eb2f64c613ca55dac17e11988b69d17f590425",
+          "metadata": false
+        }
+      ]
+    },
+    {
+      "source_id": "7c219f964cd8a9189e9d9597243d1f08866f6155fa1cd8d25ca8fd267b67fb85",
+      "selected_record_index": 3995,
+      "name": "中文看书（优）",
+      "kind": "text",
+      "host": "wap.zwkan.com",
+      "previous_same_field_network_candidate": false,
+      "candidate_fields": [
+        {
+          "field": "ruleContent.nextContentUrl",
+          "sha256": "732047bdd71dcd21df255736e6e1bcf4aa539528000b8e27f2b7544338af98e7",
+          "metadata": false
+        }
+      ]
+    },
+    {
+      "source_id": "6df213b17ffed2ae4e4dd3be29e078e307751dbeb57e4940ba7db5cbe8a79204",
+      "selected_record_index": 1195,
+      "name": "月亮小说",
+      "kind": "text",
+      "host": "yueliang25.buzz",
+      "previous_same_field_network_candidate": false,
+      "candidate_fields": [
+        {
+          "field": "bookSourceComment",
+          "sha256": "5f6f5c9ed92c928524a9be8c91d7dbdf444c93ce798533ed650e05f02d9f6886",
+          "metadata": true
+        },
+        {
+          "field": "ruleContent.content",
+          "sha256": "837aa137ece665d51977d62409ff4d72276e0bad80bfbfdccc3122145c15030d",
+          "metadata": false
+        }
+      ]
+    },
+    {
+      "source_id": "c5a61aaf895920956daeb6c5d98f359bbbc8e10817d18c8e8dca3be8f5b554de",
+      "selected_record_index": 1227,
+      "name": "国漫吧",
+      "kind": "comic",
+      "host": "www.guoman8.cc",
+      "previous_same_field_network_candidate": true,
+      "candidate_fields": [
+        {
+          "field": "ruleContent.content",
+          "sha256": "0026f7be18a5907db1fbd5f776904bc511370a6d39875ac3b10997041eb450c0",
+          "metadata": false
+        }
+      ]
+    },
+    {
+      "source_id": "a5c8022ce65de27681d680432f8b01c2b2e09d22ed4633f372f8d98250912e22",
+      "selected_record_index": 1228,
+      "name": "🗒 非常爱漫",
+      "kind": "comic",
+      "host": "wap.veryim.com",
+      "previous_same_field_network_candidate": false,
+      "candidate_fields": [
+        {
+          "field": "ruleContent.content",
+          "sha256": "b9e35303050e615f95616771254c681625b09b7cd460f1685c16700f303d322b",
+          "metadata": false
+        }
+      ]
+    },
+    {
+      "source_id": "4ba1ee353fc2132f9b0c4e13258c320bd3689f37a6b3a5afc7cc276e8f2522a4",
+      "selected_record_index": 1432,
+      "name": "🌐 兔九三网",
+      "kind": "text",
+      "host": "www.tu93.biz",
+      "previous_same_field_network_candidate": false,
+      "candidate_fields": [
+        {
+          "field": "ruleContent.nextContentUrl",
+          "sha256": "c33300939c5aa06113ec4b6d257ebfdcde3f0bed6f18c8060ecc2aff1be6a70e",
+          "metadata": false
+        }
+      ]
+    },
+    {
+      "source_id": "d5a9dc00da56f1932ab8bf3d43729cc08a561c9d9054f4bb630a0a4fed13e5bf",
+      "selected_record_index": 1671,
+      "name": "西瓜小说",
+      "kind": "text",
+      "host": "xgmf.zuanqianyi.com",
+      "previous_same_field_network_candidate": false,
+      "candidate_fields": [
+        {
+          "field": "exploreUrl",
+          "sha256": "3deaefc9a87256e60216d569e90996b011d6a1837e446a92acf648f45f4a374c",
+          "metadata": false
+        },
+        {
+          "field": "ruleBookInfo.tocUrl",
+          "sha256": "0305374268c3a53efc588e9308ced53b1db45bee4dc627f4e29bafb27ec9e07d",
+          "metadata": false
+        },
+        {
+          "field": "ruleSearch.bookUrl",
+          "sha256": "a14b1812791611c612ef360c6132fd95cd0e899bf5648cb075f8a0d1d9ce262b",
+          "metadata": false
+        },
+        {
+          "field": "searchUrl",
+          "sha256": "8b5b418536def41077c08547240bc7345c2331bb32262a62f3d5547ca2d7a6da",
+          "metadata": false
+        }
+      ]
+    },
+    {
+      "source_id": "4b71a54fd5ba1e8077fd5687e123ef0731b8f4baeef8b75d1ac4b93b9906a3b3",
+      "selected_record_index": 3836,
+      "name": "海普文学",
+      "kind": "text",
+      "host": "www.haipu-xs.com",
+      "previous_same_field_network_candidate": false,
+      "candidate_fields": [
+        {
+          "field": "ruleContent.content",
+          "sha256": "5cde25452e0d6aed7a9dac09b389e75d70f15827e4f6aa92f7fba6f0dd75b2fb",
+          "metadata": false
+        }
+      ]
+    },
+    {
+      "source_id": "dd20c02ee9937525898be0bbdadb09e31a4b5da887c99fe99a4ec100ef2ffb0f",
+      "selected_record_index": 1787,
+      "name": "🎨爱看韩漫🔞",
+      "kind": "comic",
+      "host": "www.ikanhm.top",
+      "previous_same_field_network_candidate": false,
+      "candidate_fields": [
+        {
+          "field": "ruleBookInfo.init",
+          "sha256": "dc9b5cca64cb48bcc741d23f810434884c7635f303a5280cd895a04fb1b5421b",
+          "metadata": false
+        },
+        {
+          "field": "ruleExplore.name",
+          "sha256": "1690a278f6b300bb66eea5a5df8a17fab44c3be1b64e5fce0ed6dffd2a31bf41",
+          "metadata": false
+        },
+        {
+          "field": "ruleSearch.name",
+          "sha256": "1690a278f6b300bb66eea5a5df8a17fab44c3be1b64e5fce0ed6dffd2a31bf41",
+          "metadata": false
+        }
+      ]
+    },
+    {
+      "source_id": "09ab5c51cd9ae2d950ca405915a0531c580ddaf24c9363159e4cbc33ca44dcb0",
+      "selected_record_index": 1788,
+      "name": "🎨 UU韩漫",
+      "kind": "comic",
+      "host": "www.uuhanman.com",
+      "previous_same_field_network_candidate": false,
+      "candidate_fields": [
+        {
+          "field": "ruleBookInfo.init",
+          "sha256": "0dec497430b6ddb152eb0a1612765ee4f20f22e61025c48af7a874c29f61c5b5",
+          "metadata": false
+        },
+        {
+          "field": "ruleContent.content",
+          "sha256": "14a5debc63ddbd8819e2c11296700ce9dd64ff15b40e11c613df4bd6547dd1e9",
+          "metadata": false
+        },
+        {
+          "field": "ruleSearch.bookList",
+          "sha256": "a259eee34f4e5427e3f95b1e5d9e590d79eafb9100fd0237781642012c13345a",
+          "metadata": false
+        },
+        {
+          "field": "ruleSearch.name",
+          "sha256": "bdca85937082a93004a89aa2ac0fa59dc6564d446cde446b302515dcd507cf92",
+          "metadata": false
+        },
+        {
+          "field": "ruleToc.chapterList",
+          "sha256": "67b0fc238631d47aa22b3cd908d73c9ddb1d611c0ff2c1a5c0a4842e71ac8207",
+          "metadata": false
+        },
+        {
+          "field": "searchUrl",
+          "sha256": "3290b522298d77768874e70a50f7da9f04d985e3db3681918d94cc5bb4ba929d",
+          "metadata": false
+        }
+      ]
+    },
+    {
+      "source_id": "c729cacd51b1a7b0206da191860e280572cddc57bb9ce2d5d41447a7b89edc82",
+      "selected_record_index": 1794,
+      "name": "123读书",
+      "kind": "text",
+      "host": "m.123du.vip",
+      "previous_same_field_network_candidate": true,
+      "candidate_fields": [
+        {
+          "field": "bookSourceComment",
+          "sha256": "315056a018d4e9853964dd859a9bf53c407d72c6dc09e7bd7f1d631ac101262c",
+          "metadata": true
+        },
+        {
+          "field": "ruleContent.content",
+          "sha256": "3cdc030a37e1bdca4e8b748ae4d8f5be29f182ce2575275787f6a8adcb5bbb13",
+          "metadata": false
+        },
+        {
+          "field": "ruleSearch.bookList",
+          "sha256": "5f1f8ac565e82d32973b3b3e76ad1a586ab009767d35b0059ad85e7a15df0127",
+          "metadata": false
+        }
+      ]
+    },
+    {
+      "source_id": "5b56c06bef1c17d73dc6417d6367f80c72cbf7d8ce516e58dbefe62a523d7bb9",
+      "selected_record_index": 2088,
+      "name": "顶点小说36",
+      "kind": "text",
+      "host": "www.qklady.com",
+      "previous_same_field_network_candidate": true,
+      "candidate_fields": [
+        {
+          "field": "ruleContent.content",
+          "sha256": "ac9680c416974cdf8fbb431080a9daf70d2149b93dec3d8896af26d9ff29056c",
+          "metadata": false
+        },
+        {
+          "field": "ruleSearch.bookList",
+          "sha256": "05d278961cebf19bbb24b9a081124d8457271f1fc6d3cffb037606f34285e8f1",
+          "metadata": false
+        }
+      ]
+    },
+    {
+      "source_id": "b37f63bfa731a939acc214b41916fb8bd0dc4f1c599343f397fc3e779feef2ad",
+      "selected_record_index": 2128,
+      "name": "快看漫画M",
+      "kind": "comic",
+      "host": "m.kuaikanmanhua.com",
+      "previous_same_field_network_candidate": false,
+      "candidate_fields": [
+        {
+          "field": "ruleBookInfo.author",
+          "sha256": "b1291a263a5d30aef6f9f9f1e6527035d7f05b49fe6fbeefe7eab42109bbcef0",
+          "metadata": false
+        },
+        {
+          "field": "ruleBookInfo.coverUrl",
+          "sha256": "513b681971c60d397666f88835a808774f3fbda438fde96a1663ebbb94ad8f97",
+          "metadata": false
+        },
+        {
+          "field": "ruleBookInfo.intro",
+          "sha256": "b1345ba7c2c5078ae85dd5781cd630baa9f194b5f26e20cc5686323968d9a258",
+          "metadata": false
+        },
+        {
+          "field": "ruleBookInfo.kind",
+          "sha256": "2995f6c27187c854f166f2e58b0071403f2a90a4008cf5a1c462c62f10300555",
+          "metadata": false
+        },
+        {
+          "field": "ruleBookInfo.lastChapter",
+          "sha256": "add2e23155707a9f54cf32dd9d7add34169e589388dab4ba875ef48c7f9e935e",
+          "metadata": false
+        },
+        {
+          "field": "ruleBookInfo.name",
+          "sha256": "fdb69981f90e44c670f6c9fb2480fad82511bc6c3e42f40b96cbe6c00576f7f0",
+          "metadata": false
+        },
+        {
+          "field": "ruleToc.chapterList",
+          "sha256": "fa794b49a04305aa105da88c3fe56e2fba89fca96973eb0b06f56f6cd4fabd51",
+          "metadata": false
+        }
+      ]
+    },
+    {
+      "source_id": "c2ec652cb7d1e3eacdee18897a94f498180ffab56185395df6d099d60f72cc59",
+      "selected_record_index": 2136,
+      "name": "大树漫画",
+      "kind": "comic",
+      "host": "www.dashuhuwai.com",
+      "previous_same_field_network_candidate": false,
+      "candidate_fields": [
+        {
+          "field": "ruleContent.content",
+          "sha256": "2bac062eb7f6343ab24901b04c5c8e1aee2e3873ebf8cbc87d66817526ca3bf8",
+          "metadata": false
+        }
+      ]
+    },
+    {
+      "source_id": "81b5e9abb41ac6f954d1463131b8c2eb3dff978ddc8fe41d5576039a8984b493",
+      "selected_record_index": 4152,
+      "name": "腾讯漫画",
+      "kind": "comic",
+      "host": "m.ac.qq.com",
+      "previous_same_field_network_candidate": false,
+      "candidate_fields": [
+        {
+          "field": "ruleContent.content",
+          "sha256": "3a3b58b88fe06502bd4dc8af190c56db87b07e56f6a47ad48153d018d9b30f6e",
+          "metadata": false
+        }
+      ]
+    },
+    {
+      "source_id": "8a0a93a7b076441b2a4fa620b7d3029f8f1e550d1ffdb7ba66b41a39e21fb8d8",
+      "selected_record_index": 2176,
+      "name": "八极漫画",
+      "kind": "comic",
+      "host": "www.8jj.com",
+      "previous_same_field_network_candidate": true,
+      "candidate_fields": [
+        {
+          "field": "ruleContent.content",
+          "sha256": "562be97529d59dbc72508a94e0d764e5ab3698af648f390b3cac69e11bb1b8ce",
+          "metadata": false
+        }
+      ]
+    },
+    {
+      "source_id": "0c6317e420614be60b383b06e99c8967ed905eb88a604a5c82baf1b25e0d078f",
+      "selected_record_index": 2247,
+      "name": "🚬 鄱阳镇庭",
+      "kind": "text",
+      "host": "www.pyzht.com",
+      "previous_same_field_network_candidate": false,
+      "candidate_fields": [
+        {
+          "field": "ruleContent.content",
+          "sha256": "2d21e8ffa3affa4ecbac39d2b9aeff3db80f6ea09295eaabad8f80777054a858",
+          "metadata": false
+        }
+      ]
+    },
+    {
+      "source_id": "d549d6282a2b8eeb609ed61376fe93fcaa400a09614a994d0705919738b707c6",
+      "selected_record_index": 2504,
+      "name": "️顶点小说️",
+      "kind": "text",
+      "host": "wap.maxreader.la",
+      "previous_same_field_network_candidate": true,
+      "candidate_fields": [
+        {
+          "field": "ruleContent.content",
+          "sha256": "69e6c517ff5f44aabc2ac60dd5252eb364bd47bab644640815c9d64d4e86dd93",
+          "metadata": false
+        },
+        {
+          "field": "ruleSearch.bookList",
+          "sha256": "278da888c3dc13cc2acfbcd2eb238c22e8cc4f0081331e09774f466aadc053a8",
+          "metadata": false
+        }
+      ]
+    },
+    {
+      "source_id": "7f363e8297495506f43a5bc548143c69c868dc47d26eef54e35e9c8d315597dc",
+      "selected_record_index": 3067,
+      "name": "🎧 有声听书吧(修复)",
+      "kind": "audio",
+      "host": "m.ysts8.net",
+      "previous_same_field_network_candidate": true,
+      "candidate_fields": [
+        {
+          "field": "ruleContent.content",
+          "sha256": "64bf3a9d333a6cebe5a5fcb04d2887fc463ed9fb04a1fb6db996b10b30893b0a",
+          "metadata": false
+        }
+      ]
+    },
+    {
+      "source_id": "d42b3f150f0db2fa541f1890f34fb092a51ac9a4767c4915b62cc99ef3cbca2f",
+      "selected_record_index": 3105,
+      "name": "易文台",
+      "kind": "text",
+      "host": "m.ewentai.com",
+      "previous_same_field_network_candidate": true,
+      "candidate_fields": [
+        {
+          "field": "ruleContent.content",
+          "sha256": "238082313c3d59c7954148a4c6eb2f64c613ca55dac17e11988b69d17f590425",
+          "metadata": false
+        }
+      ]
+    },
+    {
+      "source_id": "98fcf05ed0532fbc1b454978342e175778dca19487b035e9de343a51db344bde",
+      "selected_record_index": 3219,
+      "name": "🎨 爱看漫画",
+      "kind": "comic",
+      "host": "wap.65dm.com",
+      "previous_same_field_network_candidate": false,
+      "candidate_fields": [
+        {
+          "field": "ruleContent.content",
+          "sha256": "6468bfafec6bb7c45b7319e3ab8f4700993f67f67d9c85714dbb29149b1dadc3",
+          "metadata": false
+        }
+      ]
+    },
+    {
+      "source_id": "87bbe3f9815a4b29df053bed743d3277e3edcb124005d8fe3f03f487db3d0c8e",
+      "selected_record_index": 3322,
+      "name": "✐ 八极漫画 #Haxc",
+      "kind": "comic",
+      "host": "www.8jj.com",
+      "previous_same_field_network_candidate": true,
+      "candidate_fields": [
+        {
+          "field": "ruleContent.content",
+          "sha256": "562be97529d59dbc72508a94e0d764e5ab3698af648f390b3cac69e11bb1b8ce",
+          "metadata": false
+        }
+      ]
+    },
+    {
+      "source_id": "05deac0477e3afe63fb2767a1a893a01f7fcc4635a3b22fa11e36e07eb529035",
+      "selected_record_index": 4157,
+      "name": "腾讯漫画",
+      "kind": "comic",
+      "host": "m.ac.qq.com",
+      "previous_same_field_network_candidate": false,
+      "candidate_fields": [
+        {
+          "field": "ruleContent.content",
+          "sha256": "3a3b58b88fe06502bd4dc8af190c56db87b07e56f6a47ad48153d018d9b30f6e",
+          "metadata": false
+        }
+      ]
+    },
+    {
+      "source_id": "09e92e62859b1171da90310ed28f1985e224e4d9dbf371720d4a00e8bc63862a",
+      "selected_record_index": 3466,
+      "name": "🗂🙈梦游漫画🚩",
+      "kind": "comic",
+      "host": "www.mumumh.com",
+      "previous_same_field_network_candidate": false,
+      "candidate_fields": [
+        {
+          "field": "ruleBookInfo.init",
+          "sha256": "5ce9a3c5a7e0dab4759ff9aaf306b58e787421769b171bb9b49d7d08bc55caa6",
+          "metadata": false
+        },
+        {
+          "field": "searchUrl",
+          "sha256": "3b02797660b6c04ef2aefb1523f6d7b6f805315ca5baad71c3d054cf97923c56",
+          "metadata": false
+        }
+      ]
+    },
+    {
+      "source_id": "b6d2bbf620cb376b60bbadd9814c0a466f554b704b017dbeda592dcb31114b06",
+      "selected_record_index": 4083,
+      "name": "书单推荐（优+）",
+      "kind": "text",
+      "host": "www.yuque.com",
+      "previous_same_field_network_candidate": true,
+      "candidate_fields": [
+        {
+          "field": "bookSourceComment",
+          "sha256": "77a82a89401ee34e1f8f2e6c1e0566f2b9e92a94d5df4cc439347b6d0d321881",
+          "metadata": true
+        },
+        {
+          "field": "loginUrl",
+          "sha256": "42fa044333b2645ca0f8556b5ae9e638c1736270cfd4387bf3b3a9ad34ffd764",
+          "metadata": false
+        },
+        {
+          "field": "ruleBookInfo.name",
+          "sha256": "7b6e6c86490c47299d34e1d38daf1aa6ff93d7b1f09937eac2a70be658be6c86",
+          "metadata": false
+        },
+        {
+          "field": "ruleExplore.bookList",
+          "sha256": "93bf5b5fdd5dc720d6ca976217472fe14dfc2968257ada5fa4ae66bfc624df57",
+          "metadata": false
+        },
+        {
+          "field": "ruleSearch.bookList",
+          "sha256": "93bf5b5fdd5dc720d6ca976217472fe14dfc2968257ada5fa4ae66bfc624df57",
+          "metadata": false
+        }
+      ]
+    },
+    {
+      "source_id": "6a3ec699b1bd26d6a73afc8a7e41693cb3d3bf6dc5da47a9a4bcfc38f4f7fa56",
+      "selected_record_index": 3551,
+      "name": "🗂🙈久久漫画",
+      "kind": "comic",
+      "host": "99hanman.top",
+      "previous_same_field_network_candidate": false,
+      "candidate_fields": [
+        {
+          "field": "ruleBookInfo.init",
+          "sha256": "faed458247fc04f901781e49db4303b0d8ebad20bf312e14c280edabebf52012",
+          "metadata": false
+        },
+        {
+          "field": "ruleExplore.bookList",
+          "sha256": "8fb7655c8f885b393c076e6ad72abba43042327b421dd2e5fe9c149b4d91d891",
+          "metadata": false
+        }
+      ]
+    },
+    {
+      "source_id": "21cf1ffe5a442a8bb29ab23d497abe50998a9f957286a59e4f1806ba3ee5af4c",
+      "selected_record_index": 3552,
+      "name": "🗂🙈顶通漫画🚩",
+      "kind": "comic",
+      "host": "toptoon.buzz",
+      "previous_same_field_network_candidate": false,
+      "candidate_fields": [
+        {
+          "field": "ruleBookInfo.init",
+          "sha256": "0d9170f8c1597f2c7e7c684d7784c0e1528efb9dafe5fe7d6b1184a930397a73",
+          "metadata": false
+        },
+        {
+          "field": "ruleExplore.bookList",
+          "sha256": "9055cf56ec0f89e703eb10bd6ac220982a4de7eeb52d7b7950dac7aeae5323b5",
+          "metadata": false
+        },
+        {
+          "field": "ruleSearch.bookList",
+          "sha256": "b86ffb7ccd9b0b0f5c70f948e1b105be2ff21531f04c6c8efe518994b314ed79",
+          "metadata": false
+        },
+        {
+          "field": "searchUrl",
+          "sha256": "28e9a0391c84a3ec92bc929897f4dc00d49c9fd6cc8f8ee35015059c14fa256f",
+          "metadata": false
+        }
+      ]
+    },
+    {
+      "source_id": "3d30aadf74d4922a3f67eb0370b95653b44bef0121f268677fbad12e53e001e6",
+      "selected_record_index": 4829,
+      "name": "久久漫画",
+      "kind": "comic",
+      "host": "www.jjmhw.cc",
+      "previous_same_field_network_candidate": false,
+      "candidate_fields": [
+        {
+          "field": "ruleBookInfo.init",
+          "sha256": "a9671301051b270b7e76925b01299f3220c993d79e168b772b8106e6a9c4ff9c",
+          "metadata": false
+        },
+        {
+          "field": "ruleExplore.name",
+          "sha256": "4ee6bc78b39eb5297f6d6f19b4898ba1d6e6d2082eeaaac380161924439166f5",
+          "metadata": false
+        },
+        {
+          "field": "ruleSearch.author",
+          "sha256": "8d5406b22cf77a956d7b129eefdd1da1e5cecb4280a7d2b6e52c883e1f1ba23b",
+          "metadata": false
+        },
+        {
+          "field": "ruleSearch.name",
+          "sha256": "56f7513fa860da9a95e8436774315ddf44bd140f98a020a09678e22f95ba8be2",
+          "metadata": false
+        }
+      ]
+    },
+    {
+      "source_id": "6925366f12c659540daf91385af2b0d10441116246abd442a2e62417e38d1ae0",
+      "selected_record_index": 3760,
+      "name": "🎨快看漫画",
+      "kind": "text",
+      "host": "m.kuaikanmanhua.com",
+      "previous_same_field_network_candidate": false,
+      "candidate_fields": [
+        {
+          "field": "ruleBookInfo.author",
+          "sha256": "b1291a263a5d30aef6f9f9f1e6527035d7f05b49fe6fbeefe7eab42109bbcef0",
+          "metadata": false
+        },
+        {
+          "field": "ruleBookInfo.coverUrl",
+          "sha256": "513b681971c60d397666f88835a808774f3fbda438fde96a1663ebbb94ad8f97",
+          "metadata": false
+        },
+        {
+          "field": "ruleBookInfo.intro",
+          "sha256": "b1345ba7c2c5078ae85dd5781cd630baa9f194b5f26e20cc5686323968d9a258",
+          "metadata": false
+        },
+        {
+          "field": "ruleBookInfo.kind",
+          "sha256": "2995f6c27187c854f166f2e58b0071403f2a90a4008cf5a1c462c62f10300555",
+          "metadata": false
+        },
+        {
+          "field": "ruleBookInfo.lastChapter",
+          "sha256": "add2e23155707a9f54cf32dd9d7add34169e589388dab4ba875ef48c7f9e935e",
+          "metadata": false
+        },
+        {
+          "field": "ruleBookInfo.name",
+          "sha256": "fdb69981f90e44c670f6c9fb2480fad82511bc6c3e42f40b96cbe6c00576f7f0",
+          "metadata": false
+        },
+        {
+          "field": "ruleToc.chapterList",
+          "sha256": "fa794b49a04305aa105da88c3fe56e2fba89fca96973eb0b06f56f6cd4fabd51",
+          "metadata": false
+        }
+      ]
+    },
+    {
+      "source_id": "e34ec8773a9504c0d2ecd8fd34426aeeb25cfa8862ea602b9315fca4cace1fe9",
+      "selected_record_index": 3926,
+      "name": "得奇小说（优+++）",
+      "kind": "text",
+      "host": "www.deqixs.co",
+      "previous_same_field_network_candidate": true,
+      "candidate_fields": [
+        {
+          "field": "ruleBookInfo.wordCount",
+          "sha256": "0be8f8149eae8a31e3b755016766d2100a82a08775cb5aae39895061e7ee6477",
+          "metadata": false
+        },
+        {
+          "field": "ruleContent.content",
+          "sha256": "74e6b3458909b604a15df5c482c949e13f601809219d9f48ef6c387069db6d14",
+          "metadata": false
+        },
+        {
+          "field": "ruleSearch.wordCount",
+          "sha256": "9b61c335ff5523cfff92e2c8d3b3151eef05c525bbba14cc50b17935cfc46894",
+          "metadata": false
+        }
+      ]
+    },
+    {
+      "source_id": "52bdabf4fd6516215012e5337da4c77db9f97eeca42ae711be04f0df4e516265",
+      "selected_record_index": 3927,
+      "name": "蓝批小说（优+++）",
+      "kind": "text",
+      "host": "www.pixiv.net",
+      "previous_same_field_network_candidate": true,
+      "candidate_fields": [
+        {
+          "field": "loginCheckJs",
+          "sha256": "ccbef0058d12a1f67e87c118ca2315fbc1c56b69041d0a00172531149c06ceaf",
+          "metadata": false
+        },
+        {
+          "field": "loginUrl",
+          "sha256": "4d593d0bbd1f8ac413e793c85d51fe63e33fa04d00ccba412ceb47fd9a65dc2a",
+          "metadata": false
+        },
+        {
+          "field": "ruleBookInfo.init",
+          "sha256": "d81e1ed311b3baf6982ee3284c5937901a7f9797322bd9980517e2bc08a2f038",
+          "metadata": false
+        },
+        {
+          "field": "ruleContent.content",
+          "sha256": "fefdc43e9df2f1fd31e4f5575411b7dd4aabe4eb73076332297e6359c46102ea",
+          "metadata": false
+        },
+        {
+          "field": "ruleExplore.bookList",
+          "sha256": "f6bdccb6e1c1c1bbb49b6cdbe10b2e3484b356bdc9c1cc4cebdf93019e118971",
+          "metadata": false
+        },
+        {
+          "field": "ruleSearch.bookList",
+          "sha256": "738bdbb87b50496beb9593722f16f3ee031e744d9b928fc138ad0db2d753bab2",
+          "metadata": false
+        },
+        {
+          "field": "ruleToc.chapterList",
+          "sha256": "a5c5b47e1b6c1677f79f0a151d61e40e3c07121ef4fb92591471471b631abc37",
+          "metadata": false
+        }
+      ]
+    },
+    {
+      "source_id": "ea6552b459b382df81cfb628141fb764bb5c5f3aab07dba59f3ba00eec5eec58",
+      "selected_record_index": 3973,
+      "name": "狸猫故事（优+）",
+      "kind": "text",
+      "host": "www.limaogushi.com",
+      "previous_same_field_network_candidate": true,
+      "candidate_fields": [
+        {
+          "field": "ruleContent.content",
+          "sha256": "4c8b690d38383c5e9b4d5fbca03a856820d566a373b1f9aada4a399a404f2509",
+          "metadata": false
+        }
+      ]
+    },
+    {
+      "source_id": "c6a680ad8ca5c05ff54d21a1be6295ee51d5f963018d5f366f6685010c5c657e",
+      "selected_record_index": 4019,
+      "name": "笔趣小说（优）",
+      "kind": "text",
+      "host": "m.bqgcn.net",
+      "previous_same_field_network_candidate": false,
+      "candidate_fields": [
+        {
+          "field": "ruleContent.nextContentUrl",
+          "sha256": "f35e0e9d3653b1affe7a9fca632c3fd91175484d36cc90326d3e56568714a8a2",
+          "metadata": false
+        }
+      ]
+    },
+    {
+      "source_id": "ceccf4766c76a6f8509a26dbf96e0f126e0162a3453e8499a30ed7897a529111",
+      "selected_record_index": 4040,
+      "name": "蓝批漫画（优+++）",
+      "kind": "comic",
+      "host": "www.pixiv.net",
+      "previous_same_field_network_candidate": true,
+      "candidate_fields": [
+        {
+          "field": "loginCheckJs",
+          "sha256": "4bf31ad44898dbe5ac1d1f4dd74ef55afb5d76316d3212f0a00f15c8c5fce76c",
+          "metadata": false
+        },
+        {
+          "field": "ruleBookInfo.init",
+          "sha256": "1e10c9e6b6e33c6b3c10e1a090ef132ca151c194792f5f97285d3f58cee19e2f",
+          "metadata": false
+        },
+        {
+          "field": "ruleContent.content",
+          "sha256": "c1076ae9f8e7a152e5c4a72ad14a97ea000ea970348ec5fbe4bb4cf08d220878",
+          "metadata": false
+        },
+        {
+          "field": "ruleExplore.bookList",
+          "sha256": "f7aa73068c2fda8fca573458bec1cdb7f31ffa37e4d5827a5a6e881c2cc134ca",
+          "metadata": false
+        },
+        {
+          "field": "ruleSearch.bookList",
+          "sha256": "46fbd53d70e43a553a50f1a91bd72443d7dee7dc5b231a165796ec36c6a3952d",
+          "metadata": false
+        },
+        {
+          "field": "ruleToc.chapterList",
+          "sha256": "de68e44cc443b55e5bdeb1674b6636d861c6deedc80f389c1c29925d27860e7d",
+          "metadata": false
+        }
+      ]
+    },
+    {
+      "source_id": "76c77d9b49f6e4b12b8f5cebc48bb47e4020eac687bb2ef7eb2252c300f60757",
+      "selected_record_index": 4046,
+      "name": "如漫画网（优+）",
+      "kind": "comic",
+      "host": "m.rumanhua1.com",
+      "previous_same_field_network_candidate": false,
+      "candidate_fields": [
+        {
+          "field": "ruleContent.content",
+          "sha256": "1204297cf51eb5a75de21610a922ff607413b04a34c08647128b7c2371e28805",
+          "metadata": false
+        }
+      ]
+    },
+    {
+      "source_id": "c45aa7e0e9ad3450d57420b320887208945760a777c7fd1c4a63009bab5ebd5e",
+      "selected_record_index": 4052,
+      "name": "曼哈漫画（优+）",
+      "kind": "comic",
+      "host": "www.mangabz.com",
+      "previous_same_field_network_candidate": false,
+      "candidate_fields": [
+        {
+          "field": "ruleContent.content",
+          "sha256": "1eca465e14604b8f5655de7bc9c7c8b322b1a6838dd0ec22b4b1e49950aa9d3e",
+          "metadata": false
+        }
+      ]
+    },
+    {
+      "source_id": "c2c0e77e9063d96cbd6319c448da52a96b9ff43a320828f9fa3476b0b27b74ee",
+      "selected_record_index": 4151,
+      "name": "哔哩漫画（优+++）",
+      "kind": "comic",
+      "host": "manga.bilibili.com",
+      "previous_same_field_network_candidate": true,
+      "candidate_fields": [
+        {
+          "field": "loginCheckJs",
+          "sha256": "a7b2cbf4710b267001d2e58cd4984facd487f245187b0e596cdc19fdeeab733a",
+          "metadata": false
+        }
+      ]
+    },
+    {
+      "source_id": "9f37dae32a1e887ccd87f99fdd82b03b0f01eaab91a55f39801d3fa645f1d3b3",
+      "selected_record_index": 4153,
+      "name": "腾讯漫画",
+      "kind": "comic",
+      "host": "m.ac.qq.com",
+      "previous_same_field_network_candidate": false,
+      "candidate_fields": [
+        {
+          "field": "ruleContent.content",
+          "sha256": "3a3b58b88fe06502bd4dc8af190c56db87b07e56f6a47ad48153d018d9b30f6e",
+          "metadata": false
+        }
+      ]
+    },
+    {
+      "source_id": "b707317ac37705c041f1a9bdd3fec93bff4200fe80a0ad1687a924e211173e83",
+      "selected_record_index": 4156,
+      "name": "快看漫画",
+      "kind": "comic",
+      "host": "m.kuaikanmanhua.com",
+      "previous_same_field_network_candidate": false,
+      "candidate_fields": [
+        {
+          "field": "ruleBookInfo.author",
+          "sha256": "b1291a263a5d30aef6f9f9f1e6527035d7f05b49fe6fbeefe7eab42109bbcef0",
+          "metadata": false
+        },
+        {
+          "field": "ruleBookInfo.coverUrl",
+          "sha256": "513b681971c60d397666f88835a808774f3fbda438fde96a1663ebbb94ad8f97",
+          "metadata": false
+        },
+        {
+          "field": "ruleBookInfo.intro",
+          "sha256": "b1345ba7c2c5078ae85dd5781cd630baa9f194b5f26e20cc5686323968d9a258",
+          "metadata": false
+        },
+        {
+          "field": "ruleBookInfo.kind",
+          "sha256": "2995f6c27187c854f166f2e58b0071403f2a90a4008cf5a1c462c62f10300555",
+          "metadata": false
+        },
+        {
+          "field": "ruleBookInfo.lastChapter",
+          "sha256": "add2e23155707a9f54cf32dd9d7add34169e589388dab4ba875ef48c7f9e935e",
+          "metadata": false
+        },
+        {
+          "field": "ruleBookInfo.name",
+          "sha256": "fdb69981f90e44c670f6c9fb2480fad82511bc6c3e42f40b96cbe6c00576f7f0",
+          "metadata": false
+        },
+        {
+          "field": "ruleToc.chapterList",
+          "sha256": "fa794b49a04305aa105da88c3fe56e2fba89fca96973eb0b06f56f6cd4fabd51",
+          "metadata": false
+        }
+      ]
+    },
+    {
+      "source_id": "330b455a1e55345c266e9fd68eb8a0857a686d7df76ddc52616d89a2ea945d85",
+      "selected_record_index": 4158,
+      "name": "腾讯漫画",
+      "kind": "comic",
+      "host": "m.ac.qq.com",
+      "previous_same_field_network_candidate": false,
+      "candidate_fields": [
+        {
+          "field": "ruleContent.content",
+          "sha256": "3a3b58b88fe06502bd4dc8af190c56db87b07e56f6a47ad48153d018d9b30f6e",
+          "metadata": false
+        }
+      ]
+    },
+    {
+      "source_id": "a1e51933faa330fd4664297f43dbfd6cdff594dcf59a1d42bfc2b32a951574c6",
+      "selected_record_index": 4159,
+      "name": "快看漫画",
+      "kind": "comic",
+      "host": "m.kuaikanmanhua.com",
+      "previous_same_field_network_candidate": false,
+      "candidate_fields": [
+        {
+          "field": "ruleBookInfo.author",
+          "sha256": "b1291a263a5d30aef6f9f9f1e6527035d7f05b49fe6fbeefe7eab42109bbcef0",
+          "metadata": false
+        },
+        {
+          "field": "ruleBookInfo.coverUrl",
+          "sha256": "513b681971c60d397666f88835a808774f3fbda438fde96a1663ebbb94ad8f97",
+          "metadata": false
+        },
+        {
+          "field": "ruleBookInfo.intro",
+          "sha256": "b1345ba7c2c5078ae85dd5781cd630baa9f194b5f26e20cc5686323968d9a258",
+          "metadata": false
+        },
+        {
+          "field": "ruleBookInfo.kind",
+          "sha256": "2995f6c27187c854f166f2e58b0071403f2a90a4008cf5a1c462c62f10300555",
+          "metadata": false
+        },
+        {
+          "field": "ruleBookInfo.lastChapter",
+          "sha256": "add2e23155707a9f54cf32dd9d7add34169e589388dab4ba875ef48c7f9e935e",
+          "metadata": false
+        },
+        {
+          "field": "ruleBookInfo.name",
+          "sha256": "fdb69981f90e44c670f6c9fb2480fad82511bc6c3e42f40b96cbe6c00576f7f0",
+          "metadata": false
+        },
+        {
+          "field": "ruleToc.chapterList",
+          "sha256": "fa794b49a04305aa105da88c3fe56e2fba89fca96973eb0b06f56f6cd4fabd51",
+          "metadata": false
+        }
+      ]
+    },
+    {
+      "source_id": "a671019d19e09c5e8342a3a199fb865bcd21356b573e38934a92dad76988affa",
+      "selected_record_index": 4161,
+      "name": "酸奶漫画",
+      "kind": "comic",
+      "host": "m.1kkk.com",
+      "previous_same_field_network_candidate": false,
+      "candidate_fields": [
+        {
+          "field": "ruleContent.content",
+          "sha256": "69b080f669919220f89fbe265315036bb4cd12fa595f054b80e2d82f7572798e",
+          "metadata": false
+        }
+      ]
+    },
+    {
+      "source_id": "31683e41bed33261bc4e6a64b7dd0b256a76bfefc3ea835b39b7e35a596001c4",
+      "selected_record_index": 4221,
+      "name": "全本小说🎃#2",
+      "kind": "text",
+      "host": "www.quanben5.com",
+      "previous_same_field_network_candidate": false,
+      "candidate_fields": [
+        {
+          "field": "ruleSearch.bookList",
+          "sha256": "0b5459197ae724493e2d7aabe6f78a5bc9fcd6d6a753bff6b7319d72ae3ded25",
+          "metadata": false
+        }
+      ]
+    },
+    {
+      "source_id": "924ae7d6b668f0e1eb7447fec63defd4ddff4163107b3b56697688add09f1ed6",
+      "selected_record_index": 4271,
+      "name": "闲看🎃",
+      "kind": "text",
+      "host": "nav.jijia-co.com",
+      "previous_same_field_network_candidate": false,
+      "candidate_fields": [
+        {
+          "field": "ruleContent.content",
+          "sha256": "97447b6a69e2a673282c69876b889e0439f10bce8021e3e5a4abf700c202e266",
+          "metadata": false
+        }
+      ]
+    },
+    {
+      "source_id": "d711545a4170d4839f9018c07f9fba452fb131f3d5bf0a9fe9aa0793947f3181",
+      "selected_record_index": 4278,
+      "name": "闲看小说",
+      "kind": "text",
+      "host": "nav.jijia-co.com",
+      "previous_same_field_network_candidate": false,
+      "candidate_fields": [
+        {
+          "field": "ruleContent.content",
+          "sha256": "97447b6a69e2a673282c69876b889e0439f10bce8021e3e5a4abf700c202e266",
+          "metadata": false
+        }
+      ]
+    },
+    {
+      "source_id": "0165ccae84fe72d64f57b258b38cd2a30b31d3a910f872f920e9b00efa6ceeb1",
+      "selected_record_index": 4317,
+      "name": "闲看小说",
+      "kind": "text",
+      "host": "nav.jijia-co.com",
+      "previous_same_field_network_candidate": false,
+      "candidate_fields": [
+        {
+          "field": "ruleContent.content",
+          "sha256": "97447b6a69e2a673282c69876b889e0439f10bce8021e3e5a4abf700c202e266",
+          "metadata": false
+        }
+      ]
+    },
+    {
+      "source_id": "a3b45714b6eb7310667fdd429a7953b655666c6781214b69a219e3d526a88d0e",
+      "selected_record_index": 4373,
+      "name": "凤凰网书城",
+      "kind": "text",
+      "host": "androidapi4.yc.ifeng.com",
+      "previous_same_field_network_candidate": true,
+      "candidate_fields": [
+        {
+          "field": "ruleContent.content",
+          "sha256": "3f27aca1e9577ea7e1f6aa0653f3bff005ec4b41b98f82617a5bc7d77af2f470",
+          "metadata": false
+        }
+      ]
+    },
+    {
+      "source_id": "770edfb7d285da0655ca662bb64caed3c9137ae70435c1092080dcc18ef0e616",
+      "selected_record_index": 4415,
+      "name": "月亮小说，字体解密〖𝕄𝕦〗#书源.com",
+      "kind": "text",
+      "host": "ylxs.de",
+      "previous_same_field_network_candidate": false,
+      "candidate_fields": [
+        {
+          "field": "ruleSearch.name",
+          "sha256": "ca01f630760c262784c38e5c022addddf3427292ce0ff2ee6775fd7cc13b477b",
+          "metadata": false
+        }
+      ]
+    },
+    {
+      "source_id": "5d62bdffeb682308c60195899c22524ea2d1df4967e3b3ed04360e1ce4d2ea04",
+      "selected_record_index": 4497,
+      "name": "涩涩俱乐部",
+      "kind": "text",
+      "host": "seseclub.com",
+      "previous_same_field_network_candidate": false,
+      "candidate_fields": [
+        {
+          "field": "ruleContent.replaceRegex",
+          "sha256": "990dc07a61ca8080a13f1d2dadfdf686accd9e65bb9d876c4762c3d121b79e02",
+          "metadata": false
+        }
+      ]
+    },
+    {
+      "source_id": "abee5694234410c1f236d7693298936d347e4fca19363934cc749f0279ba41e5",
+      "selected_record_index": 4509,
+      "name": "✈️ 涩涩俱乐部-九梦#书源.com",
+      "kind": "text",
+      "host": "novel.seseclub.com",
+      "previous_same_field_network_candidate": false,
+      "candidate_fields": [
+        {
+          "field": "ruleContent.replaceRegex",
+          "sha256": "990dc07a61ca8080a13f1d2dadfdf686accd9e65bb9d876c4762c3d121b79e02",
+          "metadata": false
+        }
+      ]
+    },
+    {
+      "source_id": "4b0ec0be6dad7da09ae3d8b549300a0135032595108ff11c5b6910977ae1a592",
+      "selected_record_index": 4559,
+      "name": "️全本小说网",
+      "kind": "text",
+      "host": "www.quanben-xiaoshuo.net",
+      "previous_same_field_network_candidate": false,
+      "candidate_fields": [
+        {
+          "field": "ruleSearch.bookList",
+          "sha256": "78bce775a2f84d9344fbd713d82ac28d698887391a8a12aca7d9c3fd4b9ebc20",
+          "metadata": false
+        }
+      ]
+    },
+    {
+      "source_id": "bfc909dad4bafa2c0d84645fae168ffe942e35ac3d7fa55caefb9ed57d236d20",
+      "selected_record_index": 4579,
+      "name": "全本小说",
+      "kind": "text",
+      "host": "www.quanben5.com",
+      "previous_same_field_network_candidate": false,
+      "candidate_fields": [
+        {
+          "field": "ruleSearch.bookList",
+          "sha256": "0b5459197ae724493e2d7aabe6f78a5bc9fcd6d6a753bff6b7319d72ae3ded25",
+          "metadata": false
+        }
+      ]
+    },
+    {
+      "source_id": "83842c07ccfa0551e6ecc41f653f7d41339560df994a8d81ccadb48858f92852",
+      "selected_record_index": 4665,
+      "name": "🎃️全本小说网🎃",
+      "kind": "text",
+      "host": "www.quanben-xiaoshuo.net",
+      "previous_same_field_network_candidate": false,
+      "candidate_fields": [
+        {
+          "field": "ruleSearch.bookList",
+          "sha256": "78bce775a2f84d9344fbd713d82ac28d698887391a8a12aca7d9c3fd4b9ebc20",
+          "metadata": false
+        }
+      ]
+    },
+    {
+      "source_id": "55bae9ff93543b52d278ed88d5935d16bc64b85b915ff6555f4b5179e87901ac",
+      "selected_record_index": 4712,
+      "name": "看情言小说网🎃",
+      "kind": "text",
+      "host": "www.gaoyuantong.com",
+      "previous_same_field_network_candidate": false,
+      "candidate_fields": [
+        {
+          "field": "ruleContent.content",
+          "sha256": "10e888c21a834a8d84e6bbc2f70584fa2de4757e3a3cf41cdf6aa4c6aae44308",
+          "metadata": false
+        }
+      ]
+    },
+    {
+      "source_id": "c7189c3677f1a8769025b6b7fb860965e6062d4d87988829447cb762900023d7",
+      "selected_record_index": 4762,
+      "name": "看情言小说网",
+      "kind": "text",
+      "host": "www.gaoyuantong.com",
+      "previous_same_field_network_candidate": false,
+      "candidate_fields": [
+        {
+          "field": "ruleContent.content",
+          "sha256": "10e888c21a834a8d84e6bbc2f70584fa2de4757e3a3cf41cdf6aa4c6aae44308",
+          "metadata": false
+        }
+      ]
+    },
+    {
+      "source_id": "e0a87815850a94f8d9d43e9bea15de0432d5808f185010532ff13f6dd8a6c8fe",
+      "selected_record_index": 4813,
+      "name": "希望中文",
+      "kind": "text",
+      "host": "m.5xw.net",
+      "previous_same_field_network_candidate": true,
+      "candidate_fields": [
+        {
+          "field": "bookSourceComment",
+          "sha256": "1cb0c7ef4a06a125695f3c29c8aebf901014fd61a0b1c3f5995c0fb8e01ded77",
+          "metadata": true
+        },
+        {
+          "field": "ruleContent.content",
+          "sha256": "3cdc030a37e1bdca4e8b748ae4d8f5be29f182ce2575275787f6a8adcb5bbb13",
+          "metadata": false
+        },
+        {
+          "field": "ruleSearch.bookList",
+          "sha256": "5f1f8ac565e82d32973b3b3e76ad1a586ab009767d35b0059ad85e7a15df0127",
+          "metadata": false
+        }
+      ]
+    },
+    {
+      "source_id": "11ca79fda2aff1f2223dbd15183282b3aef864055aef98052caf5c38a3f43645",
+      "selected_record_index": 4817,
+      "name": "（favcomic）喜漫漫画",
+      "kind": "comic",
+      "host": "www.favcomic.net",
+      "previous_same_field_network_candidate": true,
+      "candidate_fields": [
+        {
+          "field": "ruleContent.content",
+          "sha256": "d0a760cd348d32b7f2186590e451c40f2db4647495989b7a2ef472c12d67c9a0",
+          "metadata": false
+        }
+      ]
+    },
+    {
+      "source_id": "e4478855eb2b4b0fea080a6ec8db6768baf313d957c15eb2d206e0de2a8855ae",
+      "selected_record_index": 4826,
+      "name": "📚豆瓣阅读",
+      "kind": "text",
+      "host": "read.douban.com",
+      "previous_same_field_network_candidate": true,
+      "candidate_fields": [
+        {
+          "field": "ruleContent.content",
+          "sha256": "25eb6b9292645ef1e452e118dbb69301fa72520f22a730e645e681ab9bac8992",
+          "metadata": false
+        }
+      ]
+    },
+    {
+      "source_id": "ec72141258d931cf218be074307cf65af36e8a3f4231d85322cec3ee9aebd7a0",
+      "selected_record_index": 4828,
+      "name": "🌸肉漫屋( 韩漫+ )",
+      "kind": "comic",
+      "host": "roum26.xyz",
+      "previous_same_field_network_candidate": false,
+      "candidate_fields": [
+        {
+          "field": "ruleBookInfo.intro",
+          "sha256": "81bb312e1025c0ebf8c2f8de15c350dede6fcd53b85df141b36a24387cbf0ff4",
+          "metadata": false
+        },
+        {
+          "field": "ruleBookInfo.kind",
+          "sha256": "992997560a9b5b0dc6ba49f72ac1884de90762adf99549438388fff1f425bc72",
+          "metadata": false
+        },
+        {
+          "field": "ruleBookInfo.name",
+          "sha256": "d255787a9d23fee51164ef401374ec5460722b28359e728ea7474844cd779263",
+          "metadata": false
+        },
+        {
+          "field": "ruleExplore.name",
+          "sha256": "6c853bef1cde3858caf8944e2653cdb2a54e66dfb509a0833d7401ff849d7020",
+          "metadata": false
+        },
+        {
+          "field": "ruleSearch.name",
+          "sha256": "6c853bef1cde3858caf8944e2653cdb2a54e66dfb509a0833d7401ff849d7020",
+          "metadata": false
+        },
+        {
+          "field": "ruleToc.chapterName",
+          "sha256": "c5be5d9294c0810cd1446e5773fa8a8624682937bbb5c27b0600f0b210eb0854",
+          "metadata": false
+        }
+      ]
+    },
+    {
+      "source_id": "75ed9d690c94355f14bafde3be0cbd8c1eda6f03377cea4d226cf3c90359e642",
+      "selected_record_index": 4840,
+      "name": "冷冷文学",
+      "kind": "text",
+      "host": "www7.lenglengbb.com",
+      "previous_same_field_network_candidate": false,
+      "candidate_fields": [
+        {
+          "field": "ruleContent.content",
+          "sha256": "813f933382434733ce626185508128a5135c66da089920d0b2aa66c49e19b4d6",
+          "metadata": false
+        },
+        {
+          "field": "ruleToc.chapterList",
+          "sha256": "ea79f50590b7d304f031a7fd56601809a6916e1268eb87e82b567d5dce72949f",
+          "metadata": false
+        }
+      ]
+    }
+  ]
+}

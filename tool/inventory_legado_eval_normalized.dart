@@ -13,7 +13,15 @@ final _commentCall = RegExp(r'eval\s*\([\s\S]{0,160}?bookSourceComment');
 const _ruleKeys = {
   'ruleSearch.bookList': 'searchList',
   'ruleContent.content': 'content',
+  'ruleContent.nextContentUrl': 'nextContent',
   'ruleToc.chapterList': 'chapters',
+  'ruleBookInfo.name': 'infoTitle',
+  'ruleBookInfo.init': 'infoInit',
+  'ruleBookInfo.author': 'infoAuthor',
+  'ruleBookInfo.intro': 'infoDescription',
+  'ruleBookInfo.coverUrl': 'infoCover',
+  'ruleBookInfo.kind': 'infoCategory',
+  'ruleBookInfo.lastChapter': 'infoLatest',
   'ruleBookInfo.wordCount': 'infoWordCount',
   'ruleSearch.wordCount': 'searchWordCount',
 };

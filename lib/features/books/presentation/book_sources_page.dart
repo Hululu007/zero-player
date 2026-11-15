@@ -539,16 +539,8 @@ final class _BookSourcesPageState extends State<BookSourcesPage> {
                     _services.books.sourceRiskChanges,
                   ]),
                   builder: (context, _) {
-                    final policy = _services.contentPolicy;
                     final shown = risks
-                        .where(
-                          (risk) =>
-                              _services.books.sourceRisksReady &&
-                              !policy.supervision.enabled &&
-                              !policy.supervision.corrupted &&
-                              !(policy.filterAdult && risk.adult) &&
-                              policy.textAllowed('${risk.name} ${risk.host}'),
-                        )
+                        .where(_services.books.sourceRiskEntryAllowed)
                         .toList();
                     if (shown.isEmpty) {
                       return const Center(child: Text('没有可显示的风险记录'));

@@ -1,0 +1,813 @@
+{
+  "archive_sha256": "012a0e0d6e6adc8d303c32b578510e14b562088b3e965cb01a1a647b5e7e034d",
+  "import_inventory_sha256": "ad4e347888cad71812ee7da9477f027baf0bee5bceb1d4247fc69d6c4df8764c",
+  "scope": "Static snapshot review of eval arguments and named related fields only; no source rule or remote script executed. Not a safety or availability assessment.",
+  "source_profiles": [
+    {
+      "source_id": "2ecb4f67377130c47c96eb78997b20e76f88b6e3352dd7bac94a73418b18ad80",
+      "name": "9x阅读器",
+      "kind": "text",
+      "host": "novel-api.elklk.cn",
+      "selected_record_index": 27,
+      "review_group": "supplemental_eval_review",
+      "classification": "local_code_only_observed",
+      "recommendation": "no_quarantine_based_only_on_this_eval_evidence",
+      "data_flow_summary": "内容与章节名求值源内固定解码函数；页面文本作为 decode 参数。",
+      "checked_field_set_sha256": "9626a1bd57d9f7cff9f2de3c6dbaefdda0f49b5472e82ac7168ab3bb3066284d",
+      "checked_fields": [
+        {
+          "field": "bookSourceComment",
+          "field_sha256": "c31588e4a2d5bafe9d59c1bfbd7c912f9dca27cb57a208a22e6b1cc98f22da62"
+        },
+        {
+          "field": "ruleContent.content",
+          "field_sha256": "418d1edfca4f5847c31e35f773a4b6488ffa6135a5e58d6eba9657883e219f74"
+        },
+        {
+          "field": "ruleToc.chapterName",
+          "field_sha256": "e4018526001e42462f9805c14ad53b3ef5e632a837bca354ed30de4c150858f5"
+        }
+      ],
+      "packed_literal_checks": []
+    },
+    {
+      "source_id": "e5044e38adeaa29a5c1e1cec693f715bd27bf869ca2de0864681749795c84cad",
+      "name": "我爱电影(搜索+发现)",
+      "kind": "text",
+      "host": "www.5imv.com",
+      "selected_record_index": 243,
+      "review_group": "supplemental_eval_review",
+      "classification": "local_code_only_observed",
+      "recommendation": "no_quarantine_based_only_on_this_eval_evidence",
+      "data_flow_summary": "求值源内播放配置；页面值随后拼入浏览器地址，浏览器调用须另行复核。",
+      "checked_field_set_sha256": "37ee8a42cf0f99c5884dd85f32f6d3b0d0812b9158e91b3ac0d63c40c3645c35",
+      "checked_fields": [
+        {
+          "field": "bookSourceComment",
+          "field_sha256": "77df5407e073665890a4686995136af6b541a4d41e2d7981185164672bf2f2d2"
+        },
+        {
+          "field": "ruleContent.content",
+          "field_sha256": "36159fd9a641306fc3d30427e5a63305d562f707d31c0da6a8f9db2c0fd5a54e"
+        }
+      ],
+      "packed_literal_checks": []
+    },
+    {
+      "source_id": "b3be4a799c097a368cd7aadc22034afce90c6d6d17062273525874de2e19b00c",
+      "name": "🗒 夜色韩漫",
+      "kind": "comic",
+      "host": "www.yeseimg.com",
+      "selected_record_index": 733,
+      "review_group": "supplemental_eval_review",
+      "classification": "local_code_only_observed",
+      "recommendation": "no_quarantine_based_only_on_this_eval_evidence",
+      "data_flow_summary": "固定打包代码求值源内开关，页面文本用于 HTML 解析。",
+      "checked_field_set_sha256": "906130707c723e55103551da48c11dd0fbd29f3a4a487092fc5c4e378a6d87f5",
+      "checked_fields": [
+        {
+          "field": "bookSourceComment",
+          "field_sha256": "ecbed56d840b271ffe3b37f16066e535c517e869d9a1e6ac69245c00d1e1bc43"
+        },
+        {
+          "field": "ruleBookInfo.init",
+          "field_sha256": "d57151ce6f61a3438ea6d7eb5c7b56813399ac0a197749f5a4222a763e23c711"
+        },
+        {
+          "field": "ruleContent.content",
+          "field_sha256": "11dd5ea2bd54251309ed72cdb55b3b484cec9b20cf2c26669002762e96c3dcd8"
+        },
+        {
+          "field": "ruleExplore.bookList",
+          "field_sha256": "6b6fa15027b760938d86512a7006f7bf63b3123e1eb757383043299129bb50d4"
+        },
+        {
+          "field": "ruleToc.chapterList",
+          "field_sha256": "efeec84acbd896bb598d3a1a080d928b7ab57b50fda7613bd71a76fff56c82b3"
+        },
+        {
+          "field": "searchUrl",
+          "field_sha256": "a5a3e5627226a05cd7522f96c776624f27f825c396c1d02af6581e118edff7a9"
+        }
+      ],
+      "packed_literal_checks": [
+        {
+          "field": "ruleBookInfo.init",
+          "expanded_sha256": "6a538bb20b522c0b842e940b99cf9aa7adead185dce9a6a808a361c7594f217c",
+          "local_eval_count": 1
+        },
+        {
+          "field": "ruleContent.content",
+          "expanded_sha256": "38681ce71fbc627956b9a3bd0bdf720fb799c81f78aa04d6e6136b001d3d1545",
+          "local_eval_count": 0
+        },
+        {
+          "field": "ruleExplore.bookList",
+          "expanded_sha256": "01acf0c3f74462ee36107c209067c88e17cdfcdb9f58ecdea97484209b8141df",
+          "local_eval_count": 1
+        },
+        {
+          "field": "ruleToc.chapterList",
+          "expanded_sha256": "9bb808a05ec6a19904e738b985552f1fb17dd0fc5288e9eaf54067030c75e92f",
+          "local_eval_count": 1
+        },
+        {
+          "field": "searchUrl",
+          "expanded_sha256": "4aff312ee5bb87b9ff1958c2404e2717f2fc4a49db374304eaf028a97807c499",
+          "local_eval_count": 1
+        }
+      ]
+    },
+    {
+      "source_id": "abfd798c76037dd73bfb1da7c5c91ff67f2c464c00539c4bbfd342898c8c1d56",
+      "name": "鲲弩小说",
+      "kind": "text",
+      "host": "www.kunnu.com",
+      "selected_record_index": 3432,
+      "review_group": "supplemental_eval_review",
+      "classification": "local_code_only_observed",
+      "recommendation": "no_quarantine_based_only_on_this_eval_evidence",
+      "data_flow_summary": "求值固定打包规则；网络请求结果传入 HTML 解析，不传入 eval。",
+      "checked_field_set_sha256": "6a870dda671aee9a86d65e6f18bb6ca59d033a90700c9e24d8f1cc1212aa9432",
+      "checked_fields": [
+        {
+          "field": "ruleSearch.bookList",
+          "field_sha256": "a55cdcac9b8bda9ce1b22ffcf512938fa85d70db7245ae55ac00a87a53c6f445"
+        }
+      ],
+      "packed_literal_checks": [
+        {
+          "field": "ruleSearch.bookList",
+          "expanded_sha256": "d1a6cd331682263aa2b43927e046fbb7e613631e20af55595e973beda7309fa0",
+          "local_eval_count": 0
+        }
+      ]
+    },
+    {
+      "source_id": "4844827f5d17a25f6978efa8ce0f62924c092927c4601ca454fe79f764bd3706",
+      "name": "🗒 十八禁漫",
+      "kind": "comic",
+      "host": "www.18mh.cc",
+      "selected_record_index": 1160,
+      "review_group": "supplemental_eval_review",
+      "classification": "local_code_only_observed",
+      "recommendation": "no_quarantine_based_only_on_this_eval_evidence",
+      "data_flow_summary": "固定打包代码求值源内繁简字典；网页仅作解析和替换输入。",
+      "checked_field_set_sha256": "83e8c8fbcbcce1cfa15f9c8e9c4b669371c9cbc2cae83a2cae7f16a82150b168",
+      "checked_fields": [
+        {
+          "field": "bookSourceComment",
+          "field_sha256": "be880d3ad24c49f75c1602b00ae3e7b059bc81518d94b7754f331545a403c71f"
+        },
+        {
+          "field": "ruleBookInfo.init",
+          "field_sha256": "4a6b7ec9988a5628157fbf06c34f15348f5f2516b402b47aa8d01f360e6f45e2"
+        },
+        {
+          "field": "ruleContent.content",
+          "field_sha256": "d16bed816f53eefa19346f704f7363be1518f3ea6a4d4413f94681c85e4136c8"
+        },
+        {
+          "field": "ruleContent.nextContentUrl",
+          "field_sha256": "9259151bae3c5ab05a130afd955f4e0905e708b034feec43139cfa151faae79e"
+        },
+        {
+          "field": "ruleExplore.bookList",
+          "field_sha256": "b41a58dd42c51a074aa0c308ab95cebabc639e780e8c0aff88d5566c45bedba7"
+        },
+        {
+          "field": "ruleExplore.name",
+          "field_sha256": "af97c1ef7d061bb294d38ff717c9fb6c966cc6cc037beb6f745b517bbc51ef6c"
+        },
+        {
+          "field": "ruleSearch.name",
+          "field_sha256": "af97c1ef7d061bb294d38ff717c9fb6c966cc6cc037beb6f745b517bbc51ef6c"
+        },
+        {
+          "field": "ruleToc.chapterList",
+          "field_sha256": "54b28522981d8b2a37f7f375c23d85ea644c9e1342bac920c088a6866980ddba"
+        },
+        {
+          "field": "searchUrl",
+          "field_sha256": "e50207073d18d2cb41fbfca707919493e23edd97b08905f96910c4121a8a379b"
+        }
+      ],
+      "packed_literal_checks": [
+        {
+          "field": "ruleBookInfo.init",
+          "expanded_sha256": "c0a17707e48c0469b596fbf9238e748cfb748b4df805560c502bb665afaba0c2",
+          "local_eval_count": 1
+        },
+        {
+          "field": "ruleContent.content",
+          "expanded_sha256": "2264803af07086d74d2551aa77c15d8181a6c92dd0f2327b3ff2ae24334e3d14",
+          "local_eval_count": 0
+        },
+        {
+          "field": "ruleContent.nextContentUrl",
+          "expanded_sha256": "90af9905054e588330a1e9f674603189b0082f9abd778a8600f90221b014a343",
+          "local_eval_count": 0
+        },
+        {
+          "field": "ruleExplore.bookList",
+          "expanded_sha256": "8f46c11d1157921ebbc55c5c7e9356a1471484033d7f93e2aa20ba1e0b274152",
+          "local_eval_count": 1
+        },
+        {
+          "field": "ruleToc.chapterList",
+          "expanded_sha256": "340dca4e8897eea1b167e68914bb056ca4062f3156083bede4c8e5b581fce3ef",
+          "local_eval_count": 1
+        },
+        {
+          "field": "searchUrl",
+          "expanded_sha256": "1ca040a2886462ef42c44e3aac3b0f732678cc34b61ee1d795dd63889494043f",
+          "local_eval_count": 1
+        }
+      ]
+    },
+    {
+      "source_id": "6df213b17ffed2ae4e4dd3be29e078e307751dbeb57e4940ba7db5cbe8a79204",
+      "name": "月亮小说",
+      "kind": "text",
+      "host": "yueliang25.buzz",
+      "selected_record_index": 1195,
+      "review_group": "supplemental_eval_review",
+      "classification": "local_code_only_observed",
+      "recommendation": "no_quarantine_based_only_on_this_eval_evidence",
+      "data_flow_summary": "源内 variableComment 定义固定字符替换；bookSourceComment 为说明文字。",
+      "checked_field_set_sha256": "d986d4578c67d67253ae0074de3190dda251ea1d393b8020d361973a7ae4da40",
+      "checked_fields": [
+        {
+          "field": "bookSourceComment",
+          "field_sha256": "5f6f5c9ed92c928524a9be8c91d7dbdf444c93ce798533ed650e05f02d9f6886"
+        },
+        {
+          "field": "ruleContent.content",
+          "field_sha256": "837aa137ece665d51977d62409ff4d72276e0bad80bfbfdccc3122145c15030d"
+        },
+        {
+          "field": "ruleSearch.intro",
+          "field_sha256": "39708667666f3088ee50a34ec1cfcbdb615fbcb5bef8260cca1ef75bffc307cc"
+        },
+        {
+          "field": "ruleToc.chapterName",
+          "field_sha256": "6f78997b13829686f66d5fd1ed47ff72f3b6ac782b88c8a67599ba99bcac75b6"
+        },
+        {
+          "field": "variableComment",
+          "field_sha256": "767296f6d2cc1e6bba8049331bd69810a4f73e9d1a99ea52f965403092054049"
+        }
+      ],
+      "packed_literal_checks": []
+    },
+    {
+      "source_id": "d5a9dc00da56f1932ab8bf3d43729cc08a561c9d9054f4bb630a0a4fed13e5bf",
+      "name": "西瓜小说",
+      "kind": "text",
+      "host": "xgmf.zuanqianyi.com",
+      "selected_record_index": 1671,
+      "review_group": "supplemental_eval_review",
+      "classification": "local_code_only_observed",
+      "recommendation": "no_quarantine_based_only_on_this_eval_evidence",
+      "data_flow_summary": "求值源内签名及请求构造代码；bookId 非引号模板应另行复核。",
+      "checked_field_set_sha256": "29847a13015814b3c64a5a70f3222838c8cc9d372533f57bef4240753245141e",
+      "checked_fields": [
+        {
+          "field": "bookSourceComment",
+          "field_sha256": "d46d88e12525405ac2557bfd2d29f20dc66149231091de906db3ca5c0b166128"
+        },
+        {
+          "field": "exploreUrl",
+          "field_sha256": "3deaefc9a87256e60216d569e90996b011d6a1837e446a92acf648f45f4a374c"
+        },
+        {
+          "field": "ruleBookInfo.tocUrl",
+          "field_sha256": "0305374268c3a53efc588e9308ced53b1db45bee4dc627f4e29bafb27ec9e07d"
+        },
+        {
+          "field": "ruleSearch.bookUrl",
+          "field_sha256": "a14b1812791611c612ef360c6132fd95cd0e899bf5648cb075f8a0d1d9ce262b"
+        },
+        {
+          "field": "searchUrl",
+          "field_sha256": "8b5b418536def41077c08547240bc7345c2331bb32262a62f3d5547ca2d7a6da"
+        }
+      ],
+      "packed_literal_checks": []
+    },
+    {
+      "source_id": "dd20c02ee9937525898be0bbdadb09e31a4b5da887c99fe99a4ec100ef2ffb0f",
+      "name": "🎨爱看韩漫🔞",
+      "kind": "comic",
+      "host": "www.ikanhm.top",
+      "selected_record_index": 1787,
+      "review_group": "supplemental_eval_review",
+      "classification": "local_code_only_observed",
+      "recommendation": "no_quarantine_based_only_on_this_eval_evidence",
+      "data_flow_summary": "固定打包代码求值源内繁简字典；网页仅作解析和替换输入。",
+      "checked_field_set_sha256": "f5983e6bcd3aebfd380c3f66e014c0feaa8a5bbb8f6fea642496fe39dfd7e2e0",
+      "checked_fields": [
+        {
+          "field": "bookSourceComment",
+          "field_sha256": "5b10e396c85f4e39712d4b21c58ab66e8844a79f636b4c82498513202419b741"
+        },
+        {
+          "field": "ruleBookInfo.init",
+          "field_sha256": "dc9b5cca64cb48bcc741d23f810434884c7635f303a5280cd895a04fb1b5421b"
+        },
+        {
+          "field": "ruleContent.content",
+          "field_sha256": "7d2783005196a44c0e16dd5b935f693e1a927d830c1b8ab7bdc80d3a3a880098"
+        },
+        {
+          "field": "ruleExplore.bookList",
+          "field_sha256": "d9f7ddab7c66e63d610a57ab044a4239d50bae88359ee3fe97439ce489ebf0cd"
+        },
+        {
+          "field": "ruleExplore.name",
+          "field_sha256": "1690a278f6b300bb66eea5a5df8a17fab44c3be1b64e5fce0ed6dffd2a31bf41"
+        },
+        {
+          "field": "ruleSearch.name",
+          "field_sha256": "1690a278f6b300bb66eea5a5df8a17fab44c3be1b64e5fce0ed6dffd2a31bf41"
+        },
+        {
+          "field": "ruleToc.chapterList",
+          "field_sha256": "d47454a8c751573996463769a477ca65a1697d489c020702fc9c0ed888222916"
+        },
+        {
+          "field": "searchUrl",
+          "field_sha256": "80dde2733e58df8e3d060378651b38fcb2ac075fcd685484bccf968b038199b1"
+        }
+      ],
+      "packed_literal_checks": [
+        {
+          "field": "ruleBookInfo.init",
+          "expanded_sha256": "6a25dce985e35104212cdb7d18dcd0b2204dc480c259cd6abaf478ebe9373377",
+          "local_eval_count": 1
+        },
+        {
+          "field": "ruleContent.content",
+          "expanded_sha256": "2e4290393ff0092f8e00b318b0571f71b0400892853fd3f83e0324fc74efcbcc",
+          "local_eval_count": 0
+        },
+        {
+          "field": "ruleExplore.bookList",
+          "expanded_sha256": "757da091ca3dd31cb2461cb4278aed8f53f9659ed9f095365a4764168c3507bd",
+          "local_eval_count": 0
+        },
+        {
+          "field": "ruleToc.chapterList",
+          "expanded_sha256": "b37b07bd11ea63a0939c27969b491da1df90311d4db120c3e2f55babef307a4b",
+          "local_eval_count": 0
+        },
+        {
+          "field": "searchUrl",
+          "expanded_sha256": "4a9271641bc3a567416417178a242fe360463a34fd1ba070900abe0e14a8093a",
+          "local_eval_count": 0
+        }
+      ]
+    },
+    {
+      "source_id": "09ab5c51cd9ae2d950ca405915a0531c580ddaf24c9363159e4cbc33ca44dcb0",
+      "name": "🎨 UU韩漫",
+      "kind": "comic",
+      "host": "www.uuhanman.com",
+      "selected_record_index": 1788,
+      "review_group": "supplemental_eval_review",
+      "classification": "local_code_only_observed",
+      "recommendation": "no_quarantine_based_only_on_this_eval_evidence",
+      "data_flow_summary": "固定打包代码求值源内配置及繁简字典；网页值用于解析和地址构造。",
+      "checked_field_set_sha256": "3301db1df2939dad7ae0ecc023cad34efd8f56dd390e72612013f7628eb7d6d6",
+      "checked_fields": [
+        {
+          "field": "bookSourceComment",
+          "field_sha256": "01a04b33187f75e27622fa515680bd87d2215d2258b738c6c2c146f01e9688af"
+        },
+        {
+          "field": "ruleBookInfo.init",
+          "field_sha256": "0dec497430b6ddb152eb0a1612765ee4f20f22e61025c48af7a874c29f61c5b5"
+        },
+        {
+          "field": "ruleContent.content",
+          "field_sha256": "14a5debc63ddbd8819e2c11296700ce9dd64ff15b40e11c613df4bd6547dd1e9"
+        },
+        {
+          "field": "ruleSearch.bookList",
+          "field_sha256": "a259eee34f4e5427e3f95b1e5d9e590d79eafb9100fd0237781642012c13345a"
+        },
+        {
+          "field": "ruleSearch.name",
+          "field_sha256": "bdca85937082a93004a89aa2ac0fa59dc6564d446cde446b302515dcd507cf92"
+        },
+        {
+          "field": "ruleToc.chapterList",
+          "field_sha256": "67b0fc238631d47aa22b3cd908d73c9ddb1d611c0ff2c1a5c0a4842e71ac8207"
+        },
+        {
+          "field": "searchUrl",
+          "field_sha256": "3290b522298d77768874e70a50f7da9f04d985e3db3681918d94cc5bb4ba929d"
+        }
+      ],
+      "packed_literal_checks": [
+        {
+          "field": "ruleBookInfo.init",
+          "expanded_sha256": "1bee567486b5937e8f0c6928e80ebed155acdba94cd8a3df86c3b69245036a7c",
+          "local_eval_count": 1
+        },
+        {
+          "field": "ruleContent.content",
+          "expanded_sha256": "1a18fc0ff844f46989e2789bb288d2fd16d86eab12526a8f78e86e501aa43916",
+          "local_eval_count": 0
+        },
+        {
+          "field": "ruleSearch.bookList",
+          "expanded_sha256": "1828272e55657d8d6881993897f22a838b720dcc70328fce7071cdb24f448118",
+          "local_eval_count": 1
+        },
+        {
+          "field": "ruleToc.chapterList",
+          "expanded_sha256": "9978d52f6c1d641f92691579e113db8728edf980fe4cd9044359fbbccb3bb8f6",
+          "local_eval_count": 1
+        },
+        {
+          "field": "searchUrl",
+          "expanded_sha256": "027a60a7ac5f373ae7e9e771fab26f85667ad9e08ce984c73e19681e030def59",
+          "local_eval_count": 1
+        }
+      ]
+    },
+    {
+      "source_id": "09e92e62859b1171da90310ed28f1985e224e4d9dbf371720d4a00e8bc63862a",
+      "name": "🗂🙈梦游漫画🚩",
+      "kind": "comic",
+      "host": "www.mumumh.com",
+      "selected_record_index": 3466,
+      "review_group": "supplemental_eval_review",
+      "classification": "local_code_only_observed",
+      "recommendation": "no_quarantine_based_only_on_this_eval_evidence",
+      "data_flow_summary": "求值源内固定开关；网页作为 HTML 解析或选择器数据。",
+      "checked_field_set_sha256": "4af9187aac198445d8f26cfd1e4bb0eb7c24b056756f2434bbb31218c57948d9",
+      "checked_fields": [
+        {
+          "field": "bookSourceComment",
+          "field_sha256": "6c0fc2fb7e933bd211be3093c7fe42353b6850b888a93fcca0f120da49c78d3a"
+        },
+        {
+          "field": "ruleBookInfo.init",
+          "field_sha256": "5ce9a3c5a7e0dab4759ff9aaf306b58e787421769b171bb9b49d7d08bc55caa6"
+        },
+        {
+          "field": "ruleSearch.bookList",
+          "field_sha256": "c95f7cd6960dc59ed628bdb1ec6fd62b145bbc35bfc81b41ddb3bda80d27cdaf"
+        },
+        {
+          "field": "ruleToc.chapterList",
+          "field_sha256": "c9d1cdc8f6d8711251e9c226855340c500c90d67c9e90c9f6075e280549f3ca4"
+        },
+        {
+          "field": "searchUrl",
+          "field_sha256": "3b02797660b6c04ef2aefb1523f6d7b6f805315ca5baad71c3d054cf97923c56"
+        }
+      ],
+      "packed_literal_checks": []
+    },
+    {
+      "source_id": "6a3ec699b1bd26d6a73afc8a7e41693cb3d3bf6dc5da47a9a4bcfc38f4f7fa56",
+      "name": "🗂🙈久久漫画",
+      "kind": "comic",
+      "host": "99hanman.top",
+      "selected_record_index": 3551,
+      "review_group": "supplemental_eval_review",
+      "classification": "local_code_only_observed",
+      "recommendation": "no_quarantine_based_only_on_this_eval_evidence",
+      "data_flow_summary": "求值源内固定开关；网页作为 HTML 解析或选择器数据。",
+      "checked_field_set_sha256": "fd21594a57384e6175e770bcfbe6dcc160138e18c0e70d0d8da834efa795dde1",
+      "checked_fields": [
+        {
+          "field": "bookSourceComment",
+          "field_sha256": "bd586ac6c0dba6b782439387a01b10ee47dcdeb9b1b3c4a9d7648370eb46ebca"
+        },
+        {
+          "field": "ruleBookInfo.init",
+          "field_sha256": "faed458247fc04f901781e49db4303b0d8ebad20bf312e14c280edabebf52012"
+        },
+        {
+          "field": "ruleExplore.bookList",
+          "field_sha256": "8fb7655c8f885b393c076e6ad72abba43042327b421dd2e5fe9c149b4d91d891"
+        },
+        {
+          "field": "ruleSearch.bookList",
+          "field_sha256": "76e22e073b95b3147c8575beee47a58138d44d7e70be9fb35a3e6cc42afaf056"
+        },
+        {
+          "field": "ruleToc.chapterList",
+          "field_sha256": "ddd1431317e9a2ea927367805fb03fb2c21164a554ab452ddb5b9a7fc7ce9b0e"
+        },
+        {
+          "field": "searchUrl",
+          "field_sha256": "c6a1c62cc9f1ca4412a8a8d8eb012725d918092ddfd086f602aa7904fe3fabc2"
+        }
+      ],
+      "packed_literal_checks": []
+    },
+    {
+      "source_id": "21cf1ffe5a442a8bb29ab23d497abe50998a9f957286a59e4f1806ba3ee5af4c",
+      "name": "🗂🙈顶通漫画🚩",
+      "kind": "comic",
+      "host": "toptoon.buzz",
+      "selected_record_index": 3552,
+      "review_group": "supplemental_eval_review",
+      "classification": "local_code_only_observed",
+      "recommendation": "no_quarantine_based_only_on_this_eval_evidence",
+      "data_flow_summary": "求值源内固定开关；网页作为 HTML 解析或选择器数据。",
+      "checked_field_set_sha256": "ff9eb5892275ebe277c3cad6097f964b2663c0dba506d72d6b98bce5f9655a52",
+      "checked_fields": [
+        {
+          "field": "bookSourceComment",
+          "field_sha256": "0ea198caa618ae6f9ea698767212fe5bf14c88972b7cc75f0557d8746f8e0b17"
+        },
+        {
+          "field": "ruleBookInfo.init",
+          "field_sha256": "0d9170f8c1597f2c7e7c684d7784c0e1528efb9dafe5fe7d6b1184a930397a73"
+        },
+        {
+          "field": "ruleExplore.bookList",
+          "field_sha256": "9055cf56ec0f89e703eb10bd6ac220982a4de7eeb52d7b7950dac7aeae5323b5"
+        },
+        {
+          "field": "ruleSearch.bookList",
+          "field_sha256": "b86ffb7ccd9b0b0f5c70f948e1b105be2ff21531f04c6c8efe518994b314ed79"
+        },
+        {
+          "field": "ruleToc.chapterList",
+          "field_sha256": "173ad029401aebff901c67ab789e47c40581b44ee6e6c387fb06cdcd68b60a50"
+        },
+        {
+          "field": "searchUrl",
+          "field_sha256": "28e9a0391c84a3ec92bc929897f4dc00d49c9fd6cc8f8ee35015059c14fa256f"
+        }
+      ],
+      "packed_literal_checks": []
+    },
+    {
+      "source_id": "3d30aadf74d4922a3f67eb0370b95653b44bef0121f268677fbad12e53e001e6",
+      "name": "久久漫画",
+      "kind": "comic",
+      "host": "www.jjmhw.cc",
+      "selected_record_index": 4829,
+      "review_group": "supplemental_eval_review",
+      "classification": "local_code_only_observed",
+      "recommendation": "no_quarantine_based_only_on_this_eval_evidence",
+      "data_flow_summary": "固定打包代码求值源内繁简字典；网页仅作解析和替换输入。",
+      "checked_field_set_sha256": "8a68a7dcbb92749fbb590b5976b3b1f01b3780055870b3dbd2d4931de43ac187",
+      "checked_fields": [
+        {
+          "field": "bookSourceComment",
+          "field_sha256": "5b10e396c85f4e39712d4b21c58ab66e8844a79f636b4c82498513202419b741"
+        },
+        {
+          "field": "ruleBookInfo.init",
+          "field_sha256": "a9671301051b270b7e76925b01299f3220c993d79e168b772b8106e6a9c4ff9c"
+        },
+        {
+          "field": "ruleContent.content",
+          "field_sha256": "009b05a308e159c8861c9d3a63cd52673b9b9e44993c194570289842ea89c3d3"
+        },
+        {
+          "field": "ruleExplore.bookList",
+          "field_sha256": "f8e382777099969888e827b8677b2cab4c9cd4829c1ba602b83b7b26caa11634"
+        },
+        {
+          "field": "ruleExplore.name",
+          "field_sha256": "4ee6bc78b39eb5297f6d6f19b4898ba1d6e6d2082eeaaac380161924439166f5"
+        },
+        {
+          "field": "ruleSearch.author",
+          "field_sha256": "8d5406b22cf77a956d7b129eefdd1da1e5cecb4280a7d2b6e52c883e1f1ba23b"
+        },
+        {
+          "field": "ruleSearch.name",
+          "field_sha256": "56f7513fa860da9a95e8436774315ddf44bd140f98a020a09678e22f95ba8be2"
+        },
+        {
+          "field": "ruleToc.chapterList",
+          "field_sha256": "15482b95eee0cf956108e7e512aa2da660b91855db7007b3eed7b0b91c387ffb"
+        },
+        {
+          "field": "searchUrl",
+          "field_sha256": "ffc71503f1f4f3619601ae775ba8a0a36cc67137c377273eb2b93d39874f5338"
+        }
+      ],
+      "packed_literal_checks": [
+        {
+          "field": "ruleBookInfo.init",
+          "expanded_sha256": "a2d8d0ed90c2767b06cebfed66d9c1a2d1b8c26db814b32167d28c6c32032404",
+          "local_eval_count": 1
+        },
+        {
+          "field": "ruleContent.content",
+          "expanded_sha256": "4f6d7cec72b62ae89672111a079e2943130a23dbae13740178766045f0796e94",
+          "local_eval_count": 0
+        },
+        {
+          "field": "ruleExplore.bookList",
+          "expanded_sha256": "1e165c8c5b5a6f210e44b7efb7724e08052799b19a7dc7deffd1079f405d5f6d",
+          "local_eval_count": 1
+        },
+        {
+          "field": "ruleToc.chapterList",
+          "expanded_sha256": "de0d2b24b692479bd214ef970c7d8589b8885bbc75cf7f2011d6c83364b5886e",
+          "local_eval_count": 1
+        },
+        {
+          "field": "searchUrl",
+          "expanded_sha256": "e53a2a6228460a6918c8d6ce2d18c4c31f5f0077ce5f200925ccc5c3546b7e94",
+          "local_eval_count": 1
+        }
+      ]
+    },
+    {
+      "source_id": "770edfb7d285da0655ca662bb64caed3c9137ae70435c1092080dcc18ef0e616",
+      "name": "月亮小说，字体解密〖𝕄𝕦〗#书源.com",
+      "kind": "text",
+      "host": "ylxs.de",
+      "selected_record_index": 4415,
+      "review_group": "supplemental_eval_review",
+      "classification": "local_code_only_observed",
+      "recommendation": "no_quarantine_based_only_on_this_eval_evidence",
+      "data_flow_summary": "求值源内固定字符替换表；页面文本作为替换数据。",
+      "checked_field_set_sha256": "bab5c79931def990c5883e4bec3f46b7db28dda5c9cdb08d90fc8a96edd3142c",
+      "checked_fields": [
+        {
+          "field": "bookSourceComment",
+          "field_sha256": "dd2b51d2e87c2d6ee62387ca0a760b066b2438f0b98aa06dac1dd1b7a3c1420e"
+        },
+        {
+          "field": "ruleContent.content",
+          "field_sha256": "0830783d1607c9ac574b90e974d5f121ec6e8c0a8a4c8dba5fed9622145ad17a"
+        },
+        {
+          "field": "ruleSearch.name",
+          "field_sha256": "ca01f630760c262784c38e5c022addddf3427292ce0ff2ee6775fd7cc13b477b"
+        },
+        {
+          "field": "ruleToc.chapterName",
+          "field_sha256": "56c2c77be7fac75458ce1238e2aec9c9bceee7f912126241c5069a3916b57ef2"
+        }
+      ],
+      "packed_literal_checks": []
+    },
+    {
+      "source_id": "5d62bdffeb682308c60195899c22524ea2d1df4967e3b3ed04360e1ce4d2ea04",
+      "name": "涩涩俱乐部",
+      "kind": "text",
+      "host": "seseclub.com",
+      "selected_record_index": 4497,
+      "review_group": "supplemental_eval_review",
+      "classification": "local_code_only_observed",
+      "recommendation": "no_quarantine_based_only_on_this_eval_evidence",
+      "data_flow_summary": "求值源内固定图字替换表；页面正文作为替换数据。",
+      "checked_field_set_sha256": "6f3c0ebf75394d7ad324bd2f689c43ab4a74c3f2c6cb150cdb4f51030c7f37ac",
+      "checked_fields": [
+        {
+          "field": "bookSourceComment",
+          "field_sha256": "746f2edc0dceafc6f17b7e27295b258af28e4ace2804c2625c1485d1c16af15f"
+        },
+        {
+          "field": "ruleContent.replaceRegex",
+          "field_sha256": "990dc07a61ca8080a13f1d2dadfdf686accd9e65bb9d876c4762c3d121b79e02"
+        }
+      ],
+      "packed_literal_checks": []
+    },
+    {
+      "source_id": "abee5694234410c1f236d7693298936d347e4fca19363934cc749f0279ba41e5",
+      "name": "✈️ 涩涩俱乐部-九梦#书源.com",
+      "kind": "text",
+      "host": "novel.seseclub.com",
+      "selected_record_index": 4509,
+      "review_group": "supplemental_eval_review",
+      "classification": "local_code_only_observed",
+      "recommendation": "no_quarantine_based_only_on_this_eval_evidence",
+      "data_flow_summary": "求值源内固定图字替换表；页面正文作为替换数据。",
+      "checked_field_set_sha256": "337979230cb5efe8acf27e992353812a81920677c9858ffe6786914d7303953b",
+      "checked_fields": [
+        {
+          "field": "bookSourceComment",
+          "field_sha256": "600406a4685a64c352f8c8c4c035b01f4089300a3fc80cf17be47dce17c397db"
+        },
+        {
+          "field": "ruleContent.replaceRegex",
+          "field_sha256": "990dc07a61ca8080a13f1d2dadfdf686accd9e65bb9d876c4762c3d121b79e02"
+        }
+      ],
+      "packed_literal_checks": []
+    },
+    {
+      "source_id": "ec72141258d931cf218be074307cf65af36e8a3f4231d85322cec3ee9aebd7a0",
+      "name": "🌸肉漫屋( 韩漫+ )",
+      "kind": "comic",
+      "host": "roum26.xyz",
+      "selected_record_index": 4828,
+      "review_group": "supplemental_eval_review",
+      "classification": "local_code_only_observed",
+      "recommendation": "no_quarantine_based_only_on_this_eval_evidence",
+      "data_flow_summary": "求值源内繁简转换函数和字典；页面文本作为函数参数。",
+      "checked_field_set_sha256": "66f7debb0c18e32e0e02f94e469bd014134dcc1f2826fa81bb23878005677091",
+      "checked_fields": [
+        {
+          "field": "bookSourceComment",
+          "field_sha256": "49ac6989e9dbdad7f54dece8f939a0f2f3656f8e8075683a2f88861f2650bf95"
+        },
+        {
+          "field": "ruleBookInfo.intro",
+          "field_sha256": "81bb312e1025c0ebf8c2f8de15c350dede6fcd53b85df141b36a24387cbf0ff4"
+        },
+        {
+          "field": "ruleBookInfo.kind",
+          "field_sha256": "992997560a9b5b0dc6ba49f72ac1884de90762adf99549438388fff1f425bc72"
+        },
+        {
+          "field": "ruleBookInfo.name",
+          "field_sha256": "d255787a9d23fee51164ef401374ec5460722b28359e728ea7474844cd779263"
+        },
+        {
+          "field": "ruleExplore.name",
+          "field_sha256": "6c853bef1cde3858caf8944e2653cdb2a54e66dfb509a0833d7401ff849d7020"
+        },
+        {
+          "field": "ruleSearch.name",
+          "field_sha256": "6c853bef1cde3858caf8944e2653cdb2a54e66dfb509a0833d7401ff849d7020"
+        },
+        {
+          "field": "ruleToc.chapterName",
+          "field_sha256": "c5be5d9294c0810cd1446e5773fa8a8624682937bbb5c27b0600f0b210eb0854"
+        }
+      ],
+      "packed_literal_checks": []
+    },
+    {
+      "source_id": "009e1a910a328cc9ef2b36835134c18d7319beb134893960552a89214d31240a",
+      "name": "陶越文华（优++）",
+      "kind": "text",
+      "host": "qcbook.taoyuewenhua.net",
+      "selected_record_index": 3943,
+      "review_group": "additional_source_metadata_review",
+      "classification": "local_code_only_observed",
+      "recommendation": "no_quarantine_based_only_on_this_eval_evidence",
+      "data_flow_summary": "求值源内 loginUrl；登录响应经 JSON.parse 取字段并保存变量，未见作为 eval 参数。",
+      "checked_field_set_sha256": "095ce17653bd639a4aea9680f3955de75cbdb73f28342efb1a158fb0d8a3e07e",
+      "checked_fields": [
+        {
+          "field": "exploreUrl",
+          "field_sha256": "133562aaa45a0e957c368a179caa35b6b02e1e497869c1998c47eff3b5a98863"
+        },
+        {
+          "field": "jsLib",
+          "field_sha256": "d10ab59ff615b057d7a90409a3828826be112e565a737758ed593ba3701768fe"
+        },
+        {
+          "field": "loginUrl",
+          "field_sha256": "9f50d4dbb32bbe738afba9598b85eabeedd61ab1e9afcc9d12caae56ee71f6ab"
+        },
+        {
+          "field": "searchUrl",
+          "field_sha256": "3406991271faabaffd9e82e790a34590e31b87cbeca58810f979042e404fbe61"
+        }
+      ],
+      "packed_literal_checks": []
+    },
+    {
+      "source_id": "30923a061b13715e8cc3ccdd13ec3a35bd4e615c0b8775eda5e7016f2282d286",
+      "name": "三江阁",
+      "kind": "text",
+      "host": "www.sanjiangg.com",
+      "selected_record_index": 4481,
+      "review_group": "additional_source_metadata_review",
+      "classification": "local_code_only_observed",
+      "recommendation": "no_quarantine_based_only_on_this_eval_evidence",
+      "data_flow_summary": "求值源内固定字体替换表；发现请求响应送 HTML 解析，未见作为 eval 参数。",
+      "checked_field_set_sha256": "efea6bd9ada2a74b650c876cee7e46b7b522db5e0a3be2fa6fd3001c98718836",
+      "checked_fields": [
+        {
+          "field": "bookSourceComment",
+          "field_sha256": "a8eb83a1966571a055a56c7bf5719a5d782a29ecce0695f5e706000de118c51d"
+        },
+        {
+          "field": "exploreUrl",
+          "field_sha256": "ddf011f057c66d79104838a328037a0582e4859eb887ba09f943fdf1f35fcfe8"
+        },
+        {
+          "field": "ruleToc.chapterName",
+          "field_sha256": "18c43f321b84f6dc9021705750524e89405db261c1bac10672788aacf6a10a3c"
+        },
+        {
+          "field": "searchUrl",
+          "field_sha256": "a5b2ac6a0ce9907e2525ea8853f67543bd20e15b4bc9463a39e5da9f48d476fd"
+        }
+      ],
+      "packed_literal_checks": []
+    }
+  ]
+}

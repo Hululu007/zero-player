@@ -18,6 +18,14 @@ const _adultBookHosts = {
 
 const _adultExactBookHosts = {
   'www.favcomic.xyz', // Homepage explicitly labels itself adult comics
+  'sesebooks.com', // Homepage identifies the site as adult novels
+  'm.po18wen.xyz', // Homepage describes the site as 18+ only
+  'm.xyuzhaiwu.xyz', // Homepage describes adult novels as a primary offering
+  'mm.xyuzhaiwu.xyz', // Separately checked sibling host, same description
+  'm.rousewu.cc', // Homepage describes adult novels as a primary offering
+  'm.3322t.com', // Homepage describes adult novels as a primary offering
+  'm.xyuzhaiwu5.com', // Homepage explicitly promotes adult novels
+  'm.aaread.club', // Homepage explicitly labels itself an adult-novel site
 };
 
 // Same-ID records in the bundled snapshot carry explicit 🔞 metadata, but the
@@ -82,6 +90,40 @@ const _quarantinedBookHistoryIds = {
   'ea6552b459b382df81cfb628141fb764bb5c5f3aab07dba59f3ba00eec5eec58', // 3973
   'e0a87815850a94f8d9d43e9bea15de0432d5808f185010532ff13f6dd8a6c8fe', // 4813
   'e4478855eb2b4b0fea080a6ec8db6768baf313d957c15eb2d206e0de2a8855ae', // 4826
+  '4b71a54fd5ba1e8077fd5687e123ef0731b8f4baeef8b75d1ac4b93b9906a3b3', // 3836
+  'a5c8022ce65de27681d680432f8b01c2b2e09d22ed4633f372f8d98250912e22', // 1228
+  '98fcf05ed0532fbc1b454978342e175778dca19487b035e9de343a51db344bde', // 3219
+  'b37f63bfa731a939acc214b41916fb8bd0dc4f1c599343f397fc3e779feef2ad', // 2128
+  '6925366f12c659540daf91385af2b0d10441116246abd442a2e62417e38d1ae0', // 3760
+  'b707317ac37705c041f1a9bdd3fec93bff4200fe80a0ad1687a924e211173e83', // 4156
+  'a1e51933faa330fd4664297f43dbfd6cdff594dcf59a1d42bfc2b32a951574c6', // 4159
+  'c2ec652cb7d1e3eacdee18897a94f498180ffab56185395df6d099d60f72cc59', // 2136
+  'c45aa7e0e9ad3450d57420b320887208945760a777c7fd1c4a63009bab5ebd5e', // 4052
+  'a671019d19e09c5e8342a3a199fb865bcd21356b573e38934a92dad76988affa', // 4161
+  '76c77d9b49f6e4b12b8f5cebc48bb47e4020eac687bb2ef7eb2252c300f60757', // 4046
+  '7c219f964cd8a9189e9d9597243d1f08866f6155fa1cd8d25ca8fd267b67fb85', // 3995
+  'c6a680ad8ca5c05ff54d21a1be6295ee51d5f963018d5f366f6685010c5c657e', // 4019
+  '8075d0bcb1cc3a709cb3fbaa614deec6852eabf05bff1674bf38e92723c0f0b5', // 662
+  '4ba1ee353fc2132f9b0c4e13258c320bd3689f37a6b3a5afc7cc276e8f2522a4', // 1432
+  '7426fb7a612a3315369a52e7176803b1bc2987de78c74fb3a6a660d978e3ec9b', // 3460
+  '00c58ffd3786544397500cc86d6e718e4ca3b5fd569149dd0aea3452bcaa229a', // 189
+  '872cc5219ae17bfbc413644baa65b23c21507d7faa4238f269c6ea3ff9dbb179', // 627
+  '0c6317e420614be60b383b06e99c8967ed905eb88a604a5c82baf1b25e0d078f', // 2247
+  '75ed9d690c94355f14bafde3be0cbd8c1eda6f03377cea4d226cf3c90359e642', // 4840
+  '168853d703930d0ba6a36a98171ef4c8358ba5e11a1edeffec024cc267c4d79b', // 4090
+  '81b5e9abb41ac6f954d1463131b8c2eb3dff978ddc8fe41d5576039a8984b493', // 4152
+  '9f37dae32a1e887ccd87f99fdd82b03b0f01eaab91a55f39801d3fa645f1d3b3', // 4153
+  '05deac0477e3afe63fb2767a1a893a01f7fcc4635a3b22fa11e36e07eb529035', // 4157
+  '330b455a1e55345c266e9fd68eb8a0857a686d7df76ddc52616d89a2ea945d85', // 4158
+  '31683e41bed33261bc4e6a64b7dd0b256a76bfefc3ea835b39b7e35a596001c4', // 4221
+  '4b0ec0be6dad7da09ae3d8b549300a0135032595108ff11c5b6910977ae1a592', // 4559
+  'bfc909dad4bafa2c0d84645fae168ffe942e35ac3d7fa55caefb9ed57d236d20', // 4579
+  '83842c07ccfa0551e6ecc41f653f7d41339560df994a8d81ccadb48858f92852', // 4665
+  '55bae9ff93543b52d278ed88d5935d16bc64b85b915ff6555f4b5179e87901ac', // 4712
+  'c7189c3677f1a8769025b6b7fb860965e6062d4d87988829447cb762900023d7', // 4762
+  '924ae7d6b668f0e1eb7447fec63defd4ddff4163107b3b56697688add09f1ed6', // 4271
+  'd711545a4170d4839f9018c07f9fba452fb131f3d5bf0a9fe9aa0793947f3181', // 4278
+  '0165ccae84fe72d64f57b258b38cd2a30b31d3a910f872f920e9b00efa6ceeb1', // 4317
 };
 
 // Bundled record 1803: the exact source entry has no DNS answer and its
@@ -89,9 +131,13 @@ const _quarantinedBookHistoryIds = {
 // legacy source, not a malware finding about Lofter or its real domains.
 const _unavailableLegacySourceId =
     '9671fd3cfe8189b9abdcb097cbff01609ff14c7ab43dcf7aa10d48a34a526a05';
+const _unavailableFqxsSourceId =
+    'be6ee767dad9892aa5a286ba08866f11c2b8e6b04f580878f753daaea048f61c';
 
 bool quarantinedBookSourceId(String id) =>
-    _quarantinedBookHistoryIds.contains(id) || id == _unavailableLegacySourceId;
+    _quarantinedBookHistoryIds.contains(id) ||
+    id == _unavailableLegacySourceId ||
+    id == _unavailableFqxsSourceId;
 
 bool _unavailableLegacySource(BookSource source) {
   final uri = source.endpoint;
@@ -103,6 +149,19 @@ bool _unavailableLegacySource(BookSource source) {
       (uri.path.isEmpty || uri.path == '/') &&
       !uri.hasQuery;
 }
+
+// This exact old source now resolves to a movie site and both its novel
+// discovery and search paths repeatedly returned soft 404 pages. A revised
+// rule is not automatically blocked, and this is not a malware finding.
+bool knownUnavailableBookRule(BookSource source) =>
+    source.id == _unavailableFqxsSourceId &&
+    source.kind == BookKind.text &&
+    source.endpoint.host == 'm.fqxs123.com' &&
+    source.legado?.search == '/s?q={{key}},{\n  "webView": true\n}' &&
+    source.legado?.rules['searchList'] == 'class.item' &&
+    source.legado!.categories.any(
+      (item) => item.address.contains('/xuanhuan/'),
+    );
 
 bool _hasKnownRemoteCodeRule(BookSource source) {
   final legado = source.legado;
@@ -138,6 +197,7 @@ bool knownUnsafeBookRule(BookSource source) =>
 bool quarantinedBookSource(BookSource source) =>
     quarantinedBookHost(source.endpoint.host) ||
     _unavailableLegacySource(source) ||
+    knownUnavailableBookRule(source) ||
     knownUnsafeBookRule(source);
 
 bool quarantinedComicSource(BookSource source) =>

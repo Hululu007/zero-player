@@ -1,0 +1,55 @@
+{
+  "archive_sha256": "012a0e0d6e6adc8d303c32b578510e14b562088b3e965cb01a1a647b5e7e034d",
+  "scope": "static HEAD and bounded GET, no scripts or redirects; HTTP 200 with title 404 is a soft 404",
+  "source_id": "be6ee767dad9892aa5a286ba08866f11c2b8e6b04f580878f753daaea048f61c",
+  "results": [
+    {
+      "path": "/",
+      "host": "m.fqxs123.com",
+      "observed_at": "2026-11-15T04:40:29.279984+00:00",
+      "status": 200,
+      "sample": {
+        "status": 200,
+        "title": "番茄影院",
+        "betting_signals": [],
+        "adult_signals": [],
+        "sample_bytes": 22292
+      },
+      "record_indices": [
+        2451
+      ]
+    },
+    {
+      "path": "/xuanhuan/",
+      "host": "m.fqxs123.com",
+      "observed_at": "2026-11-15T04:40:29.281299+00:00",
+      "status": 200,
+      "sample": {
+        "status": 200,
+        "title": "404",
+        "betting_signals": [],
+        "adult_signals": [],
+        "sample_bytes": 703
+      },
+      "record_indices": [
+        2451
+      ]
+    },
+    {
+      "path": "/xuanhuan/2.html",
+      "host": "m.fqxs123.com",
+      "observed_at": "2026-11-15T04:40:29.275293+00:00",
+      "status": 200,
+      "sample": {
+        "status": 200,
+        "title": "404",
+        "betting_signals": [],
+        "adult_signals": [],
+        "sample_bytes": 703
+      },
+      "record_indices": [
+        2451
+      ]
+    }
+  ]
+}

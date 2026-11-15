@@ -37,6 +37,76 @@ void _contentSignalTests(Uri target) {
     expect(inert.gamblingRisk, isFalse);
     expect(inert.adultRisk, isFalse);
   });
+
+  test('adult comics and traditional Chinese require two strong clues', () {
+    for (final html in [
+      '<p>成人漫画，请确认年满18岁</p>',
+      '<p>色情漫畫，未滿１８歲請勿進入</p>',
+      '<p>成人小說，成人專區</p>',
+    ]) {
+      expect(inspectBookSiteHtml(target, html).adultRisk, isTrue, reason: html);
+    }
+    for (final html in ['<p>成人漫畫</p>', '<p>未滿１８歲</p>']) {
+      expect(
+        inspectBookSiteHtml(target, html).adultRisk,
+        isFalse,
+        reason: html,
+      );
+    }
+    final inert = inspectBookSiteHtml(
+      target,
+      '<script>成人漫畫 未滿１８歲</script><p>普通漫畫</p>',
+    );
+    expect(inert.adultRisk, isFalse);
+  });
+
+  test('common traditional gambling terms still require a promotion', () {
+    for (final html in [
+      '<p>線上賭場 立即下注</p>',
+      '<p>博彩網站 註冊贈送</p>',
+      '<p>體育博彩 首存優惠</p>',
+    ]) {
+      expect(
+        inspectBookSiteHtml(target, html).gamblingRisk,
+        isTrue,
+        reason: html,
+      );
+    }
+    for (final html in ['<p>線上賭場</p>', '<p>立即下注</p>']) {
+      expect(
+        inspectBookSiteHtml(target, html).gamblingRisk,
+        isFalse,
+        reason: html,
+      );
+    }
+  });
+
+  test('hidden elements cannot automatically classify the homepage', () {
+    final hidden = inspectBookSiteHtml(
+      target,
+      '<div hidden>線上賭場 立即下注</div>'
+      '<section hidden="hidden">成人漫畫 未滿１８歲</section>'
+      '<p>普通书目</p>',
+    );
+    expect(hidden.finding, BookSiteFinding.sampled);
+    expect(hidden.gamblingRisk, isFalse);
+    expect(hidden.adultRisk, isFalse);
+  });
+
+  test('site description can provide clues but keywords alone cannot', () {
+    final described = inspectBookSiteHtml(
+      target,
+      '<meta name="DESCRIPTION" content="专属肉文，未满十八岁禁止浏览">'
+      '<p>普通首页</p>',
+    );
+    expect(described.adultRisk, isTrue);
+    final keywords = inspectBookSiteHtml(
+      target,
+      '<meta name="keywords" content="成人漫画 未满十八岁">'
+      '<p>普通首页</p>',
+    );
+    expect(keywords.adultRisk, isFalse);
+  });
 }
 
 void _redirectInterpretationTests(Uri target) {
