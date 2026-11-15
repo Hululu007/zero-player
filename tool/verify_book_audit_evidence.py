@@ -191,6 +191,25 @@ class EvidenceVerifier:
         for snapshot in ('source_file_sha256_at_initial', 'source_file_sha256_at_followup'):
             self.check_digest(archive, chain[snapshot][archive_key])
             self.check_digest(self.root / manifest_key, chain[snapshot][manifest_key])
+        com_rdap = json.loads(self.read(self.docs / 'legado-rdap-com-six-20261116.json'))
+        references = com_rdap['input_references']
+        expected = {
+            'catalog_archive': archive_key,
+            'catalog_manifest': manifest_key,
+            'host_recheck': 'docs/implementation/' + filename('legado-host-recheck'),
+            'doh_reviewed': 'docs/implementation/' + filename('legado-doh-reviewed'),
+            'previous_rdap': 'docs/implementation/' + filename('legado-rdap-sample'),
+        }
+        if set(references) != set(expected) | {'source_ledger_historical_git'}:
+            raise ValueError('unexpected .com RDAP evidence inputs')
+        for name, path in expected.items():
+            reference = references[name]
+            if reference['path'] != path:
+                raise ValueError(f'unexpected .com RDAP {name} path')
+            self.check_digest(self.root / path, reference['sha256'])
+        reference = references['source_ledger_historical_git']
+        path = 'docs/implementation/' + filename('legado-source-ledger')
+        self.git_snapshot(reference['commit'], reference['path'], reference['sha256'], path)
 
     def verify(self):
         for source, key, target in DIRECT_LINKS:

@@ -1,8 +1,8 @@
 {
-  "generated_at": "2026-11-15T17:54:47.256184Z",
+  "generated_at": "2026-11-15T18:37:47.901733Z",
   "archive_sha256": "012a0e0d6e6adc8d303c32b578510e14b562088b3e965cb01a1a647b5e7e034d",
   "grouped_evidence_sha256": "792aadfcd6072ed5be45e1ee31f77452560f8b4bb23126784f49f99c5443d47e",
-  "policy_script_sha256": "5b988032ade8fce06d53afbdffc00990eb01938b17c8ee47f4cb8a493f93dbb6",
+  "policy_script_sha256": "d00ac60b04079037368d4578ef4a3d54d4169630429d6e6450a41dbb87cd7e64",
   "source_digest_convention": "SHA-256 of UTF-8 source bytes with CRLF normalized to LF, matching tracked source line endings.",
   "current_policy_code_sha256": {
     "lib/features/books/data/book_import.dart": "5c27a8cac7806ca8854672f89fcc90d0d98e5ab25b92ec4fc13f094bfe93a629",
@@ -11,7 +11,8 @@
     "lib/features/books/data/legado/legado_discovery.dart": "c4c8039a58e66522547a4d71991be415a8c5ad571bf105c891bace70f2c77c7e",
     "lib/features/books/data/book_source_links.dart": "4ba0b45a4138bfb7ea6e66c11986bbfd8ef2e9ed2797bb8531789b8e83408a88",
     "lib/features/books/domain/book.dart": "1cb4a72bdbc5358d60837b90858f2cc4ce2ae47005bf5114e1b49897b5a59e3c",
-    "lib/features/books/domain/book_source_risk.dart": "471306be4fc0abda04f0e4541f597f3c6dd927f60c2f465bacca79f331de1481",
+    "lib/features/books/domain/book_source_risk.dart": "51a6b06a2cc92818f90c646fa405c58cfdc523e547397b50cf0a6918323d59c0",
+    "lib/features/books/domain/com_rdap_legacy_quarantine.dart": "87b340aeda0007fedbad192d4088ad1b81e1f2912845742e48959ca4fc528076",
     "lib/features/books/domain/fanfanu_legacy_source_fix.dart": "0c3801d4380b8d5c5bab58f0f548725d55699bdf599585156d5894be415c5827",
     "lib/features/books/domain/net_rdap_legacy_quarantine.dart": "a04eaaad9fe536c20552c8349d6ade7675b5826fa4cfb069df8233665d932913",
     "lib/features/books/domain/iqiyi_legacy_quarantine.dart": "e87cff1c42533bed307dfd419ccea31acdcbd23b78a708dff91dfd3d861876d0",
@@ -29,8 +30,8 @@
     "lib/features/books/domain/yingyu_legacy_source_fix.dart": "a979ed63e5b91a6ff5d992a959e4fc5bcffdf23141ff5586e77da0017c82bb8a",
     "lib/features/supervision/domain/content_classification.dart": "0f22950b5a1e5696fa1e60bb353c53a24f9b4546314290abab0081ed08e6146a",
     "lib/features/supervision/domain/adult_source_evidence.dart": "7dd20620b923e14687f8a7c58aafa923ece02172cd38aa260ac9bfe107795206",
-    "tool/audit_legado_amsi_classification.dart": "fa88c47511f07f66292ad2c434a1556dfeab0e8221ee60f1b526345b2467c1c9",
-    "tool/audit_blocklistproject_policy.dart": "5b988032ade8fce06d53afbdffc00990eb01938b17c8ee47f4cb8a493f93dbb6"
+    "tool/audit_legado_amsi_classification.dart": "e879e4b06d7b1ad4a429194be9d294a86f6734e49d710d8016f842118633ebb4",
+    "tool/audit_blocklistproject_policy.dart": "d00ac60b04079037368d4578ef4a3d54d4169630429d6e6450a41dbb87cd7e64"
   },
   "scope": "Offline current importer and fixed source/domain/adult rules only; no source rule execution, site request, user settings, blacklist or dynamic risk database.",
   "limitations": "Static normal-mode result assumes loaded, uncorrupted policy, adult filtering on, and no user-specific restrictions. Imported sources start disabled; supervision independently blocks non-builtin sources and all comics/audio. This is not a claim about current content or installation.",

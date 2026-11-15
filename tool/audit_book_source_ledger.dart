@@ -14,6 +14,7 @@ import 'package:zero_player/features/supervision/domain/content_classification.d
 
 import 'book_source_ledger_recent_evidence.dart';
 import 'book_source_ledger_nov16_evidence.dart';
+import 'book_source_ledger_com_rdap.dart';
 
 const _catalogFolder = 'assets/catalogs/books/legado';
 const _evidenceFolder = 'docs/implementation';
@@ -68,6 +69,7 @@ const _evidenceFiles = [
   _amsi4qo,
   _amsi4qoDecoded,
   _netRdap,
+  comRdapEvidenceFile,
   _recentRedirect,
   _categoryReview,
   _reading560,
@@ -102,6 +104,7 @@ const _codePaths = [
   'lib/features/books/data/legado/legado_rule_tokens.dart',
   'lib/features/books/domain/book.dart',
   'lib/features/books/domain/book_source_risk.dart',
+  'lib/features/books/domain/com_rdap_legacy_quarantine.dart',
   'lib/features/books/domain/fanfanu_legacy_source_fix.dart',
   'lib/features/books/domain/net_rdap_legacy_quarantine.dart',
   'lib/features/books/domain/iqiyi_legacy_quarantine.dart',
@@ -122,6 +125,7 @@ const _codePaths = [
   'tool/audit_book_source_ledger.dart',
   'tool/book_source_ledger_recent_evidence.dart',
   'tool/book_source_ledger_nov16_evidence.dart',
+  'tool/book_source_ledger_com_rdap.dart',
 ];
 const _runtimePolicyReferencePaths = [
   'lib/features/books/application/book_category_policy.dart',
@@ -1075,6 +1079,7 @@ Map<String, Object?> _row(
   _EvidenceIndex evidence,
   RecentLedgerEvidence recent,
   Nov16LedgerEvidence nov16,
+  ComRdapLedgerEvidence comRdap,
   Map<String, Map> data,
 ) {
   final index = catalog.selectedIndex[source.id]!;
@@ -1118,6 +1123,7 @@ Map<String, Object?> _row(
       index,
     ),
   );
+  registry.addAll(selectComRdapEvidence(comRdap, source, index));
   final community = communityClues(data[_blocklist]!, source, index);
   final ruleReview = ruleReviewEvidence(data, source, index);
   final searchPilot = searchPilotObservations(
@@ -1182,6 +1188,13 @@ void _verifyArchiveAssociation(
   String digest,
   Map<String, String> inputHashes,
 ) {
+  if (file == comRdapEvidenceFile) {
+    final references = evidence['input_references'] as Map;
+    if ((references['catalog_archive'] as Map)['sha256'] != digest) {
+      throw const FormatException('.com RDAP archive association mismatch');
+    }
+    return;
+  }
   if (file == _recentRedirect) {
     final sources = evidence['inputs'] as Map;
     if (sources.isEmpty ||
@@ -1339,6 +1352,11 @@ Map<String, int> _summary(List<Map<String, Object?>> sources) {
           .whereType<Map>()
           .any((observation) => observation['evidence'] == _netRdap),
     ),
+    'sources_with_com_rdap_observations': count(
+      (row) => (row['registry_and_doh_observations'] as List)
+          .whereType<Map>()
+          .any((observation) => observation['evidence'] == comRdapEvidenceFile),
+    ),
     'sources_with_recent_redirect_observations': count(
       (row) => (row['network_observations'] as List).whereType<Map>().any(
         (observation) => observation['evidence'] == _recentRedirect,
@@ -1420,9 +1438,15 @@ void main(List<String> args) {
     hashes['$_catalogFolder/manifest.json']!,
     networkObservation,
   );
+  final comRdap = readComRdapEvidence(
+    data[comRdapEvidenceFile]!,
+    hashes,
+    data[_dohReviewed]!,
+    catalog.rows,
+  );
   final rows = [
     for (final source in catalog.imported.sources)
-      _row(source, catalog, evidence, recent, nov16, data),
+      _row(source, catalog, evidence, recent, nov16, comRdap, data),
   ];
   rows.sort(
     (a, b) => (a['source_id'] as String).compareTo(b['source_id'] as String),
@@ -1493,6 +1517,8 @@ Map<String, Object?> _ledgerDocument(
     'Runtime discovery-category filtering is not simulated; static source flags and historical categories do not report its filtering outcome.',
     'Historical category and adult-source evidence requires local Git, the referenced ledger and label objects, and historical code objects; a shallow clone or missing .git causes verification to fail.',
     'The .net RDAP evidence records a historical working-tree book_source_risk.dart digest whose exact snapshot was not retained, so that historical policy state cannot be fully reconstructed from these inputs.',
+    'The .com RDAP and DoH samples distinguish the registered domain from the exact old source host; DNSSEC AD was not validated locally, the nearby rounds may share caches, and registration, 404, DNS answers or timeouts do not establish source or website safety.',
+    'The .com RDAP historical ledger requires the referenced Git object; collector scripts, raw RDAP/DNS response bytes and their intermediate draft are not preserved in the repository.',
     'Static flags do not include personal settings, enabled state, mutable assessments, user blacklists, supervision, or every private repository policy.',
     'Same-ID historical cache can lack the rule fingerprint needed to attribute old content to a specific source version.',
     'The ledger reports bounded prior pilot observations, but does not itself perform a new live search-detail-chapter-content check.',
@@ -1517,6 +1543,12 @@ Map<String, Object?> _ledgerDocument(
       ...(data[equivalentEvidenceFile]!['historical_label_evidence'] as Map),
       'verified_from_git_object': true,
     },
+  },
+  'com_rdap_historical_ledger_reference': {
+    ...((data[comRdapEvidenceFile]!['input_references']
+            as Map)['source_ledger_historical_git']
+        as Map),
+    'verified_from_git_object': true,
   },
   'community_inputs': {
     'block_list_project_revision':
