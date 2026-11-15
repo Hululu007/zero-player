@@ -1,0 +1,962 @@
+{
+  "schema_version": 1,
+  "created_at": "2026-11-15T14:25:39.842467+00:00",
+  "time_zone": "UTC; Asia/Shanghai is UTC+08:00",
+  "sources": {
+    "registry_authority": "https://origin.www1.verisign.com/news-insights/registration-data-access-protocol/help/",
+    "iana_bootstrap": "https://data.iana.org/rdap/dns.json",
+    "rdap_http_semantics": "https://www.rfc-editor.org/rfc/rfc7480.html"
+  },
+  "inputs": {
+    "archive_sha256": "012a0e0d6e6adc8d303c32b578510e14b562088b3e965cb01a1a647b5e7e034d",
+    "import_inventory_path": "docs/implementation/legado-import-inventory-20261115.json",
+    "import_inventory_sha256": "ad4e347888cad71812ee7da9477f027baf0bee5bceb1d4247fc69d6c4df8764c",
+    "head_recheck_path": "docs/implementation/legado-host-recheck-20261115.json",
+    "head_recheck_sha256": "fcb543ff2a41e7e4960d2a0112af9c311d8e55148b8716d8854c09360b1080af",
+    "public_doh_review_path": "docs/implementation/legado-doh-reviewed-20261115.json",
+    "public_doh_review_sha256": "4729489824e1f653d5e18872789a75e9f0ebe919286add025e738606f4243059",
+    "doh_helper_path": "tool/audit_legado_doh_pilot.py",
+    "doh_helper_sha256": "eecb9c14748ffde78c371009cf532b8a20d491f356c3364506d8eef707d57b68"
+  },
+  "method": {
+    "rdap_service": "https://rdap.verisign.com/com/v1/domain/{domain}",
+    "rdap": "Anonymous HTTPS GET, public DNS and fixed numeric address, TLS hostname verification, no redirects, eight-second deadline, 131072-byte limit. Only status and minimal non-personal domain-object indicators retained.",
+    "dns": "A/AAAA over HTTPS to Aliyun and Tencent resolvers, anonymous, TLS verified, six-second deadline, serial requests with at least 0.4 seconds between completions; no source host contacted.",
+    "privacy": "No RDAP registration/registrant details, full RDAP response, DNS addresses or CNAMEs were retained. Controls use a registered public domain and a random synthetic domain."
+  },
+  "rdap_controls": [
+    {
+      "domain": "google.com",
+      "started_at": "2026-11-15T14:18:45.753530+00:00",
+      "observed_at": "2026-11-15T14:18:49.794933+00:00",
+      "http_status": 200,
+      "content_type": "application/rdap+json",
+      "content_encoding": null,
+      "body_bytes": null,
+      "rdap_conformance_present": true,
+      "domain_object_and_name_match": true,
+      "error_code": null,
+      "failure_type": null,
+      "classification": "domain_object"
+    },
+    {
+      "domain": "zeroplayer-probe-fed4ca66ecd01fed.com",
+      "started_at": "2026-11-15T14:18:50.795384+00:00",
+      "observed_at": "2026-11-15T14:18:54.833442+00:00",
+      "http_status": 404,
+      "content_type": "application/rdap+json",
+      "content_encoding": null,
+      "body_bytes": null,
+      "rdap_conformance_present": null,
+      "domain_object_and_name_match": null,
+      "error_code": null,
+      "failure_type": "JSONDecodeError",
+      "classification": "http_404_parse_failed"
+    },
+    {
+      "domain": "zeroplayer-probe-fed4ca66ecd01fed.com",
+      "started_at": "2026-11-15T14:19:54.729110+00:00",
+      "observed_at": "2026-11-15T14:19:55.832286+00:00",
+      "http_status": 404,
+      "content_type": "application/rdap+json",
+      "content_encoding": "",
+      "body_bytes": 0,
+      "rdap_conformance_present": null,
+      "domain_object_and_name_match": null,
+      "error_code": null,
+      "failure_type": null,
+      "classification": "http_404_empty_body"
+    },
+    {
+      "domain": "google.com",
+      "started_at": "2026-11-15T14:22:21.922057+00:00",
+      "observed_at": "2026-11-15T14:22:24.193989+00:00",
+      "http_status": 200,
+      "content_type": "application/rdap+json",
+      "content_encoding": "",
+      "body_bytes": 2822,
+      "rdap_conformance_present": true,
+      "domain_object_and_name_match": true,
+      "error_code": null,
+      "failure_type": null,
+      "classification": "domain_object"
+    }
+  ],
+  "candidates": [
+    {
+      "registry_domain": "baitxt.com",
+      "old_endpoint_host": "baitxt.com",
+      "selected_sources": [
+        {
+          "selected_record_index": 529,
+          "id": "54aa92180c08b603d7459f4104622a4465e4be239e04983c4008c157393474e1",
+          "name": "百书阁小说网",
+          "kind": "text",
+          "raw_bookSourceUrl": "http://baitxt.com",
+          "raw_searchUrl_sha256_utf8": "8fb471bb2d035c3e4764f2f82b97426a69e3eaab2e4e4533d8951a608606f885",
+          "raw_ruleSearch_bookList": ".book-coverlist",
+          "raw_ruleSearch_bookList_sha256_utf8": "949ce994025ca7f09513d28c8002c7a061b184ac08b5d90df73bc34e2ed05846"
+        }
+      ],
+      "raw_record_indices": [
+        529
+      ],
+      "previous_first": {
+        "observed_at": "2026-11-15T02:26:16.949969+00:00",
+        "error": "dns: [Errno 11001] getaddrinfo failed",
+        "classification": "dns_host_not_found"
+      },
+      "previous_recheck": {
+        "host": "baitxt.com",
+        "observed_at": "2026-11-15T04:01:33.632892+00:00",
+        "error": "dns: [Errno 11001] getaddrinfo failed",
+        "classification": "dns_host_not_found"
+      },
+      "previous_native_dns_observations": [
+        {
+          "observed_at": "2026-11-15T04:03:52.739789+00:00",
+          "a": 9003,
+          "aaaa": 9501
+        },
+        {
+          "observed_at": "2026-11-15T04:04:33.416244+00:00",
+          "a": 9003,
+          "aaaa": 9501
+        }
+      ],
+      "previous_native_dns_verdict": "repeated_nxdomain",
+      "previous_public_doh_observations": [
+        {
+          "provider": "aliyun",
+          "query_type": "A",
+          "started_at": "2026-11-15T13:00:28.598208+00:00",
+          "http_status": 200,
+          "dns_rcode": 3,
+          "dns_truncated": false,
+          "dnssec_authenticated": false,
+          "address_categories": {},
+          "address_ttls_seconds": [],
+          "negative_ttls_seconds": [
+            1
+          ],
+          "classification": "nxdomain",
+          "response_sha256": "e7bb9728d3918db3d5b39375e5f15d3df49cd7cb1b0ee7d4578624fa74664559",
+          "observed_at": "2026-11-15T13:00:28.763518+00:00"
+        },
+        {
+          "provider": "aliyun",
+          "query_type": "AAAA",
+          "started_at": "2026-11-15T13:00:28.898518+00:00",
+          "http_status": 200,
+          "dns_rcode": 3,
+          "dns_truncated": false,
+          "dnssec_authenticated": false,
+          "address_categories": {},
+          "address_ttls_seconds": [],
+          "negative_ttls_seconds": [
+            600
+          ],
+          "classification": "nxdomain",
+          "response_sha256": "6616295e74603c85985fc9058e27e00f54ea29d0c31348403d5dce10ee60e883",
+          "observed_at": "2026-11-15T13:00:29.344809+00:00"
+        },
+        {
+          "provider": "tencent",
+          "query_type": "A",
+          "started_at": "2026-11-15T13:00:29.344835+00:00",
+          "http_status": 200,
+          "dns_rcode": 3,
+          "dns_truncated": false,
+          "dnssec_authenticated": false,
+          "address_categories": {},
+          "address_ttls_seconds": [],
+          "negative_ttls_seconds": [
+            600
+          ],
+          "classification": "nxdomain",
+          "response_sha256": "480bb844bb2275181610e57718e0b987e400d8e001182d2dbff7a26f52d54e62",
+          "observed_at": "2026-11-15T13:00:29.933826+00:00"
+        },
+        {
+          "provider": "tencent",
+          "query_type": "AAAA",
+          "started_at": "2026-11-15T13:00:29.933851+00:00",
+          "http_status": 200,
+          "dns_rcode": 3,
+          "dns_truncated": false,
+          "dnssec_authenticated": false,
+          "address_categories": {},
+          "address_ttls_seconds": [],
+          "negative_ttls_seconds": [
+            600
+          ],
+          "classification": "nxdomain",
+          "response_sha256": "08e706038558b130b591ad59cefdd4599714eea151bd8a35b5cfd72b58018c21",
+          "observed_at": "2026-11-15T13:00:30.795581+00:00"
+        }
+      ],
+      "rdap_observations": [
+        {
+          "domain": "baitxt.com",
+          "started_at": "2026-11-15T14:19:56.632618+00:00",
+          "observed_at": "2026-11-15T14:19:57.903832+00:00",
+          "http_status": 200,
+          "content_type": "application/rdap+json",
+          "content_encoding": "",
+          "body_bytes": 2564,
+          "rdap_conformance_present": true,
+          "domain_object_and_name_match": true,
+          "error_code": null,
+          "failure_type": null,
+          "classification": "domain_object"
+        }
+      ]
+    },
+    {
+      "registry_domain": "74txts.com",
+      "old_endpoint_host": "www.74txts.com",
+      "selected_sources": [
+        {
+          "selected_record_index": 4504,
+          "id": "4f0e8301c7cf9e7bca55258b772c6b992d9ffa79913dbe87a7d6cc36bd811fd9",
+          "name": "骑士小说",
+          "kind": "text",
+          "raw_bookSourceUrl": "https://www.74txts.com",
+          "raw_searchUrl_sha256_utf8": "50b89da1daf5391336c52aedef28fb2e422cb41850bc57270eceefb9f20defb3",
+          "raw_ruleSearch_bookList": "class.book-coverlist",
+          "raw_ruleSearch_bookList_sha256_utf8": "cad08228dcaa40be4e7eca3c9528e87bc1c8d2c92809d913e6b43bdeb74637af"
+        }
+      ],
+      "raw_record_indices": [
+        4504
+      ],
+      "previous_first": {
+        "observed_at": "2026-11-15T02:26:56.502167+00:00",
+        "error": "dns: [Errno 11001] getaddrinfo failed",
+        "classification": "dns_host_not_found"
+      },
+      "previous_recheck": {
+        "host": "www.74txts.com",
+        "observed_at": "2026-11-15T04:02:26.484510+00:00",
+        "error": "dns: [Errno 11001] getaddrinfo failed",
+        "classification": "dns_host_not_found"
+      },
+      "previous_native_dns_observations": [
+        {
+          "observed_at": "2026-11-15T04:03:54.166381+00:00",
+          "a": 9003,
+          "aaaa": 9501
+        },
+        {
+          "observed_at": "2026-11-15T04:04:34.412112+00:00",
+          "a": 9003,
+          "aaaa": 9501
+        }
+      ],
+      "previous_native_dns_verdict": "repeated_nxdomain",
+      "previous_public_doh_observations": [
+        {
+          "provider": "aliyun",
+          "query_type": "A",
+          "started_at": "2026-11-15T13:02:59.609091+00:00",
+          "http_status": 200,
+          "dns_rcode": 3,
+          "dns_truncated": false,
+          "dnssec_authenticated": false,
+          "address_categories": {},
+          "address_ttls_seconds": [],
+          "negative_ttls_seconds": [
+            249
+          ],
+          "classification": "nxdomain",
+          "response_sha256": "dce83221dd7343ad137a9894ce910adc1018c605d78414973cff2e28fd43c6cb",
+          "observed_at": "2026-11-15T13:02:59.697184+00:00"
+        },
+        {
+          "provider": "aliyun",
+          "query_type": "AAAA",
+          "started_at": "2026-11-15T13:02:59.909175+00:00",
+          "http_status": 200,
+          "dns_rcode": 3,
+          "dns_truncated": false,
+          "dnssec_authenticated": false,
+          "address_categories": {},
+          "address_ttls_seconds": [],
+          "negative_ttls_seconds": [
+            600
+          ],
+          "classification": "nxdomain",
+          "response_sha256": "4df9458c80a8e8757b824bab5b5dd12cd4c38c3cca9e853720b9b80bdaf1b649",
+          "observed_at": "2026-11-15T13:03:00.263371+00:00"
+        },
+        {
+          "provider": "tencent",
+          "query_type": "A",
+          "started_at": "2026-11-15T13:03:00.263397+00:00",
+          "http_status": 200,
+          "dns_rcode": 3,
+          "dns_truncated": false,
+          "dnssec_authenticated": false,
+          "address_categories": {},
+          "address_ttls_seconds": [],
+          "negative_ttls_seconds": [
+            248
+          ],
+          "classification": "nxdomain",
+          "response_sha256": "ea18d50bffc6efb752df2b4e1ee627cf838195be63c4559a2f8cf31b8cfd224d",
+          "observed_at": "2026-11-15T13:03:00.471011+00:00"
+        },
+        {
+          "provider": "tencent",
+          "query_type": "AAAA",
+          "started_at": "2026-11-15T13:03:00.563615+00:00",
+          "http_status": 200,
+          "dns_rcode": 3,
+          "dns_truncated": false,
+          "dnssec_authenticated": false,
+          "address_categories": {},
+          "address_ttls_seconds": [],
+          "negative_ttls_seconds": [
+            249
+          ],
+          "classification": "nxdomain",
+          "response_sha256": "203de6e7857bf9490d8f4b9f9d49f866cc6ede3ed352cce8e3c00059e4d0d6f2",
+          "observed_at": "2026-11-15T13:03:00.739082+00:00"
+        }
+      ],
+      "rdap_observations": [
+        {
+          "domain": "74txts.com",
+          "started_at": "2026-11-15T14:19:58.704139+00:00",
+          "observed_at": "2026-11-15T14:20:03.187960+00:00",
+          "http_status": 200,
+          "content_type": "application/rdap+json",
+          "content_encoding": "",
+          "body_bytes": 2563,
+          "rdap_conformance_present": true,
+          "domain_object_and_name_match": true,
+          "error_code": null,
+          "failure_type": null,
+          "classification": "domain_object"
+        }
+      ]
+    },
+    {
+      "registry_domain": "taotaoshu8.com",
+      "old_endpoint_host": "www.taotaoshu8.com",
+      "selected_sources": [
+        {
+          "selected_record_index": 1014,
+          "id": "827f2fea6fcae97d0fde45d48abffc4ffd50afd13f6bc8b6b721041ddeb95dc4",
+          "name": "桃桃书屋",
+          "kind": "text",
+          "raw_bookSourceUrl": "https://www.taotaoshu8.com/",
+          "raw_searchUrl_sha256_utf8": "3a5164b4993b148e8a9a463cf869abd2c8fa92f9bff5ec9882625e31fc4c4f4a",
+          "raw_ruleSearch_bookList": ".fengtui_top dl",
+          "raw_ruleSearch_bookList_sha256_utf8": "8eb9573261aceda1b6fc885c378734395ebbd45983411a461f8c497ce1db8c69"
+        }
+      ],
+      "raw_record_indices": [
+        1014,
+        2859
+      ],
+      "previous_first": {
+        "observed_at": "2026-11-15T02:27:33.975556+00:00",
+        "error": "dns: [Errno 11001] getaddrinfo failed",
+        "classification": "dns_host_not_found"
+      },
+      "previous_recheck": {
+        "host": "www.taotaoshu8.com",
+        "observed_at": "2026-11-15T04:03:21.176037+00:00",
+        "error": "dns: [Errno 11001] getaddrinfo failed",
+        "classification": "dns_host_not_found"
+      },
+      "previous_native_dns_observations": [
+        {
+          "observed_at": "2026-11-15T04:04:15.057704+00:00",
+          "a": 9003,
+          "aaaa": 9501
+        },
+        {
+          "observed_at": "2026-11-15T04:04:34.523516+00:00",
+          "a": 9003,
+          "aaaa": 9501
+        }
+      ],
+      "previous_native_dns_verdict": "repeated_nxdomain",
+      "previous_public_doh_observations": [
+        {
+          "provider": "aliyun",
+          "query_type": "A",
+          "started_at": "2026-11-15T13:05:13.533475+00:00",
+          "http_status": 200,
+          "dns_rcode": 3,
+          "dns_truncated": false,
+          "dnssec_authenticated": false,
+          "address_categories": {},
+          "address_ttls_seconds": [],
+          "negative_ttls_seconds": [
+            600
+          ],
+          "classification": "nxdomain",
+          "response_sha256": "31e5d6f4111e2c5cda48bf5ba7c261e32d538d874ab9fde19b1f3a59a5fe4de5",
+          "observed_at": "2026-11-15T13:05:14.151907+00:00"
+        },
+        {
+          "provider": "aliyun",
+          "query_type": "AAAA",
+          "started_at": "2026-11-15T13:05:14.009337+00:00",
+          "http_status": 200,
+          "dns_rcode": 3,
+          "dns_truncated": false,
+          "dnssec_authenticated": false,
+          "address_categories": {},
+          "address_ttls_seconds": [],
+          "negative_ttls_seconds": [
+            600
+          ],
+          "classification": "nxdomain",
+          "response_sha256": "d7b3467116b0f0f63dd0a2318387d91461590f01a8a928c71124d351fbc7341f",
+          "observed_at": "2026-11-15T13:05:14.361715+00:00"
+        },
+        {
+          "provider": "tencent",
+          "query_type": "A",
+          "started_at": "2026-11-15T13:05:14.309596+00:00",
+          "http_status": 200,
+          "dns_rcode": 3,
+          "dns_truncated": false,
+          "dnssec_authenticated": false,
+          "address_categories": {},
+          "address_ttls_seconds": [],
+          "negative_ttls_seconds": [
+            600
+          ],
+          "classification": "nxdomain",
+          "response_sha256": "bf3b8e93a7315d0d8815b9f8d0dea995dd0d08a23d54645dadd0f20604257610",
+          "observed_at": "2026-11-15T13:05:15.405982+00:00"
+        },
+        {
+          "provider": "tencent",
+          "query_type": "AAAA",
+          "started_at": "2026-11-15T13:05:14.609989+00:00",
+          "http_status": 200,
+          "dns_rcode": 3,
+          "dns_truncated": false,
+          "dnssec_authenticated": false,
+          "address_categories": {},
+          "address_ttls_seconds": [],
+          "negative_ttls_seconds": [
+            600
+          ],
+          "classification": "nxdomain",
+          "response_sha256": "3e2378c490e47911a414013493235bb8f292e23caf4580c2333b4374a8e0d205",
+          "observed_at": "2026-11-15T13:05:15.656173+00:00"
+        }
+      ],
+      "rdap_observations": [
+        {
+          "domain": "taotaoshu8.com",
+          "started_at": "2026-11-15T14:20:03.988231+00:00",
+          "observed_at": "2026-11-15T14:20:06.225332+00:00",
+          "http_status": 404,
+          "content_type": "application/rdap+json",
+          "content_encoding": "",
+          "body_bytes": 0,
+          "rdap_conformance_present": null,
+          "domain_object_and_name_match": null,
+          "error_code": null,
+          "failure_type": null,
+          "classification": "http_404_empty_body"
+        },
+        {
+          "domain": "taotaoshu8.com",
+          "started_at": "2026-11-15T14:22:25.194449+00:00",
+          "observed_at": "2026-11-15T14:22:27.657757+00:00",
+          "http_status": 404,
+          "content_type": "application/rdap+json",
+          "content_encoding": "",
+          "body_bytes": 0,
+          "rdap_conformance_present": null,
+          "domain_object_and_name_match": null,
+          "error_code": null,
+          "failure_type": null,
+          "classification": "http_404_empty_body"
+        }
+      ],
+      "legacy_search_method_and_path": "POST home/search"
+    },
+    {
+      "registry_domain": "mbgbook.com",
+      "old_endpoint_host": "m.mbgbook.com",
+      "selected_sources": [
+        {
+          "selected_record_index": 518,
+          "id": "988474def3440d5344e6731e16ca498c56397b6e6770e9e7e363085c683e418e",
+          "name": "📚 妙笔书阁",
+          "kind": "text",
+          "raw_bookSourceUrl": "https://m.mbgbook.com",
+          "raw_searchUrl_sha256_utf8": "49d14a74669a222f45fdd37d4a9e422517324c3781de4521d3fd1d6ddef5fa50",
+          "raw_ruleSearch_bookList": ".fk li",
+          "raw_ruleSearch_bookList_sha256_utf8": "d26962bf57b660e33cad73f70d4684e940132a71d1d1b4ede2907680a3ed370e"
+        }
+      ],
+      "raw_record_indices": [
+        518,
+        2304
+      ],
+      "previous_first": {
+        "observed_at": "2026-11-15T02:26:31.767756+00:00",
+        "error": "dns: [Errno 11001] getaddrinfo failed",
+        "classification": "dns_host_not_found"
+      },
+      "previous_recheck": {
+        "host": "m.mbgbook.com",
+        "observed_at": "2026-11-15T04:01:54.847880+00:00",
+        "error": "dns: [Errno 11001] getaddrinfo failed",
+        "classification": "dns_host_not_found"
+      },
+      "previous_native_dns_observations": [
+        {
+          "observed_at": "2026-11-15T04:03:52.861012+00:00",
+          "a": 9501,
+          "aaaa": 9003
+        },
+        {
+          "observed_at": "2026-11-15T04:04:33.814002+00:00",
+          "a": 9501,
+          "aaaa": 9003
+        }
+      ],
+      "previous_native_dns_verdict": "repeated_nxdomain",
+      "previous_public_doh_observations": [
+        {
+          "provider": "aliyun",
+          "query_type": "A",
+          "started_at": "2026-11-15T13:01:22.582785+00:00",
+          "http_status": 200,
+          "dns_rcode": 3,
+          "dns_truncated": false,
+          "dnssec_authenticated": false,
+          "address_categories": {},
+          "address_ttls_seconds": [],
+          "negative_ttls_seconds": [
+            180
+          ],
+          "classification": "nxdomain",
+          "response_sha256": "f55f4bc24ecf3c463f9342c9849e3a8f7a5b6471d5bfce4d90ce3f2633cde452",
+          "observed_at": "2026-11-15T13:01:22.993421+00:00"
+        },
+        {
+          "provider": "aliyun",
+          "query_type": "AAAA",
+          "started_at": "2026-11-15T13:01:22.993449+00:00",
+          "http_status": 200,
+          "dns_rcode": 3,
+          "dns_truncated": false,
+          "dnssec_authenticated": false,
+          "address_categories": {},
+          "address_ttls_seconds": [],
+          "negative_ttls_seconds": [
+            180
+          ],
+          "classification": "nxdomain",
+          "response_sha256": "785a9054c767c27d3880ccf6db17a4415f4e66c9092c0791a02ff4eda574f416",
+          "observed_at": "2026-11-15T13:01:23.341114+00:00"
+        },
+        {
+          "provider": "tencent",
+          "query_type": "A",
+          "started_at": "2026-11-15T13:01:23.341144+00:00",
+          "http_status": 200,
+          "dns_rcode": 3,
+          "dns_truncated": false,
+          "dnssec_authenticated": false,
+          "address_categories": {},
+          "address_ttls_seconds": [],
+          "negative_ttls_seconds": [
+            180
+          ],
+          "classification": "nxdomain",
+          "response_sha256": "ff5570eaec7cc60994fc7299989d3c6e048fef4c3fc38d35a62a78f28540b3b6",
+          "observed_at": "2026-11-15T13:01:23.542902+00:00"
+        },
+        {
+          "provider": "tencent",
+          "query_type": "AAAA",
+          "started_at": "2026-11-15T13:01:23.641519+00:00",
+          "http_status": 200,
+          "dns_rcode": 3,
+          "dns_truncated": false,
+          "dnssec_authenticated": false,
+          "address_categories": {},
+          "address_ttls_seconds": [],
+          "negative_ttls_seconds": [
+            180
+          ],
+          "classification": "nxdomain",
+          "response_sha256": "4d40782bc873fcbe84ae826be549d3648615283c1ff7db8e41ffbe0b7d257c8d",
+          "observed_at": "2026-11-15T13:01:23.866914+00:00"
+        }
+      ],
+      "rdap_observations": [
+        {
+          "domain": "mbgbook.com",
+          "started_at": "2026-11-15T14:20:07.025653+00:00",
+          "observed_at": "2026-11-15T14:20:15.039955+00:00",
+          "http_status": null,
+          "content_type": null,
+          "content_encoding": null,
+          "body_bytes": null,
+          "rdap_conformance_present": null,
+          "domain_object_and_name_match": null,
+          "error_code": null,
+          "failure_type": "TimeoutError",
+          "classification": "request_failure"
+        },
+        {
+          "domain": "mbgbook.com",
+          "started_at": "2026-11-15T14:22:28.657992+00:00",
+          "observed_at": "2026-11-15T14:22:30.083204+00:00",
+          "http_status": 200,
+          "content_type": "application/rdap+json",
+          "content_encoding": "",
+          "body_bytes": 2592,
+          "rdap_conformance_present": true,
+          "domain_object_and_name_match": true,
+          "error_code": null,
+          "failure_type": null,
+          "classification": "domain_object"
+        }
+      ]
+    },
+    {
+      "registry_domain": "leanclo.com",
+      "old_endpoint_host": "m.leanclo.com",
+      "selected_sources": [
+        {
+          "selected_record_index": 1200,
+          "id": "23f9113eebd63dee190197020ed75464eb9518302f987b24b2443293c1934fd1",
+          "name": "乐安小说",
+          "kind": "text",
+          "raw_bookSourceUrl": "https://m.leanclo.com",
+          "raw_searchUrl_sha256_utf8": "41db4ee98922783758ec443012c18b123315d1200c1fa7682ca6f5648bdad995",
+          "raw_ruleSearch_bookList": ".booklist",
+          "raw_ruleSearch_bookList_sha256_utf8": "a655062a359a2bad7423e29cef10ef54bf9409d37b0fd58a17d4a884d4653f9f"
+        }
+      ],
+      "raw_record_indices": [
+        1200,
+        3132
+      ],
+      "previous_first": {
+        "observed_at": "2026-11-15T02:26:30.800459+00:00",
+        "error": "dns: [Errno 11001] getaddrinfo failed",
+        "classification": "dns_host_not_found"
+      },
+      "previous_recheck": {
+        "host": "m.leanclo.com",
+        "observed_at": "2026-11-15T04:01:53.778996+00:00",
+        "error": "dns: [Errno 11001] getaddrinfo failed",
+        "classification": "dns_host_not_found"
+      },
+      "previous_native_dns_observations": [
+        {
+          "observed_at": "2026-11-15T04:03:52.850972+00:00",
+          "a": 9003,
+          "aaaa": 9501
+        },
+        {
+          "observed_at": "2026-11-15T04:04:33.806877+00:00",
+          "a": 9003,
+          "aaaa": 9501
+        }
+      ],
+      "previous_native_dns_verdict": "repeated_nxdomain",
+      "previous_public_doh_observations": [
+        {
+          "provider": "aliyun",
+          "query_type": "A",
+          "started_at": "2026-11-15T13:01:17.987959+00:00",
+          "http_status": 200,
+          "dns_rcode": 3,
+          "dns_truncated": false,
+          "dnssec_authenticated": false,
+          "address_categories": {},
+          "address_ttls_seconds": [],
+          "negative_ttls_seconds": [
+            235
+          ],
+          "classification": "nxdomain",
+          "response_sha256": "b6e84456b5fa95fb05c0071f8240491a3c2ea5c1b11e5c6b35f3c90d5d37e7b7",
+          "observed_at": "2026-11-15T13:01:20.343626+00:00"
+        },
+        {
+          "provider": "aliyun",
+          "query_type": "AAAA",
+          "started_at": "2026-11-15T13:01:18.288281+00:00",
+          "http_status": 200,
+          "dns_rcode": 3,
+          "dns_truncated": false,
+          "dnssec_authenticated": false,
+          "address_categories": {},
+          "address_ttls_seconds": [],
+          "negative_ttls_seconds": [
+            600
+          ],
+          "classification": "nxdomain",
+          "response_sha256": "da9b779523ca073d6d7d39175cdbe1874ef4a8fd1576a9a07a83ced09bdd9b65",
+          "observed_at": "2026-11-15T13:01:19.819862+00:00"
+        },
+        {
+          "provider": "tencent",
+          "query_type": "A",
+          "started_at": "2026-11-15T13:01:19.819890+00:00",
+          "http_status": 200,
+          "dns_rcode": 3,
+          "dns_truncated": false,
+          "dnssec_authenticated": false,
+          "address_categories": {},
+          "address_ttls_seconds": [],
+          "negative_ttls_seconds": [
+            600
+          ],
+          "classification": "nxdomain",
+          "response_sha256": "fac3117c2b9ee75df6aeec9ce159f58876f9fa4c2ab081e37fb20a03aa9f6ea7",
+          "observed_at": "2026-11-15T13:01:21.381165+00:00"
+        },
+        {
+          "provider": "tencent",
+          "query_type": "AAAA",
+          "started_at": "2026-11-15T13:01:20.343655+00:00",
+          "http_status": 200,
+          "dns_rcode": 3,
+          "dns_truncated": false,
+          "dnssec_authenticated": false,
+          "address_categories": {},
+          "address_ttls_seconds": [],
+          "negative_ttls_seconds": [
+            488
+          ],
+          "classification": "nxdomain",
+          "response_sha256": "e38f425ed7d67138ee62f293bb0b16f93c92e217cd6e37449664d16200601aaf",
+          "observed_at": "2026-11-15T13:01:21.521059+00:00"
+        }
+      ],
+      "rdap_observations": [
+        {
+          "domain": "leanclo.com",
+          "started_at": "2026-11-15T14:20:15.840090+00:00",
+          "observed_at": "2026-11-15T14:20:18.913509+00:00",
+          "http_status": 200,
+          "content_type": "application/rdap+json",
+          "content_encoding": "",
+          "body_bytes": 2601,
+          "rdap_conformance_present": true,
+          "domain_object_and_name_match": true,
+          "error_code": null,
+          "failure_type": null,
+          "classification": "domain_object"
+        }
+      ]
+    }
+  ],
+  "current_public_doh_observations": [
+    {
+      "host": "example.com",
+      "provider": "aliyun",
+      "query_type": "A",
+      "started_at": "2026-11-15T14:21:19.088793+00:00",
+      "observed_at": "2026-11-15T14:21:19.213996+00:00",
+      "http_status": 200,
+      "dns_rcode": 0,
+      "dns_truncated": false,
+      "dnssec_authenticated": false,
+      "address_categories": {
+        "public": 2
+      },
+      "negative_ttls_seconds": [],
+      "classification": "noerror_addresses",
+      "response_sha256": "f078cf6542f75f6538ff57c15fde29c336cae29c7b5c8fb78a5865ced4737c96",
+      "address_ttls_seconds": [
+        200,
+        200
+      ]
+    },
+    {
+      "host": "example.com",
+      "provider": "tencent",
+      "query_type": "A",
+      "started_at": "2026-11-15T14:21:19.614256+00:00",
+      "observed_at": "2026-11-15T14:21:19.796834+00:00",
+      "http_status": 200,
+      "dns_rcode": 0,
+      "dns_truncated": false,
+      "dnssec_authenticated": false,
+      "address_categories": {
+        "public": 2
+      },
+      "negative_ttls_seconds": [],
+      "classification": "noerror_addresses",
+      "response_sha256": "3594f4a18228131e6df8053c44b15ec87ab3f04b2de98ad91672a3d206207678",
+      "address_ttls_seconds": [
+        223,
+        223
+      ]
+    },
+    {
+      "host": "taotaoshu8.com",
+      "provider": "aliyun",
+      "query_type": "A",
+      "started_at": "2026-11-15T14:21:20.197195+00:00",
+      "observed_at": "2026-11-15T14:21:20.632078+00:00",
+      "http_status": 200,
+      "dns_rcode": 3,
+      "dns_truncated": false,
+      "dnssec_authenticated": false,
+      "address_categories": {},
+      "negative_ttls_seconds": [
+        600
+      ],
+      "classification": "nxdomain",
+      "response_sha256": "38a4498793e317309f70490409c7df42092889dcf2da194c4c5df278d4f0d37a",
+      "address_ttls_seconds": []
+    },
+    {
+      "host": "taotaoshu8.com",
+      "provider": "aliyun",
+      "query_type": "AAAA",
+      "started_at": "2026-11-15T14:21:21.032635+00:00",
+      "observed_at": "2026-11-15T14:21:21.389848+00:00",
+      "http_status": 200,
+      "dns_rcode": 3,
+      "dns_truncated": false,
+      "dnssec_authenticated": false,
+      "address_categories": {},
+      "negative_ttls_seconds": [
+        600
+      ],
+      "classification": "nxdomain",
+      "response_sha256": "15b32ff88ae20d14f97e7c43e0a948bef8fa9d8f8faf195204aa4961d94c3720",
+      "address_ttls_seconds": []
+    },
+    {
+      "host": "taotaoshu8.com",
+      "provider": "tencent",
+      "query_type": "A",
+      "started_at": "2026-11-15T14:21:21.790167+00:00",
+      "observed_at": "2026-11-15T14:21:22.271490+00:00",
+      "http_status": 200,
+      "dns_rcode": 3,
+      "dns_truncated": false,
+      "dnssec_authenticated": false,
+      "address_categories": {},
+      "negative_ttls_seconds": [
+        600
+      ],
+      "classification": "nxdomain",
+      "response_sha256": "373909a394ff51a11640223ee7e4d73658d4caac11c9871918fb09768420928a",
+      "address_ttls_seconds": []
+    },
+    {
+      "host": "taotaoshu8.com",
+      "provider": "tencent",
+      "query_type": "AAAA",
+      "started_at": "2026-11-15T14:21:22.671984+00:00",
+      "observed_at": "2026-11-15T14:21:23.517547+00:00",
+      "http_status": 200,
+      "dns_rcode": 3,
+      "dns_truncated": false,
+      "dnssec_authenticated": false,
+      "address_categories": {},
+      "negative_ttls_seconds": [
+        600
+      ],
+      "classification": "nxdomain",
+      "response_sha256": "d451fb6e5794a6f21731bb47dc3f393e17f4c3883103f768acdd2f0e6d3c6511",
+      "address_ttls_seconds": []
+    },
+    {
+      "host": "www.taotaoshu8.com",
+      "provider": "aliyun",
+      "query_type": "A",
+      "started_at": "2026-11-15T14:21:23.918095+00:00",
+      "observed_at": "2026-11-15T14:21:24.297054+00:00",
+      "http_status": 200,
+      "dns_rcode": 3,
+      "dns_truncated": false,
+      "dnssec_authenticated": false,
+      "address_categories": {},
+      "negative_ttls_seconds": [
+        600
+      ],
+      "classification": "nxdomain",
+      "response_sha256": "6b31619231a30797eb91641291a0e8ec300f3ef6f486608d5fb5b0137dce5aa7",
+      "address_ttls_seconds": []
+    },
+    {
+      "host": "www.taotaoshu8.com",
+      "provider": "aliyun",
+      "query_type": "AAAA",
+      "started_at": "2026-11-15T14:21:24.697294+00:00",
+      "observed_at": "2026-11-15T14:21:25.070259+00:00",
+      "http_status": 200,
+      "dns_rcode": 3,
+      "dns_truncated": false,
+      "dnssec_authenticated": false,
+      "address_categories": {},
+      "negative_ttls_seconds": [
+        600
+      ],
+      "classification": "nxdomain",
+      "response_sha256": "57391be291e80e0417b1de06dc131511b01d1b3a45096a41cf98ef7c95f89555",
+      "address_ttls_seconds": []
+    },
+    {
+      "host": "www.taotaoshu8.com",
+      "provider": "tencent",
+      "query_type": "A",
+      "started_at": "2026-11-15T14:21:25.470740+00:00",
+      "observed_at": "2026-11-15T14:21:26.270071+00:00",
+      "http_status": 200,
+      "dns_rcode": 3,
+      "dns_truncated": false,
+      "dnssec_authenticated": false,
+      "address_categories": {},
+      "negative_ttls_seconds": [
+        600
+      ],
+      "classification": "nxdomain",
+      "response_sha256": "0d4cfba1552325b170e8e2b2b037dd90bb6efb4054460b0fdd16c2a1c458d704",
+      "address_ttls_seconds": []
+    },
+    {
+      "host": "www.taotaoshu8.com",
+      "provider": "tencent",
+      "query_type": "AAAA",
+      "started_at": "2026-11-15T14:21:26.670493+00:00",
+      "observed_at": "2026-11-15T14:21:27.423728+00:00",
+      "http_status": 200,
+      "dns_rcode": 3,
+      "dns_truncated": false,
+      "dnssec_authenticated": false,
+      "address_categories": {},
+      "negative_ttls_seconds": [
+        600
+      ],
+      "classification": "nxdomain",
+      "response_sha256": "5eca5c4e2d5b5de6c8365aaf786e561f5068f70afd72eaa6e1e145b853487844",
+      "address_ttls_seconds": []
+    }
+  ],
+  "limitations": [
+    "A TLS-verified RDAP HTTP 404 is an empty registry answer at observation time. It does not establish historical deletion, availability for registration, permanent unavailability, or the cause of an absent record.",
+    "The 404 responses had empty bodies: an RDAP errorCode or explanatory title was not observed. The first control attempt tried to parse that response and produced JSONDecodeError.",
+    "Four candidates returned valid matching RDAP domain objects despite previously repeated DNS NXDOMAIN; registration alone does not establish that the source endpoint works.",
+    "A source ID is selected in the referenced catalog snapshot, not proof of installation or enablement; raw rule hashes are not normalized importer hashes.",
+    "The two public DNS services share the same client/network path, and results may use cached data; they are not independent geographic observations. DNSSEC authenticated was false in the current sample.",
+    "Null means unknown or not observed. No source-site request, script execution, search POST, maliciousness test, or reading usability test was performed.",
+    "DNS and RDAP responses vary over time; an exact source-version review may be appropriate, but these observations do not support irrevocable or domain-wide removal.",
+    "DNS response digests cannot be reconstructed from redacted metadata; full RDAP responses were deliberately not saved or hashed."
+  ]
+}

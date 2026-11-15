@@ -1,0 +1,684 @@
+{
+  "schema_version": 1,
+  "created_at": "2026-11-15T14:07:24.686699+00:00",
+  "time_zone": "UTC; Asia/Shanghai is UTC+08:00",
+  "scope": "Read-only bounded static recheck of exact legacy source paths. No redirect followed.",
+  "inputs": {
+    "catalog_archive_sha256": "012a0e0d6e6adc8d303c32b578510e14b562088b3e965cb01a1a647b5e7e034d",
+    "import_inventory_path": "docs/implementation/legado-import-inventory-20261115.json",
+    "import_inventory_sha256": "ad4e347888cad71812ee7da9477f027baf0bee5bceb1d4247fc69d6c4df8764c",
+    "import_inventory_generated_at": "2026-11-15T02:32:19.183484Z",
+    "helpers": {
+      "tool/audit_legado_catalog.py": "36f5359259ba259e84ae10875be6383884ad0cc71e829f029dd96b6dc9976563",
+      "tool/recheck_two_book_homes.py": "71658bff71a47cc88a490e3d99feae4888ad59ce3c0378182cb9cd9b52c67304",
+      "tool/audit_legado_amsi.py": "d5a6b9d3406d92821579ffd649698c737cb905b5f797382e1de10d9d6b9eeb6d"
+    }
+  },
+  "method": {
+    "request": "Anonymous HTTPS GET or HEAD to 443; public DNS validated, each connection pinned to a vetted IP, TLS hostname verified, 8-second overall deadline. Main samples used one address; supplemental checks could try up to three vetted addresses.",
+    "privacy_and_bounds": "No credentials, script execution, following redirects, subresource loading, or webpage-body persistence. HTML samples capped at 32768 bytes with one-byte truncation check; search key test is synthetic.",
+    "redirect": "Recorded HEAD targets are resolved from Location against the request URL; raw Location header text was not retained. GET redirect path was not recorded."
+  },
+  "iqiyi_legacy_rules": {
+    "source_count": 9,
+    "sources": [
+      {
+        "selected_record_index": 1952,
+        "source_id": "66013fbe61a22b463af0e4f026901e3d9edde413f5985f8b309393ede0b2b764",
+        "name": "🎨爱奇艺漫画",
+        "kind": "text",
+        "raw_source_url": "https://www.iqiyi.com/manhua#♤Haxc",
+        "raw_field_sha256_utf8": {
+          "searchUrl": "d50d3ef5bf63043ebc03ff5482503aabfa3c352a52c738d997c6b45a78b1a7ae",
+          "ruleSearch.bookList": "7a7d7f950a0f5a3f998a49f7b2b017dc663ef6e9210cb1f7bc2a508e471814b0",
+          "exploreUrl": "e7ec9795963c88db3c19c6cab010230017f395ed32d09675b8ca8de00cfa3200"
+        }
+      },
+      {
+        "selected_record_index": 1979,
+        "source_id": "c3728b14bdf623a3d93a4db8814ce6d121e3b498d33cd3d9d212484663fbb1dc",
+        "name": "✐ ㊣爱奇艺漫画 #Haxc1107",
+        "kind": "text",
+        "raw_source_url": "https://www.iqiyi.com/manhua#Haxc1107",
+        "raw_field_sha256_utf8": {
+          "searchUrl": "d50d3ef5bf63043ebc03ff5482503aabfa3c352a52c738d997c6b45a78b1a7ae",
+          "ruleSearch.bookList": "7a7d7f950a0f5a3f998a49f7b2b017dc663ef6e9210cb1f7bc2a508e471814b0",
+          "exploreUrl": "e7ec9795963c88db3c19c6cab010230017f395ed32d09675b8ca8de00cfa3200"
+        }
+      },
+      {
+        "selected_record_index": 2164,
+        "source_id": "5de6055cefc4b0beb12832c615e1063bff07c5abce9ce7d9afd37ccd8a48dd0d",
+        "name": "🎨 爱奇艺漫画",
+        "kind": "comic",
+        "raw_source_url": "https://www.iqiyi.com/manhua",
+        "raw_field_sha256_utf8": {
+          "searchUrl": "d50d3ef5bf63043ebc03ff5482503aabfa3c352a52c738d997c6b45a78b1a7ae",
+          "ruleSearch.bookList": "7a7d7f950a0f5a3f998a49f7b2b017dc663ef6e9210cb1f7bc2a508e471814b0",
+          "exploreUrl": "e7ec9795963c88db3c19c6cab010230017f395ed32d09675b8ca8de00cfa3200"
+        }
+      },
+      {
+        "selected_record_index": 4154,
+        "source_id": "4d7296a10b257ff1b57d4933083198fb8b9a638868afbfb88aa7d5bbff2884e5",
+        "name": "爱奇艺漫",
+        "kind": "comic",
+        "raw_source_url": "https://www.iqiyi.com/manhua#♤Haxc",
+        "raw_field_sha256_utf8": {
+          "searchUrl": "d50d3ef5bf63043ebc03ff5482503aabfa3c352a52c738d997c6b45a78b1a7ae",
+          "ruleSearch.bookList": "7a7d7f950a0f5a3f998a49f7b2b017dc663ef6e9210cb1f7bc2a508e471814b0",
+          "exploreUrl": "e7ec9795963c88db3c19c6cab010230017f395ed32d09675b8ca8de00cfa3200"
+        }
+      },
+      {
+        "selected_record_index": 4275,
+        "source_id": "21ad5d2f3e7c66fdaa4b31008cd46b52e2b32228961459c135ae866206b40ddf",
+        "name": "爱奇艺漫画$",
+        "kind": "comic",
+        "raw_source_url": "https://www.iqiyi.com",
+        "raw_field_sha256_utf8": {
+          "searchUrl": "d50d3ef5bf63043ebc03ff5482503aabfa3c352a52c738d997c6b45a78b1a7ae",
+          "ruleSearch.bookList": "7a7d7f950a0f5a3f998a49f7b2b017dc663ef6e9210cb1f7bc2a508e471814b0",
+          "exploreUrl": "e7ec9795963c88db3c19c6cab010230017f395ed32d09675b8ca8de00cfa3200"
+        }
+      },
+      {
+        "selected_record_index": 4341,
+        "source_id": "290bf6f2ed83af236dd136be2509c0c2ab48a34716ce9bbeb8e08b820afa8fb3",
+        "name": "💰爱奇艺漫画",
+        "kind": "comic",
+        "raw_source_url": "https://www.iqiyi.com/manhua#Haxc1107",
+        "raw_field_sha256_utf8": {
+          "searchUrl": "d50d3ef5bf63043ebc03ff5482503aabfa3c352a52c738d997c6b45a78b1a7ae",
+          "ruleSearch.bookList": "7a7d7f950a0f5a3f998a49f7b2b017dc663ef6e9210cb1f7bc2a508e471814b0",
+          "exploreUrl": "e7ec9795963c88db3c19c6cab010230017f395ed32d09675b8ca8de00cfa3200"
+        }
+      },
+      {
+        "selected_record_index": 4359,
+        "source_id": "021caeaebf0bbdbe1b647c58c66214fbb5d723987a9880b4a13baafceeef033a",
+        "name": "爱奇艺漫画",
+        "kind": "text",
+        "raw_source_url": "https://www.iqiyi.com/manhua",
+        "raw_field_sha256_utf8": {
+          "searchUrl": "d50d3ef5bf63043ebc03ff5482503aabfa3c352a52c738d997c6b45a78b1a7ae",
+          "ruleSearch.bookList": "7a7d7f950a0f5a3f998a49f7b2b017dc663ef6e9210cb1f7bc2a508e471814b0",
+          "exploreUrl": "e7ec9795963c88db3c19c6cab010230017f395ed32d09675b8ca8de00cfa3200"
+        }
+      },
+      {
+        "selected_record_index": 4361,
+        "source_id": "aafb8d8470d14758abdd08865f28bbd68c896706e666d429263fd3698d3fbe2f",
+        "name": "爱奇艺漫画🎃",
+        "kind": "text",
+        "raw_source_url": "https://www.iqiyi.com/manhua#🎃",
+        "raw_field_sha256_utf8": {
+          "searchUrl": "d50d3ef5bf63043ebc03ff5482503aabfa3c352a52c738d997c6b45a78b1a7ae",
+          "ruleSearch.bookList": "7a7d7f950a0f5a3f998a49f7b2b017dc663ef6e9210cb1f7bc2a508e471814b0",
+          "exploreUrl": "e7ec9795963c88db3c19c6cab010230017f395ed32d09675b8ca8de00cfa3200"
+        }
+      },
+      {
+        "selected_record_index": 4390,
+        "source_id": "0a344963c3d4c7bf1f047281708bbe01e76a1681b0a32f430fcfd4375a67eae9",
+        "name": "爱奇艺漫画",
+        "kind": "text",
+        "raw_source_url": "https://www.iqiyi.com/manhua#",
+        "raw_field_sha256_utf8": {
+          "searchUrl": "d50d3ef5bf63043ebc03ff5482503aabfa3c352a52c738d997c6b45a78b1a7ae",
+          "ruleSearch.bookList": "7a7d7f950a0f5a3f998a49f7b2b017dc663ef6e9210cb1f7bc2a508e471814b0",
+          "exploreUrl": "e7ec9795963c88db3c19c6cab010230017f395ed32d09675b8ca8de00cfa3200"
+        }
+      }
+    ],
+    "raw_searchUrl": "https://www.iqiyi.com/manhua/search-keyword={{key}}_{{page}}",
+    "raw_search_list": "class.stacksList@tag.li||class.cartoon-hot-ul@tag.li",
+    "raw_explore_path": "/manhua/weekly_update/{{page}}_1_50.html",
+    "field_hash_scope": "UTF-8 of raw archived values, not independently verified normalized importer output"
+  },
+  "iqiyi_observations": [
+    {
+      "host": "www.iqiyi.com",
+      "method": "GET",
+      "path": "/manhua",
+      "attempt": 1,
+      "started_at": "2026-11-15T14:00:45.450396+00:00",
+      "observed_at": "2026-11-15T14:00:45.560525+00:00",
+      "http_status": 301,
+      "location_raw": null,
+      "location_resolved": null,
+      "redirect_scheme": "https",
+      "redirect_host": "www.iqiyi.com"
+    },
+    {
+      "host": "www.iqiyi.com",
+      "method": "GET",
+      "path": "/manhua/weekly_update/1_1_50.html",
+      "attempt": 1,
+      "started_at": "2026-11-15T14:00:46.161059+00:00",
+      "observed_at": "2026-11-15T14:00:46.242565+00:00",
+      "http_status": 301,
+      "location_raw": null,
+      "location_resolved": null,
+      "redirect_scheme": "https",
+      "redirect_host": "www.iqiyi.com"
+    },
+    {
+      "host": "www.iqiyi.com",
+      "method": "GET",
+      "path": "/manhua/search-keyword=test_1",
+      "attempt": 1,
+      "started_at": "2026-11-15T14:00:46.843130+00:00",
+      "observed_at": "2026-11-15T14:00:46.919229+00:00",
+      "http_status": 301,
+      "location_raw": null,
+      "location_resolved": null,
+      "redirect_scheme": "https",
+      "redirect_host": "www.iqiyi.com"
+    },
+    {
+      "host": "www.iqiyi.com",
+      "method": "GET",
+      "path": "/manhua",
+      "attempt": 2,
+      "started_at": "2026-11-15T14:00:47.519548+00:00",
+      "observed_at": "2026-11-15T14:00:47.611192+00:00",
+      "http_status": 301,
+      "location_raw": null,
+      "location_resolved": null,
+      "redirect_scheme": "https",
+      "redirect_host": "www.iqiyi.com"
+    },
+    {
+      "host": "www.iqiyi.com",
+      "method": "GET",
+      "path": "/manhua/weekly_update/1_1_50.html",
+      "attempt": 2,
+      "started_at": "2026-11-15T14:00:48.211453+00:00",
+      "observed_at": "2026-11-15T14:00:48.289358+00:00",
+      "http_status": 301,
+      "location_raw": null,
+      "location_resolved": null,
+      "redirect_scheme": "https",
+      "redirect_host": "www.iqiyi.com"
+    },
+    {
+      "host": "www.iqiyi.com",
+      "method": "GET",
+      "path": "/manhua/search-keyword=test_1",
+      "attempt": 2,
+      "started_at": "2026-11-15T14:00:48.889599+00:00",
+      "observed_at": "2026-11-15T14:00:48.968072+00:00",
+      "http_status": 301,
+      "location_raw": null,
+      "location_resolved": null,
+      "redirect_scheme": "https",
+      "redirect_host": "www.iqiyi.com"
+    },
+    {
+      "host": "www.iqiyi.com",
+      "method": "HEAD",
+      "path": "/manhua",
+      "attempt": 1,
+      "started_at": "2026-11-15T14:02:01.987016+00:00",
+      "observed_at": "2026-11-15T14:02:02.062582+00:00",
+      "http_status": 301,
+      "location_raw": null,
+      "location_resolved": "https://www.iqiyi.com/",
+      "redirect_scheme": "https",
+      "redirect_host": "www.iqiyi.com"
+    },
+    {
+      "host": "www.iqiyi.com",
+      "method": "HEAD",
+      "path": "/manhua/weekly_update/1_1_50.html",
+      "attempt": 1,
+      "started_at": "2026-11-15T14:02:02.662750+00:00",
+      "observed_at": "2026-11-15T14:02:02.722951+00:00",
+      "http_status": 301,
+      "location_raw": null,
+      "location_resolved": "https://www.iqiyi.com/",
+      "redirect_scheme": "https",
+      "redirect_host": "www.iqiyi.com"
+    },
+    {
+      "host": "www.iqiyi.com",
+      "method": "HEAD",
+      "path": "/manhua/search-keyword=test_1",
+      "attempt": 1,
+      "started_at": "2026-11-15T14:02:03.323233+00:00",
+      "observed_at": "2026-11-15T14:02:03.384981+00:00",
+      "http_status": 301,
+      "location_raw": null,
+      "location_resolved": "https://www.iqiyi.com/",
+      "redirect_scheme": "https",
+      "redirect_host": "www.iqiyi.com"
+    },
+    {
+      "host": "www.iqiyi.com",
+      "method": "HEAD",
+      "path": "/manhua",
+      "attempt": 2,
+      "started_at": "2026-11-15T14:03:43.246161+00:00",
+      "observed_at": "2026-11-15T14:03:43.336987+00:00",
+      "http_status": 301,
+      "location_raw": null,
+      "location_resolved": "https://www.iqiyi.com/",
+      "redirect_scheme": "https",
+      "redirect_host": "www.iqiyi.com"
+    },
+    {
+      "host": "www.iqiyi.com",
+      "method": "HEAD",
+      "path": "/manhua/weekly_update/1_1_50.html",
+      "attempt": 2,
+      "started_at": "2026-11-15T14:03:43.937403+00:00",
+      "observed_at": "2026-11-15T14:03:44.004410+00:00",
+      "http_status": 301,
+      "location_raw": null,
+      "location_resolved": "https://www.iqiyi.com/",
+      "redirect_scheme": "https",
+      "redirect_host": "www.iqiyi.com"
+    },
+    {
+      "host": "www.iqiyi.com",
+      "method": "HEAD",
+      "path": "/manhua/search-keyword=test_1",
+      "attempt": 2,
+      "started_at": "2026-11-15T14:03:44.604690+00:00",
+      "observed_at": "2026-11-15T14:03:44.704716+00:00",
+      "http_status": 301,
+      "location_raw": null,
+      "location_resolved": "https://www.iqiyi.com/",
+      "redirect_scheme": "https",
+      "redirect_host": "www.iqiyi.com"
+    },
+    {
+      "host": "www.iqiyi.com",
+      "method": "GET",
+      "path": "/",
+      "attempt": 1,
+      "started_at": "2026-11-15T14:03:43.272939+00:00",
+      "observed_at": "2026-11-15T14:03:43.402450+00:00",
+      "http_status": 200,
+      "content_type": "text/html",
+      "sample_bytes": 8935,
+      "truncated": false,
+      "sample_sha256": "3fd4c767250d7dea85acb1db840c152dafa06bd4e44e10578042041563e040d9",
+      "title": "爱奇艺 iQIYI-热门独播剧集在线观看"
+    },
+    {
+      "host": "www.iqiyi.com",
+      "method": "GET",
+      "path": "/",
+      "attempt": 2,
+      "started_at": "2026-11-15T14:03:44.002728+00:00",
+      "observed_at": "2026-11-15T14:03:44.071305+00:00",
+      "http_status": 200,
+      "content_type": "text/html",
+      "sample_bytes": 8935,
+      "truncated": false,
+      "sample_sha256": "3fd4c767250d7dea85acb1db840c152dafa06bd4e44e10578042041563e040d9",
+      "title": "爱奇艺 iQIYI-热门独播剧集在线观看"
+    }
+  ],
+  "other_candidates": [
+    {
+      "host": "www.zuowenjing.com",
+      "selected_sources": [
+        {
+          "selected_record_index": 4253,
+          "source_id": "d138978feefec71e954315a88e193dc37b188ddc90dd0c4f40e742411ba2c623",
+          "name": "笔趣阁",
+          "kind": "text"
+        },
+        {
+          "selected_record_index": 4261,
+          "source_id": "303b30e511852aeacbad6e376d0f959e79b4a17af4eca4da214dd5983d4cfcde",
+          "name": "笔趣阁🎃#49",
+          "kind": "text"
+        }
+      ],
+      "observations": [
+        {
+          "host": "www.zuowenjing.com",
+          "method": "GET",
+          "path": "/",
+          "attempt": 1,
+          "started_at": "2026-11-15T14:00:45.448034+00:00",
+          "observed_at": "2026-11-15T14:00:46.819792+00:00",
+          "http_status": 200,
+          "error": null,
+          "error_phase": null,
+          "title": "404 页面不存在",
+          "sample_bytes": 641,
+          "sample_sha256": "e29e5d5f2b6ab0ba6fbc7c91a3092718326d4bb7d222c61f4e78b03710010701",
+          "truncated": false
+        },
+        {
+          "host": "www.zuowenjing.com",
+          "method": "GET",
+          "path": "/sort/1/1",
+          "attempt": 1,
+          "started_at": "2026-11-15T14:00:47.419951+00:00",
+          "observed_at": "2026-11-15T14:00:50.756469+00:00",
+          "http_status": 200,
+          "error": null,
+          "error_phase": null,
+          "title": "神医灵妃(李升卿邓路发)章节列表_神医灵妃TXT免费全文阅读_笔砚文学",
+          "sample_bytes": 32332,
+          "sample_sha256": "428fb0d851e668a8cf5aba57577b52e93012c45078d22e112eacad6b0bda4fe2",
+          "truncated": false
+        },
+        {
+          "host": "www.zuowenjing.com",
+          "method": "GET",
+          "path": "/search/?searchkey=test",
+          "attempt": 1,
+          "started_at": "2026-11-15T14:00:51.356772+00:00",
+          "observed_at": "2026-11-15T14:00:53.650031+00:00",
+          "http_status": 200,
+          "error": null,
+          "error_phase": null,
+          "title": "林籽意沈祈(佚名)章节列表_林籽意沈祈TXT免费全文阅读_笔砚文学",
+          "sample_bytes": 21713,
+          "sample_sha256": "087cf750780ee3edc65cc4a4b7f5898a3979d14a6920720d1772918713a312a9",
+          "truncated": false
+        },
+        {
+          "host": "www.zuowenjing.com",
+          "method": "GET",
+          "path": "/",
+          "attempt": 2,
+          "started_at": "2026-11-15T14:00:54.250260+00:00",
+          "observed_at": "2026-11-15T14:00:55.395281+00:00",
+          "http_status": 200,
+          "error": null,
+          "error_phase": null,
+          "title": "404 页面不存在",
+          "sample_bytes": 641,
+          "sample_sha256": "e29e5d5f2b6ab0ba6fbc7c91a3092718326d4bb7d222c61f4e78b03710010701",
+          "truncated": false
+        },
+        {
+          "host": "www.zuowenjing.com",
+          "method": "GET",
+          "path": "/sort/1/1",
+          "attempt": 2,
+          "started_at": "2026-11-15T14:00:55.995474+00:00",
+          "observed_at": "2026-11-15T14:00:58.380125+00:00",
+          "http_status": 200,
+          "error": null,
+          "error_phase": null,
+          "title": "神医灵妃(李升卿邓路发)章节列表_神医灵妃TXT免费全文阅读_笔砚文学",
+          "sample_bytes": 32332,
+          "sample_sha256": "428fb0d851e668a8cf5aba57577b52e93012c45078d22e112eacad6b0bda4fe2",
+          "truncated": false
+        },
+        {
+          "host": "www.zuowenjing.com",
+          "method": "GET",
+          "path": "/search/?searchkey=test",
+          "attempt": 2,
+          "started_at": "2026-11-15T14:00:58.980714+00:00",
+          "observed_at": "2026-11-15T14:01:00.288303+00:00",
+          "http_status": 200,
+          "error": null,
+          "error_phase": null,
+          "title": "林籽意沈祈(佚名)章节列表_林籽意沈祈TXT免费全文阅读_笔砚文学",
+          "sample_bytes": 21713,
+          "sample_sha256": "087cf750780ee3edc65cc4a4b7f5898a3979d14a6920720d1772918713a312a9",
+          "truncated": false
+        }
+      ],
+      "interpretation": "The root title reports 404 while the old category and search paths return novel chapter pages. These are counterexamples to quarantining an entire host based solely on its home title; whether the original list selectors work was not tested."
+    },
+    {
+      "hosts": [
+        "m.lvzhu.cc",
+        "www.lvzhu.cc"
+      ],
+      "selected_sources": [
+        {
+          "selected_record_index": 1081,
+          "source_id": "407892022f8de7bc2b494e6127883825f451f138862e77c36c29198dae5e33f5",
+          "name": "绿竹小说",
+          "kind": "text"
+        },
+        {
+          "selected_record_index": 193,
+          "source_id": "f670f04810ccca4af8ffc8321a4b177747dac12a1a98a3d8162387a48413016c",
+          "name": "🎈绿竹小说",
+          "kind": "text"
+        }
+      ],
+      "observations": [
+        {
+          "host": "m.lvzhu.cc",
+          "method": "GET",
+          "path": "/",
+          "attempt": 1,
+          "started_at": "2026-11-15T14:00:45.447761+00:00",
+          "observed_at": "2026-11-15T14:00:47.786440+00:00",
+          "http_status": 200,
+          "error": null,
+          "error_phase": null,
+          "title": "最新视频",
+          "sample_bytes": 1505,
+          "sample_sha256": "5c5dc45964d20f17007c32ba5529d33e91e7bccc6d173f90d7b2be5ed8812b85",
+          "truncated": false
+        },
+        {
+          "host": "m.lvzhu.cc",
+          "method": "GET",
+          "path": "/search/?searchkey=test",
+          "attempt": 1,
+          "started_at": "2026-11-15T14:00:48.386760+00:00",
+          "observed_at": "2026-11-15T14:00:56.393149+00:00",
+          "http_status": null,
+          "error": "TimeoutError",
+          "error_phase": null,
+          "title": null,
+          "sample_bytes": null,
+          "sample_sha256": null,
+          "truncated": null
+        },
+        {
+          "host": "m.lvzhu.cc",
+          "method": "GET",
+          "path": "/",
+          "attempt": 2,
+          "started_at": "2026-11-15T14:00:56.993571+00:00",
+          "observed_at": "2026-11-15T14:00:58.972555+00:00",
+          "http_status": 200,
+          "error": null,
+          "error_phase": null,
+          "title": "最新视频",
+          "sample_bytes": 1505,
+          "sample_sha256": "5c5dc45964d20f17007c32ba5529d33e91e7bccc6d173f90d7b2be5ed8812b85",
+          "truncated": false
+        },
+        {
+          "host": "m.lvzhu.cc",
+          "method": "GET",
+          "path": "/search/?searchkey=test",
+          "attempt": 2,
+          "started_at": "2026-11-15T14:00:59.573001+00:00",
+          "observed_at": "2026-11-15T14:01:00.958370+00:00",
+          "http_status": 404,
+          "error": null,
+          "error_phase": null,
+          "title": "",
+          "sample_bytes": 427,
+          "sample_sha256": "9bf4d176058969d7c7c813c7612ee7164204059bb9fdc9133d385aefda61ff14",
+          "truncated": false
+        },
+        {
+          "host": "m.lvzhu.cc",
+          "method": "GET",
+          "path": "/search/?searchkey=test",
+          "attempt": 3,
+          "started_at": "2026-11-15T14:02:01.964104+00:00",
+          "observed_at": "2026-11-15T14:02:09.978216+00:00",
+          "http_status": null,
+          "error": "TimeoutError",
+          "error_phase": null,
+          "title": null,
+          "sample_bytes": null,
+          "sample_sha256": null,
+          "truncated": null
+        },
+        {
+          "host": "www.lvzhu.cc",
+          "method": "GET",
+          "path": "/",
+          "attempt": 1,
+          "started_at": "2026-11-15T14:02:01.992983+00:00",
+          "observed_at": "2026-11-15T14:02:09.993979+00:00",
+          "http_status": null,
+          "error": "TimeoutError",
+          "error_phase": null,
+          "title": null,
+          "sample_bytes": null,
+          "sample_sha256": null,
+          "truncated": null
+        },
+        {
+          "host": "www.lvzhu.cc",
+          "method": "GET",
+          "path": "/search/?searchkey=test",
+          "attempt": 1,
+          "started_at": "2026-11-15T14:02:10.594231+00:00",
+          "observed_at": "2026-11-15T14:02:12.943775+00:00",
+          "http_status": 404,
+          "error": null,
+          "error_phase": null,
+          "title": null,
+          "sample_bytes": null,
+          "sample_sha256": null,
+          "truncated": null
+        },
+        {
+          "host": "www.lvzhu.cc",
+          "method": "GET",
+          "path": "/",
+          "attempt": 2,
+          "started_at": "2026-11-15T14:02:13.543931+00:00",
+          "observed_at": "2026-11-15T14:02:21.552734+00:00",
+          "http_status": null,
+          "error": "TimeoutError",
+          "error_phase": null,
+          "title": null,
+          "sample_bytes": null,
+          "sample_sha256": null,
+          "truncated": null
+        },
+        {
+          "host": "www.lvzhu.cc",
+          "method": "GET",
+          "path": "/search/?searchkey=test",
+          "attempt": 2,
+          "started_at": "2026-11-15T14:02:22.153000+00:00",
+          "observed_at": "2026-11-15T14:02:30.166386+00:00",
+          "http_status": null,
+          "error": "TimeoutError",
+          "error_phase": null,
+          "title": null,
+          "sample_bytes": null,
+          "sample_sha256": null,
+          "truncated": null
+        }
+      ],
+      "earlier_m_lvzhu_head_observations": [
+        {
+          "evidence_path": "build/legado-target-lvzhu-search.json",
+          "evidence_sha256": "3577f367105ef9a9c6dcdac2694927fcf0675760e6f8ba8b32c683b76208d3b9",
+          "method": "HEAD",
+          "path": "/search/",
+          "recorded_at": "2026-11-15T04:29:17.399603+00:00",
+          "recorded_time_semantics": "probe start",
+          "completed_at": null,
+          "http_status": 404
+        },
+        {
+          "evidence_path": "build/legado-target-lvzhu-search-2.json",
+          "evidence_sha256": "8778c9982f99fed6612cbabc234b0decd6770510f86d8d111d646b00749cf942",
+          "method": "HEAD",
+          "path": "/search/",
+          "recorded_at": "2026-11-15T04:29:58.355947+00:00",
+          "recorded_time_semantics": "probe start",
+          "completed_at": null,
+          "http_status": 404
+        }
+      ],
+      "interpretation": "The mobile homepage twice identifies video content; each checked host returned one GET 404 for the old search URL, alongside timeouts. The older HEAD observations used the same path without the query. Further verification is needed before a permanent site-wide conclusion."
+    },
+    {
+      "host": "www.mxz.cc",
+      "selected_sources": [
+        {
+          "selected_record_index": 1497,
+          "source_id": "314248b02891209670f2e89700453c5a3e5c9f873331a4873a52186ec707a600",
+          "name": "梦想者",
+          "kind": "text"
+        },
+        {
+          "selected_record_index": 1777,
+          "source_id": "8a6300a07400da6ab9cca034bc14111d4499be3bf5a1de56f5ab2062cfd56813",
+          "name": "梦想者1",
+          "kind": "text"
+        },
+        {
+          "selected_record_index": 1779,
+          "source_id": "984a91acc29347aa70ef68b91b1131085d589134288fc3bd7ee61aefd1cfa256",
+          "name": "梦想者2",
+          "kind": "text"
+        },
+        {
+          "selected_record_index": 1784,
+          "source_id": "d7a9667bb52fad5075487ff29aaec51eddcd1dfab5fdec5d678e60449ba82d25",
+          "name": "梦想者3",
+          "kind": "text"
+        }
+      ],
+      "interpretation": "Prior GET /search/ observations returned a film page, but the selected legacy rules send POST; no POST was performed, so the actual legacy search was not independently tested.",
+      "earlier_head_and_get_observations": [
+        {
+          "evidence_path": "build/legado-target-mxz-search.json",
+          "evidence_sha256": "b2f21b76daffef0f9df92f1c95d6307a758f570baaa810e099bca842e3953c7c",
+          "path": "/search/",
+          "recorded_at": "2026-11-15T04:29:17.417334+00:00",
+          "recorded_time_semantics": "probe start",
+          "completed_at": null,
+          "head_http_status": 200,
+          "get_http_status": 200,
+          "title": "影剧视界|剧情介绍与影评分享-剧大佬",
+          "sample_bytes": 22330,
+          "sample_sha256": null,
+          "truncated": null
+        },
+        {
+          "evidence_path": "build/legado-target-mxz-search-2.json",
+          "evidence_sha256": "c464c9df288a9b453c0e7f93bc3fd2e969a999ce7c533f2b93f96f02c3a80d54",
+          "path": "/search/",
+          "recorded_at": "2026-11-15T04:29:58.338988+00:00",
+          "recorded_time_semantics": "probe start",
+          "completed_at": null,
+          "head_http_status": 200,
+          "get_http_status": 200,
+          "title": "影剧视界|剧情介绍与影评分享-剧大佬",
+          "sample_bytes": 17109,
+          "sample_sha256": null,
+          "truncated": null
+        }
+      ]
+    }
+  ],
+  "limitations": [
+    "The selected source IDs and indices reflect the referenced import inventory snapshot, not a census of installed or enabled user sources.",
+    "A request status and location describe the observation in this environment and time; they do not establish maliciousness, a permanent shutdown, or the state of unrelated paths or other hosts.",
+    "The separately fetched root page was not followed from the redirects; GET Location path was not retained. Raw HEAD Location text was not retained, only its resolved target.",
+    "No body is retained, so historical sample SHA-256 values cannot be recomputed from this JSON; script code and actual parser execution were not tested.",
+    "Null values mean unknown or unrecorded rather than negative, and timeouts do not establish a permanent outage. Corrected rule versions and other sources on the same host are outside this legacy-rule finding."
+  ]
+}

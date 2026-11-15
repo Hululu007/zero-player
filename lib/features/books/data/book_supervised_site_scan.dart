@@ -1,0 +1,225 @@
+part of 'books_repository.dart';
+
+const _supervisedCheckPrefix = 'books_supervised_site_check:';
+const _siteCheckPrefix = 'books_site_check:';
+
+/// This entry point selects its own eligible built-ins and performs its own
+/// bounded HTTP requests. Callers cannot submit HTML or inspection results.
+extension BookSupervisedSiteScan on BooksRepository {
+  Future<void> checkSupervisedBuiltinSites(
+    CancellationToken cancellation,
+  ) async {
+    if (_evidenceClosing) throw StateError('书源服务正在关闭');
+    if (_supervisedScans.isNotEmpty) {
+      throw const FormatException('书源网页抽查正在进行，请稍后再试');
+    }
+    final token = CancellationToken();
+    final done = Completer<void>();
+    final unlink = cancellation.listen(token.cancel);
+    final run = _SupervisedSiteRun(
+      this,
+      token,
+      bookSitePolicySnapshot(policy),
+      _sourceConfigurationRevision,
+    );
+    _supervisedScans.add(token);
+    _supervisedScanDone.add(done);
+    final cancelIfChanged = run._cancelIfChanged;
+    _sourceRiskChanges.addListener(cancelIfChanged);
+    policy.addListener(cancelIfChanged);
+    policy.settings.addListener(cancelIfChanged);
+    try {
+      run._requireCurrent();
+      await ensureSourceRiskLoaded();
+      run._requireCurrent();
+      final selected = await run._selectDue();
+      await run._runWorkers(selected);
+      run._requireCurrent();
+    } finally {
+      _sourceRiskChanges.removeListener(cancelIfChanged);
+      policy.removeListener(cancelIfChanged);
+      policy.settings.removeListener(cancelIfChanged);
+      unlink();
+      _supervisedScans.remove(token);
+      _supervisedScanDone.remove(done);
+      done.complete();
+    }
+  }
+
+  Future<BookSourceEntry?> _supervisedCurrentSource(
+    BookSourceEntry original,
+  ) async {
+    final verified = _verifiedSources[original.source.id];
+    if (verified == null ||
+        !verified.builtin ||
+        verified.kind != BookKind.text ||
+        bookSourceCheckFingerprint(verified) !=
+            bookSourceCheckFingerprint(original.source)) {
+      return null;
+    }
+    final current = await store.source(verified, verified.id);
+    if (current == null ||
+        !current.enabled ||
+        !_sourceEntryAllowed(current) ||
+        (await store.blockedSources()).containsKey(verified.id)) {
+      return null;
+    }
+    return current;
+  }
+}
+
+final class _SupervisedSiteRun {
+  const _SupervisedSiteRun(
+    this.books,
+    this.token,
+    this.expectedPolicy,
+    this.expectedConfiguration,
+  );
+
+  final BooksRepository books;
+  final CancellationToken token;
+  final String expectedPolicy;
+  final int expectedConfiguration;
+
+  bool get _allowed =>
+      !books._evidenceClosing &&
+      !books._riskSuspended &&
+      books.policy.supervision.enabled &&
+      !books.policy.supervision.corrupted &&
+      books.policy.settings.value.backgroundProbe &&
+      bookSitePolicySnapshot(books.policy) == expectedPolicy &&
+      books._sourceConfigurationRevision == expectedConfiguration &&
+      books._sourceConfigurationMutations == 0;
+
+  void _requireCurrent() {
+    token.check();
+    if (!_allowed) throw const RequestCancelled();
+  }
+
+  void _cancelIfChanged() {
+    if (!_allowed) token.cancel();
+  }
+
+  Future<List<BookSourceEntry>> _selectDue() async {
+    final available = await books.sources(BookKind.text, enabledOnly: true);
+    _requireCurrent();
+    final now = DateTime.now();
+    final due = <({BookSourceEntry entry, int checkedAt})>[];
+    for (final entry in available) {
+      _requireCurrent();
+      if (!entry.source.builtin ||
+          books._verifiedSources[entry.source.id] == null) {
+        continue;
+      }
+      BookSiteCheck? previous;
+      try {
+        previous = BookSiteCheck.fromJson(
+          await books.store.read('$_supervisedCheckPrefix${entry.source.id}'),
+          entry.source,
+        );
+      } on FormatException {
+        // Damaged metadata is not a completed inspection.
+      } on TypeError {
+        // Preserve the original record until a real inspection replaces it.
+      }
+      _requireCurrent();
+      if (previous == null || previous.isDue(now)) {
+        due.add((
+          entry: entry,
+          checkedAt: previous?.checkedAt.millisecondsSinceEpoch ?? 0,
+        ));
+      }
+    }
+    due.sort((a, b) => a.checkedAt.compareTo(b.checkedAt));
+    final hosts = <String>{};
+    return due
+        .where((item) => hosts.add(item.entry.source.endpoint.host))
+        .take(20)
+        .map((item) => item.entry)
+        .toList();
+  }
+
+  Future<void> _runWorkers(List<BookSourceEntry> selected) async {
+    var next = 0;
+    Future<void> worker() async {
+      try {
+        while (next < selected.length) {
+          _requireCurrent();
+          final entry = selected[next++];
+          try {
+            await _inspectOne(entry);
+          } on RequestCancelled {
+            rethrow;
+          } on Exception {
+            // An unavailable source or failed write must not stop the rest.
+            _requireCurrent();
+          }
+        }
+      } catch (_) {
+        token.cancel();
+        rethrow;
+      }
+    }
+
+    await Future.wait(
+      List.generate(selected.length.clamp(0, 3), (_) => worker()),
+    );
+  }
+
+  Future<void> _inspectOne(BookSourceEntry entry) async {
+    final current = await books._supervisedCurrentSource(entry);
+    _requireCurrent();
+    if (current == null) return;
+    // No injectable parser or caller-provided finding can reach the privileged
+    // write: the repository uses its own HTTP client.
+    final inspection = await BookSiteInspector(
+      books._http,
+    ).inspect(current.source, token);
+    _requireCurrent();
+    final check = BookSiteCheck(
+      inspection,
+      DateTime.now(),
+      bookSourceCheckFingerprint(current.source),
+    );
+
+    Future<void> persist() async {
+      BookSourceAssessment? assessment;
+      final committed = await books.store.db.atomic(() async {
+        _requireCurrent();
+        final latest = await books._supervisedCurrentSource(entry);
+        _requireCurrent();
+        if (latest == null) return false;
+        if (inspection.gamblingRisk || inspection.adultRisk) {
+          assessment = await books._addSourceAssessment(
+            latest.source,
+            adult: inspection.adultRisk,
+            quarantine: inspection.gamblingRisk,
+            rootPageEvidence: true,
+          );
+        }
+        _requireCurrent();
+        await books.store.write(
+          '$_supervisedCheckPrefix${latest.source.id}',
+          check.toJson(),
+        );
+        await books.store.write(
+          '$_siteCheckPrefix${latest.source.id}',
+          check.toJson(),
+        );
+        _requireCurrent();
+        return true;
+      }, tables: {'app_meta'});
+      if (committed && assessment != null) {
+        books._rememberAssessment(assessment!);
+        books.policy.refresh();
+      }
+    }
+
+    if (inspection.gamblingRisk || inspection.adultRisk) {
+      await books._withEvidenceMutation(persist);
+    } else {
+      await persist();
+    }
+    _requireCurrent();
+  }
+}

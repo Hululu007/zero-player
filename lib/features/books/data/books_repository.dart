@@ -31,6 +31,8 @@ import 'book_download_guard.dart';
 import 'book_import.dart';
 import 'book_image_payload.dart';
 import 'book_mixed_content.dart';
+import 'book_site_check.dart';
+import 'book_site_inspection.dart';
 import 'book_source_risk_store.dart';
 import 'book_source_links.dart';
 import 'book_store.dart';
@@ -39,6 +41,8 @@ import 'qidian_catalog.dart';
 import 'rich_book.dart';
 
 part 'book_comic_download.dart';
+part 'book_repository_mutations.dart';
+part 'book_supervised_site_scan.dart';
 
 typedef BookEdition = ({Book book, List<BookChapter> chapters});
 typedef BookImportChanges = ({
@@ -116,6 +120,8 @@ final class BooksRepository {
   bool get sourceRisksSuspended => _riskSuspended;
   bool get sourceRiskMutationPending =>
       _evidenceMutations > 0 || _evidenceClosing;
+  int get sourceConfigurationRevision => _sourceConfigurationRevision;
+  bool get sourceConfigurationChanging => _sourceConfigurationMutations != 0;
   final BookCoverCache coverCache;
   final ContentPolicy policy;
   late bool _coverSupervisionRestricted;
@@ -159,31 +165,17 @@ final class BooksRepository {
   bool _riskLoaded = false;
   bool _riskSuspended = false;
   int _riskGeneration = 0;
+  int _sourceConfigurationRevision = 0, _sourceConfigurationMutations = 0;
   final _refreshingSubscriptions = <String>{};
   Future<void>? _seeding;
   int _evidenceMutations = 0;
   bool _evidenceClosing = false;
   Future<void>? _closing;
   final _pendingEvidenceMutations = <Completer<void>>{};
+  final _supervisedScans = <CancellationToken>{};
+  final _supervisedScanDone = <Completer<void>>{};
   @visibleForTesting
   Future<void> Function()? beforeEvidenceMutationForTesting;
-  Future<T> _withEvidenceMutation<T>(Future<T> Function() action) async {
-    if (_evidenceClosing) throw StateError('书源服务正在关闭');
-    final done = Completer<void>();
-    _pendingEvidenceMutations.add(done);
-    _evidenceMutations++;
-    _sourceRiskChanges.value++;
-    try {
-      final before = beforeEvidenceMutationForTesting;
-      if (before != null) await before();
-      return await action();
-    } finally {
-      _evidenceMutations--;
-      _sourceRiskChanges.value++;
-      _pendingEvidenceMutations.remove(done);
-      done.complete();
-    }
-  }
 
   BookDownloadGuard? _downloadGuard;
   BookDownloadGuard get downloadGuard => _downloadGuard ??= BookDownloadGuard(
@@ -287,18 +279,8 @@ final class BooksRepository {
     _riskLoaded = true;
   }
 
-  Future<void> _refreshChangedSources() async {
-    _riskGeneration++;
-    _riskLoaded = false;
-    _sourceRiskChanges.value++;
-    try {
-      await refreshSourceRisks();
-    } finally {
-      _sourceRiskChanges.value++;
-    }
-  }
-
   void suspendSourceRisks() {
+    _sourceConfigurationRevision++;
     _riskSuspended = true;
     _riskLoaded = false;
     _riskGeneration++;
@@ -790,8 +772,10 @@ final class BooksRepository {
     return (books: result.books.where(bookAllowed).toList(), next: result.next);
   }
 
-  Future<void> restoreDefaultSources(BookKind kind) =>
-      _withEvidenceMutation(() => _restoreDefaultSources(kind));
+  Future<void> restoreDefaultSources(BookKind kind) => _withEvidenceMutation(
+    () => _restoreDefaultSources(kind),
+    sourceConfiguration: true,
+  );
 
   Future<void> _restoreDefaultSources(BookKind kind) async {
     policy.supervision.require(SensitiveOperation.channels);
@@ -828,9 +812,12 @@ final class BooksRepository {
 
   Future<void> saveSource(BookSource source, Map<String, Object?> updates) =>
       updates.keys.any(
-        (key) => const {'group', 'source', 'removed'}.contains(key),
+        (key) => const {'group', 'source', 'removed', 'enabled'}.contains(key),
       )
-      ? _withEvidenceMutation(() => _saveSource(source, updates))
+      ? _withEvidenceMutation(
+          () => _saveSource(source, updates),
+          sourceConfiguration: true,
+        )
       : _saveSource(source, updates);
 
   Future<void> _saveSource(
@@ -886,7 +873,10 @@ final class BooksRepository {
     BookKind kind,
     Set<String> ids,
     bool enabled,
-  ) => _withEvidenceMutation(() => _setSourcesEnabled(kind, ids, enabled));
+  ) => _withEvidenceMutation(
+    () => _setSourcesEnabled(kind, ids, enabled),
+    sourceConfiguration: true,
+  );
 
   Future<void> _setSourcesEnabled(
     BookKind kind,
@@ -912,8 +902,10 @@ final class BooksRepository {
     }
   }
 
-  Future<void> blockSource(BookSource source) =>
-      _withEvidenceMutation(() => _blockSource(source));
+  Future<void> blockSource(BookSource source) => _withEvidenceMutation(
+    () => _blockSource(source),
+    sourceConfiguration: true,
+  );
 
   Future<void> _blockSource(BookSource source) async {
     await ensureSourceRiskLoaded();
@@ -955,7 +947,12 @@ final class BooksRepository {
     return '${source.kind.name}:$host$path?${source.endpoint.query}:${source.sourceKey}';
   }
 
-  Future<void> unblockSource(String id) async {
+  Future<void> unblockSource(String id) => _withEvidenceMutation(
+    () => _unblockSource(id),
+    sourceConfiguration: true,
+  );
+
+  Future<void> _unblockSource(String id) async {
     await store.db.atomic(() async {
       policy.supervision.require(SensitiveOperation.channels);
       final blocked = await store.blockedSources()
@@ -1069,6 +1066,7 @@ final class BooksRepository {
       catalogRevision: catalogRevision,
       catalogAdultFilter: catalogAdultFilter,
     ),
+    sourceConfiguration: true,
   );
 
   Future<BookImportChanges> _importSources(
@@ -1287,8 +1285,10 @@ final class BooksRepository {
     return BookSource.fromJson(source.toJson()..remove('sourceKey'));
   }
 
-  Future<void> removeSource(BookSource source) =>
-      _withEvidenceMutation(() => _removeSource(source));
+  Future<void> removeSource(BookSource source) => _withEvidenceMutation(
+    () => _removeSource(source),
+    sourceConfiguration: true,
+  );
 
   Future<void> _removeSource(BookSource source) async {
     policy.supervision.require(SensitiveOperation.channels);
@@ -2470,6 +2470,10 @@ final class BooksRepository {
 
   Future<void> _close() async {
     _sourceRiskChanges.value++;
+    for (final token in _supervisedScans.toList()) {
+      token.cancel();
+    }
+    await Future.wait(_supervisedScanDone.map((done) => done.future).toList());
     await Future.wait(
       _pendingEvidenceMutations.map((done) => done.future).toList(),
     );

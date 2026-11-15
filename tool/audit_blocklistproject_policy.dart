@@ -21,10 +21,14 @@ const codePaths = [
   'lib/features/books/data/book_source_links.dart',
   'lib/features/books/domain/book.dart',
   'lib/features/books/domain/book_source_risk.dart',
+  'lib/features/books/domain/iqiyi_legacy_quarantine.dart',
+  'lib/features/books/domain/taotaoshu_legacy_quarantine.dart',
+  'lib/features/books/domain/legado_source_fingerprint.dart',
   'lib/features/books/domain/known_untrusted_book_rules.dart',
   'lib/features/books/domain/legado_source.dart',
   'lib/features/books/domain/legado_source_fixes.dart',
   'lib/features/books/domain/kuwo_legacy_source_fix.dart',
+  'lib/features/books/domain/qq_reading_legacy_source_fix.dart',
   'lib/features/books/domain/yuque_legacy_source_fix.dart',
   'lib/features/books/domain/zhongyi_legacy_source_fix.dart',
   'lib/features/books/domain/jingzhi_legacy_source_fix.dart',
@@ -153,7 +157,7 @@ void main(List<String> args) {
     );
   }
   final initialHashes = {
-    for (final path in codePaths) path: digest(File(path).readAsBytesSync()),
+    for (final path in codePaths) path: prior.sourceSha(File(path)),
   };
   final evidenceBytes = File(args[0]).readAsBytesSync();
   final evidence = jsonDecode(utf8.decode(evidenceBytes)) as Map;
@@ -214,7 +218,7 @@ void main(List<String> args) {
     }
   }
   for (final path in codePaths) {
-    if (digest(File(path).readAsBytesSync()) != initialHashes[path]) {
+    if (prior.sourceSha(File(path)) != initialHashes[path]) {
       throw FormatException('policy code changed during the audit: $path');
     }
   }
@@ -225,6 +229,8 @@ void main(List<String> args) {
     'policy_script_sha256': digest(
       File(Platform.script.toFilePath()).readAsBytesSync(),
     ),
+    'source_digest_convention':
+        'SHA-256 of UTF-8 source bytes with CRLF normalized to LF, matching tracked source line endings.',
     'current_policy_code_sha256': initialHashes,
     'scope':
         'Offline current importer and fixed source/domain/adult rules only; no source rule execution, site request, user settings, blacklist or dynamic risk database.',

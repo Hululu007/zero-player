@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 
 import '../../../core/network/cancellation_token.dart';
 import '../../settings/application/settings_controller.dart';
+import '../data/books_repository.dart';
 import '../domain/book.dart';
 import 'book_site_checks.dart';
 
@@ -23,6 +24,7 @@ final class BookSiteMonitor {
   Timer? _initial, _periodic;
   CancellationToken? _token;
   Future<void>? _pending;
+  int? _configurationAtStart;
   bool _started = false, _closed = false;
   int _manualOperations = 0;
   final _manualTokens = <CancellationToken>{};
@@ -33,8 +35,8 @@ final class BookSiteMonitor {
       !_closed &&
       _manualOperations == 0 &&
       !checks.books.sourceRisksSuspended &&
+      !checks.books.sourceConfigurationChanging &&
       settings.value.backgroundProbe &&
-      !checks.books.policy.supervision.enabled &&
       !checks.books.policy.supervision.corrupted;
 
   void start() {
@@ -54,10 +56,16 @@ final class BookSiteMonitor {
   }
 
   void _sourceRiskChanged() {
-    if (!checks.books.sourceRisksSuspended) return;
-    _token?.cancel();
-    for (final token in _manualTokens.toList()) {
-      token.cancel();
+    if (checks.books.sourceRisksSuspended ||
+        (_configurationAtStart != null &&
+            _configurationAtStart !=
+                checks.books.sourceConfigurationRevision)) {
+      _token?.cancel();
+    }
+    if (checks.books.sourceRisksSuspended) {
+      for (final token in _manualTokens.toList()) {
+        token.cancel();
+      }
     }
   }
 
@@ -74,7 +82,12 @@ final class BookSiteMonitor {
 
   Future<void> _run() async {
     final token = _token = CancellationToken();
+    _configurationAtStart = checks.books.sourceConfigurationRevision;
     try {
+      if (checks.books.policy.supervision.enabled) {
+        await checks.books.checkSupervisedBuiltinSites(token);
+        return;
+      }
       final entries = [
         for (final kind in BookKind.values)
           ...await checks.books.sources(kind, enabledOnly: true),
@@ -98,7 +111,10 @@ final class BookSiteMonitor {
           );
       await checks.run(due.take(20).toList(), token, enabledOnly: true);
     } finally {
-      if (identical(_token, token)) _token = null;
+      if (identical(_token, token)) {
+        _token = null;
+        _configurationAtStart = null;
+      }
     }
   }
 

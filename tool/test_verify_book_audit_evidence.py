@@ -27,6 +27,21 @@ class EvidenceIntegrityTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             EvidenceVerifier(ROOT).check_digest(ROOT / 'missing', 'not-a-hash')
 
+    def test_ledger_paths_cannot_escape_the_workspace(self):
+        verifier = EvidenceVerifier(ROOT)
+        for path in ('../secret', 'lib/../../secret', 'lib\\secret', '/lib/secret'):
+            with self.subTest(path=path), self.assertRaises(ValueError):
+                verifier.ledger_path(path, ('lib',))
+
+    def test_source_snapshot_accepts_equivalent_windows_line_endings(self):
+        with tempfile.TemporaryDirectory() as directory:
+            target = Path(directory) / 'source.dart'
+            target.write_bytes(b'a\r\nb\r\n')
+            digest = hashlib.sha256(b'a\nb\n').hexdigest()
+            EvidenceVerifier(directory).check_digest(target, digest, normalize_lf=True)
+            with self.assertRaises(ValueError):
+                EvidenceVerifier(directory).check_digest(target, digest)
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -78,6 +78,11 @@ migrate_working_dir/
 !/docs/implementation/legado-blocklistproject-evidence-20261115.json
 !/docs/implementation/legado-blocklistproject-policy-20261115.json
 !/docs/implementation/legado-blocklist-malware-recheck-20261115.json
+!/docs/implementation/legado-iqiyi-manhua-recheck-20261115.json
+!/docs/implementation/legado-rdap-sample-20261115.json
+!/docs/implementation/legado-static-search-pilot-20261115.json
+!/docs/implementation/legado-source-ledger-20261115.json
+!/docs/implementation/legado-560xs-recheck-20261115.json
 !/docs/implementation/legado-import-inventory-20261115.json
 !/docs/implementation/legado-adult-label-evidence-20261115.json
 !/docs/implementation/legado-targeted-rechecks-20261115.json

@@ -265,7 +265,7 @@ final class SettingsPage extends StatelessWidget {
         '后台检测源可用性',
         'backgroundProbe',
         s.backgroundProbe,
-        subtitle: '低优先级检测来源，并定期抽查已启用书源首页；播放请求优先',
+        subtitle: '低优先级检测来源，并定期抽查已启用书源首页；监管期间仅检查允许的内置文字源',
       ),
       _choice(
         context,

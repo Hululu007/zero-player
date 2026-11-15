@@ -6,6 +6,7 @@ import 'jingzhi_legacy_source_fix.dart';
 import 'legado_source.dart';
 import 'legado_source_fixes.dart';
 import 'kuwo_legacy_source_fix.dart';
+import 'qq_reading_legacy_source_fix.dart';
 import 'shubang_legacy_source_fix.dart';
 import 'yuque_legacy_source_fix.dart';
 import 'yingyu_legacy_source_fix.dart';
@@ -377,7 +378,8 @@ Map _repairedLegadoRules(Map data) {
   legado = repairJingzhiLegadoSource(data, legado);
   legado = repairZhongyiLegadoSource(data, legado);
   legado = repairShubangLegadoSource(data, legado);
-  return repairYingyuLegadoSource(data, legado);
+  legado = repairYingyuLegadoSource(data, legado);
+  return repairQqReadingLegadoSource(data, legado);
 }
 
 Map _comicLegadoRules(Map data) {

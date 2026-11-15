@@ -1,0 +1,367 @@
+{
+  "schema_version": 1,
+  "created_at": "2026-11-15T14:59:44.388814+00:00",
+  "time_zone": "UTC; Asia/Shanghai is UTC+08:00",
+  "scope": "Five selected text sources and one bounded follow-up investigation of m.myxzm.com; not a full reading or safety audit.",
+  "method": {
+    "preflight": "Current application catalog importer plus adultBookSource, knownAdultHost and quarantinedBookSource. Require selected record match, script-free search/fallback fields, no declared login or extra request headers, and same-host HTTPS GET.",
+    "network": "Python direct HTTPS using validated public DNS answers, a pinned numeric IP, SNI/certificate verification, no proxies, no credentials, one source GET per initial candidate, no redirect following, no subresources.",
+    "limits": "Configured 10-second request deadline and 512 KiB full-body maximum; oversized, incomplete, encoded or non-HTML samples are not parsed. One request returned after 13.2 seconds despite the nominal deadline; it is not a hard wall-clock limit.",
+    "parser": "Dart VM with QuickJS-unavailable stub; actual LegadoOperation.books and application selector engine, 5-second isolate bounds, synthetic query 三国, no JS execution.",
+    "privacy": "No user database, dynamic blacklist, saved risk records, local settings, user bookshelf, user search or credentials were read. Raw HTML was only held in memory or temporary ignored build files, not included in this evidence."
+  },
+  "inputs": {
+    "catalog_archive_sha256": "012a0e0d6e6adc8d303c32b578510e14b562088b3e965cb01a1a647b5e7e034d",
+    "initial_temporary_result_path": "build/legado_static_search_pilot/result.json",
+    "initial_temporary_result_sha256": "66553ef1a5d6bc0ddc675a99dc4bc527e188ccaeeaba735098887a7c5c66a8e7",
+    "initial_temporary_probe_sha256": "8083c0a41affca00be555b71d7ee981ed5198654a832c997ce5d7a7673438d0e",
+    "initial_temporary_dart_sha256": "97442c50078ebbac8a7bb7cf10c30dd849b1c7a9f29a5e83113459ad7aa9f845",
+    "source_and_tool_sha256": {
+      "build/legado_static_search_pilot/pilot.dart": "97442c50078ebbac8a7bb7cf10c30dd849b1c7a9f29a5e83113459ad7aa9f845",
+      "build/legado_static_search_pilot/pilot.py": "8083c0a41affca00be555b71d7ee981ed5198654a832c997ce5d7a7673438d0e",
+      "assets/catalogs/books/legado/catalog.json.bz2": "012a0e0d6e6adc8d303c32b578510e14b562088b3e965cb01a1a647b5e7e034d",
+      "assets/catalogs/books/legado/manifest.json": "59bb9e3551b5a01406c1d720d2b5d5d5f21518eccbb52cd93f8d752c19f7cf66",
+      "lib/features/books/data/book_import.dart": "5c27a8cac7806ca8854672f89fcc90d0d98e5ab25b92ec4fc13f094bfe93a629",
+      "lib/features/books/data/book_html.dart": "3ef516a3dbac36b22da40c8f78b99a7fe56616bd6087a4aa5cc159b2c8ba7ecf",
+      "lib/features/books/data/legado/legado_import.dart": "3d4f0f1fb848c26bf65a0eec25373bc993403576634c60524dc17c5a6e217b69",
+      "lib/features/books/data/legado/legado_request.dart": "da65df24e85c72e12e9b6305407612084bd8ea2f6d9197ce66fc96e0bd717914",
+      "lib/features/books/data/legado/legado_rules.dart": "1d7eec2586901d68414fb5901e512a4cbd830b3d8284e08340ea37ae849cbd63",
+      "lib/features/books/data/legado/legado_css.dart": "4fb7cbadd4904cfe72949705d634beb1bfe7b3d0de955aa9523961c75b3b3b5d",
+      "lib/features/books/data/legado/legado_rule_tokens.dart": "4833544f325c73292eebf09e9d82d0573a97cf9e5ba16971cc4b3d3576c30333",
+      "lib/features/books/data/legado/legado_script.dart": "c07e35031410d73fbdde6503789a2080807a480d6329ae24e9e026671fedc6dd",
+      "lib/features/books/data/legado/legado_script_stub.dart": "c94f290e6328a5d60289329e2a9cc80b9381a770b4758df2b2a6ac2b8feca5e4",
+      "lib/features/books/data/legado/legado_worker.dart": "bdc2285367dec024d2d9ea58335ee464c9e3334d34ece85b06d37316afbabafd",
+      "lib/features/books/domain/book.dart": "62618f439fdb054b7cf3693dfef266ec5acd4eb76611e0e03b455cccbf7d5959",
+      "lib/features/books/domain/book_search.dart": "5df399376fea21f96f571af17139b0b90e1ea8880f7f373e73898dccac05e9ab",
+      "lib/features/books/domain/legado_source.dart": "5b907923968332090760ecc9f4d6f7e652aa06501ac7981b5f477ef7c0d954d1",
+      "lib/features/books/domain/legado_source_fixes.dart": "5861cc4c175989a116074165f9aa0500cf56e5e82ebe8399833dc84470330f25",
+      "lib/features/books/domain/book_source_risk.dart": "1c76896b4fc8d061e9a6fe248638f8593453175e806f640645a1dae1adefa7c2",
+      "lib/features/books/domain/known_untrusted_book_rules.dart": "8caf6f3b50868d858a0bbb461c0f680c70dc60c8673c5a8c24639676f28a8c89",
+      "lib/features/supervision/domain/adult_source_evidence.dart": "7dd20620b923e14687f8a7c58aafa923ece02172cd38aa260ac9bfe107795206",
+      "lib/features/supervision/domain/content_classification.dart": "0f22950b5a1e5696fa1e60bb353c53a24f9b4546314290abab0081ed08e6146a",
+      "lib/core/network/document_encoding.dart": "172e2da9ab62964439b147ba9d570e215e44c39ded113de40ba8ec68f022fa28",
+      "tool/audit_legado_catalog.py": "36f5359259ba259e84ae10875be6383884ad0cc71e829f029dd96b6dc9976563"
+    },
+    "followup_tool_sha256": {
+      "build/legado_static_search_pilot/myxzm_review.dart": "9628698d1116f48d0e8b5a19809443bf2e5125549ab7f48a1892186eaeabd3dd",
+      "build/legado_static_search_pilot/myxzm_category.dart": "f8b6ae2db6710db167d8dac7ecbf6c62195bc36be27c6625c09fc0c7ce9ee273",
+      "build/legado_static_search_pilot/myxzm_category_review.dart": "19d190875dc22921834ea83792246ebb68aea3e2e5a1483afed0a5732061f838",
+      "build/legado_static_search_pilot/myxzm_forms.dart": "8446cc1eaca479e1230676bf07822f24ee07ea770bf41d7474a4eae487b7e55a",
+      "build/legado_static_search_pilot/myxzm_form_uri.dart": "dd23d2daeaef2c7438efcc6d917e2bdadf1706c47465ff81f4387fa61fe43066"
+    }
+  },
+  "fixture_results": [
+    {
+      "id": "483d7c92f8871bb1e84d45883d9a6ea0705afe1265615146ece1b2c9fbef90ad",
+      "row_count": 1,
+      "books": 1,
+      "same_host_books": 1,
+      "keyword_matches": 1
+    },
+    {
+      "id": "483d7c92f8871bb1e84d45883d9a6ea0705afe1265615146ece1b2c9fbef90ad",
+      "row_count": 0,
+      "books": 0,
+      "same_host_books": 0,
+      "keyword_matches": 0
+    }
+  ],
+  "initial_preflight": [
+    {
+      "id": "bca6e55770d00d422fc5ca90194c062433fd5955601b573c28cc5533a22f4bf4",
+      "expected_index": 282,
+      "expected_host": "www.560xs.com",
+      "selected_index": 282,
+      "name": "560小说网",
+      "host": "www.560xs.com",
+      "kind": "text",
+      "static_adult": false,
+      "static_quarantined": false,
+      "eligible": true,
+      "search_uri": "https://www.560xs.com/ar.php?keyWord=%E4%B8%89%E5%9B%BD",
+      "search_list": "class.txt-list txt-list-row5@li",
+      "search_sha256": "4771d60b6b36c8a3a5294919438130db07c55915c699cdf10a7cfd2c0bd73ad2",
+      "search_list_sha256": "a13443044610d44b5afed7e021e1167ea32b149d9440dd422548d9f647183e91"
+    },
+    {
+      "id": "483d7c92f8871bb1e84d45883d9a6ea0705afe1265615146ece1b2c9fbef90ad",
+      "expected_index": 751,
+      "expected_host": "m.myxzm.com",
+      "selected_index": 751,
+      "name": "蚂蚁文学网",
+      "host": "m.myxzm.com",
+      "kind": "text",
+      "static_adult": false,
+      "static_quarantined": false,
+      "eligible": true,
+      "search_uri": "https://m.myxzm.com/search/?q=%E4%B8%89%E5%9B%BD&page=1",
+      "search_list": "class.clearfix@li",
+      "search_sha256": "5b94eb307b1c1daa58f4e7fad72d030991dfc833f6676a2a0c06bcd50da20f52",
+      "search_list_sha256": "59f3362b7d20c3ea20af7896d647669d7ade264e71f0c0251f3d10e8d9ec632b"
+    },
+    {
+      "id": "b1fe65efa82c23d08fddb9948d5ec920801618ad35e2a722cc798d6f7508d376",
+      "expected_index": 2576,
+      "expected_host": "m.zhulang.com",
+      "selected_index": 2576,
+      "name": "逐浪小说",
+      "host": "m.zhulang.com",
+      "kind": "text",
+      "static_adult": false,
+      "static_quarantined": false,
+      "eligible": true,
+      "search_uri": "https://m.zhulang.com/search/index.html?k=%E4%B8%89%E5%9B%BD",
+      "search_list": "id.ret-list@li",
+      "search_sha256": "c4216d63150c3e1d0ee7a2063d641744cc46f340ccd6da86a0376f33926095f1",
+      "search_list_sha256": "11a43c51143fdf5574877e048624705052928beb201cbc2a3c68576913f2caf5"
+    },
+    {
+      "id": "1aeae27ff75d0fd32c681a42e21576fa86d9a634e49aa4e92e977422890606df",
+      "expected_index": 2830,
+      "expected_host": "m.1qxs.com",
+      "selected_index": 2830,
+      "name": "一七小说",
+      "host": "m.1qxs.com",
+      "kind": "text",
+      "static_adult": false,
+      "static_quarantined": false,
+      "eligible": true,
+      "search_uri": "https://m.1qxs.com/search.html?kw=%E4%B8%89%E5%9B%BD",
+      "search_list": ".result_list li||.list li",
+      "search_sha256": "37c0f4d308ca9db29aa730ffa2024ad8e190b93f68ee109bd13fcd0b24366d98",
+      "search_list_sha256": "38f352eba50152ccaa25a19ffefcae8188f60e68dccfca5747f6095fdcba8b5d"
+    },
+    {
+      "id": "93ee42d66b2f4f126c6272258af203ed445229b99856f76a9f15d4e5a44761ce",
+      "expected_index": 4752,
+      "expected_host": "www.7kbook.com",
+      "selected_index": 4752,
+      "name": "🌟去看小说网",
+      "host": "www.7kbook.com",
+      "kind": "text",
+      "static_adult": false,
+      "static_quarantined": false,
+      "eligible": true,
+      "search_uri": "https://www.7kbook.com/search.php?q=%E4%B8%89%E5%9B%BD&p=1",
+      "search_list": ".col-md-6@dl",
+      "search_sha256": "20319b0e885811469d891f0ce7b198dae586cd37cf5a19dacad6a31a29cb70af",
+      "search_list_sha256": "bd4b2c13b68595e40be3a756b8abae0f9e47c7109cd7c5d61c6d5080cba392e3"
+    }
+  ],
+  "initial_observations": [
+    {
+      "id": "bca6e55770d00d422fc5ca90194c062433fd5955601b573c28cc5533a22f4bf4",
+      "host": "www.560xs.com",
+      "started_at": "2026-11-15T14:46:05.319800+00:00",
+      "http_status": 200,
+      "content_type": "text/html;charset=utf-8",
+      "sample_bytes": 36973,
+      "truncated": false,
+      "sample_sha256": "2ae23b45b27740e678a279f2032d4a5bd9851803dada7140394a4c50fd2f44ae",
+      "failure": null,
+      "observed_at": "2026-11-15T14:46:07.792404+00:00"
+    },
+    {
+      "id": "483d7c92f8871bb1e84d45883d9a6ea0705afe1265615146ece1b2c9fbef90ad",
+      "host": "m.myxzm.com",
+      "started_at": "2026-11-15T14:46:08.796749+00:00",
+      "http_status": 200,
+      "content_type": "text/html; charset=utf-8",
+      "sample_bytes": 20231,
+      "truncated": false,
+      "sample_sha256": "3e5b0b845f83ab26c91341863394b454e637d70566d59d2a847b5751b6b3e2f8",
+      "failure": null,
+      "observed_at": "2026-11-15T14:46:09.639404+00:00"
+    },
+    {
+      "id": "b1fe65efa82c23d08fddb9948d5ec920801618ad35e2a722cc798d6f7508d376",
+      "host": "m.zhulang.com",
+      "started_at": "2026-11-15T14:46:10.643622+00:00",
+      "http_status": 200,
+      "content_type": "text/html; charset=utf-8",
+      "sample_bytes": 4403,
+      "truncated": false,
+      "sample_sha256": "7a05ce14c79b9514d33d31bdf1e068ae38916b377ce52114ae8e949651ce1480",
+      "failure": null,
+      "observed_at": "2026-11-15T14:46:10.981967+00:00"
+    },
+    {
+      "id": "1aeae27ff75d0fd32c681a42e21576fa86d9a634e49aa4e92e977422890606df",
+      "host": "m.1qxs.com",
+      "started_at": "2026-11-15T14:46:11.986250+00:00",
+      "http_status": 502,
+      "content_type": null,
+      "sample_bytes": null,
+      "truncated": null,
+      "sample_sha256": null,
+      "failure": "http_status",
+      "observed_at": "2026-11-15T14:46:12.708254+00:00"
+    },
+    {
+      "id": "93ee42d66b2f4f126c6272258af203ed445229b99856f76a9f15d4e5a44761ce",
+      "host": "www.7kbook.com",
+      "started_at": "2026-11-15T14:46:13.712627+00:00",
+      "http_status": 200,
+      "content_type": "text/html; charset=utf-8",
+      "sample_bytes": null,
+      "truncated": null,
+      "sample_sha256": null,
+      "failure": "timeout",
+      "observed_at": "2026-11-15T14:46:26.927706+00:00"
+    }
+  ],
+  "initial_parser_results": [
+    {
+      "id": "bca6e55770d00d422fc5ca90194c062433fd5955601b573c28cc5533a22f4bf4",
+      "row_count": 0,
+      "books": 0,
+      "same_host_books": 0,
+      "keyword_matches": 0
+    },
+    {
+      "id": "483d7c92f8871bb1e84d45883d9a6ea0705afe1265615146ece1b2c9fbef90ad",
+      "row_count": 29,
+      "books": 0,
+      "same_host_books": 0,
+      "keyword_matches": 0
+    },
+    {
+      "id": "b1fe65efa82c23d08fddb9948d5ec920801618ad35e2a722cc798d6f7508d376",
+      "row_count": 3,
+      "books": 3,
+      "same_host_books": 3,
+      "keyword_matches": 3
+    }
+  ],
+  "myxzm_followup": {
+    "source_id": "483d7c92f8871bb1e84d45883d9a6ea0705afe1265615146ece1b2c9fbef90ad",
+    "selected_record_index": 751,
+    "initial_search_observation_id": "483d7c92f8871bb1e84d45883d9a6ea0705afe1265615146ece1b2c9fbef90ad",
+    "repeated_search_observation": {
+      "method": "GET",
+      "path": "/search/?q=<synthetic>&page=1",
+      "started_at": "2026-11-15T14:48:49.854702+00:00",
+      "observed_at": "2026-11-15T14:48:50.597902+00:00",
+      "http_status": 200,
+      "content_type": "text/html; charset=utf-8",
+      "sample_bytes": 20231,
+      "truncated": false,
+      "sample_sha256": "3e5b0b845f83ab26c91341863394b454e637d70566d59d2a847b5751b6b3e2f8"
+    },
+    "search_page_title": "搜索三国-共找到6条结果 - 蚂蚁漫画",
+    "old_search_rules": {
+      "list": "class.clearfix@li",
+      "name": "class.tit@text",
+      "link": "class.tit@href"
+    },
+    "old_search_counts": {
+      "old_rows": 29,
+      "rows_with_name": 0,
+      "rows_with_link": 0,
+      "rows_with_both": 0,
+      "rows_with_both_and_accepted_link": 0,
+      "class_tit": 0,
+      "total_anchors": 44,
+      "keyword_text_anchors_shown": 4
+    },
+    "category_rule": "/top/",
+    "category_observation": {
+      "method": "GET",
+      "path": "/top/",
+      "started_at": "2026-11-15T14:52:15.639857+00:00",
+      "observed_at": "2026-11-15T14:52:16.462298+00:00",
+      "http_status": 200,
+      "content_type": "text/html; charset=utf-8",
+      "sample_bytes": 25542,
+      "truncated": false,
+      "sample_sha256": "deaeaff5910ff5dda03158de2752d3d02fcd7b89a1c646aef43030f7ebffcf45"
+    },
+    "category_title": "总榜 - 蚂蚁文学",
+    "old_category_counts": {
+      "old_list_rows": 49,
+      "old_name_rows": 20,
+      "old_link_rows": 20,
+      "actual_discovery_books": 20,
+      "comic_list_items": 0
+    },
+    "category_form": {
+      "method": "get",
+      "action": {
+        "same_host": true,
+        "scheme": "https",
+        "path": "/search/",
+        "query_present": false
+      },
+      "onsubmit_present": false,
+      "inputs": [
+        {
+          "name": "q",
+          "type": "text"
+        }
+      ]
+    },
+    "form_observation": {
+      "method": "GET",
+      "path": "/search/?q=<synthetic>",
+      "started_at": "2026-11-15T14:56:39.462601+00:00",
+      "observed_at": "2026-11-15T14:56:41.435391+00:00",
+      "http_status": 200,
+      "content_type": "text/html; charset=utf-8",
+      "sample_bytes": 20231,
+      "truncated": false,
+      "sample_sha256": "897b1d3c69cec532e9c201f6e6f244de23b0dbb586c23318cd148f95b62cf9af"
+    },
+    "form_page_title": "搜索三国-共找到6条结果 - 蚂蚁漫画",
+    "form_old_search_counts": {
+      "old_rows": 29,
+      "rows_with_name": 0,
+      "rows_with_link": 0,
+      "rows_with_both": 0,
+      "rows_with_both_and_accepted_link": 0,
+      "class_tit": 0,
+      "total_anchors": 44,
+      "keyword_text_anchors_shown": 4
+    },
+    "comic_search_experiment_original": {
+      "list": "class.myui-vodlist@li",
+      "name": "class.title@a@text",
+      "link": "class.title@a@href",
+      "row_count": 6,
+      "rows_with_name": 6,
+      "rows_with_link": 6,
+      "actual_engine_books": 6,
+      "same_host_books": 6,
+      "keyword_matches": 4
+    },
+    "comic_search_experiment_form": {
+      "list": "class.myui-vodlist@li",
+      "name": "class.title@a@text",
+      "link": "class.title@a@href",
+      "row_count": 6,
+      "rows_with_name": 6,
+      "rows_with_link": 6,
+      "actual_engine_books": 6,
+      "same_host_books": 6,
+      "keyword_matches": 4
+    },
+    "existing_novel_downstream_fields": {
+      "infoTitle": "class.base clearfix@dd@h2@text",
+      "chapters": "class.attentions@class.clearfix@li",
+      "chapterTitle": "tag.a@text",
+      "chapterUrl": "tag.a@href",
+      "content": "class.content@html##《.*》 第.*章 .*免费试读"
+    },
+    "example_old_novel_detail_path": "/book/2066788.html",
+    "interpretation": "The old novel discovery page still produces novel results. Both checked search requests return comic results and fail the old novel search selectors. Do not quarantine the whole host or convert the existing text source into a comic source. The novel search endpoint remains unresolved.",
+    "next_verification": "Locate an independently supported same-host novel search endpoint; then recheck search result -> same-host novel detail -> old toc selectors -> accessible text content under the existing supervision and bounded network policy. No detail, chapter, content, image or media request was made in this follow-up."
+  },
+  "limitations": [
+    "Static policy checks do not include any user-specific settings, user risk records, dynamic blacklist or protected-source state.",
+    "Root-page prior 200 samples and a single bounded search do not establish ongoing availability, full catalog support, clean content or complete reading usability.",
+    "Empty results, 502, a timeout after 200 headers, anti-bot pages, encoding differences and changed markup are inconclusive and do not justify permanent removal.",
+    "The same-network observations and source versions are time-bound; 20 matched discovery books do not prove details, toc or text content work.",
+    "Initial page bytes were not retained; follow-up HTML remains only in ignored temporary build files and is not included here. Historical sample bytes cannot be reconstructed from a digest.",
+    "The temporary comic selector is an offline search-page experiment only; comic source identity, images, content policy and full reading were not verified.",
+    "Null means unknown or not observed, including sample length and truncation after the 7kbook timeout."
+  ]
+}

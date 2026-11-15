@@ -1,6 +1,8 @@
 import '../../supervision/domain/content_classification.dart';
 import 'book.dart';
+import 'iqiyi_legacy_quarantine.dart';
 import 'known_untrusted_book_rules.dart';
+import 'taotaoshu_legacy_quarantine.dart';
 
 // These hosts have specifically adult-labelled entries in the bundled Legado
 // snapshot. This is source metadata evidence, not a claim about today's site.
@@ -171,14 +173,16 @@ bool _unavailableLegacySource(BookSource source) {
 // discovery and search paths repeatedly returned soft 404 pages. A revised
 // rule is not automatically blocked, and this is not a malware finding.
 bool knownUnavailableBookRule(BookSource source) =>
-    source.id == _unavailableFqxsSourceId &&
-    source.kind == BookKind.text &&
-    source.endpoint.host == 'm.fqxs123.com' &&
-    source.legado?.search == '/s?q={{key}},{\n  "webView": true\n}' &&
-    source.legado?.rules['searchList'] == 'class.item' &&
-    source.legado!.categories.any(
-      (item) => item.address.contains('/xuanhuan/'),
-    );
+    (source.id == _unavailableFqxsSourceId &&
+        source.kind == BookKind.text &&
+        source.endpoint.host == 'm.fqxs123.com' &&
+        source.legado?.search == '/s?q={{key}},{\n  "webView": true\n}' &&
+        source.legado?.rules['searchList'] == 'class.item' &&
+        source.legado!.categories.any(
+          (item) => item.address.contains('/xuanhuan/'),
+        )) ||
+    unavailableIqiyiLegacySource(source) ||
+    unavailableTaotaoshuLegacySource(source);
 
 bool _hasKnownRemoteCodeRule(BookSource source) {
   final legado = source.legado;

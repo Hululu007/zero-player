@@ -1,0 +1,277 @@
+{
+  "schema_version": 1,
+  "created_at": "2026-11-15T15:31:39.109570+00:00",
+  "time_zone": "UTC; Asia/Shanghai is UTC+08:00",
+  "scope": "Specific archived 560 text source, its static search, a single form POST, and one separate publicly linked book sample; not a site-wide content or safety classification.",
+  "source": {
+    "id": "bca6e55770d00d422fc5ca90194c062433fd5955601b573c28cc5533a22f4bf4",
+    "name": "560小说网",
+    "selected_record_index": 282,
+    "host": "www.560xs.com",
+    "static_adult": false,
+    "static_quarantined": false,
+    "normalized_old_search_sha256": "4771d60b6b36c8a3a5294919438130db07c55915c699cdf10a7cfd2c0bd73ad2",
+    "normalized_old_search_list_sha256": "a13443044610d44b5afed7e021e1167ea32b149d9440dd422548d9f647183e91",
+    "old_rules": {
+      "list": "class.txt-list txt-list-row5@li",
+      "title": "class.s2@a@text",
+      "link": "a@href"
+    }
+  },
+  "inputs": {
+    "catalog_archive_sha256": "012a0e0d6e6adc8d303c32b578510e14b562088b3e965cb01a1a647b5e7e034d",
+    "initial_pilot_evidence_path": "docs/implementation/legado-static-search-pilot-20261115.json",
+    "initial_pilot_evidence_sha256": "24552a8d35c64319d5cd8be5d2c94ef972bdcf101026567b7bb050ed69f87ba7",
+    "initial_temporary_result_sha256": "66553ef1a5d6bc0ddc675a99dc4bc527e188ccaeeaba735098887a7c5c66a8e7",
+    "source_and_initial_tool_sha256": {
+      "build/legado_static_search_pilot/pilot.dart": "97442c50078ebbac8a7bb7cf10c30dd849b1c7a9f29a5e83113459ad7aa9f845",
+      "build/legado_static_search_pilot/pilot.py": "8083c0a41affca00be555b71d7ee981ed5198654a832c997ce5d7a7673438d0e",
+      "assets/catalogs/books/legado/catalog.json.bz2": "012a0e0d6e6adc8d303c32b578510e14b562088b3e965cb01a1a647b5e7e034d",
+      "assets/catalogs/books/legado/manifest.json": "59bb9e3551b5a01406c1d720d2b5d5d5f21518eccbb52cd93f8d752c19f7cf66",
+      "lib/features/books/data/book_import.dart": "5c27a8cac7806ca8854672f89fcc90d0d98e5ab25b92ec4fc13f094bfe93a629",
+      "lib/features/books/data/book_html.dart": "3ef516a3dbac36b22da40c8f78b99a7fe56616bd6087a4aa5cc159b2c8ba7ecf",
+      "lib/features/books/data/legado/legado_import.dart": "3d4f0f1fb848c26bf65a0eec25373bc993403576634c60524dc17c5a6e217b69",
+      "lib/features/books/data/legado/legado_request.dart": "da65df24e85c72e12e9b6305407612084bd8ea2f6d9197ce66fc96e0bd717914",
+      "lib/features/books/data/legado/legado_rules.dart": "1d7eec2586901d68414fb5901e512a4cbd830b3d8284e08340ea37ae849cbd63",
+      "lib/features/books/data/legado/legado_css.dart": "4fb7cbadd4904cfe72949705d634beb1bfe7b3d0de955aa9523961c75b3b3b5d",
+      "lib/features/books/data/legado/legado_rule_tokens.dart": "4833544f325c73292eebf09e9d82d0573a97cf9e5ba16971cc4b3d3576c30333",
+      "lib/features/books/data/legado/legado_script.dart": "c07e35031410d73fbdde6503789a2080807a480d6329ae24e9e026671fedc6dd",
+      "lib/features/books/data/legado/legado_script_stub.dart": "c94f290e6328a5d60289329e2a9cc80b9381a770b4758df2b2a6ac2b8feca5e4",
+      "lib/features/books/data/legado/legado_worker.dart": "bdc2285367dec024d2d9ea58335ee464c9e3334d34ece85b06d37316afbabafd",
+      "lib/features/books/domain/book.dart": "62618f439fdb054b7cf3693dfef266ec5acd4eb76611e0e03b455cccbf7d5959",
+      "lib/features/books/domain/book_search.dart": "5df399376fea21f96f571af17139b0b90e1ea8880f7f373e73898dccac05e9ab",
+      "lib/features/books/domain/legado_source.dart": "5b907923968332090760ecc9f4d6f7e652aa06501ac7981b5f477ef7c0d954d1",
+      "lib/features/books/domain/legado_source_fixes.dart": "5861cc4c175989a116074165f9aa0500cf56e5e82ebe8399833dc84470330f25",
+      "lib/features/books/domain/book_source_risk.dart": "1c76896b4fc8d061e9a6fe248638f8593453175e806f640645a1dae1adefa7c2",
+      "lib/features/books/domain/known_untrusted_book_rules.dart": "8caf6f3b50868d858a0bbb461c0f680c70dc60c8673c5a8c24639676f28a8c89",
+      "lib/features/supervision/domain/adult_source_evidence.dart": "7dd20620b923e14687f8a7c58aafa923ece02172cd38aa260ac9bfe107795206",
+      "lib/features/supervision/domain/content_classification.dart": "0f22950b5a1e5696fa1e60bb353c53a24f9b4546314290abab0081ed08e6146a",
+      "lib/core/network/document_encoding.dart": "172e2da9ab62964439b147ba9d570e215e44c39ded113de40ba8ec68f022fa28",
+      "tool/audit_legado_catalog.py": "36f5359259ba259e84ae10875be6383884ad0cc71e829f029dd96b6dc9976563"
+    },
+    "followup_tool_sha256": {
+      "build/legado_static_search_pilot/560xs_review.dart": "23aaa7a13f5f44a11af92caebb1776ed8affbf774df462ea54384e4f42511a27",
+      "build/legado_static_search_pilot/560xs_form_review.dart": "718b70d44b0fa4b35282a61bdabf81dbfce2bda2a92ca3af43b5c48346402796",
+      "build/legado_static_search_pilot/560xs_uri.dart": "c7436e86031b5c90b407063e5978fd97cb128e0567766a2d238690d30870532e",
+      "build/legado_static_search_pilot/560xs_post_preflight.dart": "61a42c131ebeb6a58b6ad4e100668389215d29e92ad1f1849fc5760444acfec1",
+      "build/legado_static_search_pilot/560xs_candidate.dart": "9978f81ebd54d2fedf7630c39a17f7fca98049b2c180c7026c82494caf36d64f",
+      "build/legado_static_search_pilot/560xs_detail_review.dart": "a05a50cd762079e35d4a1871e4ce25726c751d26730911f334fe61faf5d1f919",
+      "build/legado_static_search_pilot/560xs_chapter_review.dart": "809fd9a69e561efa96886bd0a03c5abade5578f12e5c4e90f0eb059409c711eb"
+    }
+  },
+  "method": {
+    "preflight": "Current catalog importer and static adult/quarantine checks; user settings, user databases, dynamic risk records and dynamic blacklists were not read.",
+    "network": "Validated public DNS, direct fixed-IP TLS with hostname verification; no credentials, redirect following, JS execution or external resource requests. Only the synthetic keyword was posted in field s.",
+    "form": "Both previously observed forms used same-host POST /search.html with one enabled text input s and an unnamed submit button; no hidden inputs, form event handlers or CAPTCHA/signature marker were observed.",
+    "limits": "Configured 10-second deadline and 512 KiB full-body limit; the toc request lasted 10.63 seconds on the wall clock, so the deadline is not a strict wall-clock guarantee.",
+    "parser": "Current Legado selectors and LegadoOperation.books/content in a Dart VM with QuickJS-unavailable stub. Raw HTML stayed in ignored build files and is not included here."
+  },
+  "observations": [
+    {
+      "method": "GET",
+      "path": "/ar.php",
+      "synthetic_query": "三国",
+      "started_at": "2026-11-15T14:46:05.319800+00:00",
+      "observed_at": "2026-11-15T14:46:07.792404+00:00",
+      "http_status": 200,
+      "sample_bytes": 36973,
+      "sample_sha256": "2ae23b45b27740e678a279f2032d4a5bd9851803dada7140394a4c50fd2f44ae",
+      "truncated": false,
+      "failure": null
+    },
+    {
+      "method": "GET",
+      "path": "/ar.php",
+      "synthetic_query": "三国",
+      "started_at": "2026-11-15T15:11:33.203782+00:00",
+      "observed_at": "2026-11-15T15:11:34.670120+00:00",
+      "http_status": 200,
+      "sample_bytes": 36973,
+      "sample_sha256": "2ae23b45b27740e678a279f2032d4a5bd9851803dada7140394a4c50fd2f44ae",
+      "truncated": false,
+      "failure": null
+    },
+    {
+      "method": "GET",
+      "path": "/ar.php",
+      "synthetic_query": "水浒",
+      "started_at": "2026-11-15T15:14:18.255299+00:00",
+      "observed_at": "2026-11-15T15:14:20.578443+00:00",
+      "http_status": 200,
+      "sample_bytes": 48532,
+      "sample_sha256": "8d28eac0eb2422158ec6972ba854df64abc166fa19b5a6ab753c99c5f2cb986a",
+      "truncated": false,
+      "failure": null
+    },
+    {
+      "method": "POST",
+      "path": "/search.html",
+      "synthetic_query": "三国",
+      "started_at": "2026-11-15T15:17:48.773909+00:00",
+      "observed_at": "2026-11-15T15:17:50.541579+00:00",
+      "http_status": 200,
+      "sample_bytes": 27001,
+      "sample_sha256": "9f5b74963459de67f034f0435f91a758451decfa54e1c075f1ccae0ab8c12486",
+      "truncated": false,
+      "failure": null
+    },
+    {
+      "method": "GET",
+      "path": "/xs/isookbj.html",
+      "synthetic_query": null,
+      "started_at": "2026-11-15T15:24:43.218904+00:00",
+      "observed_at": "2026-11-15T15:24:45.561024+00:00",
+      "http_status": 200,
+      "sample_bytes": 48532,
+      "sample_sha256": "8d28eac0eb2422158ec6972ba854df64abc166fa19b5a6ab753c99c5f2cb986a",
+      "truncated": false,
+      "failure": null
+    },
+    {
+      "method": "GET",
+      "path": "/xs/isookbj/mulu_1.html",
+      "synthetic_query": null,
+      "started_at": "2026-11-15T15:25:08.425261+00:00",
+      "observed_at": "2026-11-15T15:25:19.056222+00:00",
+      "http_status": 200,
+      "sample_bytes": null,
+      "sample_sha256": null,
+      "truncated": null,
+      "failure": "body_timeout"
+    },
+    {
+      "method": "GET",
+      "path": "/xs/isookbj/jcepbqxi.html",
+      "synthetic_query": null,
+      "started_at": "2026-11-15T15:25:56.959143+00:00",
+      "observed_at": "2026-11-15T15:25:58.317750+00:00",
+      "http_status": 200,
+      "sample_bytes": 39149,
+      "sample_sha256": "bfa4b72ec57e4988aa1c9f9a5e2ac551450e2cc56074eb8fee46ba3f463e37e6",
+      "truncated": false,
+      "failure": null
+    }
+  ],
+  "old_get_search": {
+    "old_rules": {
+      "list": "class.txt-list txt-list-row5@li",
+      "title": "class.s2@a@text",
+      "link": "a@href"
+    },
+    "sanguo_page_title": "陈启林苏荷最新章节更新时间与最新章节_陈启林苏荷最新章节更新时间与全文免费阅读_老黄王国光_560小说网",
+    "sanguo_counts": {
+      "old_rows": 0,
+      "rows_with_name": 0,
+      "rows_with_link": 0,
+      "old_engine_books": 0,
+      "txt_list": 0,
+      "txt_list_row5": 0,
+      "query_text_anchors_shown": 0,
+      "all_anchors": 245
+    },
+    "shuihu_page_title": "在修真界当营销咖最新章节_在修真界当营销咖全文免费阅读_王欣容郭天福_560小说网",
+    "shuihu_counts": {
+      "old_rows": 0,
+      "rows_with_name": 0,
+      "rows_with_link": 0,
+      "old_engine_books": 0,
+      "txt_list": 0,
+      "txt_list_row5": 0,
+      "query_text_anchors_shown": 0,
+      "all_anchors": 326
+    },
+    "interpretation": "The two GET search inputs returned unrelated book-detail pages; the old search list and its title/link fields produced no result. This does not establish permanent source failure."
+  },
+  "post_search": {
+    "form_field_names": [
+      "s"
+    ],
+    "page_title": "「三国」的搜索结果 - 560小说网",
+    "old_rule_counts": {
+      "old_rows": 0,
+      "rows_with_name": 0,
+      "rows_with_link": 0,
+      "old_engine_books": 0,
+      "txt_list": 0,
+      "txt_list_row5": 0,
+      "query_text_anchors_shown": 1,
+      "all_anchors": 175
+    },
+    "experimental_static_rules": {
+      "list": "class.tbl slist@class.trow srow",
+      "title": "class.tn@a@text",
+      "link": "class.tn@a@href"
+    },
+    "actual_engine_row_count": 1,
+    "actual_engine_book_count": 1,
+    "actual_engine_same_host_book_count": 1,
+    "actual_engine_keyword_match_count": 1,
+    "result_detail_path": "/124448/",
+    "result_content_classification": "unknown",
+    "interpretation": "The temporary POST search rules produced one matching same-host result in this sample. Its detail and content were not fetched; this alone is not a complete validated source repair."
+  },
+  "separate_book_chain": {
+    "detail_path": "/xs/isookbj.html",
+    "detail_content_classification": "unknown",
+    "detail_page_title": "在修真界当营销咖最新章节_在修真界当营销咖全文免费阅读_王欣容郭天福_560小说网",
+    "detail_metadata_theme": "The page describes a story about running a restaurant in a cultivation setting.",
+    "detail_matches_shuihu_sample_sha256": true,
+    "old_chapter_rule": "class.section-list fix.1@li@a",
+    "old_chapter_rule_count_in_detail": 0,
+    "observed_toc_link": "/xs/isookbj/mulu_1.html",
+    "toc_http_status": 200,
+    "toc_body": "timeout_unknown",
+    "observed_start_reading_link": "/xs/isookbj/jcepbqxi.html",
+    "chapter_page_title": "第一章 大酒楼的一块牌匾_在修真界当营销咖_560小说网",
+    "old_content_rule": "id.content@textNodes",
+    "old_next_content_rule": null,
+    "old_content_nodes": 1,
+    "old_parsed_content_characters": 0,
+    "raw_content_script_count": 38,
+    "raw_content_external_script_count": 0,
+    "raw_inline_script_document_write_count": 36,
+    "visible_content_text_characters": 165,
+    "alternative_static_rule_character_counts": {
+      "id.content@text": 165,
+      "id.content@html": 187
+    },
+    "old_rule_next_links": 0,
+    "visible_navigation_links": [
+      {
+        "label": "目录",
+        "same_host": true,
+        "path": "/xs/isookbj.html",
+        "query_present": false
+      },
+      {
+        "label": "下一章",
+        "same_host": true,
+        "path": "/xs/16606773/67106216_1.html",
+        "query_present": false
+      },
+      {
+        "label": "目录",
+        "same_host": true,
+        "path": "/xs/isookbj.html",
+        "query_present": false
+      },
+      {
+        "label": "下一章",
+        "same_host": true,
+        "path": "/xs/16606773/67106216_1.html",
+        "query_present": false
+      }
+    ],
+    "interpretation": "The separately sampled book was not the POST search result. The toc body was not obtained. The old text rule yielded no body; the page contains inline document.write scripts which were not executed or decoded. Static alternative text counts include navigation/metadata and do not demonstrate readable body text."
+  },
+  "limitations": [
+    "The POST result content category is unknown. No source-wide adult or malware inference is made.",
+    "The two original GET searches and one synthetic POST are time-bound observations; a single result does not validate the entire catalog.",
+    "The independently sampled book is not the POST result, and its content classification is unknown. No paywall bypass was attempted.",
+    "The directory response had a 200 header but its body timed out; chapter-list completeness and pagination were not verified.",
+    "Page scripts were neither executed nor decoded; document.write alone does not establish malicious behavior or readable content.",
+    "The chapter page was received anonymously, but the current text rule extracted zero characters. Its short alternative static text includes navigation/metadata, not verified novel text.",
+    "No raw webpage body is included; sample digests cannot recreate historical pages. Null values mean unknown or unrecorded.",
+    "Any practical repair still needs independently verified search, detail, complete toc, accessible text, pagination and the current content policy."
+  ]
+}
