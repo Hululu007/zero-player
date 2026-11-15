@@ -1,6 +1,42 @@
 # 实施状态与需求矩阵
 
-更新：2026-11-14（Asia/Shanghai）。本文件是项目当前进度的唯一入口；下文日期章节和需求矩阵保留历史验收范围。
+更新：2026-11-15（Asia/Shanghai）。本文件是项目当前进度的唯一入口；下文日期章节和需求矩阵保留历史验收范围。
+
+## 阅读、听书、漫画与音乐代码审计（2026-11-15）
+
+- 审阅近期未提交的来源适配、漫画规则、歌词与 Android 悬浮窗改动；保留既有来源域名、内容策略和测试签名边界。修复听书播放器加载期间切换章节被忽略的问题：取消旧请求并在收尾后加载最后选中的章节，关闭页面时丢弃待切换请求。书音FM目录超过分页上限时明确报错，避免将截断目录作为完整作品保存。
+- 修复悬浮歌词关闭与异步更新交错导致悬浮窗可能重新显示的问题：关闭前等待在途更新，串行化开关操作，并处理 Android 通道异常。悬浮窗宽度限制在设备可用宽度内。开发测试打包脚本不再误用正式版 70 MiB 上限，仍执行 APK 内容与版本校验。
+- `flutter test --no-pub`：835 项通过、12 项按配置跳过；听书与歌词定向 7 项通过、1 项在线用例按配置跳过；`flutter analyze --no-pub` 无问题。Windows 原生中文有声渠道搜索、下载及离线解码 1 项通过（`.dart_tool/native-95d5b0de/audio_channels_native_test.log`），驱动另计 `tearDownAll`。Windows x64 Release 构建通过。源码规模检查仍报告既有 4 处函数超限，本轮新增文件无超限。
+- Android ARM64 开发测试 Release 由离线 Gradle 构建通过；首次离线构建因生成的 `integration_test` 插件注册残留失败，按构建说明备份并仅移除测试注册后重新编译通过（`build/audit-20261115-android.log`）。APK 为 0.7.4+74、独立测试包名、ARM64、74.78 MiB，字体、必需原生库、ZIP CRC 与 v2 测试签名校验通过。包体超过历史 70 MiB 正式预算，只作开发测试包。Android/TV 设备、长期实网来源及系统悬浮窗权限往返尚未实机验收。
+- 本轮独立测试附件在 `artifacts/device-test/0.7.4-20261115-081733/`：Windows 安装器与便携包、Android ARM64 测试 APK、源码、第三方声明、原生来源和 SHA-256 清单。便携包与暂存目录 333 个文件逐项摘要一致，源码包来自本轮 Git 提交的 894 个 blob，六个附件的 SHA-256 见同目录清单；保留旧发行归档及工作区 `tmp/` 素材。
+
+## 网络漫画章节修复（2026-11-14）
+
+- 核对内置 Legado 包的 8 条 `xapi.xinmanhua.net` 同站规则：章节 API `/chapters/<id>/qualitywebs` 返回 `data[*].attributes.url`，旧规则另用脚本拼 HTML，图片位于未声明的 `works.xinmanhua.net`，因此漫画阅读器会丢弃全部跨域图片。对站点、章节模板和原内容规则同时匹配的来源，在加载时将内容规则改为直接读 JSON 地址，并仅补入该 HTTPS 媒体域；旧持久化来源同样生效，不放宽其他站点的网络边界。`works` 站旧 HTTP 图片链接按既有 Legado HTTPS 升级处理。
+- 实网抽查用户提供的《非人哉》作品接口、章节 4801 的 `qualitywebs` JSON 及首张 JPEG，均返回 200；books 全量 110 项通过，定向静态分析与差异空白检查通过。其他漫画站点及 Windows/Android/TV 实际界面仍待逐源、逐设备验收，不能据此宣称全部 153 条漫画来源可用。
+- 扩展排查 153 条漫画类型记录：118 条正文规则依赖脚本，15 条为无替换的 `@html` 图片规则，全部未在原始包中声明额外媒体域。通用提图器此前对选中的 `<img>` 取 `innerHtml`，返回空串；现改为从元素本身读取惰性加载或 `src` 属性，同时继续兼容容器规则。内置 `www.manmanapp.com` 同模板旧记录补齐已实测可用的搜索入口与 `images.tmanga.com` 媒体域；免费章节及 JPEG 均返回 200。新增通用 `<img>` 与旧规则变体回归后 books 全量 112 项通过、定向静态分析无问题。包子漫画页面直连返回 403，漫客栈和腾讯漫画依赖旧脚本／签名接口，本轮未把它们标为可用或扩大跨域许可。
+
+## 听书接手（2026-11-14）
+
+- 本轮按六仓库现行快照完成全部 22 个 JAR 的逐包核对，SHA-256 去重后 17 个不同二进制，均静态读取 DEX 顶层类和接口域名；逐包入口、重复关系、是否听书包及导入结果见[听书渠道核对](AUDIOBOOK_SOURCES.md)。尝试独立适配 `english.jar` 的 Lit2Go；独立请求能取书目、章节和 HTTPS MP3，但本应用 Windows 原生书目请求连续两次超时，已撤回未验收的内置入口。当前仅保留三个通过完整原生下载解码的中文渠道，不安装或执行 JAR 字节码。
+- 本轮继续静态分析 freefly22 JAR 中的 XiMaLaYa 接口，独立接入喜马拉雅免费有声的分类、发现、搜索、完整目录与同域 HTTPS 音频。搜索书目、目录音轨和播放响应均检查付费标记，已下架专辑返回明确错误。三个中文渠道通过 Windows 原生分类、发现、搜索、目录、下载与离线解码专项（`.dart_tool/native-e89f5cf9/audio_channels_native_test.log`）；books 回归 109 项、`flutter analyze --no-pub`、`git diff --check` 通过。懒人需登录、LibriVox 媒体域连接超时，未收录。Android/TV 与长期可用率待验，详情见[听书渠道核对](AUDIOBOOK_SOURCES.md)。
+- 续轮按用户要求静态拆解六个仓库中 17 个不同 JAR 的 DEX 类、方法与接口常量，不加载插件；在 freefly22 的 BoKanYouSheng 规则中确认独立的博看有声 HTTPS 接口。本项目新增博看有声适配，提供分类、发现、搜索、分页目录及 HTTPS 音频；与既有书音FM一起通过 Windows 原生分类、发现、搜索、详情、目录、下载及离线解码专项（`.dart_tool/native-577965e5/audio_channels_native_test.log`）。books 模块 107 项通过，`flutter analyze --no-pub` 和 `git diff --check` 通过；源码规模脚本仍只列既有音乐及 UU看书测试函数。恋听、275、29、酷我 FM、云图与听友的具体阻碍及去重结果见[听书渠道核对](AUDIOBOOK_SOURCES.md)。
+- 导入器识别直接上传的 DEX JAR 和“我的听书”订阅描述，给出明确的格式提示，不将插件字节当作备份 JSON。新增定向 4 项及既有书源安全测试均通过；JAR 仅用于离线分析和独立适配。
+- 直连核对用户给出的六个“我的听书”源仓库，按站点与 JAR SHA-256 整理重叠关系，详见[听书渠道核对](AUDIOBOOK_SOURCES.md)。这些仓库主要是 JAR 插件订阅或备份，不能按 Legado 书源直接导入。按 m1ngzer 公开接口独立实现书音FM渠道（分类、发现、搜索、详情、分页目录、带签名音频），保留原有网络与内容策略边界；其 GET 搜索会返回其他关键词的缓存，本实现使用 POST 并校验回显关键词。“西游记”样本取得 182 章、完整 MP3；Windows 原生下载及离线解码通过（`.dart_tool/native-bb55f2ef/shuyin_native_test.log`）。其他候选尚无本项目全链路证据，不能宣称中文渠道多源目标已完成。
+- 听书播放器新增自动下一章、章节列表、15 秒后退／30 秒前进及 15／30／60 分钟定时暂停。识别“我的听书”插件订阅 JSON，导入时明确说明格式边界。books 模块回归 105 项通过，随后新增渠道端点约束测试 2 项通过；Windows 原生书音FM专项 1 项通过，`flutter analyze --no-pub` 与 `git diff --check` 通过。源码规模脚本仅报告既有音乐与 UU看书测试函数超限。播放器界面、连续长播及 Android/TV 设备验收仍待实际验证。
+
+## 多来源同步歌词续进（2026-11-14）
+
+- 参考 [SuperLyric 酷狗网络歌词实现](https://github.com/HChenX/SuperLyric/blob/master/lyric-network/src/main/java/com/hchen/superlyric/provider/kugou/KuGouApiSource.kt) 的接口流程，独立实现酷狗 Hash 直查、歌名歌手候选检索、KRC 候选下载与有界解码，转为本播放器按行同步歌词。另接入 [LRCLIB 公开同步歌词 API](https://lrclib.net/docs)，使用带应用标识的请求；只采纳曲名、歌手匹配且时长差不超过 12 秒的带时间戳记录。网易云直接取词仍优先，失败时依次尝试其他来源；酷狗曲目优先自身 Hash。歌词记录附带来源，内容策略按实际来源复核，成功结果最多在内存保留 64 首，避免重播重复请求。来源脚本和 SuperLyric 的 GPL 代码均未打包或执行。
+- 本地 HTTP 回归覆盖 LRCLIB 错版本拒绝、酷狗 Hash 直查、坏候选回退与 KRC 解码；公网样本用应用网络客户端分别取得 LRCLIB 与酷狗同步歌词，在线 3 项通过（首轮 LRCLIB 请求曾超时，重试通过）。音乐模块全量 97 项通过、10 项按配置跳过；`dart analyze lib/features/music test/music` 无问题。源码规模检查仅报既有音乐页、播放条、UU 看书和音乐榜单测试函数超限；本轮新增文件符合约定。真实设备、更多语言和歌曲版本的长期命中率仍待验收。
+
+## 在线音乐歌词与悬浮窗续进（2026-11-14）
+
+- 歌词页增加当前行高亮、翻译分行、渐变背景与 ±3 秒校准；校准同时作用于歌词页、播放条、悬浮窗及本机歌词状态接口，本次运行期间有效。LRC 解析清除逐字时间标签，并在 250 毫秒内对齐轻微错位的翻译。网易云普通 LRC 缺失时使用 YRC 逐字格式回退为按行同步，仍沿用公开歌词接口及曲目匹配；未接入 SuperLyric 的 LSPosed Hook。其 [README](https://github.com/HChenX/SuperLyric) 表明它从其他应用的 Hook／在线接口获取歌词，并由系统 MediaSession 驱动进度；本播放器应继续使用自身播放时钟，后续可评估兼容其公开帧协议。
+- Android 音乐页增加悬浮歌词入口，用户主动点击后说明系统悬浮窗授权；未授权或拒绝时不创建悬浮窗，授权后需再次点击启用。显示曲名、歌手、当前歌词及播放／缓冲状态，关闭或应用销毁时移除。Android／TV 真机权限往返、后台长播及不同系统版本的悬浮窗位置尚未验收。
+- [pdone/lx-music-source](https://github.com/pdone/lx-music-source) 的 20 个原始脚本链接于本机返回 HTTP 200；清单补入 FeiChangDao、QingLiang、SuYin、XingLan 的版本、大小与 SHA-256。管理页可复制原始／gh-proxy.org 加速链接，版本检查可在原始链接失败时尝试加速链接。下载脚本只用于审查，不执行或自动导入；新增 4 项尚未验证真实媒体播放，未列为可播渠道。其他加速站点可按上游 README 替换前缀，但本轮未逐站验证。
+- 本机对现有 Huibq、QDY 与幻音的单曲接口抽查分别得到 HTTP 403、HTTP 403、TLS 连接失败；不据此断定永久失效，也不将它们新增为默认可播来源。后续需按实际脚本协议、授权条件、媒体 URL 与应用网络边界逐源复验。
+- 音乐模块全量 95 项通过、9 项按配置跳过；`dart analyze lib/features/music test/music/music_direct_sources_test.dart` 无问题，Android `:app:compileDebugKotlin --offline -Ptarget-platform=android-arm64` 通过。首轮未指定 ARM64 的离线 Gradle 命令因 armeabi_v7a_debug 依赖未缓存失败，不计为通过。尚未做全项目测试、Android 真机歌词同步及完整 APK 构建。
 
 ## 网络阅读本轮优化（2026-11-14，进行中）
 

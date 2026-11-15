@@ -509,6 +509,36 @@
     "originNote": "https://www.yckceo.com/yuedu/shuyuan/content/id/6199.html"
   },
   {
+    "name": "书音FM",
+    "group": "中文有声",
+    "kind": "audio",
+    "format": "shuyin",
+    "url": "https://m.mekui.com/ecmsapi/index.php",
+    "sample": "西游记",
+    "mediaHosts": ["api.aikeu.com", "car-lv.kuwo.cn", "img2.kuwo.cn"],
+    "originNote": "m1ngzer/tingshu-sources 接口协议参考；本项目独立实现；2026-11-14 Windows 原生核验搜索、目录、离线音频解码"
+  },
+  {
+    "name": "博看有声",
+    "group": "中文有声",
+    "kind": "audio",
+    "format": "bookan",
+    "url": "https://api.bookan.com.cn/voice/book/list",
+    "sample": "三国演义",
+    "mediaHosts": ["audio.bookan.com.cn"],
+    "originNote": "freefly22/tingshu-free-jar 的 BoKanYouSheng DEX 协议参考；本项目静态 HTTPS 适配"
+  },
+  {
+    "name": "喜马拉雅 · 免费有声",
+    "group": "中文有声",
+    "kind": "audio",
+    "format": "ximalaya",
+    "url": "https://mobile.ximalaya.com/mobile/v1/album/track",
+    "sample": "三国演义",
+    "mediaHosts": ["aod.cos.tx.xmcdn.com"],
+    "originNote": "freefly22/tingshu-free-jar 的 XiMaLaYa DEX 协议参考；仅接入免费专辑与免费音轨，音频限同域 HTTPS"
+  },
+  {
     "name": "古龙全集",
     "group": "武侠经典",
     "kind": "text",

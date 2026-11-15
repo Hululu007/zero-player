@@ -22,6 +22,7 @@ class MainActivity : FlutterActivity() {
     private val videoPicker by lazy { VideoFilePicker(this) }
     private val videoDirectories by lazy { VideoDirectoryBridge(this) }
     private val playbackDiagnostics by lazy { PlaybackDeviceDiagnostics(this) }
+    private val musicOverlay by lazy { MusicLyricsOverlay(this) }
     private var saveResult: MethodChannel.Result? = null
     private var savePath: String? = null
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
@@ -43,6 +44,13 @@ class MainActivity : FlutterActivity() {
                         result.success(null)
                     }
                     "playbackDeviceDiagnostics" -> result.success(playbackDiagnostics.snapshot())
+                    "musicOverlayPermission" -> result.success(musicOverlay.hasPermission())
+                    "requestMusicOverlayPermission" -> {
+                        musicOverlay.openPermissionSettings()
+                        result.success(null)
+                    }
+                    "updateMusicOverlay" -> result.success(musicOverlay.update(call))
+                    "hideMusicOverlay" -> { musicOverlay.hide(); result.success(null) }
                     "setPlayerOrientation" -> {
                         val orientation = when (call.argument<String>("mode")) {
                             "system" -> ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
@@ -128,6 +136,7 @@ class MainActivity : FlutterActivity() {
         try {
             videoPicker.close()
             videoDirectories.close()
+            musicOverlay.hide()
             saveResult?.let { finishSave(it) }
         } finally {
             super.onDestroy()

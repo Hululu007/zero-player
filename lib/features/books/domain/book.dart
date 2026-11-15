@@ -6,7 +6,7 @@ import 'legado_source.dart';
 
 enum BookKind { text, audio, comic }
 
-enum BookFormat { html, feed, featured }
+enum BookFormat { html, feed, featured, shuyin, bookan, ximalaya }
 
 String bookLabel(Object? value, [int limit = 160]) {
   final text = value is String
@@ -69,8 +69,8 @@ final class BookSource {
       rules = _rules(data['rules']),
       legado = data['legado'] == null
           ? null
-          : LegadoSource.fromJson(data['legado'] as Map),
-      mediaHosts = _hosts(data['mediaHosts']),
+          : LegadoSource.fromJson(_comicLegadoRules(data)),
+      mediaHosts = _hosts(_comicMediaHosts(data)),
       originNote = bookLabel(data['originNote'], 240),
       sourceKey = _rule(data['sourceKey'], 2048),
       updatedAt = data['updatedAt'] as int? ?? 0,
@@ -93,6 +93,18 @@ final class BookSource {
         ),
     ]);
     if (name.isEmpty ||
+        (format == BookFormat.shuyin &&
+            (kind != BookKind.audio ||
+                endpoint.toString() !=
+                    'https://m.mekui.com/ecmsapi/index.php')) ||
+        (format == BookFormat.bookan &&
+            (kind != BookKind.audio ||
+                endpoint.toString() !=
+                    'https://api.bookan.com.cn/voice/book/list')) ||
+        (format == BookFormat.ximalaya &&
+            (kind != BookKind.audio ||
+                endpoint.toString() !=
+                    'https://mobile.ximalaya.com/mobile/v1/album/track')) ||
         !const {'utf-8', 'gbk', 'gb2312', 'gb18030'}.contains(searchCharset) ||
         (searchForm.isNotEmpty && searchCharset != 'utf-8') ||
         (directAudio && kind != BookKind.audio) ||
@@ -111,6 +123,9 @@ final class BookSource {
                 ].any((key) => !rules.containsKey(key)))) ||
         (legado == null &&
             format != BookFormat.feed &&
+            format != BookFormat.shuyin &&
+            format != BookFormat.bookan &&
+            format != BookFormat.ximalaya &&
             [
               'chapters',
               'chapterTitle',
@@ -307,6 +322,69 @@ final class BookSource {
       }),
     );
   }
+}
+
+bool _xinmanhuaImageRule(Map data) {
+  final legado = data['legado'];
+  final rules = legado is Map ? legado['rules'] : null;
+  final content = rules is Map ? rules['content'] : null;
+  final endpoint = Uri.tryParse('${data['url']}');
+  return endpoint?.scheme == 'https' &&
+      endpoint?.host == 'xapi.xinmanhua.net' &&
+      (endpoint?.path.isEmpty == true || endpoint?.path == '/') &&
+      rules is Map &&
+      rules['chapterUrl'] ==
+          r'https://xapi.xinmanhua.net/chapters/{$.id}/qualitywebs' &&
+      content is String &&
+      content.startsWith(
+        r'$.data[*].attributes.url'
+        '\n@js:',
+      );
+}
+
+bool _manmanComicRule(Map data) {
+  final endpoint = Uri.tryParse('${data['url']}');
+  final legado = data['legado'];
+  final rules = legado is Map ? legado['rules'] : null;
+  return endpoint?.scheme == 'https' &&
+      endpoint?.host == 'www.manmanapp.com' &&
+      (endpoint?.path.isEmpty == true || endpoint?.path == '/') &&
+      rules is Map &&
+      rules['chapterUrl'] ==
+          r'https://www.manmanapp.com/comic/detail-{{$.id}}.html' &&
+      const {'class.man_img@html', '.man_img@html'}.contains(rules['content']);
+}
+
+Map _comicLegadoRules(Map data) {
+  final legado = data['legado'] as Map;
+  if (_xinmanhuaImageRule(data)) {
+    return {
+      ...legado,
+      'rules': {
+        ...legado['rules'] as Map,
+        'content': r'$.data[*].attributes.url',
+      },
+    };
+  }
+  if (_manmanComicRule(data)) {
+    return {
+      ...legado,
+      if ('${legado['search']}'.contains('/search/word-{{key}}.html'))
+        'search': 'https://www.manmanapp.com/search/index.html?keyword={{key}}',
+    };
+  }
+  return legado;
+}
+
+Object? _comicMediaHosts(Map data) {
+  final host = _xinmanhuaImageRule(data)
+      ? 'works.xinmanhua.net'
+      : _manmanComicRule(data)
+      ? 'images.tmanga.com'
+      : null;
+  return host == null
+      ? data['mediaHosts']
+      : [...?data['mediaHosts'] as List?, host];
 }
 
 typedef BookDiscoveryPage = ({List<Book> books, String? next});

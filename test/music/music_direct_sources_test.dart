@@ -29,6 +29,26 @@ void main() {
       expect(lyrics.translatedLrc, '[00:03.140]翻译');
     },
   );
+  test('enhanced LRC words and slightly shifted translation stay aligned', () {
+    final lyrics = MusicLyrics.parse(
+      '[00:01.000]<00:01.000>你<00:01.400>好',
+      '[00:01.120]Hello',
+    );
+    expect(lyrics.lines.single.text, '你好');
+    expect(lyrics.lines.single.translation, 'Hello');
+    expect(lyrics.lineAt(const Duration(milliseconds: 999)), isNull);
+    expect(lyrics.lineAt(const Duration(seconds: 1))?.text, '你好');
+  });
+  test('YRC provides line sync when standard LRC is missing', () {
+    final lyrics = MusicLyrics.parseYrc(
+      '[1280,900](1280,300,0)晚(1580,600,0)风\n[2500,400](2500,400,0)起',
+      '[00:01.280]Evening wind',
+    );
+    expect(lyrics.lines.first.text, '晚风');
+    expect(lyrics.lines.first.translation, 'Evening wind');
+    expect(lyrics.indexAt(const Duration(milliseconds: 2499)), 0);
+    expect(lyrics.indexAt(const Duration(milliseconds: 2500)), 1);
+  });
   _kugouTest();
   _playlistTest();
 }

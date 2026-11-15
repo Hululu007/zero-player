@@ -13,7 +13,10 @@ import '../domain/book_search.dart';
 import '../domain/legado_source.dart';
 import 'book_html.dart';
 import 'book_mixed_content.dart';
+import 'bookan_audio_client.dart';
 import 'legado/legado_client.dart';
+import 'shuyin_audio_client.dart';
+import 'ximalaya_audio_client.dart';
 
 List<Uri> parseBookImageAddresses(BookSource source, Uri base, String body) {
   if (!body.trimLeft().startsWith('[')) return const [];
@@ -84,6 +87,9 @@ final class BookClient {
   const BookClient(this.network);
   final DocumentClient network;
   LegadoBookClient get _legado => LegadoBookClient(network);
+  ShuYinAudioClient get _shuyin => ShuYinAudioClient(network);
+  BookanAudioClient get _bookan => BookanAudioClient(network);
+  XimalayaAudioClient get _ximalaya => XimalayaAudioClient(network);
 
   Future<Book> details(
     BookSource source,
@@ -91,6 +97,11 @@ final class BookClient {
     CancellationToken token,
   ) async {
     _requireNovelSource(source);
+    if (source.format == BookFormat.shuyin) {
+      return _shuyin.details(source, book, token);
+    }
+    if (source.format == BookFormat.bookan) return book;
+    if (source.format == BookFormat.ximalaya) return book;
     if (source.format != BookFormat.html) return book;
     if (source.legado != null) return _legado.details(source, book, token);
     if (!source.rules.keys.any((key) => key.startsWith('info'))) return book;
@@ -127,6 +138,12 @@ final class BookClient {
     CancellationToken token,
   ) => _hasLegadoRules(source)
       ? _legado.categories(source, token)
+      : source.format == BookFormat.shuyin
+      ? _shuyin.categories(source, token)
+      : source.format == BookFormat.bookan
+      ? Future.value(BookanAudioClient.categories)
+      : source.format == BookFormat.ximalaya
+      ? Future.value(XimalayaAudioClient.categories)
       : Future.value(source.discoveryCategories);
 
   Future<Document> fetch(
@@ -153,6 +170,15 @@ final class BookClient {
     String? cursor,
   }) async {
     _requireNovelSource(source);
+    if (source.format == BookFormat.shuyin) {
+      return _shuyin.discover(source, token, category: category, page: page);
+    }
+    if (source.format == BookFormat.bookan) {
+      return _bookan.discover(source, token, category: category, page: page);
+    }
+    if (source.format == BookFormat.ximalaya) {
+      return _ximalaya.discover(source, token, category: category, page: page);
+    }
     if (_hasLegadoRules(source) && source.format == BookFormat.html) {
       return _legado.discover(
         source,
@@ -185,6 +211,15 @@ final class BookClient {
     Uri? bookAddress,
   }) async {
     _requireNovelSource(source);
+    if (source.format == BookFormat.shuyin) {
+      return _shuyin.books(source, query, token, page: page);
+    }
+    if (source.format == BookFormat.bookan) {
+      return _bookan.books(source, query, token, page: page);
+    }
+    if (source.format == BookFormat.ximalaya) {
+      return _ximalaya.books(source, query, token, page: page);
+    }
     if (query.isEmpty &&
         bookAddress == null &&
         source.format == BookFormat.html) {
@@ -335,6 +370,15 @@ final class BookClient {
     CancellationToken token,
   ) async {
     _requireNovelSource(source);
+    if (source.format == BookFormat.shuyin) {
+      return _shuyin.chapters(source, book, token);
+    }
+    if (source.format == BookFormat.bookan) {
+      return _bookan.chapters(source, book, token);
+    }
+    if (source.format == BookFormat.ximalaya) {
+      return _ximalaya.chapters(source, book, token);
+    }
     if (_hasLegadoRules(source)) return _legado.chapters(source, book, token);
     if (source.format == BookFormat.feed) {
       return (await _feed(source, token)).$2;
@@ -493,6 +537,15 @@ final class BookClient {
     CancellationToken token, {
     Book? book,
   }) async {
+    if (source.format == BookFormat.shuyin) {
+      return _shuyin.audio(source, chapter, token);
+    }
+    if (source.format == BookFormat.bookan) {
+      return _bookan.audio(source, chapter);
+    }
+    if (source.format == BookFormat.ximalaya) {
+      return _ximalaya.audio(source, chapter, token);
+    }
     if (_hasLegadoRules(source)) {
       return _legado.audio(source, chapter, token, book: book);
     }

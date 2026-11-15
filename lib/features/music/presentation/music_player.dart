@@ -8,6 +8,7 @@ import '../application/music_multi_search.dart';
 import '../data/public_music_sources.dart';
 import 'music_actions.dart';
 import 'music_lyrics_dialog.dart';
+import 'music_floating_lyrics.dart';
 
 String musicTime(Duration value) =>
     '${value.inMinutes}:${(value.inSeconds % 60).toString().padLeft(2, '0')}';
@@ -133,7 +134,7 @@ final class MusicPlayer extends StatelessWidget {
   }
 
   Widget _currentLyric(BuildContext context) {
-    final lyric = controller.lyrics.lineAt(controller.snapshot.position);
+    final lyric = controller.lyrics.lineAt(controller.lyricPosition);
     // Keep the strip height and its accessibility node stable while lyrics load.
     final text = lyric == null
         ? controller.lyricsLoading
@@ -206,6 +207,20 @@ final class MusicPlayer extends StatelessWidget {
           tooltip: '同步歌词',
           onPressed: () => showMusicLyrics(context, controller),
           icon: const Icon(Icons.lyrics_outlined),
+        ),
+      if (defaultTargetPlatform == TargetPlatform.android)
+        ListenableBuilder(
+          listenable: MusicFloatingLyrics.instance,
+          builder: (context, _) => IconButton(
+            tooltip: MusicFloatingLyrics.instance.enabled ? '关闭悬浮歌词' : '开启悬浮歌词',
+            onPressed: () =>
+                MusicFloatingLyrics.instance.toggle(context, controller),
+            icon: Icon(
+              MusicFloatingLyrics.instance.enabled
+                  ? Icons.picture_in_picture_alt
+                  : Icons.picture_in_picture_alt_outlined,
+            ),
+          ),
         ),
       PopupMenuButton<MusicPlayMode>(
         tooltip: '播放模式：${musicModeLabels[controller.mode.index]}',

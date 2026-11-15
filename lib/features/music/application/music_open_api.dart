@@ -31,7 +31,7 @@ final class MusicOpenApi extends ChangeNotifier {
     final track = player.selected;
     final visible = track != null && player.repository.allowed(track);
     final lyrics = player.lyrics;
-    final index = visible ? lyrics.indexAt(player.snapshot.position) : -1;
+    final index = visible ? lyrics.indexAt(player.lyricPosition) : -1;
     final line = index < 0 ? null : lyrics.lines[index];
     return {
       'status': !visible

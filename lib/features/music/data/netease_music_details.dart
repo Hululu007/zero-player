@@ -34,7 +34,10 @@ final class NeteaseMusicDetails {
       return text is String ? text : '';
     }
 
-    return MusicLyrics.parse(lrc('lrc'), lrc('tlyric'));
+    final lyrics = MusicLyrics.parse(lrc('lrc'), lrc('tlyric'));
+    return lyrics.lines.isNotEmpty
+        ? lyrics
+        : MusicLyrics.parseYrc(lrc('yrc'), lrc('tlyric'));
   }
 
   Future<({String name, List<MusicTrack> tracks, int total})> playlist(

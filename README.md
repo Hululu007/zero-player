@@ -44,6 +44,7 @@
 - 统一成人过滤，监管模式覆盖点播、直播和广播；支持频道/关键词屏蔽，每次敏感操作验证密码，恢复码由用户自行保管。
 - **在线广播（实验阶段）**：电台分组/搜索、收藏、广播与电视伴听分类、健康筛选/测活、失败换线、迷你播放器；离开页面继续播放，Windows 支持托盘收听与退出。
 - **在线音乐**：默认浏览 QQ 音乐热歌，可选择网易云新歌和 Apple Music 中国区热门歌曲。Flutter 客户端直接请求各播放渠道，无需部署音乐服务器。首次搜索默认聚合 MY FREE MP3、网易云公开音频、Audius、酷狗公开音频和酷我试听，优先查询收藏渠道。可在“我的歌单”导入网易云公开歌单，在播放器查看网易云歌曲的同步歌词和可用译文。另有播放队列、历史续播、离线下载、迷你播放器和 Windows 托盘控制。渠道限制与实验性 LX 适配见[使用指南](docs/implementation/USER-GUIDE.md#在线音乐当前源码新增)。
+- **听书**：中文书音FM、博看有声、喜马拉雅免费有声、Gutenberg 公版朗读与两路文化播客；提供搜索、分类、书架、离线章节、续播、连续播放及定时暂停。三个中文渠道已完成 Windows 原生样本验证，其他渠道和设备范围见[听书渠道核对](docs/implementation/AUDIOBOOK_SOURCES.md)。
 - 渠道按实际诊断自动启停并持续复检，频道选择显示 TCP Ping；收藏和重复接口整理保持独立。
 - 受控媒体网关、私网访问拦截、HLS 引用校验、原生脚本/协议限制与有界退出清理。
 - 播放中特征跳过（默认关闭）：原画质直接播放，后台优先检测音频；没有规则、资源缺失或检测失败时继续播放。支持频道/全剧声画样本、保守/积极/提示策略、离线关键词检测。关键词始终先确认，默认跳过时长 20 秒，可调整并撤销。轻量关键词、OCR / ASR 资源在设置中手动下载，不随基础包安装。Android 实机性能待设备验收。详见 [实施记录](docs/implementation/VIDEO-CONTENT-FILTER-PLAN.md)。
@@ -99,6 +100,8 @@ lib/features 按业务划分；lib/media 包含播放、HLS、回环网关、缓
 | [Dart html](https://github.com/dart-lang/tools/tree/main/pkgs/html)、[Dart XML](https://github.com/renggli/dart-xml) | HTML 与 XML 文档解析 |
 | [Flutter packages](https://github.com/flutter/packages)、[Dart core](https://github.com/dart-lang/core) | 文件选择、存储路径、路径处理与摘要计算 |
 | [awesome-m3u](https://github.com/popocoding/awesome-m3u) | 实验广播内置列表来源 |
+| [m1ngzer/tingshu-sources](https://github.com/m1ngzer/tingshu-sources) | 书音FM公开接口协议参考；本项目独立实现，不运行其 JAR |
+| [freefly22/tingshu-free-jar](https://github.com/freefly22/tingshu-free-jar) | 博看有声、喜马拉雅免费音轨公开接口协议参考；本项目独立实现，不运行其 JAR |
 | [iptv-org/iptv](https://github.com/iptv-org/iptv) | 中国公开直播列表来源 |
 | [Xiaolai](https://github.com/lxgw/kose-font)、[Noto fonts](https://github.com/google/fonts) | 中文字体 |
 | [Inno Setup](https://jrsoftware.org/isinfo.php)、[Pillow](https://github.com/python-pillow/Pillow) | Windows 安装器和品牌素材构建工具 |

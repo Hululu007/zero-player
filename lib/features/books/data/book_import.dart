@@ -81,6 +81,13 @@ Iterable<Object?> _zipRecords(List<int> bytes) sync* {
   if (directory.fileHeaders.length > 4000) {
     throw const FormatException('备份条目过多');
   }
+  if (directory.fileHeaders.any(
+    (header) =>
+        header.file?.filename.replaceAll(r'\', '/').split('/').last ==
+        'classes.dex',
+  )) {
+    throw const FormatException('这是“我的听书”的 JAR 插件，不能直接执行或导入；请使用已适配的内置渠道');
+  }
   const names = {
     'booksource.json',
     'book_sources.json',
@@ -151,6 +158,13 @@ BookSourceImport parseBookSourceRecords(Iterable<Object?> records) {
 
 Iterable<Object?> _sourceRecords(Object? value, [int depth = 0]) sync* {
   if (depth > 4) throw const FormatException('来源清单嵌套过深');
+  if (value is Map &&
+      value.containsKey('entry_package') &&
+      value.containsKey('download_url')) {
+    throw const FormatException(
+      '这是“我的听书”的 JAR 插件订阅，当前不能导入；请使用可解析的 Legado JSON、RSS 或静态 HTML 书源',
+    );
+  }
   if (value is List) {
     for (final record in value) {
       yield* _sourceRecords(record, depth + 1);

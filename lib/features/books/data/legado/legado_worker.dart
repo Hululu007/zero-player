@@ -452,6 +452,14 @@ final class _LegadoEvaluation {
       }
     }
 
+    if (rule.endsWith('@html')) {
+      final selector = rule.substring(0, rule.length - '@html'.length);
+      for (final element
+          in evaluator.elements(selector, evaluator.root).take(100)) {
+        if (element is dom.Element) addElement(element);
+      }
+    }
+
     for (final value in evaluator.rawValues(rule, evaluator.root).take(100)) {
       addValue(value);
     }

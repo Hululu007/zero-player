@@ -1,6 +1,8 @@
 {
   "origin": "https://github.com/pdone/lx-music-source",
   "checkedAt": "2026-11-01",
+  "availabilityCheckedAt": "2026-11-14",
+  "note": "原有 16 项脚本摘要沿用 2026-11-01 快照；新增 4 项摘要在 2026-11-14 计算。20 项 GitHub 原始链接仅验证可下载，不代表音频接口可播放。",
   "sources": [
     {
       "id": "changqing",
@@ -10,6 +12,15 @@
       "lines": 10,
       "provider": "",
       "status": "已还原固定媒体地址；当前 HTTP 404，不设为可播渠道"
+    },
+    {
+      "id": "feichangdao",
+      "version": "v5",
+      "bytes": 17846,
+      "sha256": "49486cab064e64d5ad63723e670c44ee55eadadcc790ccf493351fbde64284d7",
+      "lines": 443,
+      "provider": "",
+      "status": "脚本可下载；播放协议及实际媒体地址未验证，待原生适配"
     },
     {
       "id": "fish",
@@ -127,6 +138,33 @@
       "lines": 11,
       "provider": "",
       "status": "混淆协议待原生分析"
+    },
+    {
+      "id": "qingliang",
+      "version": "2.1.0",
+      "bytes": 26416,
+      "sha256": "f5d589c4ebe583800b25fe12e35dfd4f807f1758bfbea83054df4b9a4f95aa29",
+      "lines": 476,
+      "provider": "",
+      "status": "脚本可下载；多平台播放协议及实际媒体地址未验证，待原生适配"
+    },
+    {
+      "id": "suyin",
+      "version": "v1",
+      "bytes": 17656,
+      "sha256": "d10c9c28823b5c2ce4e3fef3b25b8ff16d2d165bd0883e2b866900ef7c0dc0ee",
+      "lines": 583,
+      "provider": "",
+      "status": "脚本可下载；播放协议及实际媒体地址未验证，待原生适配"
+    },
+    {
+      "id": "xinglan",
+      "version": "v4.0.2",
+      "bytes": 74386,
+      "sha256": "d186346cec8f813dc447bebcc4d5a29a5ad41f62c90102edb196d67cc870eaf2",
+      "lines": 1643,
+      "provider": "",
+      "status": "脚本可下载；聚合播放协议及实际媒体地址未验证，待原生适配"
     },
     {
       "id": "xinghai",

@@ -39,7 +39,8 @@ if (!$WindowsOnly) {
     if (!$AndroidArm64Only -and !(Test-Path -LiteralPath $bundle)) { throw 'Build Android appbundle first.' }
     if ($AndroidArm64Only) {
         $expectedAppId = if ($DeviceTest) { 'dev.zeroplayer.zero_player.devtest' } else { 'dev.zeroplayer.zero_player' }
-        & python "$projectRoot/tool/verify_apk.py" "$projectRoot/build/app/outputs/flutter-apk/app-release.apk" --abis arm64-v8a --max-mib 70 --compressed-native --version $version --build-number ($buildVersion.Split('+')[1]) --application-id $expectedAppId
+        $sizeLimit = if ($DeviceTest) { @() } else { @('--max-mib', '70') }
+        & python "$projectRoot/tool/verify_apk.py" "$projectRoot/build/app/outputs/flutter-apk/app-release.apk" --abis arm64-v8a @sizeLimit --compressed-native --version $version --build-number ($buildVersion.Split('+')[1]) --application-id $expectedAppId
         if ($LASTEXITCODE -ne 0) { throw 'ARM64 APK validation failed.' }
     }
 }

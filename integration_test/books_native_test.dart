@@ -103,9 +103,28 @@ void _audiobooks() {
         final sources = await books.sources(BookKind.audio);
         expect(sources.length, greaterThanOrEqualTo(3));
         for (final entry in sources) {
-          final library = await books.client.books(entry.source, '', token);
+          final shuyin = entry.source.format == BookFormat.shuyin;
+          final bookan = entry.source.format == BookFormat.bookan;
+          final ximalaya = entry.source.format == BookFormat.ximalaya;
+          final library = await books.client.books(
+            entry.source,
+            shuyin
+                ? '西游记'
+                : bookan || ximalaya
+                ? '三国演义'
+                : '',
+            token,
+          );
           expect(library, isNotEmpty, reason: entry.source.name);
-          for (final work in library) {
+          final selected = ximalaya
+              ? library.where(
+                  (entry) => entry.uri.queryParameters['albumId'] == '20665610',
+                )
+              : shuyin || bookan
+              ? library.take(1)
+              : library;
+          expect(selected, isNotEmpty, reason: entry.source.name);
+          for (final work in selected) {
             final chapters = await books.chapters(work, token);
             expect(chapters.length, greaterThan(1), reason: work.title);
             await _playChapter(tester, services, work, chapters.first, token);

@@ -6,6 +6,8 @@ import '../domain/music_track.dart';
 import '../domain/music_lyrics.dart';
 import '../domain/music_match.dart';
 import 'netease_music_details.dart';
+import 'kugou_lyrics.dart';
+import 'lrclib_lyrics.dart';
 import 'music_parser.dart';
 import 'myfreemp3_client.dart';
 import 'public_music_sources.dart';
@@ -17,6 +19,9 @@ final class MusicRepository {
   final ContentPolicy? policy;
   late final public = PublicMusicSources(client.network);
   late final _netease = NeteaseMusicDetails(client.network);
+  late final _kugouLyrics = KugouLyrics(client.network);
+  late final _lrclib = LrclibLyrics(client.network);
+  final _lyricCache = <String, MusicLyrics>{};
   VideoSource sourceFor(String provider) => provider == 'neteasePlaylist'
       ? sourceFor('netease')
       : provider == 'kugouPlaylist'
@@ -29,6 +34,7 @@ final class MusicRepository {
               musicSources[provider] ??
               musicPlaylistProviders[provider] ??
               switch (provider) {
+                'lrclib' => 'LRCLIB 同步歌词',
                 'appleHome' => 'Apple Music',
                 'wfu' => 'WFU 音乐精选',
                 _ => provider,
@@ -39,6 +45,7 @@ final class MusicRepository {
             'audius' => 'https://audius.co',
             'flacHi' => 'https://flac.music.hi.cn',
             'kugou' => 'https://www.kugou.com',
+            'lrclib' => 'https://lrclib.net',
             'qqPlaylist' => 'https://y.qq.com',
             'appleHome' => 'https://rss.marketingtools.apple.com',
             'wfu' => 'https://music1.wfuapp.com',
@@ -79,49 +86,105 @@ final class MusicRepository {
   bool supportsLyrics(MusicTrack track) =>
       allowed(track) &&
       (NeteaseMusicDetails.supportsLyrics(track.provider) ||
+          track.provider == 'kugou' ||
           track.artist.trim().isNotEmpty) &&
-      (policy?.sourceAllowed(sourceFor('netease')) ?? true);
+      const [
+        'netease',
+        'kugou',
+        'lrclib',
+      ].any((id) => policy?.sourceAllowed(sourceFor(id)) ?? true);
 
   Future<MusicLyrics> lyrics(MusicTrack track, CancellationToken token) async {
     if (!supportsLyrics(track)) return MusicLyrics.empty;
-    if (NeteaseMusicDetails.supportsLyrics(track.provider)) {
-      final direct = await _tryLyrics(track, token);
+    final cached = _lyricCache[track.key];
+    if (cached != null && _lyricSourceAllowed(cached.sourceId)) return cached;
+    final result = await _lookupLyrics(track, token);
+    token.check();
+    if (result.lines.isNotEmpty &&
+        supportsLyrics(track) &&
+        _lyricSourceAllowed(result.sourceId)) {
+      _lyricCache.remove(track.key);
+      _lyricCache[track.key] = result;
+      if (_lyricCache.length > 64) _lyricCache.remove(_lyricCache.keys.first);
+      return result;
+    }
+    return MusicLyrics.empty;
+  }
+
+  Future<MusicLyrics> _lookupLyrics(
+    MusicTrack track,
+    CancellationToken token,
+  ) async {
+    if (NeteaseMusicDetails.supportsLyrics(track.provider) &&
+        _lyricSourceAllowed('netease')) {
+      final direct = await _tryNetease(track.id, token);
+      if (direct.lines.isNotEmpty) return direct;
+    }
+    if (track.provider == 'kugou' && _lyricSourceAllowed('kugou')) {
+      final direct = await _tryProvider(
+        () => _kugouLyrics.find(track, token),
+        token,
+      );
       if (direct.lines.isNotEmpty) return direct;
     }
     if (track.artist.trim().isEmpty) return MusicLyrics.empty;
-    final results = await search(
-      '${track.title} ${track.artist}',
-      provider: 'netease',
-      cancellation: token,
-    );
-    final matches = results.tracks.where((candidate) {
-      if (!matchesMusic(track, candidate)) return false;
-      if (NeteaseMusicDetails.supportsLyrics(track.provider) &&
-          track.id == candidate.id) {
-        return false;
-      }
-      return track.duration == Duration.zero ||
-          candidate.duration == Duration.zero ||
-          (track.duration - candidate.duration).abs() <=
-              const Duration(seconds: 12);
-    });
-    for (final candidate in matches.take(2)) {
-      final lyrics = await _tryLyrics(candidate, token);
-      if (lyrics.lines.isNotEmpty) {
-        return supportsLyrics(track) ? lyrics : MusicLyrics.empty;
+    if (_lyricSourceAllowed('lrclib')) {
+      final result = await _tryProvider(
+        () => _lrclib.find(track, token),
+        token,
+      );
+      if (result.lines.isNotEmpty) return result;
+    }
+    if (track.provider != 'kugou' && _lyricSourceAllowed('kugou')) {
+      final result = await _tryProvider(
+        () => _kugouLyrics.find(track, token),
+        token,
+      );
+      if (result.lines.isNotEmpty) return result;
+    }
+    if (_lyricSourceAllowed('netease')) {
+      try {
+        final results = await search(
+          '${track.title} ${track.artist}',
+          provider: 'netease',
+          cancellation: token,
+        );
+        final matches = results.tracks.where((candidate) {
+          if (!matchesMusic(track, candidate)) return false;
+          if (NeteaseMusicDetails.supportsLyrics(track.provider) &&
+              track.id == candidate.id) {
+            return false;
+          }
+          return track.duration == Duration.zero ||
+              candidate.duration == Duration.zero ||
+              (track.duration - candidate.duration).abs() <=
+                  const Duration(seconds: 12);
+        });
+        for (final candidate in matches.take(2)) {
+          final result = await _tryNetease(candidate.id, token);
+          if (result.lines.isNotEmpty) return result;
+        }
+      } catch (_) {
+        token.check();
       }
     }
     return MusicLyrics.empty;
   }
 
-  Future<MusicLyrics> _tryLyrics(
-    MusicTrack track,
+  bool _lyricSourceAllowed(String id) =>
+      policy?.sourceAllowed(sourceFor(id)) ?? true;
+
+  Future<MusicLyrics> _tryNetease(String id, CancellationToken token) =>
+      _tryProvider(() => _netease.lyrics(id, token), token);
+
+  Future<MusicLyrics> _tryProvider(
+    Future<MusicLyrics> Function() fetch,
     CancellationToken token,
   ) async {
     try {
-      final lyrics = await _netease.lyrics(track.id, token);
+      final lyrics = await fetch();
       token.check();
-      if (supportsLyrics(track)) return lyrics;
+      if (_lyricSourceAllowed(lyrics.sourceId)) return lyrics;
     } catch (_) {
       token.check();
     }
@@ -131,7 +194,7 @@ final class MusicRepository {
   MusicLyrics visibleLyrics(MusicLyrics lyrics) {
     final policy = this.policy;
     if (policy == null || lyrics.lines.isEmpty) return lyrics;
-    if (!policy.sourceAllowed(sourceFor('netease'))) return MusicLyrics.empty;
+    if (!_lyricSourceAllowed(lyrics.sourceId)) return MusicLyrics.empty;
     return lyrics.filtered(policy.textAllowed);
   }
 

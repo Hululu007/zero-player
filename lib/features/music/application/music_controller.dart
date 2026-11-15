@@ -224,6 +224,18 @@ final class MusicController extends ChangeNotifier
   CancellationToken? _lyricsRequest;
   MusicLyrics _lyrics = MusicLyrics.empty;
   MusicLyrics lyrics = MusicLyrics.empty;
+  Duration lyricOffset = Duration.zero;
+  Duration get lyricPosition => snapshot.position + lyricOffset;
+  void setLyricOffset(Duration value) {
+    if (value < const Duration(seconds: -3) ||
+        value > const Duration(seconds: 3) ||
+        value == lyricOffset) {
+      return;
+    }
+    lyricOffset = value;
+    if (!_closed) notifyListeners();
+  }
+
   bool get lyricsLoading => _lyricsRequest != null;
   final _closing = Completer<void>();
   Completer<void>? _interrupt;
@@ -543,7 +555,7 @@ final class MusicController extends ChangeNotifier
 
   Future<void> _loadLyrics(MusicTrack track) async {
     final token = _lyricsRequest = CancellationToken();
-    final deadline = Timer(const Duration(seconds: 12), token.cancel);
+    final deadline = Timer(const Duration(seconds: 22), token.cancel);
     try {
       final result = await repository.lyrics(track, token);
       if (!token.isCancelled) {
@@ -568,7 +580,8 @@ final class MusicController extends ChangeNotifier
       final previous = snapshot;
       final progressed = previous.position != state.position;
       final lyricChanged =
-          lyrics.indexAt(previous.position) != lyrics.indexAt(state.position);
+          lyrics.indexAt(previous.position + lyricOffset) !=
+          lyrics.indexAt(state.position + lyricOffset);
       snapshot = state;
       _watchStall(generation, progressed: progressed);
       if (progressed &&

@@ -7,6 +7,7 @@ import '../data/public_music_sources.dart';
 
 const lxSourceNames = [
   'changqing',
+  'feichangdao',
   'fish',
   'flower',
   'grass',
@@ -19,8 +20,11 @@ const lxSourceNames = [
   'juhe',
   'lx',
   'qdy',
+  'qingliang',
   'sixyin',
+  'suyin',
   'xinghai',
+  'xinglan',
   'yuningxi',
 ];
 Future<void> showLxSources(BuildContext context, AppServices services) =>
@@ -63,16 +67,31 @@ final class _LxSourcesState extends State<_LxSources> {
           '/pdone/lx-music-source/main/$id/latest.js',
         ),
       };
-      final doc = await widget.services.network.get(uri, maxBytes: 1024 * 1024);
+      String script;
+      var viaProxy = false;
+      try {
+        script = (await widget.services.network.get(
+          uri,
+          maxBytes: 1024 * 1024,
+        )).text;
+      } catch (_) {
+        if (!lxSourceNames.contains(id)) rethrow;
+        final proxy = Uri.parse('https://gh-proxy.org/$uri');
+        script = (await widget.services.network.get(
+          proxy,
+          maxBytes: 1024 * 1024,
+        )).text;
+        viaProxy = true;
+      }
       final version = RegExp(r'@version\s+([^\r\n*]+)')
-          .firstMatch(doc.text.substring(0, doc.text.length.clamp(0, 4000)))
+          .firstMatch(script.substring(0, script.length.clamp(0, 4000)))
           ?.group(1)
           ?.trim();
       if (mounted) {
         setState(
           () => _status[id] = version == null
-              ? '页面可访问，播放能力需另行验证'
-              : '脚本版本 $version；不会执行或自动更新',
+              ? '页面可访问${viaProxy ? '（加速链接）' : ''}，播放能力需另行验证'
+              : '脚本版本 $version${viaProxy ? '（加速链接）' : ''}；不会执行或自动更新',
         );
       }
     } catch (_) {
@@ -109,7 +128,7 @@ final class _LxSourcesState extends State<_LxSources> {
           const Divider(),
           _openApi(),
           const Divider(),
-          const Text('LX 原生适配清单 · 16 项仓库源 + 本地修复包'),
+          const Text('LX 音源审查清单 · 20 项仓库源 + 本地修复包'),
           FutureBuilder<List<Map>>(
             future: _catalog,
             builder: (context, snapshot) {
@@ -166,6 +185,27 @@ final class _LxSourcesState extends State<_LxSources> {
                 ? null
                 : () => _check(row['id'] as String),
             child: const Text('版本'),
+          ),
+        if (lxSourceNames.contains(row['id']))
+          PopupMenuButton<bool>(
+            tooltip: '复制音源链接',
+            icon: const Icon(Icons.link),
+            onSelected: (proxy) {
+              final direct =
+                  'https://raw.githubusercontent.com/pdone/lx-music-source/main/${row['id']}/latest.js';
+              Clipboard.setData(
+                ClipboardData(
+                  text: proxy ? 'https://gh-proxy.org/$direct' : direct,
+                ),
+              );
+              ScaffoldMessenger.of(
+                context,
+              ).showSnackBar(const SnackBar(content: Text('音源链接已复制')));
+            },
+            itemBuilder: (_) => const [
+              PopupMenuItem(value: false, child: Text('复制 GitHub 原始链接')),
+              PopupMenuItem(value: true, child: Text('复制加速链接')),
+            ],
           ),
       ],
     ),
