@@ -496,7 +496,9 @@ final class BooksRepository {
         // The host of a damaged secondary record cannot be reconstructed from
         // its hash. Do not report a successful clear that would reappear after
         // restart or discard evidence for an unknown host.
-        throw const FormatException('风险记录损坏，请从备份恢复后复核');
+        throw const FormatException(
+          '风险记录已损坏，相关来源暂不可用；普通备份不包含书源风险记录，请保留数据并从完整数据库备份恢复',
+        );
       }
       final sourceEntry = await store.source(
         _verifiedSources[entry.sourceId],
@@ -598,6 +600,10 @@ final class BooksRepository {
     return kindAllowed(book.kind) &&
         !_blockedSourceIds.contains(book.sourceId) &&
         !(sourceEntry == null && quarantinedBookSourceId(book.sourceId)) &&
+        !(sourceEntry != null &&
+            quarantinedBookSourceId(book.sourceId) &&
+            book.uri.host.toLowerCase() !=
+                sourceEntry.source.endpoint.host.toLowerCase()) &&
         !(policy.filterAdult &&
             sourceEntry == null &&
             verified == null &&

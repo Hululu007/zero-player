@@ -120,7 +120,8 @@ void main() {
       );
       expect(await services.books.store.text(book, chapter), '原有离线正文');
 
-      // A distinct endpoint with the same legacy ID is not a host-wide ban.
+      // A distinct endpoint with the same legacy ID is not a host-wide ban,
+      // but it cannot validate history whose address belongs to another host.
       final alternate = _sameIdDifferentEndpoint(source);
       await services.books.store.write('books_source:${alternate.id}', {
         'source': alternate.toJson(),
@@ -128,7 +129,7 @@ void main() {
       });
       await services.books.refreshSourceRisks();
       expect(services.books.sourceAllowed(alternate), isTrue);
-      expect(services.books.bookAllowed(book), isTrue);
+      expect(services.books.bookAllowed(book), isFalse);
     },
   );
 }

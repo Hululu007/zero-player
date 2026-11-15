@@ -36,6 +36,12 @@ const _ruleDigests = <String, Set<String>>{
     '813f933382434733ce626185508128a5135c66da089920d0b2aa66c49e19b4d6',
     'e9216096a8566f11a534622e4204bff5452bf1606ec5fe4d57b2d8c37437d96b',
     '97447b6a69e2a673282c69876b889e0439f10bce8021e3e5a4abf700c202e266',
+    '25b7dc9b2c27bb2ab71fe6d2fedb8e6b1ceadab97bbf6a9ef234a756861830ce',
+    '391fac0f7eb63736bf09b9924e13c31de8022214a581e0697db5a02d260b6618',
+    'dd0c86918cab95af6da3cea2c9bd36df6f1a6c5161c6ad85da9da0720f4e84c3',
+    '238082313c3d59c7954148a4c6eb2f64c613ca55dac17e11988b69d17f590425',
+    '4879ba3a4c053151b73c76159b68b0fdc96f3a7c77de72a3c97b18f3200b1efb',
+    'd0a760cd348d32b7f2186590e451c40f2db4647495989b7a2ef472c12d67c9a0',
   },
   'searchList': {
     '31b0a1f9df433c5c8d712873420d0e1f0bad43322f0a114808454b1148edc749',
@@ -81,22 +87,43 @@ const _ruleDigests = <String, Set<String>>{
     'c33300939c5aa06113ec4b6d257ebfdcde3f0bed6f18c8060ecc2aff1be6a70e',
     'f35e0e9d3653b1affe7a9fca632c3fd91175484d36cc90326d3e56568714a8a2',
   },
+  'categories': {
+    '23c38894118027d35c4807eaedef6657c87afa1aae48c2bc4920ad687f67cde4',
+    '7c54f471b2d055cf6b778d8fbf4544c6a0ec657fee93acc52bd82728d6a861f9',
+  },
 };
 
-const _commentDigests = {
-  'b0cececbfa92db3895a02a55c90e112e68f4b74abcecc9ce8b0730d6cfebbd79',
-  '315056a018d4e9853964dd859a9bf53c407d72c6dc09e7bd7f1d631ac101262c',
-  '1cb0c7ef4a06a125695f3c29c8aebf901014fd61a0b1c3f5995c0fb8e01ded77',
+const _oldRemoteCommentCallers = {
+  '5f1f8ac565e82d32973b3b3e76ad1a586ab009767d35b0059ad85e7a15df0127',
+  '3cdc030a37e1bdca4e8b748ae4d8f5be29f182ce2575275787f6a8adcb5bbb13',
 };
 
 // Metadata alone is not executable. At least one reviewed caller must also
-// match the exact normalized search/content field that evaluates the comment.
-const _commentCallers = {
-  'searchList':
-      '5f1f8ac565e82d32973b3b3e76ad1a586ab009767d35b0059ad85e7a15df0127',
-  'content': '3cdc030a37e1bdca4e8b748ae4d8f5be29f182ce2575275787f6a8adcb5bbb13',
+// match a reviewed call that evaluates that particular comment.
+const _commentCallers = <String, Set<String>>{
+  'b0cececbfa92db3895a02a55c90e112e68f4b74abcecc9ce8b0730d6cfebbd79':
+      _oldRemoteCommentCallers,
+  '315056a018d4e9853964dd859a9bf53c407d72c6dc09e7bd7f1d631ac101262c':
+      _oldRemoteCommentCallers,
+  '1cb0c7ef4a06a125695f3c29c8aebf901014fd61a0b1c3f5995c0fb8e01ded77':
+      _oldRemoteCommentCallers,
+  'a1f5b5f0f3fba90edfce8b1a0fce07abe2f6c34d0efdfbafccd4c39a199967ac': {
+    '7213630535b610969baa556a400ef3b40251327d795311717a87d187cc35cde5',
+    '95d8457f64ab663de6f36e6c8c047635c37c4bf0aae60a5d4297f96f931c7669',
+  },
+  '77a82a89401ee34e1f8f2e6c1e0566f2b9e92a94d5df4cc439347b6d0d321881': {
+    '93bf5b5fdd5dc720d6ca976217472fe14dfc2968257ada5fa4ae66bfc624df57',
+    '7b6e6c86490c47299d34e1d38daf1aa6ff93d7b1f09937eac2a70be658be6c86',
+    '2bdb545392d42dfd566b7c9043bfc3baa7d1fc10e081d636450db2f65c3e9e4a',
+  },
 };
 
+// A source update can move a reviewed executable fragment between rule fields,
+// into a search/category address, or into its script library. The same exact
+// dangerous fragment remains evidence there; comments alone remain metadata.
+final _executableRuleDigests = {
+  for (final digests in _ruleDigests.values) ...digests,
+};
 final _matches = Expando<bool>();
 
 String _digest(String value) => sha256.convert(utf8.encode(value)).toString();
@@ -106,17 +133,24 @@ bool knownUntrustedBookRule(BookSource source) {
   if (saved != null) return saved;
   final legacy = source.legado;
   if (legacy == null) return _matches[source] = false;
-  for (final entry in _ruleDigests.entries) {
-    final rule = legacy.rules[entry.key] ?? '';
-    if (rule.contains('eval') && entry.value.contains(_digest(rule))) {
+  final executable = [
+    legacy.search,
+    legacy.library,
+    ...legacy.categories.map((category) => category.address),
+    ...legacy.rules.values,
+  ];
+  for (final rule in executable) {
+    if (rule.contains('eval') &&
+        _executableRuleDigests.contains(_digest(rule))) {
       return _matches[source] = true;
     }
   }
-  if (legacy.comment.contains('eval') &&
-      _commentDigests.contains(_digest(legacy.comment))) {
-    for (final caller in _commentCallers.entries) {
-      final rule = legacy.rules[caller.key] ?? '';
-      if (rule.contains('eval') && _digest(rule) == caller.value) {
+  final commentCallers = legacy.comment.contains('eval')
+      ? _commentCallers[_digest(legacy.comment)]
+      : null;
+  if (commentCallers != null) {
+    for (final rule in executable) {
+      if (rule.contains('eval') && commentCallers.contains(_digest(rule))) {
         return _matches[source] = true;
       }
     }

@@ -72,9 +72,33 @@ void main() {
           reason: 'record $index',
         );
       }
-      // JSONP / object expression candidates are not in the confirmed set.
-      final dataExpression = parseBookSourceRecord(records[17]);
-      expect(knownUntrustedBookRule(dataExpression), isFalse);
+      // Reviewed JSONP and expression fallbacks must not execute response data.
+      for (final index in [
+        17,
+        231,
+        232,
+        233,
+        234,
+        393,
+        604,
+        619,
+        1030,
+        1184,
+        3105,
+        4817,
+      ]) {
+        final dataExpression = parseBookSourceRecord(records[index]);
+        expect(
+          knownUntrustedBookRule(dataExpression),
+          isTrue,
+          reason: '$index',
+        );
+        expect(
+          quarantinedBookSourceId(dataExpression.id),
+          isTrue,
+          reason: '$index',
+        );
+      }
       final oldVariant = parseBookSourceRecord(records[535]);
       final selectedVariant = parseBookSourceRecord(records[1798]);
       expect(oldVariant.id, selectedVariant.id);

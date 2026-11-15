@@ -81,6 +81,60 @@ void _contentSignalTests(Uri target) {
     }
   });
 
+  test(
+    'anti-gambling warnings remain clues rather than automatic isolation',
+    () {
+      for (final html in [
+        '<p>防诈骗警示：远离在线赌场，拒绝立即下注。</p>',
+        '<p>遠離線上賭場，請勿立即下注。</p>',
+        '<p>在线赌场与立即下注均属于诈骗陷阱。</p>',
+        '<p>在线赌场，不要立即下注。</p>',
+        '<meta name="description" content="抵制博彩网站，请勿立即投注">',
+      ]) {
+        final result = inspectBookSiteHtml(target, html);
+        expect(result.finding, BookSiteFinding.gamblingClue, reason: html);
+        expect(result.gamblingRisk, isFalse, reason: html);
+      }
+    },
+  );
+
+  test(
+    'nearby warning does not suppress a separate gambling advertisement',
+    () {
+      for (final html in [
+        '<p>远离在线赌场，拒绝立即下注。</p>'
+            '<p>线上赌场 <a>立即下注</a></p>',
+        '<p>遠離線上賭場，請勿立即下注。</p>'
+            '<p>博彩網站 <span>註冊贈送</span></p>',
+        '<p>远离在线赌场，拒绝立即下注。</p>'
+            '<div>线上赌场</div><div>首存优惠</div>',
+        '<p>远离在线赌场 线上赌场 立即下注</p>',
+        '<p>不要错过线上赌场 立即下注</p>',
+      ]) {
+        expect(
+          inspectBookSiteHtml(target, html).gamblingRisk,
+          isTrue,
+          reason: html,
+        );
+      }
+    },
+  );
+
+  test('a warning or one promotional signal cannot form a risk by itself', () {
+    for (final html in [
+      '<p>在线赌场，拒绝立即下注。</p>',
+      '<p>远离在线赌场，立即下注。</p>',
+      '<p>请勿立即下注。</p>',
+      '<p>博彩網站</p>',
+    ]) {
+      expect(
+        inspectBookSiteHtml(target, html).gamblingRisk,
+        isFalse,
+        reason: html,
+      );
+    }
+  });
+
   test('hidden elements cannot automatically classify the homepage', () {
     final hidden = inspectBookSiteHtml(
       target,

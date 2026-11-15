@@ -238,6 +238,21 @@ final _gamblingPromotion = RegExp(
   r'首存(?:优惠|優惠|奖励|獎勵|赠送|贈送)|充值(?:返水|送|赠|贈)',
   caseSensitive: false,
 );
+final _gamblingContextBoundary = RegExp(r'[。！？!?；;，,\n\r]');
+final _gamblingWarning = RegExp(
+  r'远离|遠離|抵制|拒绝|拒絕|切勿|请勿|請勿|勿点|勿點|'
+  r'严禁|嚴禁|禁止(?!未成年人|未满|未滿)|'
+  r'(?:不要|不可|不能|不应|不應|避免)(?:访问|訪問|参与|參與|'
+  r'点击|點擊|轻信|輕信|注册|註冊|进入|進入|下注|投注|(?=\s*$))|'
+  r'防诈骗|防詐騙|防骗|防騙|反赌|反賭|警惕|谨防|謹防|'
+  r'打击|打擊|取缔|取締|揭露|曝光',
+);
+final _gamblingWarningAfter = RegExp(
+  r'^[\s"\x27“”‘’《》]*(?:等)?(?:均|皆)?'
+  r'(?:是|为|為|属于|屬於|涉嫌)?'
+  r'(?:诈骗|詐騙|骗局|騙局|陷阱|违法|違法|非法|'
+  r'危害|风险|風險|应当远离|應當遠離|切勿参与|切勿參與)',
+);
 final _adultBusiness = RegExp(
   r'成人(?:视频|視頻|(?:黄色|黃色)?(?:小说|小說)|漫画|漫畫)|'
   r'色情(?:小说|小說|视频|視頻|漫画|漫畫)|情色(?:小说|小說)|'
@@ -248,6 +263,35 @@ final _adultGate = RegExp(
   r'(?:年|未)?(?:满|滿)\s*(?:[1１][8８]|十八)\s*(?:岁|歲)|'
   r'未成年人(?:禁止|请勿|請勿)|成人(?:专用|專用|专区|專區)',
 );
+
+/// A warning applies only to a nearby signal in the same clause. A later
+/// occurrence, or an advertisement in another block, remains independent.
+bool _hasGamblingSignalOutsideWarning(String text, RegExp signal) {
+  const contextLength = 32;
+  for (final match in signal.allMatches(text)) {
+    final start = (match.start - contextLength).clamp(0, text.length);
+    final end = (match.end + contextLength).clamp(0, text.length);
+    final before = text
+        .substring(start, match.start)
+        .split(_gamblingContextBoundary)
+        .last;
+    final after = text
+        .substring(match.end, end)
+        .split(_gamblingContextBoundary)
+        .first;
+    final warning = _gamblingWarning.allMatches(before).lastOrNull;
+    if (warning != null) {
+      final intervening = before.substring(warning.end);
+      if (!_gamblingBusiness.hasMatch(intervening) &&
+          !_gamblingPromotion.hasMatch(intervening)) {
+        continue;
+      }
+    }
+    if (_gamblingWarningAfter.hasMatch(after)) continue;
+    return true;
+  }
+  return false;
+}
 
 /// Parse inert HTML only. Do not render, execute scripts or fetch subresources.
 BookSiteInspection inspectBookSiteHtml(
@@ -298,7 +342,10 @@ BookSiteInspection inspectBookSiteHtml(
   ].join('\n');
   final gambling = _gamblingBusiness.hasMatch(text);
   final adult = _adultBusiness.hasMatch(text);
-  final bettingRisk = gambling && _gamblingPromotion.hasMatch(text);
+  final bettingRisk =
+      gambling &&
+      _hasGamblingSignalOutsideWarning(text, _gamblingBusiness) &&
+      _hasGamblingSignalOutsideWarning(text, _gamblingPromotion);
   final adultRisk = adult && _adultGate.hasMatch(text);
   final finding = gambling && adult
       ? BookSiteFinding.gamblingAndAdultClues
