@@ -613,6 +613,36 @@ void _storedCheckTests() {
 
 void _batchRiskTests() {
   test(
+    'script clues are persisted without quarantining or changing choices',
+    () async {
+      final fixture = await _Fixture.create();
+      addTearDown(fixture.close);
+      final source = _source('script', 'script-review.example');
+      final entry = (await fixture.add([source])).single;
+      final repo = fixture.services.books;
+      final checks = BookSiteChecks(
+        repo,
+        inspect: (source, _) async => inspectBookSiteHtml(
+          source.endpoint,
+          "<script>location.href='https://private.example/?secret=token';</script>",
+        ),
+      );
+      final result = await checks.run([entry], CancellationToken());
+      expect(result.checked, 1);
+      expect(result.quarantined, 0);
+      expect(await repo.riskStore.get(source.id), isNull);
+      final raw = await repo.store.read('books_site_check:${source.id}');
+      expect(raw.toString(), isNot(contains('private.example')));
+      expect(raw.toString(), isNot(contains('secret=token')));
+      final saved = BookSiteCheck.fromJson(raw, source)!;
+      expect(saved.inspection.scriptReview.hasClues, isTrue);
+      final after = (await repo.sourceEntry(BookKind.text, source.id))!;
+      expect(after.enabled, isTrue);
+      expect(after.favorite, isTrue);
+    },
+  );
+
+  test(
     'same host is fetched once and strong evidence covers both sources',
     () async {
       final fixture = await _Fixture.create();
@@ -1065,6 +1095,66 @@ void _monitorPolicyTests() {
 
 void _monitorRetryTests() {
   test(
+    'legacy successful samples are revisited without bypassing retry backoff',
+    () async {
+      final fixture = await _Fixture.create();
+      addTearDown(fixture.close);
+      final repo = fixture.services.books;
+      final oldSample = _source('old-sample', 'old-sample.example');
+      final oldTimeout = _source('old-timeout', 'old-timeout.example');
+      await fixture.add([oldSample, oldTimeout]);
+      final ids = {oldSample.id, oldTimeout.id};
+      for (final kind in BookKind.values) {
+        final others = (await repo.sources(kind, enabledOnly: true))
+            .where((entry) => !ids.contains(entry.source.id))
+            .map((entry) => entry.source.id)
+            .toSet();
+        await repo.setSourcesEnabled(kind, others, false);
+      }
+      final now = DateTime.now();
+      for (final source in [oldSample, oldTimeout]) {
+        final finding = source.id == oldSample.id
+            ? BookSiteFinding.sampled
+            : BookSiteFinding.timeout;
+        final record = BookSiteCheck(
+          BookSiteInspection(finding),
+          now,
+          bookSourceCheckFingerprint(source),
+        ).toJson()..remove('scriptReview');
+        await repo.store.write('books_site_check:${source.id}', record);
+      }
+      final requested = <String>[];
+      final monitor = BookSiteMonitor(
+        BookSiteChecks(
+          repo,
+          inspect: (source, _) async {
+            requested.add(source.id);
+            return inspectBookSiteHtml(
+              source.endpoint,
+              "<script>location.href='https://other.example/';</script>",
+            );
+          },
+        ),
+        fixture.services.settings,
+        startDelay: const Duration(hours: 1),
+        interval: const Duration(hours: 1),
+      );
+      addTearDown(monitor.close);
+      monitor.start();
+      await monitor.check().timeout(const Duration(seconds: 10));
+      await monitor.check().timeout(const Duration(seconds: 10));
+      expect(requested, [oldSample.id]);
+      final migrated = BookSiteCheck.fromJson(
+        await repo.store.read('books_site_check:${oldSample.id}'),
+        oldSample,
+      )!;
+      expect(migrated.inspection.scriptReview.hasClues, isTrue);
+      expect(migrated.legacyScriptReviewMissing, isFalse);
+      expect(await repo.riskStore.get(oldSample.id), isNull);
+    },
+  );
+
+  test(
     'due failures do not starve older samples and a recovered host is blocked',
     () async {
       final fixture = await _Fixture.create();
@@ -1150,6 +1240,64 @@ void _monitorRetryTests() {
       recovered = true;
       await monitor.check().timeout(const Duration(seconds: 10));
       expect((await repo.riskStore.get(failing.first.id))!.quarantined, isTrue);
+    },
+  );
+
+  test(
+    'ordinary monitor retries a clue with redirect and keeps strong risk',
+    () async {
+      final fixture = await _Fixture.create();
+      addTearDown(fixture.close);
+      final repo = fixture.services.books;
+      final source = _source('mixed-redirect', 'mixed-redirect.example');
+      await fixture.add([source]);
+      for (final kind in BookKind.values) {
+        final others = (await repo.sources(kind, enabledOnly: true))
+            .where((entry) => entry.source.id != source.id)
+            .map((entry) => entry.source.id)
+            .toSet();
+        await repo.setSourcesEnabled(kind, others, false);
+      }
+      var calls = 0;
+      final monitor = BookSiteMonitor(
+        BookSiteChecks(
+          repo,
+          inspect: (entry, _) async {
+            calls++;
+            return inspectBookSiteHtml(
+              entry.endpoint,
+              '<meta http-equiv="refresh" content="0;url=https://other.example/">'
+              '<p>${calls == 1 ? '在线赌场' : '在线赌场 立即下注'}</p>',
+            );
+          },
+        ),
+        fixture.services.settings,
+        startDelay: const Duration(hours: 1),
+        interval: const Duration(hours: 1),
+      );
+      addTearDown(monitor.close);
+      monitor.start();
+      await monitor.check().timeout(const Duration(seconds: 10));
+      final key = 'books_site_check:${source.id}';
+      var check = BookSiteCheck.fromJson(await repo.store.read(key), source)!;
+      expect(check.inspection.finding, BookSiteFinding.gamblingClue);
+      expect(check.inspection.gamblingRisk, isFalse);
+      expect(check.inspection.redirect, BookSiteRedirect.external);
+      expect(check.needsRetry, isTrue);
+      expect(await repo.riskStore.get(source.id), isNull);
+      await repo.store.write(key, {
+        ...check.toJson(),
+        'checkedAt': DateTime.now()
+            .subtract(const Duration(minutes: 31))
+            .millisecondsSinceEpoch,
+      });
+      await monitor.check().timeout(const Duration(seconds: 10));
+      expect(calls, 2);
+      expect((await repo.riskStore.get(source.id))!.quarantinedHost, isTrue);
+      check = BookSiteCheck.fromJson(await repo.store.read(key), source)!;
+      expect(check.inspection.gamblingRisk, isTrue);
+      expect(check.inspection.redirect, BookSiteRedirect.external);
+      expect(check.needsRetry, isTrue);
     },
   );
 }

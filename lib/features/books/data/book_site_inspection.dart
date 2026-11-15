@@ -12,6 +12,7 @@ import '../../../core/network/media_http_client.dart';
 import '../../../core/network/request_scheduler.dart';
 import '../domain/book.dart';
 import 'book_html.dart';
+import 'book_site_script_clues.dart';
 
 /// A page sample is evidence for review, never a statement that a site is safe.
 enum BookSiteFinding {
@@ -37,6 +38,7 @@ final class BookSiteInspection {
     this.truncated = false,
     this.statusCode,
     this.redirect = BookSiteRedirect.none,
+    this.scriptReview = const BookPageScriptReview(),
   });
 
   final BookSiteFinding finding;
@@ -46,6 +48,7 @@ final class BookSiteInspection {
   final bool gamblingRisk, adultRisk, truncated;
   final int? statusCode;
   final BookSiteRedirect redirect;
+  final BookPageScriptReview scriptReview;
 
   String get label {
     final signal = gamblingRisk && adultRisk
@@ -55,8 +58,7 @@ final class BookSiteInspection {
         : adultRisk
         ? '成人强线索'
         : switch (finding) {
-            BookSiteFinding.sampled =>
-              truncated ? '页面抽样未见明显线索（已截断）' : '页面抽样未见明显线索',
+            BookSiteFinding.sampled => truncated ? '首页静态样本已截断' : '已抽样首页静态内容',
             BookSiteFinding.gamblingClue => '疑似博彩文字线索，待复核',
             BookSiteFinding.adultClue => '疑似成人文字线索，待复核',
             BookSiteFinding.gamblingAndAdultClues => '疑似博彩及成人文字线索，待复核',
@@ -67,15 +69,32 @@ final class BookSiteInspection {
             BookSiteFinding.networkError => '连接失败，未确认',
             BookSiteFinding.unsupported => '非可检查网页或编码不支持，未确认',
           };
-    if (finding == BookSiteFinding.sameSiteRedirect ||
-        finding == BookSiteFinding.externalRedirect) {
-      return signal;
+    final parts = [signal];
+    if (finding != BookSiteFinding.sameSiteRedirect &&
+        finding != BookSiteFinding.externalRedirect) {
+      switch (redirect) {
+        case BookSiteRedirect.none:
+          break;
+        case BookSiteRedirect.sameSite:
+          parts.add('页面跳转，未跟随');
+        case BookSiteRedirect.external:
+          parts.add('跨站跳转，未跟随，待复核');
+      }
     }
-    return switch (redirect) {
-      BookSiteRedirect.none => signal,
-      BookSiteRedirect.sameSite => '$signal · 页面跳转，未跟随',
-      BookSiteRedirect.external => '$signal · 跨站跳转，未跟随，待复核',
-    };
+    if (scriptReview.clues.contains(BookPageScriptClue.crossOriginRedirect)) {
+      parts.add('内联脚本含跨源跳转写法，待复核');
+    }
+    if (scriptReview.clues.contains(
+      BookPageScriptClue.decodedDynamicEvaluation,
+    )) {
+      parts.add('内联脚本含解码后动态求值写法，待复核');
+    }
+    parts.add(switch (scriptReview.coverage) {
+      BookPageScriptCoverage.notChecked => '页面脚本未检查',
+      BookPageScriptCoverage.sampled => '仅静态检查首页内联脚本',
+      BookPageScriptCoverage.partial => '页面脚本仅部分覆盖',
+    });
+    return parts.join(' · ');
   }
 }
 
@@ -330,6 +349,20 @@ BookSiteInspection inspectBookSiteHtml(
   bool truncated = false,
 }) {
   final document = html.parse(input);
+  BookPageScriptReview scriptReview;
+  try {
+    scriptReview = inspectBookPageScripts(
+      document,
+      target,
+      truncated: truncated,
+    );
+  } catch (_) {
+    // A malformed sample must not discard the independent adult/betting scan.
+    // No exception detail or page text is retained.
+    scriptReview = const BookPageScriptReview(
+      coverage: BookPageScriptCoverage.partial,
+    );
+  }
   var refresh = false;
   var externalRefresh = false;
   for (final meta in document.querySelectorAll('meta[http-equiv]')) {
@@ -407,6 +440,7 @@ BookSiteInspection inspectBookSiteHtml(
     gamblingRisk: bettingRisk,
     adultRisk: adultRisk,
     truncated: truncated,
+    scriptReview: scriptReview,
     redirect: !refresh
         ? BookSiteRedirect.none
         : externalRefresh

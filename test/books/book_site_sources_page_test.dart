@@ -16,6 +16,63 @@ void main() {
   _quarantineReviewPageTests();
   _sourceListPolicyRaceTests();
   _ruleCluePageTests();
+  _pageScriptClueTests();
+}
+
+void _pageScriptClueTests() {
+  testWidgets('small source page filters homepage script clues', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(320, 740);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(() {
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
+    late Directory root;
+    late AppServices services;
+    final warning = _source('网页测试线索', 'warning.example');
+    final ordinary = _source('网页测试普通', 'ordinary.example');
+    await tester.runAsync(() async {
+      root = await Directory.systemTemp.createTemp('book-page-script-ui-');
+      services = AppServices.scoped(root, AppDatabase.memory());
+      await services.supervision.load();
+      await services.settings.load();
+      await _skipCatalogSeed(services);
+      await services.books.importSources([warning, ordinary]);
+      final inspection = inspectBookSiteHtml(
+        warning.endpoint,
+        "<script>location.href='https://other.example/';</script>",
+      );
+      await services.books.store.write(
+        'books_site_check:${warning.id}',
+        BookSiteCheck(
+          inspection,
+          DateTime.now(),
+          bookSourceCheckFingerprint(warning),
+        ).toJson(),
+      );
+    });
+    addTearDown(() => _close(tester, services, root));
+    await tester.pumpWidget(
+      MaterialApp(
+        home: BookSourcesPage(services: services, kind: BookKind.text),
+      ),
+    );
+    await tester.enterText(find.byType(TextField).first, '网页测试');
+    await _waitFor(
+      tester,
+      () =>
+          find.text('网页测试线索').evaluate().isNotEmpty &&
+          find.text('网页测试普通').evaluate().isNotEmpty,
+    );
+    expect(find.textContaining('跨源跳转写法，待复核'), findsOneWidget);
+    await tester.tap(find.text('网页脚本线索'));
+    await tester.pump();
+    expect(find.text('网页测试线索'), findsOneWidget);
+    expect(find.text('网页测试普通'), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
 }
 
 void _ruleCluePageTests() {
@@ -127,7 +184,7 @@ void _quarantineReviewPageTests() {
       );
       expect(find.text('网页抽查'), findsOneWidget);
       expect(find.text('风险记录'), findsOneWidget);
-      expect(find.textContaining('不验证解析、网页脚本、木马或安全性'), findsOneWidget);
+      expect(find.textContaining('不执行网页脚本'), findsOneWidget);
       expect(find.textContaining('未确认结果的重试间隔从 30 分钟递增'), findsOneWidget);
       expect(find.textContaining('网页：疑似博彩文字线索'), findsOneWidget);
       expect(tester.takeException(), isNull);

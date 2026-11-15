@@ -15,6 +15,8 @@ import 'package:zero_player/features/supervision/domain/content_classification.d
 import 'book_source_ledger_recent_evidence.dart';
 import 'book_source_ledger_nov16_evidence.dart';
 import 'book_source_ledger_com_rdap.dart';
+import 'book_source_ledger_sfwx.dart';
+import 'book_source_ledger_lengmen.dart';
 
 const _catalogFolder = 'assets/catalogs/books/legado';
 const _evidenceFolder = 'docs/implementation';
@@ -76,6 +78,7 @@ const _evidenceFiles = [
   comRdapEvidenceFile,
   comRdapEighteenEvidenceFile,
   rdapNineEvidenceFile,
+  rdapFiveEvidenceFile,
   topCcEvidenceFile,
   _recentRedirect,
   _categoryReview,
@@ -95,6 +98,8 @@ const _evidenceFiles = [
   mixedHomeEvidenceFile,
   novel242EvidenceFile,
   threeRedirectEvidenceFile,
+  sfwxEvidenceFile,
+  lengmenEvidenceFile,
   ..._amsiFiles,
 ];
 const _codePaths = [
@@ -123,6 +128,7 @@ const _codePaths = [
   'lib/features/books/domain/com_rdap_legacy_quarantine.dart',
   'lib/features/books/domain/fanfanu_legacy_source_fix.dart',
   'lib/features/books/domain/net_rdap_legacy_quarantine.dart',
+  'lib/features/books/domain/moe_rdap_legacy_quarantine.dart',
   'lib/features/books/domain/novel_242_legacy_quarantine.dart',
   'lib/features/books/domain/iqiyi_legacy_quarantine.dart',
   'lib/features/books/domain/taotaoshu_legacy_quarantine.dart',
@@ -137,6 +143,7 @@ const _codePaths = [
   'lib/features/books/domain/zhongyi_legacy_source_fix.dart',
   'lib/features/books/domain/jingzhi_legacy_source_fix.dart',
   'lib/features/books/domain/shubang_legacy_source_fix.dart',
+  'lib/features/books/domain/sfwx_legacy_source_fix.dart',
   'lib/features/books/domain/yingyu_legacy_source_fix.dart',
   'lib/features/supervision/domain/content_classification.dart',
   'lib/features/supervision/domain/adult_source_evidence.dart',
@@ -146,7 +153,10 @@ const _codePaths = [
   'tool/book_source_ledger_com_rdap.dart',
   'tool/book_source_ledger_com_eighteen.dart',
   'tool/book_source_ledger_rdap_nine.dart',
+  'tool/book_source_ledger_rdap_five.dart',
   'tool/book_source_ledger_top_cc.dart',
+  'tool/book_source_ledger_sfwx.dart',
+  'tool/book_source_ledger_lengmen.dart',
   'tool/verify_legado_unresolved_head.py',
   'tool/compare_legado_head_get.py',
   'tool/recheck_legado_failures.py',
@@ -159,6 +169,9 @@ const _codePaths = [
   'tool/verify_legado_adult_mixed_home.py',
   'tool/verify_legado_242xs_recheck.py',
   'tool/verify_legado_three_redirect_recheck.py',
+  'tool/verify_legado_sfwx_repair.py',
+  'tool/verify_legado_lengmen_recheck.py',
+  'tool/verify_legado_rdap_five.py',
 ];
 const _runtimePolicyReferencePaths = [
   'lib/app/app_services.dart',
@@ -180,6 +193,7 @@ const _runtimePolicyReferencePaths = [
   'lib/features/books/data/book_repository_site_checks.dart',
   'lib/features/books/data/book_site_check.dart',
   'lib/features/books/data/book_site_inspection.dart',
+  'lib/features/books/data/book_site_script_clues.dart',
   'lib/features/books/data/book_source_risk_store.dart',
   'lib/features/books/data/book_supervised_site_scan.dart',
   'lib/features/books/data/book_request_guard.dart',
@@ -1248,7 +1262,10 @@ Map<String, Object?> _row(
   ComRdapLedgerEvidence comRdap,
   ComRdapLedgerEvidence comEighteen,
   ComRdapLedgerEvidence rdapNine,
+  ComRdapLedgerEvidence rdapFive,
   ComRdapLedgerEvidence topCc,
+  SfwxLedgerEvidence sfwx,
+  LengmenLedgerEvidence lengmen,
   Map<String, Map> data,
 ) {
   final index = catalog.selectedIndex[source.id]!;
@@ -1307,6 +1324,7 @@ Map<String, Object?> _row(
   registry.addAll(selectComRdapEvidence(comRdap, source, index));
   registry.addAll(selectComRdapEvidence(comEighteen, source, index));
   registry.addAll(selectComRdapEvidence(rdapNine, source, index));
+  registry.addAll(selectComRdapEvidence(rdapFive, source, index));
   registry.addAll(selectComRdapEvidence(topCc, source, index));
   final community = communityClues(data[_blocklist]!, source, index);
   final ruleReview = ruleReviewEvidence(data, source, index);
@@ -1328,6 +1346,7 @@ Map<String, Object?> _row(
     index,
   );
   reading.addAll(selectNov16Evidence(nov16.reading, source, index));
+  reading.addAll(selectSfwxEvidence(sfwx, source, index));
   final adultReview = selectNov16Evidence(nov16.adultReview, source, index);
   return {
     'source_id': source.id,
@@ -1349,6 +1368,11 @@ Map<String, Object?> _row(
     'network_coverage': networkCoverage(network),
     'network_observations': network,
     'amsi_observations': amsi,
+    'historical_engine_followup_observations': selectLengmenEvidence(
+      lengmen,
+      source,
+      index,
+    ),
     'registry_and_doh_observations': registry,
     'community_list_clues': community,
     'historical_raw_rule_review': ruleReview,
@@ -1372,6 +1396,18 @@ void _verifyArchiveAssociation(
   String digest,
   Map<String, String> inputHashes,
 ) {
+  if (file == lengmenEvidenceFile) {
+    verifyLengmenInput(evidence, digest, inputHashes);
+    return;
+  }
+  if (file == rdapFiveEvidenceFile) {
+    verifyRdapFiveInput(evidence, digest, inputHashes);
+    return;
+  }
+  if (file == sfwxEvidenceFile) {
+    verifySfwxInput(evidence, digest, inputHashes);
+    return;
+  }
   if (file == threeRedirectEvidenceFile) {
     final refs = evidence['input_references'] as Map;
     if (inputHashes['$_evidenceFolder/$file'] !=
@@ -1763,6 +1799,12 @@ void main(List<String> args) {
     catalog.rows,
     networkObservation,
   );
+  final sfwx = readSfwxEvidence(data[sfwxEvidenceFile]!, hashes, catalog.rows);
+  final lengmen = readLengmenEvidence(
+    data[lengmenEvidenceFile]!,
+    hashes,
+    catalog.rows,
+  );
   final comRdap = readComRdapEvidence(
     data[comRdapEvidenceFile]!,
     hashes,
@@ -1787,6 +1829,12 @@ void main(List<String> args) {
     catalog.rows,
     data[_head]!,
   );
+  final rdapFive = readRdapFiveEvidence(
+    data[rdapFiveEvidenceFile]!,
+    hashes,
+    data[_dohReviewed]!,
+    catalog.rows,
+  );
   final topCc = readTopCcEvidence(
     data[topCcEvidenceFile]!,
     hashes,
@@ -1804,7 +1852,10 @@ void main(List<String> args) {
         comRdap,
         comEighteen,
         rdapNine,
+        rdapFive,
         topCc,
+        sfwx,
+        lengmen,
         data,
       ),
   ];
@@ -1881,6 +1932,7 @@ Map<String, Object?> _ledgerDocument(
     'The .com RDAP historical ledger requires the referenced Git object; collector scripts, raw RDAP/DNS response bytes and their intermediate draft are not preserved in the repository.',
     'The eighteen-domain review explicitly records DNS requests skipped after a failed control and provider timeouts as unknown; sibling-host DNS/HTTP responses are contextual counterexamples and do not establish the old host\'s availability or safety.',
     'The nine-domain review uses separate .com and .net controls; DNS SERVFAIL, timeout and skipped requests are not NXDOMAIN, and the sibling 301 was not followed and does not establish old-source availability or safety.',
+    'The five-domain review has no strict eligible candidate: it retains twenty failed-control skips and one candidate timeout as unknown. Four zri sources are separately identified for cross-period review; skipped Tencent queries were not treated as NXDOMAIN.',
     'The later 1023-host HEAD and native-DNS recheck records time-specific responses or failures only; DNS not checked, failed queries and no HTTP response remain unknown.',
     'The recovered-host AMSI samples are appended independently; their HTML-wrapped test control was missed, and neither non-detection nor an unavailable scan establishes safety.',
     'The .top/.cc review preserves failed controls, skipped requests and provider timeouts; a single registry 404 is not a repeated 404 and does not establish the exact source host status.',
@@ -1888,6 +1940,8 @@ Map<String, Object?> _ledgerDocument(
     'The two-source redirect review follows no third-party redirect; the separate two-book rule candidate has counterexamples and timed-out re-fetches, so neither observation establishes maliciousness or complete readability.',
     'The 242 review concerns one exact historical rule and endpoint; its sampled 404 responses do not imply maliciousness, permanent closure, or a host-wide restriction.',
     'The three-source redirect recheck uses GET and a possibly different user agent than the earlier HEAD. One old POST search was not submitted, discovery sampled only two entries per source, and fields missing from truncated collector output remain unknown.',
+    'The three-source sfwx reading observations are bounded historical samples; the 404 is a single search path, the two sfwx works and three chapters do not establish complete readability or safety, and long-chapter pagination and one old link target remain unverified. The repaired current rule may differ from the sampled historical rule.',
+    'The lengmen follow-up represents one shared root-page study for two sources, not independent threats; the 302 Location was not captured, the network environment was shared, and engine detections or non-detections do not establish malware, false positive, or safety. HTML and script-wrapped EICAR controls were missed.',
     'Static flags do not include personal settings, enabled state, mutable assessments, user blacklists, supervision, or every private repository policy.',
     'Same-ID historical cache can lack the rule fingerprint needed to attribute old content to a specific source version.',
     'The ledger reports bounded prior pilot observations, but does not itself perform a new live search-detail-chapter-content check.',
@@ -1915,6 +1969,23 @@ Map<String, Object?> _ledgerDocument(
         as Map),
     'verified_from_git_object': true,
   },
+  'sfwx_historical_ledger_reference': {
+    'git_commit':
+        (data[sfwxEvidenceFile]!['inputs'] as Map)['historical_git_commit'],
+    'path':
+        (data[sfwxEvidenceFile]!['inputs'] as Map)['historical_ledger_path'],
+    'sha256':
+        (data[sfwxEvidenceFile]!['inputs'] as Map)['historical_ledger_sha256'],
+    'verified_from_git_object': true,
+  },
+  'lengmen_historical_ledger_reference': {
+    'git_commit':
+        (data[lengmenEvidenceFile]!['inputs'] as Map)['historical_git_commit'],
+    ...(((data[lengmenEvidenceFile]!['inputs'] as Map)['historical_files']
+            as Map)['ledger']
+        as Map),
+    'verified_from_git_object': true,
+  },
   'adult_source_historical_references': {
     'ledger': {
       ...(data[uaaEvidenceFile]!['historical_ledger'] as Map),
@@ -1939,6 +2010,12 @@ Map<String, Object?> _ledgerDocument(
   },
   'rdap_nine_historical_ledger_reference': {
     ...((data[rdapNineEvidenceFile]!['input_references']
+            as Map)['source_ledger_historical_git']
+        as Map),
+    'verified_from_git_object': true,
+  },
+  'rdap_five_historical_ledger_reference': {
+    ...((data[rdapFiveEvidenceFile]!['input_references']
             as Map)['source_ledger_historical_git']
         as Map),
     'verified_from_git_object': true,

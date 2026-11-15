@@ -136,6 +136,43 @@ void main() {
   );
 
   test(
+    'supervised checks persist script clues without risk and revisit v1',
+    () async {
+      final f = await _Fixture.create();
+      addTearDown(f.close);
+      await f.supervise();
+      final source = f.first.source;
+      final host = source.endpoint.host;
+      final key = 'books_supervised_site_check:${source.id}';
+      f.server.pages[host] =
+          "<script>location.href='https://other.example/?token=secret';</script>";
+      await f.monitor.check().timeout(_timeout);
+      final original = BookSiteCheck.fromJson(
+        await f.services.books.store.read(key),
+        source,
+      )!;
+      expect(original.inspection.scriptReview.hasClues, isTrue);
+      expect(await f.services.books.riskStore.get(source.id), isNull);
+      expect(original.toJson().toString(), isNot(contains('other.example')));
+      final legacy = original.toJson()..remove('scriptReview');
+      await f.services.books.store.write(key, legacy);
+      final count = f.requested.where((uri) => uri.host == host).length;
+      await f.monitor.check().timeout(_timeout);
+      expect(
+        f.requested.where((uri) => uri.host == host),
+        hasLength(count + 1),
+      );
+      final migrated = BookSiteCheck.fromJson(
+        await f.services.books.store.read(key),
+        source,
+      )!;
+      expect(migrated.inspection.scriptReview.hasClues, isTrue);
+      expect(migrated.legacyScriptReviewMissing, isFalse);
+      expect(await f.services.books.riskStore.get(source.id), isNull);
+    },
+  );
+
+  test(
     'supervised failures persist, back off and detect a recovered host',
     () async {
       final f = await _Fixture.create();
@@ -197,6 +234,61 @@ void main() {
         recovered.nextDue.difference(recovered.checkedAt),
         const Duration(days: 7),
       );
+    },
+  );
+
+  test(
+    'supervised monitor retries a clue with redirect and retains strong risk',
+    () async {
+      final f = await _Fixture.create();
+      addTearDown(f.close);
+      await f.supervise();
+      final source = f.first.source;
+      final host = source.endpoint.host;
+      final key = 'books_supervised_site_check:${source.id}';
+      const redirect =
+          '<meta http-equiv="refresh" content="0;url=https://other.example/">';
+      f.server.pages[host] = '$redirect<p>在线赌场</p>';
+      await f.monitor.check().timeout(_timeout);
+      var check = BookSiteCheck.fromJson(
+        await f.services.books.store.read(key),
+        source,
+      )!;
+      expect(check.inspection.finding, BookSiteFinding.gamblingClue);
+      expect(check.inspection.redirect, BookSiteRedirect.external);
+      expect(check.inspection.gamblingRisk, isFalse);
+      expect(check.needsRetry, isTrue);
+      expect(await f.services.books.riskStore.get(source.id), isNull);
+      final firstCount = f.requested.where((uri) => uri.host == host).length;
+      await f.monitor.check().timeout(_timeout);
+      expect(
+        f.requested.where((uri) => uri.host == host),
+        hasLength(firstCount),
+      );
+      await f.services.books.store.write(key, {
+        ...check.toJson(),
+        'checkedAt': DateTime.now()
+            .subtract(const Duration(minutes: 31))
+            .millisecondsSinceEpoch,
+      });
+      f.server.pages[host] = '$redirect<p>在线赌场 立即下注</p>';
+      await f.monitor.check().timeout(_timeout);
+      expect(
+        f.requested.where((uri) => uri.host == host),
+        hasLength(firstCount + 1),
+      );
+      expect(
+        (await f.services.books.riskStore.get(source.id))!.quarantinedHost,
+        isTrue,
+      );
+      check = BookSiteCheck.fromJson(
+        await f.services.books.store.read(key),
+        source,
+      )!;
+      expect(check.inspection.gamblingRisk, isTrue);
+      expect(check.inspection.redirect, BookSiteRedirect.external);
+      expect(check.needsRetry, isTrue);
+      expect(f.requested.every((uri) => uri.host != 'other.example'), isTrue);
     },
   );
 

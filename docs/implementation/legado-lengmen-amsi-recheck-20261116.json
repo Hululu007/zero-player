@@ -1,0 +1,503 @@
+{
+  "schema_version": 1,
+  "purpose": "Redacted follow-up to prior protection-engine detections on one bundled source host.",
+  "host": "www.lengmen.org",
+  "inputs": {
+    "historical_git_commit": "f7b5697d49fdc5113274e5add45a1108638957c5",
+    "archive_path": "assets/catalogs/books/legado/catalog.json.bz2",
+    "archive_sha256": "012a0e0d6e6adc8d303c32b578510e14b562088b3e965cb01a1a647b5e7e034d",
+    "historical_files": {
+      "ledger": {
+        "path": "docs/implementation/legado-source-ledger-20261115.json",
+        "sha256": "fb6b8ace9e42eed5ab9756cb3a35d115a83466479b1946e968afe13306aee8c6"
+      },
+      "summary": {
+        "path": "docs/implementation/legado-amsi-summary-20261115.json",
+        "sha256": "b8a93e7b8fb78ca3bcf57f5748a7b50f67e32e14c8298776726f7779f81ecf67"
+      },
+      "initial": {
+        "path": "docs/implementation/legado-amsi-other-hosts-20261115.json",
+        "sha256": "25180e804c1df15165af8bb20ae58c5b4dd6b2e24f6a0a092d50281ca5e25750"
+      },
+      "clusters": {
+        "path": "docs/implementation/legado-amsi-template-clusters-20261115.json",
+        "sha256": "0aaff7d86529327f67ea09f741d62a00a0cf47a03a90175b982619beeed9de3e"
+      },
+      "classification": {
+        "path": "docs/implementation/legado-amsi-source-classification-20261115.json",
+        "sha256": "d8a40945fa3875f65085d9fd210808aa8038f5d8a012495e8bf2bd68fe061180"
+      }
+    }
+  },
+  "source_fingerprints": [
+    {
+      "source_id": "5c5cc84bbd5019fd7fc40a5effcdf9adfddca60a2f4f6885b1eb034ad4da0a93",
+      "name": "灵梦小说（正文不全求修复）",
+      "kind": "text",
+      "format": "html",
+      "selected_record_index": 450,
+      "historical_same_id_record_indices": [
+        450,
+        2318
+      ],
+      "endpoint_sha256": "47ef2a50b46240a84258168a7667de037f4e7613be373b881037749baeb5194c",
+      "raw_record_canonical_sha256": "9c70ff25617f14323c042b44761e61971b727c2e508a4656d34daba81a31012b",
+      "normalized_legado_canonical_sha256": "98d3c34181b05187296b73cedf44c117088709673fc7d8bf4307fbfdcdcbd5dd",
+      "earlier_amsi_classification_legado_sha256_unsorted_json": "ff30fd07f6763f9e1802271c6e8f6efd5ecb0e3cda55be86ccb142639307b343",
+      "raw_field_sha256": {
+        "searchUrl": "d9f8cf51b9a8014a960c9013a6f6708e8d50a28471108722a3399065e04b6bdd",
+        "ruleSearch": "a08c1bedaf1ca52b7cd12e734268d254798c333dd18401b01687de1bf6b2fa80",
+        "ruleBookInfo": "fe5499c89bbd899fbab4b4444eaaf38233063767b1719fa9d0f6f426c7cf528b",
+        "ruleToc": "d75a8263074886820bb4270135a50019813608db681c7872325235da6bf07622",
+        "ruleContent": "856e600f3a378becb61004af54a02b908d6c1bdac7892f000d831707bcc7cd17",
+        "header": "3be77bffe74d8175dc91167a86876d03bb4027faa78fc31fb4ff8abbe2fda149"
+      },
+      "historical_static_policy": {
+        "adult_source_classified": false,
+        "adult_by_label": false,
+        "adult_by_bundled_id": false,
+        "adult_evidence_merged": false,
+        "adult_by_text_policy": false,
+        "known_adult_hosts": [],
+        "fixed_endpoint_host_quarantine": false,
+        "fixed_media_host_quarantines": [],
+        "fixed_untrusted_rule": false,
+        "fixed_unavailable_rule": false,
+        "fixed_other_exact_source_quarantine": false,
+        "fixed_orphan_history_id": false
+      }
+    },
+    {
+      "source_id": "47e709728d21b76a1156fd1a080dd45d8dc82c1a95f8e66359533ac4d336847e",
+      "name": "灵梦小说（修复：正文不全）",
+      "kind": "text",
+      "format": "html",
+      "selected_record_index": 1921,
+      "historical_same_id_record_indices": [
+        1921
+      ],
+      "endpoint_sha256": "c595697111df550e8bc53555bdd414bf41ab8458ff927d633d12b9c4564d6969",
+      "raw_record_canonical_sha256": "685e648c320ff8abc876cb4b273e04e355b90c6919c8de3eeae234dc25903f89",
+      "normalized_legado_canonical_sha256": "264c75aab9098fa2d643b6ef1db6174d91ca55a8d00c8b216fb5837decde112e",
+      "earlier_amsi_classification_legado_sha256_unsorted_json": "4700134546e88318b2dea002f72ca33ee1b99fd745a89c5771160c8af41fde6f",
+      "raw_field_sha256": {
+        "searchUrl": "d9f8cf51b9a8014a960c9013a6f6708e8d50a28471108722a3399065e04b6bdd",
+        "ruleSearch": "a08c1bedaf1ca52b7cd12e734268d254798c333dd18401b01687de1bf6b2fa80",
+        "ruleBookInfo": "fe5499c89bbd899fbab4b4444eaaf38233063767b1719fa9d0f6f426c7cf528b",
+        "ruleToc": "94ec2b2d6babce843580d6fe77d58674f91f640cd9b7b35e7e271c806606578d",
+        "ruleContent": "6007d2ca486ec75a2578b8f644077c6c93cd963c8d5b211b9994f2bc0c865e11",
+        "header": "3be77bffe74d8175dc91167a86876d03bb4027faa78fc31fb4ff8abbe2fda149"
+      },
+      "historical_static_policy": {
+        "adult_source_classified": false,
+        "adult_by_label": false,
+        "adult_by_bundled_id": false,
+        "adult_evidence_merged": false,
+        "adult_by_text_policy": false,
+        "known_adult_hosts": [],
+        "fixed_endpoint_host_quarantine": false,
+        "fixed_media_host_quarantines": [],
+        "fixed_untrusted_rule": false,
+        "fixed_unavailable_rule": false,
+        "fixed_other_exact_source_quarantine": false,
+        "fixed_orphan_history_id": false
+      }
+    }
+  ],
+  "fingerprint_conventions": {
+    "historical_ledger": "SHA-256 of recursively key-sorted UTF-8 JSON; list order preserved.",
+    "earlier_amsi_classification": "SHA-256 of Dart jsonEncode output, preserving map order; not directly comparable to sorted ledger digest.",
+    "raw_fields": "Strings hash UTF-8 bytes; objects hash recursively key-sorted compact UTF-8 JSON."
+  },
+  "prior": {
+    "initial": {
+      "observed_at_utc": "2026-11-15T05:55:07.617056+00:00",
+      "http_status": 200,
+      "sample_bytes": 477,
+      "sample_sha256": "7ac2e9bb156f7bea815170de3c7d48c9df6031587555ccb7f6740dcaf358c0e7",
+      "truncated": false,
+      "html_amsi": {
+        "phase": "scan",
+        "hresult": "0x00000000",
+        "amsi_result": 32768,
+        "classification": "detected"
+      },
+      "inline_sample_bytes": 373,
+      "inline_sample_sha256": "32928c432fdc791397aad53b74a569f20f2ddab7b0ee753b5568fcc5d5e5292b",
+      "inline_amsi": {
+        "phase": "scan",
+        "hresult": "0x00000000",
+        "amsi_result": 32768,
+        "classification": "detected"
+      }
+    },
+    "cluster_recheck": {
+      "observed_at_utc": "2026-11-15T05:59:14.994035+00:00",
+      "http_status": 200,
+      "sample_bytes": 477,
+      "sample_sha256": "fc122e4488cc8eae6228f629dfc5edec9989863a44b0fb1af31409f74a57ab73",
+      "truncated": false,
+      "html_amsi": {
+        "phase": "scan",
+        "hresult": "0x00000000",
+        "amsi_result": 32768,
+        "classification": "detected"
+      },
+      "inline_sample_bytes": 373,
+      "inline_sample_sha256": "7cf3150106c7262ff61f5efb023996a3d520c448239cbcb944a4c9549bca29de",
+      "inline_amsi": {
+        "phase": "scan",
+        "hresult": "0x00000000",
+        "amsi_result": 32768,
+        "classification": "detected"
+      },
+      "shape_sha256": "05e7d863aefa066d521304faf1ecf18b31791a0f55502474dc1d646e4a8bf6b6",
+      "shape_group_size": 14,
+      "direct_literal_navigation_same_host": true,
+      "direct_literal_navigation_root_path": true,
+      "literal_navigation_had_query": true,
+      "literal_navigation_target_followed": false
+    }
+  },
+  "method": {
+    "started_at_utc": "2026-11-15T22:30:29.563586+00:00",
+    "ended_at_utc": "2026-11-15T22:32:58.052723+00:00",
+    "http_method": "GET",
+    "port": 443,
+    "request_paths": "root only",
+    "requests": 6,
+    "max_sample_bytes": 32768,
+    "max_script_bytes": 8192,
+    "max_scripts_per_page": 6,
+    "request_deadline_seconds": 8,
+    "amsi_worker_deadline_seconds": 15,
+    "all_dns_answers_public_and_pinned": true,
+    "tls_hostname_verified": true,
+    "redirects_followed": false,
+    "credentials_sent": false,
+    "script_executed": false,
+    "subresources_requested": false,
+    "response_or_script_saved": false,
+    "query_saved": false,
+    "collector_code_saved": false,
+    "amsi_cloud_note": "The local protection provider may use cloud protection or automatic sample submission."
+  },
+  "controls": [
+    {
+      "observed_at_utc": "2026-11-15T22:30:29.563528+00:00",
+      "clean": {
+        "hresult": "0x00000000",
+        "amsi_result": 1,
+        "classification": "not_detected"
+      },
+      "eicar_raw": {
+        "hresult": "0x00000000",
+        "amsi_result": 32768,
+        "classification": "detected"
+      },
+      "eicar_in_html": {
+        "hresult": "0x00000000",
+        "amsi_result": 1,
+        "classification": "not_detected"
+      },
+      "eicar_in_script": {
+        "hresult": "0x00000000",
+        "amsi_result": 1,
+        "classification": "not_detected"
+      },
+      "passed_for_raw_and_clean_only": true
+    },
+    {
+      "observed_at_utc": "2026-11-15T22:32:15.443416+00:00",
+      "clean": {
+        "hresult": "0x00000000",
+        "amsi_result": 1,
+        "classification": "not_detected"
+      },
+      "eicar_raw": {
+        "hresult": "0x00000000",
+        "amsi_result": 32768,
+        "classification": "detected"
+      },
+      "eicar_in_html": {
+        "hresult": "0x00000000",
+        "amsi_result": 1,
+        "classification": "not_detected"
+      },
+      "eicar_in_script": {
+        "hresult": "0x00000000",
+        "amsi_result": 1,
+        "classification": "not_detected"
+      },
+      "passed_for_raw_and_clean_only": true
+    },
+    {
+      "observed_at_utc": "2026-11-15T22:32:57.051069+00:00",
+      "clean": {
+        "hresult": "0x00000000",
+        "amsi_result": 1,
+        "classification": "not_detected"
+      },
+      "eicar_raw": {
+        "hresult": "0x00000000",
+        "amsi_result": 32768,
+        "classification": "detected"
+      },
+      "eicar_in_html": {
+        "hresult": "0x00000000",
+        "amsi_result": 1,
+        "classification": "not_detected"
+      },
+      "eicar_in_script": {
+        "hresult": "0x00000000",
+        "amsi_result": 1,
+        "classification": "not_detected"
+      },
+      "passed_for_raw_and_clean_only": true
+    }
+  ],
+  "observations": [
+    {
+      "kind": "root_status",
+      "observed_at_utc": "2026-11-15T22:30:30.790290+00:00",
+      "http_status": 302,
+      "redirect_target": "unknown_not_captured",
+      "amsi": "not_scanned_no_html_sample"
+    },
+    {
+      "kind": "root_html_and_script",
+      "observed_at_utc": "2026-11-15T22:30:32.576270+00:00",
+      "http_status": 200,
+      "sample_bytes": 477,
+      "sample_sha256": "caa29dfeafb848ab53e19f65dea2fe6438bdc4e2879c321a06e6ea145e571a2a",
+      "truncated": false,
+      "html_amsi": {
+        "hresult": "0x00000000",
+        "amsi_result": 32768,
+        "classification": "detected"
+      },
+      "inline_sample_bytes": 373,
+      "inline_sample_sha256": "a57b68a7f0ea3fa42c7d3003c04d4d02001aa178efe2ff3b6dd2b13c4327fe33",
+      "inline_amsi": {
+        "hresult": "0x00000000",
+        "amsi_result": 32768,
+        "classification": "detected"
+      },
+      "shape_sha256": "05e7d863aefa066d521304faf1ecf18b31791a0f55502474dc1d646e4a8bf6b6",
+      "literal_navigation_same_host_root": true,
+      "literal_navigation_had_query": true,
+      "target_followed": false,
+      "direct_atob_literals": 0
+    },
+    {
+      "kind": "root_status_and_title",
+      "observed_at_utc": "2026-11-15T22:31:06.258543+00:00",
+      "http_status": 200,
+      "sample_bytes": 477,
+      "title": "Loading...",
+      "sample_sha256": null,
+      "amsi": "not_scanned"
+    },
+    {
+      "kind": "root_status_and_title",
+      "observed_at_utc": "2026-11-15T22:31:09.324176+00:00",
+      "http_status": 200,
+      "sample_bytes": 477,
+      "title": "Loading...",
+      "sample_sha256": null,
+      "amsi": "not_scanned"
+    },
+    {
+      "kind": "segment_and_synthetic_controls",
+      "observed_at_utc": "2026-11-15T22:32:17.288370+00:00",
+      "http_status": 200,
+      "sample_bytes": 477,
+      "sample_sha256": "c1184175605960744fa503d0eb39520852452723a41a3b737dfb52239b496ca9",
+      "truncated": false,
+      "inline_sample_bytes": 373,
+      "inline_sample_sha256": "e5e2754239a52568f72cf406366f155828ac0894896a8a0f442e465c9491fc17",
+      "html_amsi": {
+        "hresult": "0x00000000",
+        "amsi_result": 32768,
+        "classification": "detected"
+      },
+      "inline_amsi": {
+        "hresult": "0x00000000",
+        "amsi_result": 32768,
+        "classification": "detected"
+      },
+      "script_shape_sha256": "98b07651058455d48d466a9a1dae48b2066b39e9cb0bb8389db4bd90a2445f53",
+      "segment_scans": [
+        {
+          "offset": 0,
+          "bytes": 94,
+          "sha256": "07708f284d5e26b5b40aa143706fcad3e4e4dc0653f927dd21935c9b642e65b9",
+          "amsi": {
+            "hresult": "0x00000000",
+            "amsi_result": 1,
+            "classification": "not_detected"
+          }
+        },
+        {
+          "offset": 94,
+          "bytes": 94,
+          "sha256": "8d50307fc7abd4d420a2951492d108f8eda7852887e3fa0fab410febdab56009",
+          "amsi": {
+            "hresult": "0x00000000",
+            "amsi_result": 1,
+            "classification": "not_detected"
+          }
+        },
+        {
+          "offset": 188,
+          "bytes": 94,
+          "sha256": "326d1f268035ea44e9be5b95f406d19016f07b28261a1f82f58474efcf12a2ed",
+          "amsi": {
+            "hresult": "0x00000000",
+            "amsi_result": 1,
+            "classification": "not_detected"
+          }
+        },
+        {
+          "offset": 282,
+          "bytes": 91,
+          "sha256": "03baf8bbb6036aa94c44d54abd19b0b301a7a9be2099b7abcb11b71807ee88a0",
+          "amsi": {
+            "hresult": "0x00000000",
+            "amsi_result": 1,
+            "classification": "not_detected"
+          }
+        }
+      ],
+      "same_sample_transforms": [
+        {
+          "kind": "url_replaced",
+          "bytes": 52,
+          "sha256": "00707912fa742f8c8f92bbc0bb9f63b9665c7d5af26e461fdcf8064caaacec04",
+          "amsi": {
+            "hresult": "0x00000000",
+            "amsi_result": 1,
+            "classification": "not_detected"
+          }
+        },
+        {
+          "kind": "quoted_literals_replaced",
+          "bytes": 37,
+          "sha256": "72559c6d512f41d54425a81e7d32c522ddbb6c2cc2bb941d1877d79f1aa3ae4f",
+          "amsi": {
+            "hresult": "0x00000000",
+            "amsi_result": 1,
+            "classification": "not_detected"
+          }
+        }
+      ],
+      "ordinary_synthetic_navigation_controls": [
+        {
+          "kind": "location",
+          "bytes": 41,
+          "sha256": "6d8b26e8ac6975890d318b5df039e84d862e317fd4f61e1596a2857db81562a7",
+          "amsi": {
+            "hresult": "0x00000000",
+            "amsi_result": 1,
+            "classification": "not_detected"
+          }
+        },
+        {
+          "kind": "navigation_with_synthetic_query",
+          "bytes": 59,
+          "sha256": "5c000aca2e69dd62471099c4b39e8a6ee65a55f5048ab91c41cecb641ed5bb49",
+          "amsi": {
+            "hresult": "0x00000000",
+            "amsi_result": 1,
+            "classification": "not_detected"
+          }
+        },
+        {
+          "kind": "html_with_navigation",
+          "bytes": 71,
+          "sha256": "ee2fd021363fbccd133cbad150565d74f6803130532fb84cd89fad844493a077",
+          "amsi": {
+            "hresult": "0x00000000",
+            "amsi_result": 1,
+            "classification": "not_detected"
+          }
+        }
+      ],
+      "static_indicators": {
+        "complete_eicar_marker": false,
+        "eicar_word": false,
+        "script_location_reference": true,
+        "script_eval_reference": false,
+        "script_atob_reference": false,
+        "script_document_write_reference": false,
+        "external_script_src": false,
+        "iframe_tag": false,
+        "meta_refresh": false
+      }
+    },
+    {
+      "kind": "equal_length_counterfactual",
+      "observed_at_utc": "2026-11-15T22:32:58.052723+00:00",
+      "http_status": 200,
+      "sample_bytes": 477,
+      "sample_sha256": "7862d923d3d2ad533415b1000d5c9d2f8ea245e9c695731e67d579fb77477bbb",
+      "truncated": false,
+      "inline_sample_bytes": 373,
+      "one_literal_url": true,
+      "same_byte_length_for_all_variants": true,
+      "comparisons": [
+        {
+          "kind": "observed",
+          "sha256": "1e22bae8890046ac15f9d7fa9fa2453c9cff1485afe1f349f8f4cf47b6794f47",
+          "amsi": {
+            "hresult": "0x00000000",
+            "amsi_result": 32768,
+            "classification": "detected"
+          }
+        },
+        {
+          "kind": "hostname_literal_replaced_within_url",
+          "sha256": "10279388247c68f008cf11c77c720f413516f52891209a631e0822c7c5ca4f55",
+          "amsi": {
+            "hresult": "0x00000000",
+            "amsi_result": 32768,
+            "classification": "detected"
+          }
+        },
+        {
+          "kind": "query_only_masked",
+          "sha256": "7990635196bdc428474266442b6109e036bd647725c6dac2abb1f94c12606f4a",
+          "amsi": {
+            "hresult": "0x00000000",
+            "amsi_result": 1,
+            "classification": "not_detected"
+          }
+        },
+        {
+          "kind": "hostname_literal_replaced_and_query_masked",
+          "sha256": "bf037ee342eb8e201cd5bcac2269773e7c11d8999f1d719247e29774b80482ea",
+          "amsi": {
+            "hresult": "0x00000000",
+            "amsi_result": 1,
+            "classification": "not_detected"
+          }
+        }
+      ],
+      "host_replacement_scope": "All occurrences of the source hostname literal within the URL; query was not retained, so occurrences there are unknown."
+    }
+  ],
+  "limitations": [
+    "No response body, inline script, destination query or temporary collection code was retained; the new observations cannot be replayed offline.",
+    "Only host roots were sampled. Results do not establish the behavior of search, details, chapters or other paths.",
+    "The first 302 Location was not captured, so its destination remains unknown.",
+    "All observations share one network environment; repeated sampling does not establish an independent geographic or network vantage point.",
+    "Normalized script shapes remove quoted literals and numbers and can group different behavior; similarity, shared network identity and engine detection do not establish origin, operator, malware or safety.",
+    "The equal-length substitutions indicate sensitivity to changed bytes in this sample; they do not reveal a provider signature or establish a malicious query.",
+    "The ordinary synthetic navigation controls were not detected, so this experiment did not establish a false positive on an ordinary navigation script.",
+    "The raw positive control was detected, but HTML-wrapped and inline-script controls were not; a non-detection does not rule out malicious content.",
+    "The historical static source policy does not inspect a user installation, enablement, dynamic risk database or blacklist.",
+    "These observations do not justify asserting malware or false positive, or extending fixed isolation.",
+    "The hostname replacement applied to all hostname-literal occurrences within the URL; the query was not retained, so it is unknown whether any occurrence was in that query.",
+    "Non-overlapping segment non-detections do not exclude cross-boundary signatures or context effects."
+  ]
+}

@@ -382,6 +382,91 @@ class EvidenceVerifier:
         ref = refs['source_ledger_historical_git']
         self.git_snapshot(ref['commit'], ref['path'], ref['sha256'], ledger_path)
 
+        sfwx = json.loads(self.read(self.docs / 'legado-sfwx-repair-20261116.json'))
+        inputs = sfwx['inputs']
+        if inputs['archive_path'] != 'assets/catalogs/books/legado/catalog.json.bz2':
+            raise ValueError('unexpected source-repair archive path')
+        self.check_digest(archive, inputs['archive_sha256'])
+        commit = inputs['historical_git_commit']
+        self.git_snapshot(commit, inputs['historical_ledger_path'],
+                          inputs['historical_ledger_sha256'], ledger_path)
+        head_path = 'docs/implementation/legado-unresolved-head-later-20261116.json'
+        self.git_snapshot(commit, inputs['historical_head_path'],
+                          inputs['historical_head_sha256'], head_path)
+        if inputs['probe_helper_path'] != 'tool/audit_legado_catalog.py':
+            raise ValueError('unexpected source-repair probe helper path')
+        self.check_digest(self.root / inputs['probe_helper_path'],
+                          inputs['probe_helper_sha256'], normalize_lf=True)
+
+        lengmen = json.loads(self.read(self.docs / 'legado-lengmen-amsi-recheck-20261116.json'))
+        inputs = lengmen['inputs']
+        if inputs['archive_path'] != 'assets/catalogs/books/legado/catalog.json.bz2':
+            raise ValueError('unexpected AMSI follow-up archive path')
+        self.check_digest(archive, inputs['archive_sha256'])
+        expected_history = {
+            'ledger': ledger_path,
+            'summary': 'docs/implementation/legado-amsi-summary-20261115.json',
+            'initial': 'docs/implementation/legado-amsi-other-hosts-20261115.json',
+            'clusters': 'docs/implementation/legado-amsi-template-clusters-20261115.json',
+            'classification': 'docs/implementation/legado-amsi-source-classification-20261115.json',
+        }
+        if set(inputs['historical_files']) != set(expected_history):
+            raise ValueError('unexpected AMSI follow-up historical references')
+        for key, path in expected_history.items():
+            ref = inputs['historical_files'][key]
+            self.git_snapshot(inputs['historical_git_commit'], ref['path'], ref['sha256'], path)
+
+        five = json.loads(self.read(self.docs / 'legado-rdap-five-20261116.json'))
+        refs = five['input_references']
+        expected = {
+            'catalog_archive': 'assets/catalogs/books/legado/catalog.json.bz2',
+            'catalog_manifest': 'assets/catalogs/books/legado/manifest.json',
+            'later_host_recheck': 'docs/implementation/legado-unresolved-head-later-20261116.json',
+            'prior_public_doh': 'docs/implementation/legado-doh-reviewed-20261115.json',
+            'older_host_recheck': 'docs/implementation/legado-host-recheck-20261115.json',
+        }
+        if set(refs) != set(expected) | {'source_ledger_historical_git', 'previous_rdap_historical_git'}:
+            raise ValueError('unexpected five-domain RDAP inputs')
+        ref = refs['source_ledger_historical_git']
+        commit = ref['commit']
+        history = json.loads(self.git_snapshot(commit, ref['path'], ref['sha256'], ledger_path))
+        for key, path in expected.items():
+            if refs[key]['path'] != path:
+                raise ValueError('unexpected five-domain RDAP path')
+            self.check_digest(self.root / path, refs[key]['sha256'])
+            self.git_snapshot(commit, path, refs[key]['sha256'], path)
+        previous = refs['previous_rdap_historical_git']
+        expected_previous = {
+            'docs/implementation/legado-rdap-sample-20261115.json',
+            'docs/implementation/legado-rdap-net-sample-20261115.json',
+            'docs/implementation/legado-rdap-com-six-20261116.json',
+            'docs/implementation/legado-rdap-com-eighteen-20261116.json',
+            'docs/implementation/legado-rdap-nine-20261116.json',
+            'docs/implementation/legado-rdap-top-cc-20261116.json',
+        }
+        if set(previous) != expected_previous:
+            raise ValueError('unexpected historical RDAP reference set')
+        for path, item in previous.items():
+            if item['commit'] != commit:
+                raise ValueError('historical RDAP commit mismatch')
+            self.git_snapshot(commit, path, item['sha256'], path)
+        snapshot = five['source_code_snapshot']
+        if (snapshot['commit'] != commit or snapshot['digest_convention'] != 'sha256_crlf_to_lf' or
+                snapshot['normalized_sha256'] != history['normalized_source_code_sha256']):
+            raise ValueError('five-domain historical code snapshot mismatch')
+        expected_tools = {
+            'tool/collect_legado_rdap_five.py', 'tool/collect_legado_rdap_top_cc.py',
+            'tool/audit_legado_doh_pilot.py', 'tool/audit_legado_catalog.py',
+            'tool/verify_legado_rdap_com_eighteen.py', 'tool/verify_legado_rdap_com_six.py',
+        }
+        for name, expected_set in (('collection_scripts', expected_tools),
+                                   ('verification_support', {'tool/verify_legado_rdap_top_cc.py'})):
+            group = five[name]
+            if group['digest_convention'] != 'sha256_crlf_to_lf' or set(group['sha256']) != expected_set:
+                raise ValueError('unexpected five-domain tool reference set')
+            for path, digest in group['sha256'].items():
+                self.check_digest(self.root / path, digest, normalize_lf=True)
+
     def verify(self):
         for source, key, target in DIRECT_LINKS:
             self.check_digest(self.docs / filename(target), self.report(source)[key])

@@ -5,6 +5,7 @@ import 'package:crypto/crypto.dart';
 import '../../supervision/application/content_policy.dart';
 import '../domain/book.dart';
 import 'book_site_inspection.dart';
+import 'book_site_script_clues.dart';
 
 const bookSiteCheckInterval = Duration(days: 7);
 const bookSiteRetryInterval = Duration(minutes: 30);
@@ -29,27 +30,33 @@ final class BookSiteCheck {
     this.checkedAt,
     this.fingerprint, {
     this.consecutiveFailures = 0,
+    this.legacyScriptReviewMissing = false,
   });
   final BookSiteInspection inspection;
   final DateTime checkedAt;
   final String fingerprint;
   final int consecutiveFailures;
+  final bool legacyScriptReviewMissing;
 
-  /// A redirect or transport failure did not sample the homepage's text.
-  bool get needsRetry => switch (inspection.finding) {
-    BookSiteFinding.sameSiteRedirect ||
-    BookSiteFinding.externalRedirect ||
-    BookSiteFinding.httpError ||
-    BookSiteFinding.timeout ||
-    BookSiteFinding.networkError ||
-    BookSiteFinding.unsupported => true,
-    _ => false,
-  };
+  /// The redirect target was not followed, even when its referring page had clues.
+  bool get needsRetry =>
+      inspection.redirect != BookSiteRedirect.none ||
+      switch (inspection.finding) {
+        BookSiteFinding.sameSiteRedirect ||
+        BookSiteFinding.externalRedirect ||
+        BookSiteFinding.httpError ||
+        BookSiteFinding.timeout ||
+        BookSiteFinding.networkError ||
+        BookSiteFinding.unsupported => true,
+        _ => false,
+      };
 
   int get _failureCount =>
       needsRetry ? consecutiveFailures.clamp(1, _maxSiteFailures) : 0;
 
   DateTime get nextDue {
+    // Revisit pre-feature successful samples without bypassing failure backoff.
+    if (legacyScriptReviewMissing && !needsRetry) return checkedAt;
     if (!needsRetry) return checkedAt.add(bookSiteCheckInterval);
     final minutes = bookSiteRetryInterval.inMinutes << (_failureCount - 1);
     final retry = Duration(
@@ -97,6 +104,8 @@ final class BookSiteCheck {
     'checkedAt': checkedAt.millisecondsSinceEpoch,
     'fingerprint': fingerprint,
     'consecutiveFailures': _failureCount,
+    if (!legacyScriptReviewMissing)
+      'scriptReview': inspection.scriptReview.toJson(),
   };
 
   static BookSiteCheck? fromJson(Object? value, BookSource source) {
@@ -131,12 +140,16 @@ final class BookSiteCheck {
         truncated: value['truncated'] == true,
         statusCode: code is int && code >= 100 && code <= 599 ? code : null,
         redirect: redirect,
+        scriptReview: BookPageScriptReview.fromJson(value['scriptReview']),
       ),
       DateTime.fromMillisecondsSinceEpoch(stamp),
       value['fingerprint'] as String,
       consecutiveFailures: value['consecutiveFailures'] is int
           ? (value['consecutiveFailures'] as int).clamp(0, _maxSiteFailures)
           : 0,
+      legacyScriptReviewMissing: !BookPageScriptReview.validJson(
+        value['scriptReview'],
+      ),
     );
   }
 }

@@ -145,6 +145,7 @@ void _testPublishedCollection() {
         final imported = [
           ...await books.sources(BookKind.text),
           ...await books.sources(BookKind.audio),
+          ...await books.sources(BookKind.comic),
         ].where((entry) => !entry.source.builtin).toList();
         expect(imported, hasLength(result.changes.added));
         expect(imported.every((entry) => !entry.enabled), isTrue);

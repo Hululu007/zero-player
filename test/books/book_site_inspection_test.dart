@@ -259,6 +259,25 @@ void _redirectInterpretationTests(Uri target) {
       expect(restored.inspection.redirect, BookSiteRedirect.external);
       expect(restored.inspection.label, contains('博彩文字线索'));
       expect(restored.inspection.label, contains('跨站跳转'));
+      expect(restored.needsRetry, isTrue);
+      expect(
+        restored.nextDue.difference(restored.checkedAt),
+        const Duration(minutes: 30),
+      );
+      final combinedLegacy = current.toJson()..remove('consecutiveFailures');
+      final oldCombined = BookSiteCheck.fromJson(combinedLegacy, source)!;
+      expect(oldCombined.needsRetry, isTrue);
+      expect(oldCombined.inspection.finding, BookSiteFinding.gamblingClue);
+      expect(oldCombined.inspection.redirect, BookSiteRedirect.external);
+      final strong = BookSiteCheck(
+        adult,
+        DateTime.now(),
+        bookSourceCheckFingerprint(source),
+      );
+      final restoredStrong = BookSiteCheck.fromJson(strong.toJson(), source)!;
+      expect(restoredStrong.needsRetry, isTrue);
+      expect(restoredStrong.inspection.adultRisk, isTrue);
+      expect(restoredStrong.inspection.redirect, BookSiteRedirect.sameSite);
       final legacy = current.toJson()
         ..remove('redirect')
         ..['finding'] = BookSiteFinding.externalRedirect.name;

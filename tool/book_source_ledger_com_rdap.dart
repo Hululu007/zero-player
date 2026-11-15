@@ -12,6 +12,7 @@ import 'book_source_ledger_nov16_evidence.dart';
 part 'book_source_ledger_com_eighteen.dart';
 part 'book_source_ledger_rdap_nine.dart';
 part 'book_source_ledger_top_cc.dart';
+part 'book_source_ledger_rdap_five.dart';
 
 const comRdapEvidenceFile = 'legado-rdap-com-six-20261116.json';
 const _ledgerPath = 'docs/implementation/legado-source-ledger-20261115.json';

@@ -3,6 +3,7 @@ import 'book.dart';
 import 'com_rdap_legacy_quarantine.dart';
 import 'iqiyi_legacy_quarantine.dart';
 import 'known_untrusted_book_rules.dart';
+import 'moe_rdap_legacy_quarantine.dart';
 import 'net_rdap_legacy_quarantine.dart';
 import 'novel_242_legacy_quarantine.dart';
 import 'redirected_legacy_quarantine.dart';
@@ -192,6 +193,7 @@ bool knownUnavailableBookRule(BookSource source) =>
         )) ||
     unavailableIqiyiLegacySource(source) ||
     unavailableTaotaoshuLegacySource(source) ||
+    unavailableMoeRdapLegacySource(source) ||
     unavailableNetRdapLegacySource(source) ||
     unavailableComRdapLegacySource(source) ||
     unavailable242NovelLegacySource(source) ||

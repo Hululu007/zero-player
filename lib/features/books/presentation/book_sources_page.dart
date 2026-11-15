@@ -42,7 +42,7 @@ final class BookSourcesPage extends StatefulWidget {
 final class _BookSourcesPageState extends State<BookSourcesPage> {
   List<BookSourceEntry> _entries = [];
   bool _busy = false, _favorites = false, _dynamicRules = false;
-  bool _historicalAmsi = false;
+  bool _historicalAmsi = false, _pageScriptClues = false;
   bool? _enabled;
   String _query = '';
   bool _selecting = false;
@@ -736,8 +736,8 @@ final class _BookSourcesPageState extends State<BookSourcesPage> {
           '启用后台检测时，每 30 分钟抽查最多 20 个已启用源；'
           '已采样页面 7 天复查；未确认结果的重试间隔从 30 分钟递增至 24 小时，排队可能更久。'
           '监管期间仅检查策略允许的可信内置文字源，不检查外部书源。'
-          '只查首页部分静态文字和跳转，不验证解析、网页脚本、木马或安全性。'
-          '“动态求值”和 2026-11-15 的历史检出仅是复核线索，不代表恶意或安全。',
+          '只查首页部分静态文字、跳转和内联脚本写法，不执行网页脚本，也不验证解析、木马或安全性。'
+          '网页脚本线索、来源规则“动态求值”和历史检出仅供复核，不代表恶意或安全。',
         ),
       ),
     ],
@@ -751,6 +751,12 @@ final class _BookSourcesPageState extends State<BookSourcesPage> {
               (entry) =>
                   (!_favorites || entry.favorite) &&
                   (!_dynamicRules || bookSourceHasDynamicCode(entry.source)) &&
+                  (!_pageScriptClues ||
+                      _siteResults[entry.source.id]
+                              ?.inspection
+                              .scriptReview
+                              .hasClues ==
+                          true) &&
                   (!_historicalAmsi ||
                       bookSourceHasHistoricalAmsiClue(entry.source)) &&
                   (_enabled == null || entry.enabled == _enabled) &&
@@ -895,6 +901,11 @@ final class _BookSourcesPageState extends State<BookSourcesPage> {
               label: const Text('动态求值'),
               selected: _dynamicRules,
               onSelected: (value) => setState(() => _dynamicRules = value),
+            ),
+            FilterChip(
+              label: const Text('网页脚本线索'),
+              selected: _pageScriptClues,
+              onSelected: (value) => setState(() => _pageScriptClues = value),
             ),
             FilterChip(
               label: const Text('历史检出'),

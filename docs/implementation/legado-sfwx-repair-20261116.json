@@ -1,0 +1,258 @@
+{
+  "schema_version": 1,
+  "purpose": "Three recovered bundled source search samples and a narrowly scoped declarative repair of record 4760.",
+  "inputs": {
+    "archive_path": "assets/catalogs/books/legado/catalog.json.bz2",
+    "archive_sha256": "012a0e0d6e6adc8d303c32b578510e14b562088b3e965cb01a1a647b5e7e034d",
+    "historical_git_commit": "f7b5697d49fdc5113274e5add45a1108638957c5",
+    "historical_ledger_path": "docs/implementation/legado-source-ledger-20261115.json",
+    "historical_ledger_sha256": "fb6b8ace9e42eed5ab9756cb3a35d115a83466479b1946e968afe13306aee8c6",
+    "historical_head_path": "docs/implementation/legado-unresolved-head-later-20261116.json",
+    "historical_head_sha256": "3024ff03581b0de4b286601188974e05cd8f7cf602b8af49e234ce054d2a6ebd",
+    "probe_helper_path": "tool/audit_legado_catalog.py",
+    "probe_helper_sha256": "36f5359259ba259e84ae10875be6383884ad0cc71e829f029dd96b6dc9976563"
+  },
+  "method": {
+    "started_at_utc": "2026-11-15T21:57:07.248841+00:00",
+    "ended_at_utc": "2026-11-15T22:11:37.573497+00:00",
+    "http_method": "GET",
+    "https_port": 443,
+    "all_dns_addresses_must_be_public": true,
+    "fixed_public_ip_with_tls_hostname_validation": true,
+    "redirects_followed": false,
+    "credentials_sent": false,
+    "post_sent": false,
+    "scripts_executed": false,
+    "subresources_loaded": false,
+    "timeout_seconds": 12,
+    "sample_limit_bytes": 262144,
+    "minimum_spacing_seconds_per_probe_process": 1.5,
+    "page_content_saved": false,
+    "work_identifiers_saved": false,
+    "engine": "LegadoOperation books/details/toc/content from current Dart application, no script-capable runtime used"
+  },
+  "sources": [
+    {
+      "record_index": 4760,
+      "source_id": "0723af128aa8adacd3e3a9efe03b622fa660d2f78a21b72cbe2bfe7d32ce8b75",
+      "endpoint_host": "www.sfwx.com",
+      "historical_raw_sha256": "e73d7875c34940758f5a35a57cc94f314b9b3f12966a22070bd6862bc28ccf54",
+      "historical_legado_sha256": "b91ea60260f819a4d31198672593d844caaaee381918419a46888814190ad411",
+      "raw_field_sha256": {
+        "searchUrl": "633a2f0ec48ba162e14d43c596236fa9263f9d37530b796e59a41e76994e2b31",
+        "ruleBookInfo": "d5fbe6e9386524bb0574e0f82eefc3cd73384e6de7fd1057648d3034620797c2",
+        "ruleToc": "2e5acb42f956aad2fb6a6ef3e3465e1bba0b235edec6b47582819a6d0bf636ad",
+        "ruleContent": "0185eed57d8afb8b62ea7a7bcb790e75fa7726cb2e020f10c4eebfb6b2ba5289"
+      },
+      "prior_recovery_head_at_utc": "2026-11-15T20:37:49.892398+00:00",
+      "prior_recovery_head_status": 200,
+      "source_static_adult": false,
+      "source_static_quarantined": false
+    },
+    {
+      "record_index": 3002,
+      "source_id": "ad35798f5b42bac39ba862133be63224081484921a86a8e8e6b5570e65ca63a3",
+      "endpoint_host": "www.biquge7.xyz",
+      "historical_raw_sha256": "9a8290e740b7356b4a0d90fd2bd1af1ec580033f7656581db3a21985ed2ce2a6",
+      "historical_legado_sha256": "e0768b6f273fc63bb1f09fc7bfb2514b749a3d15f0eb934bf797c1f6cdfac7cf",
+      "raw_field_sha256": {
+        "searchUrl": "4ac247a22b67e9ff2943e3779859b27fa4f7bc5c7e61d0adde6029fea40b30fa",
+        "ruleBookInfo": "50f5d51a4d22b880929f00f73bc0558478a6b580e0676eb6d97045660823969a",
+        "ruleToc": "2675e3dad8d95238cdf3e74c44d0f1f3a7cfdef01f087f9d053b8f35441063d7",
+        "ruleContent": "5cff36151229332a20c7365323cc6acd0a4a6c3f06afee75c3d3e1c2070030f3"
+      },
+      "prior_recovery_head_at_utc": "2026-11-15T20:37:07.950571+00:00",
+      "prior_recovery_head_status": 200,
+      "source_static_adult": false,
+      "source_static_quarantined": false
+    },
+    {
+      "record_index": 2578,
+      "source_id": "926a302f72881a7c6488555dfd0779da9db89c7f1ae35fbb14fbaaa9846caa43",
+      "endpoint_host": "www.b520.cc",
+      "historical_raw_sha256": "c913ab7769be5af5e210ba681cc47eb8c71dc7fa1269dd444fa665efbd24d0a3",
+      "historical_legado_sha256": "fc3ddc6cb8e9c568200327d1d360ba7fad42e88a698abb18b57147f8c536b2f8",
+      "raw_field_sha256": {
+        "searchUrl": "5285357d2748055044d43a100d5c985761f24eb706ec8b0caa839648fecdf588",
+        "ruleBookInfo": "6007fc39896a56754ffa5d45ffff56aa8f2b587c0165f75a304f7df18fd61b3e",
+        "ruleToc": "b8f3a8ee52e899323da78a700f50ac7215a5521729f429d6bebf4232ab03e07b",
+        "ruleContent": "99a7872a7427a8eb66bf15e5c705676fc8d959e73fc01facbb46b120fd342869"
+      },
+      "prior_recovery_head_at_utc": "2026-11-15T20:37:03.618686+00:00",
+      "prior_recovery_head_status": 200,
+      "source_static_adult": false,
+      "source_static_quarantined": false
+    }
+  ],
+  "observations": {
+    "record_3002": {
+      "search": {
+        "observed_at_utc": "2026-11-15T21:57:07.248933+00:00",
+        "status": 200,
+        "sample_bytes": 38913,
+        "sample_sha256": "c7acb9f8fe35a73ef84125dcfc2f21df4415567b100c6c00c9964d2d058564fc",
+        "truncated": false,
+        "books": 30,
+        "same_host_books": 30
+      },
+      "detail": {
+        "observed_at_utc": "2026-11-15T21:57:15.797513+00:00",
+        "status": 200,
+        "sample_bytes": 30739,
+        "sample_sha256": "b42a9567aaf95c8447da5e57e77cd9127c228320375bc66c84a9d10e0a0c9878",
+        "truncated": false,
+        "title_and_author_match": true
+      },
+      "toc": {
+        "observed_at_utc": "2026-11-15T21:57:21.537670+00:00",
+        "status": 200,
+        "sample_bytes": 30739,
+        "sample_sha256": "859358e5b2f87a779543123d1212decd890706c5e8238d724bd785d7938c345e",
+        "truncated": false,
+        "chapters": 120
+      },
+      "chapter": {
+        "observed_at_utc": "2026-11-15T21:57:27.510996+00:00",
+        "status": 200,
+        "sample_bytes": 23232,
+        "sample_sha256": "af0f7547c6cbecdc5fbb55572f25ee5a39449462ef54b1aeec43f00efb17d1c8",
+        "truncated": false,
+        "story_character_clue": true,
+        "content_utf16_code_units": 4656
+      }
+    },
+    "record_2578": {
+      "search": {
+        "observed_at_utc": "2026-11-15T21:57:10.249564+00:00",
+        "status": 404,
+        "body_sampled": false
+      },
+      "detail_toc_content": "not_requested"
+    },
+    "record_4760": {
+      "work_a": {
+        "search": {
+          "observed_at_utc": "2026-11-15T21:58:15.429623+00:00",
+          "status": 200,
+          "sample_bytes": 8268,
+          "sample_sha256": "23a16629637cbd99a21f369b3f1cb6f7bbfcfd3b6ddd08159f7ec1375c2a6ca8",
+          "truncated": false,
+          "books": 6,
+          "title_and_author_match_count": 1
+        },
+        "detail_and_toc": {
+          "observed_at_utc": "2026-11-15T22:02:31.202969+00:00",
+          "status": 200,
+          "sample_bytes": 35789,
+          "sample_sha256": "23ce05bc97ce16828139625cc40647978143777b96e25da5b24e2ca8c84f6d17",
+          "truncated": false,
+          "old_details": "FormatException:选择器层数超过限制",
+          "candidate_title_and_author_match": true,
+          "candidate_toc_chapters": 100,
+          "candidate_toc_links": 2,
+          "old_and_candidate_detail_evaluated_at_utc": "2026-11-15T22:00:15.329708+00:00",
+          "observed_at_utc_role": "toc sample; details were evaluated on a prior response with the same byte digest"
+        },
+        "chapters": [
+          {
+            "observed_at_utc": "2026-11-15T22:02:37.162301+00:00",
+            "status": 200,
+            "sample_bytes": 21758,
+            "sample_sha256": "cc36d7bbbcc39a342b9a1b967237314d6b0393ce2e3e4b56823cd2fdbf68bdc0",
+            "truncated": false,
+            "content_sha256": "a5d11167db92013a1ba01f4455ef0d7821c864b7cf5655db20a20b43bbc53230",
+            "old_next_count": 2,
+            "old_next_unique_count": 1,
+            "old_next_matches_second_toc_chapter": true,
+            "visible_next_page_anchors": 0,
+            "content_continuation_marker": false,
+            "without_next_same_content_sha256": true,
+            "without_next_links": 0,
+            "content_utf16_code_units": 4739
+          },
+          {
+            "observed_at_utc": "2026-11-15T22:02:43.436981+00:00",
+            "status": 200,
+            "sample_bytes": 25003,
+            "sample_sha256": "371fd284718314b53d5a407a6fe88295842c6d9584ea555c8538c4f9de83258d",
+            "truncated": false,
+            "content_sha256": "49a6320a465f0cb6657b399ddc2f3a905acf45763f2e2a76fc4f9a9a1bacba24",
+            "old_next_count": 2,
+            "old_next_unique_count": 1,
+            "visible_next_page_anchors": 0,
+            "content_continuation_marker": false,
+            "without_next_same_content_sha256": true,
+            "without_next_links": 0,
+            "content_utf16_code_units": 5763
+          }
+        ]
+      },
+      "work_b": {
+        "search": {
+          "observed_at_utc": "2026-11-15T22:03:48.145760+00:00",
+          "status": 200,
+          "sample_bytes": 18499,
+          "sample_sha256": "1a53ddff1c1338fcef31e2b6b3eccf817ffedf38ea69f062362c578408d67cbc",
+          "truncated": false,
+          "books": 20,
+          "title_and_author_match_count": 1
+        },
+        "detail_and_toc": {
+          "observed_at_utc": "2026-11-15T22:03:54.651212+00:00",
+          "status": 200,
+          "sample_bytes": 35750,
+          "sample_sha256": "e1ccbbcaa496f18c8a0bd2f0859063dc9a9aba6655cfda963d79a5c4f5b74376",
+          "truncated": false,
+          "old_details": "FormatException:选择器层数超过限制",
+          "candidate_title_and_author_match": true,
+          "candidate_toc_chapters": 100,
+          "candidate_toc_links": 2
+        },
+        "chapters": [
+          {
+            "observed_at_utc": "2026-11-15T22:04:05.430579+00:00",
+            "status": 200,
+            "sample_bytes": 20188,
+            "sample_sha256": "9ded7b9de7e09ad777bd20183540dde6422d66c33fa8572fdefac3bc358f875f",
+            "truncated": false,
+            "content_sha256": "517e47f51225baff06cb94a05641f615a70f7309db8ef463ef9f1fe1899e21d3",
+            "old_next_count": 2,
+            "old_next_unique_count": 1,
+            "old_next_matches_second_toc_chapter": false,
+            "visible_next_page_anchors": 0,
+            "content_continuation_marker": false,
+            "without_next_same_content_sha256": true,
+            "without_next_links": 0,
+            "content_utf16_code_units": 4109
+          }
+        ]
+      },
+      "category_recheck": {
+        "observed_at_utc": "2026-11-15T22:11:37.573497+00:00",
+        "status": 200,
+        "sample_bytes": 35789,
+        "sample_sha256": "23ce05bc97ce16828139625cc40647978143777b96e25da5b24e2ca8c84f6d17",
+        "truncated": false,
+        "nonempty_category_meta_count": 1,
+        "pipe_expression_output_length": 0,
+        "explicit_selector_output_length": 27,
+        "explicit_selector_contains_category_meta": true,
+        "production_selector": "[property$=category]@content",
+        "production_selector_evaluated_separately_on_saved_live_sample": false,
+        "first_component_of_observed_three_selector_expression": true,
+        "synthetic_exact_adult_label_preserved": true,
+        "synthetic_ordinary_label_preserved": true
+      }
+    }
+  },
+  "limitations": [
+    "Network responses, sampling code and actual work identifiers are not retained; independent offline reconstruction of the observed HTML or engine results is not possible.",
+    "The two works and three chapters are samples; long chapters or genuine intra-chapter pagination were not verified.",
+    "For work B the old next target was not the second listed table-of-contents entry; its exact destination was not classified.",
+    "HTTP status, extracted content or a clean prior static audit does not prove site safety, future availability, or all works readable.",
+    "The 404 is a single search-path observation and does not establish that the full source is unavailable.",
+    "Current source-level static policy was checked; user settings, dynamic blocklists, and risk databases were not read.",
+    "Candidate rule with unused infoWordCount additionally set was tested in memory; the shipped repair omits this unrelated optional field.",
+    "The category recheck covers one work at the observation time; other works and future pages may expose different metadata."
+  ]
+}
