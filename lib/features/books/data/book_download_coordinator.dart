@@ -34,6 +34,7 @@ final class BookDownloadTask extends ChangeNotifier {
 final class BookDownloadCoordinator extends ChangeNotifier {
   BookDownloadCoordinator(this.repository, {this.downloadChapter}) {
     repository.policy.addListener(_policyChanged);
+    repository.sourceRiskChanges.addListener(_policyChanged);
   }
 
   final BooksRepository repository;
@@ -210,6 +211,7 @@ final class BookDownloadCoordinator extends ChangeNotifier {
   Future<void> close() async {
     _closed = true;
     repository.policy.removeListener(_policyChanged);
+    repository.sourceRiskChanges.removeListener(_policyChanged);
     final tasks = _tasks.values.toList();
     for (final task in tasks) {
       task.pause();

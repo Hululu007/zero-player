@@ -37,6 +37,8 @@ import '../features/live/data/live_audit_defaults.dart';
 import '../features/radio/data/radio_repository.dart';
 import '../features/radio/application/radio_controller.dart';
 import '../features/books/application/audiobook_controller.dart';
+import '../features/books/application/book_site_checks.dart';
+import '../features/books/application/book_site_monitor.dart';
 import '../core/platform/background_audio_group.dart';
 import '../features/music/data/myfreemp3_client.dart';
 import '../features/music/data/music_repository.dart';
@@ -167,6 +169,12 @@ final class AppServices {
     exporter.validateAudiobook,
     coverCacheMiB: settings.value.bookCoverCacheMiB,
   );
+  BookSiteChecks? _bookSiteChecks;
+  BookSiteChecks get bookSiteChecks =>
+      _bookSiteChecks ??= BookSiteChecks(books);
+  BookSiteMonitor? _bookSiteMonitor;
+  BookSiteMonitor get bookSiteMonitor =>
+      _bookSiteMonitor ??= BookSiteMonitor(bookSiteChecks, settings);
   BookDownloadCoordinator? _bookDownloads;
   BookDownloadCoordinator get bookDownloads =>
       _bookDownloads ??= BookDownloadCoordinator(books);
@@ -302,12 +310,21 @@ final class AppServices {
   );
 
   Future<void> restoreBackup(BackupPreview preview) async {
-    await backup.restore(preview);
-    contentPolicy.forgetSources();
-    await sources.all(includeSuppressed: true);
-    await settings.load();
-    contentPolicy.refresh();
-    await _musicLibrary?.reload();
+    final bookRepository = _books;
+    bookRepository?.suspendSourceRisks();
+    try {
+      await backup.restore(preview);
+      contentPolicy.forgetSources();
+      await sources.all(includeSuppressed: true);
+      await settings.load();
+      await _musicLibrary?.reload();
+    } finally {
+      try {
+        await bookRepository?.resumeSourceRisks();
+      } finally {
+        contentPolicy.refresh();
+      }
+    }
   }
 
   late final store = SegmentStore(
@@ -515,6 +532,7 @@ final class AppServices {
         () => _musicRecommendations?.close(),
         () => _audiobookPlayer?.close(),
         () => _bookDownloads?.close(),
+        () => _bookSiteMonitor?.close(),
         () => _books?.close(),
         () async {
           await _musicOpenApi?.close();

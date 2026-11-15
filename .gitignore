@@ -51,6 +51,14 @@ migrate_working_dir/
 !/docs/implementation/BUILD.md
 !/docs/implementation/STATUS.md
 !/docs/implementation/COMIC_SOURCE_AUDIT.md
+!/docs/implementation/BOOK_SOURCE_AUDIT.md
+!/docs/implementation/legado-host-audit-20261115.json
+!/docs/implementation/legado-import-inventory-20261115.json
+!/docs/implementation/legado-adult-label-evidence-20261115.json
+!/docs/implementation/legado-targeted-rechecks-20261115.json
+!/docs/implementation/legado-rule-patterns-20261115.json
+!/docs/implementation/legado-eval-triage-20261115.json
+!/docs/implementation/legado-eval-normalized-20261115.json
 !/docs/implementation/LIVE_SOURCES.md
 !/docs/implementation/USER-GUIDE.md
 !/docs/implementation/RELEASE-0.0.1.md

@@ -60,22 +60,46 @@ final class _AudiobookPlayerPageState extends State<AudiobookPlayerPage> {
       builder: (context) => SafeArea(
         child: SizedBox(
           height: MediaQuery.sizeOf(context).height * .7,
-          child: ListView.builder(
-            itemCount: player.chapters.length,
-            itemBuilder: (context, index) {
-              final item = player.chapters[index];
-              return ListTile(
-                selected: item.id == player.chapter?.id,
-                leading: Text('${index + 1}'),
-                title: Text(item.title, maxLines: 2),
-                onTap: () => Navigator.pop(context, item),
+          child: ListenableBuilder(
+            listenable: Listenable.merge([
+              player,
+              widget.services.contentPolicy,
+            ]),
+            builder: (context, _) {
+              final books = widget.services.books;
+              final work = player.book;
+              if (work == null || !books.bookAllowed(work)) {
+                return const Center(child: Text('当前内容策略限制访问此作品'));
+              }
+              final chapters = player.chapters
+                  .where((item) => books.policy.textAllowed(item.title))
+                  .toList();
+              return ListView.builder(
+                itemCount: chapters.length,
+                itemBuilder: (context, index) {
+                  final item = chapters[index];
+                  return ListTile(
+                    selected: item.id == player.chapter?.id,
+                    leading: Text('${index + 1}'),
+                    title: Text(item.title, maxLines: 2),
+                    onTap: () => Navigator.pop(context, item),
+                  );
+                },
               );
             },
           ),
         ),
       ),
     );
-    if (chapter != null && mounted) player.choose(chapter);
+    final work = player.book;
+    if (chapter != null &&
+        mounted &&
+        work != null &&
+        widget.services.books.bookAllowed(work) &&
+        widget.services.contentPolicy.textAllowed(chapter.title) &&
+        player.chapters.contains(chapter)) {
+      player.choose(chapter);
+    }
   }
 
   void _skip(Duration offset) {
@@ -89,6 +113,12 @@ final class _AudiobookPlayerPageState extends State<AudiobookPlayerPage> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    if (!widget.services.books.bookAllowed(player.book ?? widget.book)) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('听书')),
+        body: const Center(child: Text('当前内容策略限制访问此作品')),
+      );
+    }
     final chapter = player.chapter;
     final state = player.snapshot;
     final active = player.active && !player.loading && player.error == null;
@@ -284,6 +314,16 @@ final class AudiobookMiniPlayer extends StatelessWidget {
     builder: (context, _) {
       final player = services.audiobookPlayer;
       if (!player.active) return const SizedBox.shrink();
+      if (player.book == null || !services.books.bookAllowed(player.book!)) {
+        return ListTile(
+          title: const Text('当前内容策略限制播放'),
+          trailing: IconButton(
+            tooltip: '停止听书',
+            onPressed: player.stop,
+            icon: const Icon(Icons.close),
+          ),
+        );
+      }
       return Material(
         color: Theme.of(context).colorScheme.surfaceContainerHigh,
         child: SafeArea(

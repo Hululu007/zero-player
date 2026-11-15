@@ -63,6 +63,7 @@ final class _ProductAppState extends ConsumerState<ProductApp>
     );
     unawaited(services.subscriptions.refreshDue());
     services.sourceMonitor.start();
+    services.bookSiteMonitor.start();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted && LocalVideo.startupPath != null) {
         final path = LocalVideo.startupPath!;

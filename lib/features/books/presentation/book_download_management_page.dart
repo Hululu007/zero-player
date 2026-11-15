@@ -44,13 +44,27 @@ final class _BookDownloadManagementPageState
   void initState() {
     super.initState();
     _manager.addListener(_tasksChanged);
+    widget.services.contentPolicy.addListener(_policyChanged);
+    widget.services.books.sourceRiskChanges.addListener(_policyChanged);
     unawaited(_reload());
   }
 
   @override
   void dispose() {
     _manager.removeListener(_tasksChanged);
+    widget.services.contentPolicy.removeListener(_policyChanged);
+    widget.services.books.sourceRiskChanges.removeListener(_policyChanged);
     super.dispose();
+  }
+
+  void _policyChanged() {
+    if (!mounted) return;
+    setState(() {
+      _items.removeWhere(
+        (item) => !widget.services.books.bookAllowed(item.entry.book),
+      );
+    });
+    unawaited(_reload());
   }
 
   void _tasksChanged() {
@@ -74,6 +88,7 @@ final class _BookDownloadManagementPageState
     final sequence = ++_sequence;
     if (mounted) setState(() => _loading = true);
     try {
+      await widget.services.books.ensureSourceRiskLoaded();
       final store = widget.services.books.store;
       final plans = await store.downloadPlans();
       final shelf = await store.shelf();
@@ -95,7 +110,8 @@ final class _BookDownloadManagementPageState
       }
       for (final task in _manager.activeTasks) {
         final book = task.book;
-        if (seen.contains(book.id) || !widget.services.books.bookAllowed(book)) {
+        if (seen.contains(book.id) ||
+            !widget.services.books.bookAllowed(book)) {
           continue;
         }
         items.add((
@@ -187,6 +203,7 @@ final class _BookDownloadManagementPageState
   }
 
   List<_DownloadItem> get _visible => _items.where((item) {
+    if (!widget.services.books.bookAllowed(item.entry.book)) return false;
     if (_kind != null && item.entry.book.kind != _kind) return false;
     final running = _manager.active(item.entry.book) != null;
     return switch (_filter) {

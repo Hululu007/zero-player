@@ -8,6 +8,7 @@ import 'package:zero_player/core/network/cancellation_token.dart';
 import 'package:zero_player/core/network/document_client.dart';
 import 'package:zero_player/core/network/media_http_client.dart';
 import 'package:zero_player/core/persistence/app_database.dart';
+import 'package:zero_player/core/persistence/installation_metadata.dart';
 import 'package:zero_player/features/books/data/audiobook_files.dart';
 import 'package:zero_player/features/books/data/book_html.dart';
 import 'package:zero_player/features/books/data/book_import.dart';
@@ -208,8 +209,15 @@ void _fallbackTest() {
         await services.close();
         await root.delete(recursive: true);
       });
+      await services.db.write('INSERT OR REPLACE INTO app_meta VALUES(?,?)', [
+        installationAccessKey,
+        upgradedInstallationAccess,
+      ]);
       await services.settings.load();
       await services.supervision.load();
+      // An orphaned online work is readable only when adult filtering is off;
+      // supervision below must still block it despite that preference.
+      await services.settings.update({'filterAdult': false});
       final repository = services.books;
       final original = Book(
         'unavailable',

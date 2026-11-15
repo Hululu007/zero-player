@@ -3,6 +3,7 @@ import 'dart:io';
 import '../../../core/network/network_target_policy.dart';
 import '../../sources/domain/video_source.dart';
 import 'legado_source.dart';
+import 'legado_source_fixes.dart';
 
 enum BookKind { text, audio, comic }
 
@@ -69,11 +70,14 @@ final class BookSource {
       rules = _rules(data['rules']),
       legado = data['legado'] == null
           ? null
-          : LegadoSource.fromJson(_comicLegadoRules(data)),
+          : LegadoSource.fromJson(
+              repairDushuLegadoSource(data, _comicLegadoRules(data)),
+            ),
       mediaHosts = _hosts(_comicMediaHosts(data)),
       originNote = bookLabel(data['originNote'], 240),
       sourceKey = _rule(data['sourceKey'], 2048),
       updatedAt = data['updatedAt'] as int? ?? 0,
+      adultEvidence = data['adultEvidence'] == true,
       defaultEnabled = data['defaultEnabled'] != false,
       directAudio = data['directAudio'] == true {
     final rawFeatured = data['featured'];
@@ -153,6 +157,7 @@ final class BookSource {
   final Uri endpoint;
   final bool builtin;
   final bool defaultEnabled;
+  final bool adultEvidence;
   final bool directAudio;
   final LegadoSource? legado;
   final List<LegadoCategory> discoveryCategories;
@@ -233,6 +238,7 @@ final class BookSource {
     'originNote': originNote,
     if (sourceKey.isNotEmpty) 'sourceKey': sourceKey,
     if (updatedAt != 0) 'updatedAt': updatedAt,
+    if (adultEvidence) 'adultEvidence': true,
     if (directAudio) 'directAudio': true,
     if (!defaultEnabled) 'defaultEnabled': false,
     if (featured.isNotEmpty)

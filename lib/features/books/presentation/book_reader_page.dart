@@ -84,6 +84,7 @@ final class _BookReaderPageState extends State<BookReaderPage>
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     _books.policy.addListener(_policyChanged);
+    _books.sourceRiskChanges.addListener(_policyChanged);
     unawaited(_start());
     _clock = Timer.periodic(const Duration(minutes: 1), (_) {
       if (mounted && _style.status) setState(() {});
@@ -544,6 +545,7 @@ final class _BookReaderPageState extends State<BookReaderPage>
     _token?.cancel();
     _endToken?.cancel();
     _books.policy.removeListener(_policyChanged);
+    _books.sourceRiskChanges.removeListener(_policyChanged);
     _paperFocus.dispose();
     _contentsFocus.dispose();
     _progress.dispose();
@@ -722,7 +724,7 @@ final class _BookReaderPageState extends State<BookReaderPage>
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      _chapter.title,
+                      _books.bookAllowed(widget.book) ? _chapter.title : '阅读',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(

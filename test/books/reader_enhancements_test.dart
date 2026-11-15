@@ -13,6 +13,8 @@ import 'package:zero_player/features/books/presentation/book_reader_page.dart';
 import 'package:zero_player/features/books/presentation/reader_pagination.dart';
 import 'package:zero_player/features/books/presentation/reader_style.dart';
 
+import '../../test_support/book_fixture_source.dart';
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   test(
@@ -311,8 +313,10 @@ void _fallbackTest() {
       });
       await repository.importSources([source]);
       await repository.saveSource(source, {'enabled': true});
+      final primary = bookFixtureSource('original.test');
+      await repository.importSources([primary]);
       final original = Book(
-        'missing',
+        primary.id,
         BookKind.text,
         '同一本书',
         '作者',

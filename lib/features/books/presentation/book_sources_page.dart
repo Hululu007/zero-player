@@ -1,12 +1,18 @@
+import 'dart:async';
+import 'dart:convert';
+
 import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
 
 import '../../../app/app_services.dart';
 import '../../../core/network/cancellation_token.dart';
 import '../../../core/network/document_client.dart';
+import '../../supervision/domain/adult_source_evidence.dart';
 import '../../supervision/presentation/sensitive_action.dart';
+import '../application/book_site_checks.dart';
 import '../data/aoaostar_book_catalog.dart';
 import '../data/book_import.dart';
+import '../data/book_source_risk_store.dart';
 import '../data/book_store.dart';
 import '../data/books_repository.dart';
 import '../domain/book.dart';
@@ -19,9 +25,14 @@ final class BookSourcesPage extends StatefulWidget {
     super.key,
     required this.services,
     required this.kind,
+    this.afterSourceReadForTesting,
   });
   final AppServices services;
   final BookKind kind;
+
+  /// Allows a test to change policy or source metadata between reads.
+  @visibleForTesting
+  final Future<void> Function()? afterSourceReadForTesting;
   @override
   State<BookSourcesPage> createState() => _BookSourcesPageState();
 }
@@ -34,29 +45,62 @@ final class _BookSourcesPageState extends State<BookSourcesPage> {
   bool _selecting = false;
   final _selected = <String>{};
   CancellationToken? _token;
+  late final BookSiteChecks _siteChecks;
+  late String _sitePolicySnapshot;
+  Map<String, BookSiteCheck> _siteResults = {};
+  String? _siteProgress;
+  late final StreamSubscription<void> _sourceChanges;
+  Timer? _sourceRefresh;
+  int _sourceRevision = 0;
   AppServices get _services => widget.services;
 
   @override
   void initState() {
     super.initState();
+    _siteChecks = _services.bookSiteChecks;
+    _sitePolicySnapshot = bookSitePolicySnapshot(_services.contentPolicy);
     _services.contentPolicy.addListener(_policyChanged);
+    _services.books.sourceRiskChanges.addListener(_policyChanged);
+    _sourceChanges = _services.books.store.db
+        .changesFor(const {'app_meta'})
+        .listen((_) => _dataChanged());
     _run(_services.books.ensureCatalog);
   }
 
   @override
   void dispose() {
     _token?.cancel();
+    _sourceRefresh?.cancel();
+    unawaited(_sourceChanges.cancel());
     _services.contentPolicy.removeListener(_policyChanged);
+    _services.books.sourceRiskChanges.removeListener(_policyChanged);
     super.dispose();
   }
 
   void _policyChanged() {
-    _token?.cancel();
+    _sourceRevision++;
+    final next = bookSitePolicySnapshot(_services.contentPolicy);
+    if (next != _sitePolicySnapshot) _token?.cancel();
+    _sitePolicySnapshot = next;
     setState(() {
       _entries = [];
+      _siteResults = {};
       _selected.clear();
     });
-    if (!_busy) _run(() async {});
+    if (!_busy) _queueRefresh();
+  }
+
+  void _dataChanged() {
+    _sourceRevision++;
+    if (mounted && !_busy) _queueRefresh();
+  }
+
+  void _queueRefresh() {
+    if (_sourceRefresh != null) return;
+    _sourceRefresh = Timer(const Duration(milliseconds: 100), () {
+      _sourceRefresh = null;
+      if (mounted && !_busy) _run(() async {});
+    });
   }
 
   void _notice(String message) {
@@ -92,13 +136,64 @@ final class _BookSourcesPageState extends State<BookSourcesPage> {
       _notice('操作未完成，请重试');
     } finally {
       try {
-        final entries = await _services.books.sources(widget.kind);
-        if (mounted) setState(() => _entries = entries);
+        await _reloadSources();
       } catch (_) {
         _notice('无法读取来源清单');
       }
       if (mounted) setState(() => _busy = false);
     }
+  }
+
+  Future<void> _reloadSources() async {
+    for (var attempt = 0; attempt < 4 && mounted; attempt++) {
+      final revision = _sourceRevision;
+      final policy = bookSitePolicySnapshot(_services.contentPolicy);
+      final entries = await _services.books.sources(widget.kind);
+      await widget.afterSourceReadForTesting?.call();
+      final siteResults = await _siteChecks.load(entries);
+      final latest = await _services.books.sources(widget.kind);
+      if (!mounted) return;
+      if (revision != _sourceRevision ||
+          policy != bookSitePolicySnapshot(_services.contentPolicy) ||
+          !_sameEntries(entries, latest)) {
+        continue;
+      }
+      // No asynchronous work between the final policy check and setState.
+      final allowed = latest.where(_services.books.sourceEntryAllowed).toList();
+      setState(() {
+        _entries = allowed;
+        _siteResults = siteResults;
+      });
+      return;
+    }
+    if (mounted) {
+      setState(() {
+        _entries = [];
+        _siteResults = {};
+      });
+      _queueRefresh();
+    }
+  }
+
+  bool _sameEntries(List<BookSourceEntry> first, List<BookSourceEntry> second) {
+    if (first.length != second.length) return false;
+    String signature(BookSourceEntry entry) => jsonEncode([
+      entry.source.toJson(),
+      entry.source.builtin,
+      entry.enabled,
+      entry.favorite,
+      entry.group,
+      entry.health,
+      entry.checkedAt,
+      entry.subscriptionId,
+      entry.fromCatalog,
+    ]);
+    final previous = {
+      for (final entry in first) entry.source.id: signature(entry),
+    };
+    return second.every(
+      (entry) => previous[entry.source.id] == signature(entry),
+    );
   }
 
   Future<String?> _prompt(
@@ -263,36 +358,58 @@ final class _BookSourcesPageState extends State<BookSourcesPage> {
             content: SizedBox(
               width: 520,
               height: 280,
-              child: entries.isEmpty
-                  ? const Center(child: Text('还没有导入订阅链接'))
-                  : ListView.builder(
-                      itemCount: entries.length,
-                      itemBuilder: (context, index) {
-                        final entry = entries[index];
-                        return ListTile(
-                          title: Text(entry.url.host),
-                          subtitle: Text(
-                            '${entry.url.path}\n最近核对 ${entry.count} 个源',
-                            maxLines: 3,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          trailing: PopupMenuButton<bool>(
-                            tooltip: '订阅操作',
-                            onSelected: (refresh) => Navigator.pop(context, (
-                              entry: entry,
-                              refresh: refresh,
-                            )),
-                            itemBuilder: (_) => const [
-                              PopupMenuItem(value: true, child: Text('刷新订阅')),
-                              PopupMenuItem(
-                                value: false,
-                                child: Text('移除订阅链接'),
-                              ),
-                            ],
-                          ),
-                        );
-                      },
-                    ),
+              child: ListenableBuilder(
+                listenable: Listenable.merge([
+                  _services.contentPolicy,
+                  _services.books.sourceRiskChanges,
+                ]),
+                builder: (context, _) {
+                  final policy = _services.contentPolicy;
+                  final shown =
+                      !_services.books.sourceRisksReady ||
+                          policy.supervision.enabled ||
+                          policy.supervision.corrupted
+                      ? <BookSourceSubscription>[]
+                      : entries
+                            .where(
+                              (entry) =>
+                                  policy.textAllowed(
+                                    '${entry.url.host} ${entry.url.path}',
+                                  ) &&
+                                  !(policy.filterAdult &&
+                                      knownAdultHost(entry.url.host)),
+                            )
+                            .toList();
+                  if (shown.isEmpty) {
+                    return const Center(child: Text('没有可显示的订阅链接'));
+                  }
+                  return ListView.builder(
+                    itemCount: shown.length,
+                    itemBuilder: (context, index) {
+                      final entry = shown[index];
+                      return ListTile(
+                        title: Text(entry.url.host),
+                        subtitle: Text(
+                          '${entry.url.path}\n最近核对 ${entry.count} 个源',
+                          maxLines: 3,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        trailing: PopupMenuButton<bool>(
+                          tooltip: '订阅操作',
+                          onSelected: (refresh) => Navigator.pop(context, (
+                            entry: entry,
+                            refresh: refresh,
+                          )),
+                          itemBuilder: (_) => const [
+                            PopupMenuItem(value: true, child: Text('刷新订阅')),
+                            PopupMenuItem(value: false, child: Text('移除订阅链接')),
+                          ],
+                        ),
+                      );
+                    },
+                  );
+                },
+              ),
             ),
             actions: [
               TextButton(
@@ -357,6 +474,146 @@ final class _BookSourcesPageState extends State<BookSourcesPage> {
     }, protected: true);
   }
 
+  Future<void> _scanSites(List<BookSourceEntry> entries) => _run(() async {
+    final token = _token = CancellationToken();
+    setStateIfMounted(() => _siteProgress = '网页抽查 0 / ${entries.length}');
+    try {
+      final summary = await _services.bookSiteMonitor.whileManual(
+        token,
+        () => _siteChecks.run(
+          entries,
+          token,
+          onProgress: (checked, total) =>
+              setStateIfMounted(() => _siteProgress = '网页抽查 $checked / $total'),
+        ),
+      );
+      _notice(
+        '网页抽查 ${summary.checked} 项，博彩强线索隔离 ${summary.quarantined} 项，'
+        '成人强线索标记 ${summary.adult} 项；跳过 ${summary.skipped} 项，'
+        '未完成 ${summary.failed} 项，其余仍需人工复核',
+      );
+    } on RequestCancelled {
+      _notice('网页抽查已取消或因策略变化中止，已完成的结果和风险记录保留');
+    } finally {
+      if (identical(token, _token)) {
+        setStateIfMounted(() {
+          _token = null;
+          _siteProgress = null;
+        });
+      }
+    }
+  }, protected: true);
+
+  Future<void> _scanVisibleSites() async {
+    final entries = _selecting
+        ? _entries
+              .where((entry) => _selected.contains(entry.source.id))
+              .toList()
+        : _visibleEntries();
+    if (entries.isEmpty) {
+      _notice('没有可检查的来源');
+      return;
+    }
+    if (entries.length > 100) _notice('本次最多检查 100 项，请缩小筛选范围继续');
+    await _scanSites(entries.take(100).toList());
+  }
+
+  Future<void> _sourceRisks() => _run(() async {
+    final risks = await _services.books.sourceRiskEntries();
+    if (!mounted) return;
+    final selected = await showDialog<BookSourceRiskEntry>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('风险记录'),
+        content: SizedBox(
+          width: 520,
+          height: 300,
+          child: Column(
+            children: [
+              const Text('列表受当前内容策略限制；同域关联项请复核产生记录的来源。'),
+              const SizedBox(height: 8),
+              Expanded(
+                child: ListenableBuilder(
+                  listenable: Listenable.merge([
+                    _services.contentPolicy,
+                    _services.books.sourceRiskChanges,
+                  ]),
+                  builder: (context, _) {
+                    final policy = _services.contentPolicy;
+                    final shown = risks
+                        .where(
+                          (risk) =>
+                              _services.books.sourceRisksReady &&
+                              !policy.supervision.enabled &&
+                              !policy.supervision.corrupted &&
+                              !(policy.filterAdult && risk.adult) &&
+                              policy.textAllowed('${risk.name} ${risk.host}'),
+                        )
+                        .toList();
+                    if (shown.isEmpty) {
+                      return const Center(child: Text('没有可显示的风险记录'));
+                    }
+                    return ListView.builder(
+                      itemCount: shown.length,
+                      itemBuilder: (_, index) {
+                        final risk = shown[index];
+                        return ListTile(
+                          title: Text(risk.name),
+                          subtitle: Text(
+                            [
+                              risk.host,
+                              if (risk.adult) '成人线索',
+                              if (risk.quarantined) '已隔离',
+                              if (risk.fixedQuarantine) '内置隔离',
+                            ].join(' · '),
+                          ),
+                          trailing: risk.fixedQuarantine || risk.version <= 0
+                              ? null
+                              : TextButton(
+                                  onPressed: () => Navigator.pop(context, risk),
+                                  child: const Text('人工复核'),
+                                ),
+                        );
+                      },
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('关闭'),
+          ),
+        ],
+      ),
+    );
+    if (!mounted || selected == null) return;
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('解除风险记录'),
+        content: const Text('请在安全环境中人工复核后再解除。解除后，同域历史书籍和来源可能重新可用。'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('取消'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('确认解除'),
+          ),
+        ],
+      ),
+    );
+    if (confirm == true) {
+      await _services.books.clearSourceRisk(selected);
+      _notice('已解除该条风险记录；其他同域记录仍可能生效');
+    }
+  }, protected: true);
+
   void setStateIfMounted(VoidCallback update) {
     if (mounted) setState(update);
   }
@@ -371,23 +628,36 @@ final class _BookSourcesPageState extends State<BookSourcesPage> {
         content: SizedBox(
           width: 440,
           height: 280,
-          child: blocked.isEmpty
-              ? const Center(child: Text('暂无屏蔽书源'))
-              : ListView(
-                  children: [
-                    for (final entry in blocked.entries.where(
-                      (entry) =>
-                          _services.contentPolicy.textAllowed(entry.value),
-                    ))
-                      ListTile(
-                        title: Text(entry.value),
-                        trailing: TextButton(
-                          onPressed: () => Navigator.pop(context, entry.key),
-                          child: const Text('解除屏蔽'),
-                        ),
+          child: ListenableBuilder(
+            listenable: Listenable.merge([
+              _services.contentPolicy,
+              _services.books.sourceRiskChanges,
+            ]),
+            builder: (context, _) {
+              final policy = _services.contentPolicy;
+              final shown =
+                  !_services.books.sourceRisksReady ||
+                      policy.supervision.enabled ||
+                      policy.supervision.corrupted
+                  ? <MapEntry<String, String>>[]
+                  : blocked.entries
+                        .where((entry) => policy.textAllowed(entry.value))
+                        .toList();
+              if (shown.isEmpty) return const Center(child: Text('暂无可显示的屏蔽书源'));
+              return ListView(
+                children: [
+                  for (final entry in shown)
+                    ListTile(
+                      title: Text(entry.value),
+                      trailing: TextButton(
+                        onPressed: () => Navigator.pop(context, entry.key),
+                        child: const Text('解除屏蔽'),
                       ),
-                  ],
-                ),
+                    ),
+                ],
+              );
+            },
+          ),
         ),
       ),
     );
@@ -439,22 +709,38 @@ final class _BookSourcesPageState extends State<BookSourcesPage> {
   Widget _restoreControls() => Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
-      Align(
-        alignment: Alignment.centerLeft,
-        child: TextButton.icon(
-          onPressed: _busy
-              ? null
-              : () => _run(
-                  () => _services.books.restoreDefaultSources(widget.kind),
-                  protected: true,
-                ),
-          icon: const Icon(Icons.restore),
-          label: const Text('一键还原默认渠道'),
-        ),
+      Wrap(
+        children: [
+          TextButton.icon(
+            onPressed: _busy
+                ? null
+                : () => _run(
+                    () => _services.books.restoreDefaultSources(widget.kind),
+                    protected: true,
+                  ),
+            icon: const Icon(Icons.restore),
+            label: const Text('一键还原默认渠道'),
+          ),
+          TextButton.icon(
+            onPressed: _busy ? null : _scanVisibleSites,
+            icon: const Icon(Icons.fact_check_outlined),
+            label: const Text('网页抽查'),
+          ),
+          TextButton.icon(
+            onPressed: _busy || _services.supervision.enabled
+                ? null
+                : _sourceRisks,
+            icon: const Icon(Icons.gpp_maybe_outlined),
+            label: const Text('风险记录'),
+          ),
+        ],
       ),
       const Padding(
         padding: EdgeInsets.symmetric(horizontal: 16),
-        child: Text('恢复内置启用状态，停用额外渠道；保留收藏、书架、下载与黑名单。'),
+        child: Text(
+          '未开启监管且启用后台检测时，应用运行期间每 30 分钟抽查最多 20 个超过 7 天未查的已启用源；手动可检查筛选结果。'
+          '只查首页部分静态文字和跳转，不验证解析、网页脚本、木马或安全性。',
+        ),
       ),
     ],
   );
@@ -554,6 +840,7 @@ final class _BookSourcesPageState extends State<BookSourcesPage> {
       body: Column(
         children: [
           if (_busy) const LinearProgressIndicator(),
+          if (_siteProgress != null) Text(_siteProgress!),
           _restoreControls(),
           _filters(),
           if (_selecting) _selectionTools(list),
@@ -646,7 +933,7 @@ final class _BookSourcesPageState extends State<BookSourcesPage> {
       },
       itemBuilder: (_) => [
         const PopupMenuItem(value: 'copy', child: Text('复制渠道链接')),
-        const PopupMenuItem(value: 'probe', child: Text('检测')),
+        const PopupMenuItem(value: 'probe', child: Text('解析检测（执行来源规则）')),
         const PopupMenuItem(value: 'group', child: Text('修改分组')),
         const PopupMenuItem(value: 'remove', child: Text('删除书源')),
         const PopupMenuItem(value: 'block', child: Text('屏蔽并加入黑名单')),
@@ -695,7 +982,9 @@ final class _BookSourcesPageState extends State<BookSourcesPage> {
           if (source.legado != null) 'Legado',
           if (entry.group.isNotEmpty) entry.group,
           source.endpoint.host,
-          if (entry.health.isNotEmpty) entry.health,
+          if (entry.health.isNotEmpty) '解析：${entry.health}',
+          if (_siteResults[source.id] case final check?)
+            '网页：${check.inspection.label} · ${_siteTime(check.checkedAt)}${check.isDue(DateTime.now()) ? '（已过期）' : ''}',
         ].join(' · '),
       ),
       trailing: Row(
@@ -715,5 +1004,12 @@ final class _BookSourcesPageState extends State<BookSourcesPage> {
         ],
       ),
     );
+  }
+
+  String _siteTime(DateTime value) {
+    String two(int n) => n.toString().padLeft(2, '0');
+    final local = value.toLocal();
+    return '${local.year}-${two(local.month)}-${two(local.day)} '
+        '${two(local.hour)}:${two(local.minute)}';
   }
 }

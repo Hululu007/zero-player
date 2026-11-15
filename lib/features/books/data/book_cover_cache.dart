@@ -15,7 +15,7 @@ final class BookCoverCache extends ChangeNotifier {
   final Directory directory;
   final Map<String, _CoverEntry> _entries = {};
   final Map<String, Uint8List> _memory = {};
-  Future<void> _queue = Future.value();
+  Future<void>? _queue;
   int _maxBytes;
   int _memoryBytes = 0;
   int _generation = 0;
@@ -23,13 +23,16 @@ final class BookCoverCache extends ChangeNotifier {
 
   int get generation => _generation;
   int get limitBytes => _maxBytes;
-  Future<void> waitForIdle() => _queue;
+  Future<void> waitForIdle() => _queue ?? Future<void>.value();
 
   String key(String title, String author, Uri cover) =>
       sha256.convert(utf8.encode('$title\u0000$author\u0000$cover')).toString();
 
   Future<T> _serial<T>(Future<T> Function() action) {
-    final result = _queue.then((_) => action());
+    final previous = _queue;
+    final result = previous == null
+        ? Future<T>.sync(action)
+        : previous.then((_) => action());
     _queue = result.then<void>((_) {}, onError: (Object _, StackTrace _) {});
     return result;
   }

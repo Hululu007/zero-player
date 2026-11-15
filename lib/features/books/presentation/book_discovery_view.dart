@@ -517,39 +517,50 @@ final class _BookDiscoveryViewState extends State<BookDiscoveryView> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => StatefulBuilder(
-        builder: (context, update) => AlertDialog(
-          title: const Text('发现页显示渠道'),
-          content: SizedBox(
-            width: 460,
-            height: MediaQuery.sizeOf(context).height * .48,
-            child: ListView.builder(
-              itemCount: _enabled.length,
-              itemBuilder: (_, index) {
-                final source = _enabled[index].source;
-                return CheckboxListTile(
-                  title: Text(source.name),
-                  value: !selected.contains(source.id),
-                  onChanged: (value) => update(() {
-                    if (value == true) {
-                      selected.remove(source.id);
-                    } else {
-                      selected.add(source.id);
-                    }
-                  }),
-                );
-              },
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('取消'),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.pop(context, true),
-              child: const Text('应用'),
-            ),
-          ],
+        builder: (context, update) => ListenableBuilder(
+          listenable: Listenable.merge([
+            widget.repository.policy,
+            widget.repository.sourceRiskChanges,
+          ]),
+          builder: (context, _) {
+            final visible = _enabled
+                .where(widget.repository.sourceEntryAllowed)
+                .toList();
+            return AlertDialog(
+              title: const Text('发现页显示渠道'),
+              content: SizedBox(
+                width: 460,
+                height: MediaQuery.sizeOf(context).height * .48,
+                child: ListView.builder(
+                  itemCount: visible.length,
+                  itemBuilder: (_, index) {
+                    final source = visible[index].source;
+                    return CheckboxListTile(
+                      title: Text(source.name),
+                      value: !selected.contains(source.id),
+                      onChanged: (value) => update(() {
+                        if (value == true) {
+                          selected.remove(source.id);
+                        } else {
+                          selected.add(source.id);
+                        }
+                      }),
+                    );
+                  },
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('取消'),
+                ),
+                FilledButton(
+                  onPressed: () => Navigator.pop(context, true),
+                  child: const Text('应用'),
+                ),
+              ],
+            );
+          },
         ),
       ),
     );
@@ -570,8 +581,18 @@ final class _BookDiscoveryViewState extends State<BookDiscoveryView> {
   Future<void> _pickSource() async {
     final choice = await showDialog<({String? id})>(
       context: context,
-      builder: (context) =>
-          _ChannelPicker(entries: _enabled, selected: _sourceId),
+      builder: (context) => ListenableBuilder(
+        listenable: Listenable.merge([
+          widget.repository.policy,
+          widget.repository.sourceRiskChanges,
+        ]),
+        builder: (context, _) => _ChannelPicker(
+          entries: _enabled
+              .where(widget.repository.sourceEntryAllowed)
+              .toList(),
+          selected: _sourceId,
+        ),
+      ),
     );
     if (mounted && choice != null) _chooseSource(choice.id);
   }

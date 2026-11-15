@@ -15,6 +15,7 @@ final class AudiobookController extends ChangeNotifier
     implements BackgroundAudioSession {
   AudiobookController(this.books, this.createEngine, this.beforePlay) {
     books.policy.addListener(_policyChanged);
+    books.sourceRiskChanges.addListener(_policyChanged);
   }
 
   final BooksRepository books;
@@ -109,27 +110,37 @@ final class AudiobookController extends ChangeNotifier
     snapshot = const PlaybackSnapshot();
     _resumeMs = null;
     notifyListeners();
+    PlayerEngine? openingEngine;
+    var opened = false;
+    void authorize() {
+      token.check();
+      if (!identical(book, work) || !identical(chapter, next)) {
+        throw const RequestCancelled();
+      }
+      books.requireBook(work, next);
+    }
+
     try {
+      await books.ensureSourceRiskLoaded();
       await _engine?.stop();
       _session?.close();
       _session = null;
-      books.requireBook(work, next);
+      authorize();
       final old = await books.store.entry(work);
       if (!await books.audioFiles.contains(work, next)) {
         await books.download(work, next, token);
       }
-      token.check();
-      books.requireBook(work, next);
+      authorize();
       _session = await books.audioFiles.open(work, next);
-      token.check();
+      authorize();
       await beforePlay();
-      token.check();
-      books.requireBook(work, next);
+      authorize();
       final engine = _engine ??= _createEngine();
+      openingEngine = engine;
       await engine.open(_session!.uri);
-      token.check();
+      authorize();
       await engine.setRate(rate);
-      token.check();
+      authorize();
       if (resume && old?.last == next.id && old!.position > 0) {
         _resumeMs = old.position;
         _restore(engine.snapshot);
@@ -140,6 +151,8 @@ final class AudiobookController extends ChangeNotifier
         last: next,
         position: old?.last == next.id ? old?.position ?? 0 : 0,
       );
+      authorize();
+      opened = true;
     } on RequestCancelled {
       error ??= '已取消加载音频';
     } on FormatException catch (failure) {
@@ -148,6 +161,22 @@ final class AudiobookController extends ChangeNotifier
       if (!token.isCancelled) error = failure.message;
     } catch (_) {
       if (!token.isCancelled) error = '无法打开音频或内容受限';
+    } finally {
+      if (!opened) {
+        try {
+          await openingEngine?.stop();
+        } catch (_) {
+          error = '停止音频失败，请关闭播放器';
+          try {
+            await openingEngine?.pause();
+          } catch (_) {
+            await openingEngine?.dispose();
+            if (identical(_engine, openingEngine)) _engine = null;
+          }
+        }
+        _session?.close();
+        _session = null;
+      }
     }
     notifyListeners();
   }
@@ -220,10 +249,34 @@ final class AudiobookController extends ChangeNotifier
   @override
   Future<void> toggle() async {
     if (!active || loading || chapter == null || error != null) return;
-    books.requireBook(book!, chapter!);
+    final work = book!;
+    final currentChapter = chapter!;
+    final engine = _engine;
+    books.requireBook(work, currentChapter);
     if (!playing) await beforePlay();
-    if (active && books.kindAllowed(BookKind.audio)) {
-      await _engine?.playOrPause();
+    bool stillAllowed() =>
+        active &&
+        !loading &&
+        error == null &&
+        identical(book, work) &&
+        identical(chapter, currentChapter) &&
+        identical(_engine, engine) &&
+        books.kindAllowed(BookKind.audio) &&
+        books.bookAllowed(work) &&
+        books.policy.textAllowed(currentChapter.title);
+
+    if (!stillAllowed() || engine == null) return;
+    try {
+      await engine.playOrPause();
+    } finally {
+      if (!stillAllowed()) {
+        try {
+          await engine.pause();
+        } catch (_) {
+          await engine.stop();
+          rethrow;
+        }
+      }
     }
   }
 
@@ -290,6 +343,7 @@ final class AudiobookController extends ChangeNotifier
     await _errors?.cancel();
     await _engine?.dispose();
     books.policy.removeListener(_policyChanged);
+    books.sourceRiskChanges.removeListener(_policyChanged);
     super.dispose();
   }
 }

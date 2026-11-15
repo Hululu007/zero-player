@@ -92,6 +92,7 @@ class _BookSearchPageState extends State<BookSearchPage> {
   void initState() {
     super.initState();
     widget.repository.policy.addListener(_policyChanged);
+    widget.repository.sourceRiskChanges.addListener(_policyChanged);
     unawaited(_load());
   }
 
@@ -315,7 +316,7 @@ class _BookSearchPageState extends State<BookSearchPage> {
     String title,
     List<Book> choices,
   ) => AlertDialog(
-    title: Text(title),
+    title: Text(choices.isEmpty ? '选择来源' : title),
     content: SizedBox(
       width: 520,
       height: MediaQuery.sizeOf(context).height * .5,
@@ -373,6 +374,7 @@ class _BookSearchPageState extends State<BookSearchPage> {
     _input.dispose();
     _updates.dispose();
     widget.repository.policy.removeListener(_policyChanged);
+    widget.repository.sourceRiskChanges.removeListener(_policyChanged);
     super.dispose();
   }
 

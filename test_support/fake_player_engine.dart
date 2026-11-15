@@ -2,9 +2,16 @@ import 'dart:async';
 import 'package:zero_player/features/playback/domain/player_engine.dart';
 
 final class FakePlayerEngine implements PlayerEngine {
-  FakePlayerEngine({this.onVolume, this.onSeek});
+  FakePlayerEngine({
+    this.onVolume,
+    this.onSeek,
+    this.onOpen,
+    this.onPlayOrPause,
+  });
   final Future<void> Function(double)? onVolume;
   final Future<void> Function(Duration)? onSeek;
+  final Future<void> Function()? onOpen;
+  final Future<void> Function()? onPlayOrPause;
   final changes = StreamController<PlaybackSnapshot>.broadcast();
   final failures = StreamController<String>.broadcast();
   int opens = 0;
@@ -44,13 +51,18 @@ final class FakePlayerEngine implements PlayerEngine {
   @override
   Future<void> open(Uri uri, {Map<String, String> headers = const {}}) async {
     opens++;
+    if (onOpen case final callback?) await callback();
     emit(
       const PlaybackSnapshot(duration: Duration(seconds: 30), playing: true),
     );
   }
 
   @override
-  Future<void> playOrPause() async => change(playing: !snapshot.playing);
+  Future<void> playOrPause() async {
+    if (onPlayOrPause case final callback?) await callback();
+    change(playing: !snapshot.playing);
+  }
+
   @override
   Future<void> seek(Duration value) async {
     seeks.add(value);

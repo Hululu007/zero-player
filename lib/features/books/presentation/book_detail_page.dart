@@ -72,6 +72,7 @@ final class _BookDetailPageState extends State<BookDetailPage> {
   void initState() {
     super.initState();
     _books.policy.addListener(_policyChanged);
+    _books.sourceRiskChanges.addListener(_policyChanged);
     _downloadTask = widget.services.bookDownloads.active(_book);
     _downloadTask?.addListener(_downloadChanged);
     _saved.addAll(_downloadTask?.savedChapterIds ?? const {});
@@ -83,6 +84,7 @@ final class _BookDetailPageState extends State<BookDetailPage> {
     _token?.cancel();
     _downloadTask?.removeListener(_downloadChanged);
     _books.policy.removeListener(_policyChanged);
+    _books.sourceRiskChanges.removeListener(_policyChanged);
     _catalogScroll.dispose();
     _filter.dispose();
     super.dispose();
@@ -426,18 +428,24 @@ final class _BookDetailPageState extends State<BookDetailPage> {
     if (!mounted || token.isCancelled) return;
     final chosen = await showDialog<BookEdition>(
       context: context,
-      builder: (context) => SimpleDialog(
-        title: const Text('切换作品来源'),
-        children: [
-          for (final edition in editions)
-            SimpleDialogOption(
-              onPressed: () => Navigator.pop(context, edition),
-              child: Text(
-                '${entries.where((s) => s.source.id == edition.book.sourceId).firstOrNull?.source.name ?? edition.book.uri.host}'
-                ' · ${edition.chapters.length} 章',
-              ),
-            ),
-        ],
+      builder: (context) => ListenableBuilder(
+        listenable: Listenable.merge([_books.policy, _books.sourceRiskChanges]),
+        builder: (context, _) => SimpleDialog(
+          title: const Text('切换作品来源'),
+          children: [
+            if (_books.bookAllowed(_book))
+              for (final edition in editions.where(
+                (edition) => _books.bookAllowed(edition.book),
+              ))
+                SimpleDialogOption(
+                  onPressed: () => Navigator.pop(context, edition),
+                  child: Text(
+                    '${entries.where((s) => s.source.id == edition.book.sourceId).firstOrNull?.source.name ?? edition.book.uri.host}'
+                    ' · ${edition.chapters.length} 章',
+                  ),
+                ),
+          ],
+        ),
       ),
     );
     if (chosen == null || !mounted || token.isCancelled) return;
@@ -684,7 +692,11 @@ final class _BookDetailPageState extends State<BookDetailPage> {
   }
 
   AppBar _appBar(bool hasLast) => AppBar(
-    title: Text(_book.title, maxLines: 1, overflow: TextOverflow.ellipsis),
+    title: Text(
+      _books.bookAllowed(_book) ? _book.title : '书籍详情',
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+    ),
     actions: [
       if (_local && _books.bookAllowed(_book))
         IconButton(

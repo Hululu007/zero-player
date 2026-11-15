@@ -6,6 +6,7 @@ import 'package:zero_player/features/books/presentation/book_download_management
 import 'package:zero_player/features/books/presentation/book_shelf_view.dart';
 
 import '../../test_support/mobile_app_fixture.dart';
+import '../../test_support/book_fixture_source.dart';
 
 void main() {
   for (final width in [320.0, 390.0]) {
@@ -25,8 +26,12 @@ void main() {
         '作者',
         Uri.parse('file:///books/test.epub'),
       );
+      final source = bookFixtureSource('fixture.test');
+      await tester.runAsync(
+        () => fixture.services.books.importSources([source]),
+      );
       final online = Book(
-        'source',
+        source.id,
         BookKind.text,
         '在线书籍',
         '作者',

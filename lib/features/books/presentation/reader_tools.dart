@@ -8,7 +8,10 @@ extension _ReaderTools on _BookReaderPageState {
       showDragHandle: true,
       builder: (context) => StatefulBuilder(
         builder: (context, update) => AnimatedBuilder(
-          animation: _books.policy,
+          animation: Listenable.merge([
+            _books.policy,
+            _books.sourceRiskChanges,
+          ]),
           builder: (context, _) {
             final allowed = _books.bookAllowed(widget.book);
             final ordered = _reverse ? _chapters.reversed : _chapters;
@@ -101,7 +104,10 @@ extension _ReaderTools on _BookReaderPageState {
       showDragHandle: true,
       builder: (context) => StatefulBuilder(
         builder: (context, update) => AnimatedBuilder(
-          animation: _books.policy,
+          animation: Listenable.merge([
+            _books.policy,
+            _books.sourceRiskChanges,
+          ]),
           builder: (context, _) {
             final matches =
                 _ready && _text == text && _books.bookAllowed(widget.book)
@@ -198,7 +204,7 @@ extension _ReaderTools on _BookReaderPageState {
     final note = await showDialog<String>(
       context: context,
       builder: (context) => AnimatedBuilder(
-        animation: _books.policy,
+        animation: Listenable.merge([_books.policy, _books.sourceRiskChanges]),
         builder: (context, _) {
           if (!_ready || !_books.bookAllowed(widget.book)) {
             return AlertDialog(
@@ -279,7 +285,10 @@ extension _ReaderTools on _BookReaderPageState {
         context: context,
         builder: (context) => StatefulBuilder(
           builder: (context, update) => AnimatedBuilder(
-            animation: _books.policy,
+            animation: Listenable.merge([
+              _books.policy,
+              _books.sourceRiskChanges,
+            ]),
             builder: (context, _) => !_books.bookAllowed(widget.book)
                 ? const Center(child: Text('当前内容策略限制访问此作品'))
                 : SafeArea(

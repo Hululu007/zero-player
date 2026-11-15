@@ -1,0 +1,1350 @@
+{
+  "archive_sha256": "012a0e0d6e6adc8d303c32b578510e14b562088b3e965cb01a1a647b5e7e034d",
+  "import_code_sha256": {
+    "lib/features/books/data/book_import.dart": "5c27a8cac7806ca8854672f89fcc90d0d98e5ab25b92ec4fc13f094bfe93a629",
+    "lib/features/books/data/legado/legado_import.dart": "3d4f0f1fb848c26bf65a0eec25373bc993403576634c60524dc17c5a6e217b69",
+    "lib/features/books/domain/book.dart": "c0aec8fc6c82eef58dba4047654e8c75a8ef45e6bcfb5e9e185880609b09583f",
+    "lib/features/books/domain/legado_source.dart": "5b907923968332090760ecc9f4d6f7e652aa06501ac7981b5f477ef7c0d954d1"
+  },
+  "label_pattern": "🔞|十八禁|18禁|色情|成人小说|成人漫画|成人文学|情色|黄文|黃文|肉文|裸聊",
+  "labelled_id_count": 76,
+  "selected_label_absent_count": 10,
+  "sources": [
+    {
+      "id": "f670f04810ccca4af8ffc8321a4b177747dac12a1a98a3d8162387a48413016c",
+      "name": "🎈绿竹小说",
+      "group": "④🎈  普通",
+      "kind": "text",
+      "host": "www.lvzhu.cc",
+      "selected_has_label": false,
+      "raw_label_evidence": [
+        {
+          "index": 1541,
+          "host": "www.lvzhu.cc",
+          "name": "🔞 绿竹小说",
+          "group": "🔞"
+        },
+        {
+          "index": 3579,
+          "host": "www.lvzhu.cc",
+          "name": "🔞 绿竹小说",
+          "group": "🔞 小说,0-1文本"
+        }
+      ]
+    },
+    {
+      "id": "e5044e38adeaa29a5c1e1cec693f715bd27bf869ca2de0864681749795c84cad",
+      "name": "我爱电影(搜索+发现)",
+      "group": "🔞",
+      "kind": "text",
+      "host": "www.5imv.com",
+      "selected_has_label": true,
+      "raw_label_evidence": [
+        {
+          "index": 243,
+          "host": "www.5imv.com",
+          "name": "我爱电影(搜索+发现)",
+          "group": "🔞"
+        }
+      ]
+    },
+    {
+      "id": "d130c88f7df4c603e47b8a4bf1bd98a6ab42de6fff42f70ef04e3ef8449c81f9",
+      "name": "👔 肉宅屋网",
+      "group": "🔞",
+      "kind": "text",
+      "host": "m.rouzhaiwu.info",
+      "selected_has_label": true,
+      "raw_label_evidence": [
+        {
+          "index": 252,
+          "host": "m.rouzhaiwu.info",
+          "name": "👔 肉宅屋网",
+          "group": "🔞"
+        }
+      ]
+    },
+    {
+      "id": "bee0f9d6904aca009b59392479c8e205bddf1a0cc3fd1690fb17c2598500e30d",
+      "name": "第一版主111",
+      "group": "🔞",
+      "kind": "text",
+      "host": "www.111bz.cc",
+      "selected_has_label": true,
+      "raw_label_evidence": [
+        {
+          "index": 325,
+          "host": "www.111bz.cc",
+          "name": "第一版主111",
+          "group": "🔞"
+        }
+      ]
+    },
+    {
+      "id": "62ff9ae1d1442508f0e79d9a3b89ed3755d84036b47bab006edfe64f7d645472",
+      "name": "第一版主网👿",
+      "group": "🔞",
+      "kind": "text",
+      "host": "www.diyibanzhu.buzz",
+      "selected_has_label": true,
+      "raw_label_evidence": [
+        {
+          "index": 327,
+          "host": "www.diyibanzhu.buzz",
+          "name": "第一版主网👿",
+          "group": "🔞"
+        }
+      ]
+    },
+    {
+      "id": "bff0d0939ada5487b2b926e32498b306a868dd3d42932d449f561a33f7929431",
+      "name": "🎈牛站小说「PO文」",
+      "group": "🔞",
+      "kind": "text",
+      "host": "m.niuzhanxs.com",
+      "selected_has_label": true,
+      "raw_label_evidence": [
+        {
+          "index": 398,
+          "host": "m.niuzhanxs.com",
+          "name": "🎈牛站小说「PO文」",
+          "group": "🔞"
+        },
+        {
+          "index": 2115,
+          "host": "m.niuzhanxs.com",
+          "name": "🎈牛站小说「PO文」",
+          "group": "搜索链接规则为空,🔞"
+        }
+      ]
+    },
+    {
+      "id": "528f5322589b9f182a5a01cc79dfb38bc6bb3c6503ee8e8cd26bf8f646c8afd6",
+      "name": "♜第一小说② #破冰",
+      "group": "🔞",
+      "kind": "text",
+      "host": "www.diyitxt.com",
+      "selected_has_label": true,
+      "raw_label_evidence": [
+        {
+          "index": 424,
+          "host": "www.diyitxt.com",
+          "name": "♜第一小说② #破冰",
+          "group": "🔞"
+        }
+      ]
+    },
+    {
+      "id": "97b609eeacaf162e02d3bb699bb2079216deb486078a4abfd135ea130ef37a66",
+      "name": "🚬 疯情书库",
+      "group": "🔞",
+      "kind": "text",
+      "host": "www.aastory.space",
+      "selected_has_label": true,
+      "raw_label_evidence": [
+        {
+          "index": 438,
+          "host": "www.aastory.space",
+          "name": "🚬 疯情书库",
+          "group": "🔞"
+        }
+      ]
+    },
+    {
+      "id": "5d8d16d1f2cafcc2dd2d64b3ecfe53ba3ce0a43532739ef93a6ba9a5172fb72b",
+      "name": "🚬 第一版主⑤",
+      "group": "🔞",
+      "kind": "text",
+      "host": "m.xinbanzhu.net",
+      "selected_has_label": true,
+      "raw_label_evidence": [
+        {
+          "index": 439,
+          "host": "m.xinbanzhu.net",
+          "name": "🚬 第一版主⑤",
+          "group": "🔞"
+        }
+      ]
+    },
+    {
+      "id": "afcccdde162ca226f8320297fd1d928c3c35f20475c7c5ab1e60baf6de5fcfcd",
+      "name": "🚬 落宅小说",
+      "group": "🔞",
+      "kind": "text",
+      "host": "m.lazhaiwu.com",
+      "selected_has_label": true,
+      "raw_label_evidence": [
+        {
+          "index": 440,
+          "host": "m.lazhaiwu.com",
+          "name": "🚬 落宅小说",
+          "group": "🔞"
+        }
+      ]
+    },
+    {
+      "id": "833643d62570c063da5a49f6cceefd83d7fca5c77a60cabbeeb1799fd4ba8b3f",
+      "name": "🚬 po18⁷",
+      "group": "🔞",
+      "kind": "text",
+      "host": "po18wen.vip",
+      "selected_has_label": true,
+      "raw_label_evidence": [
+        {
+          "index": 441,
+          "host": "po18wen.vip",
+          "name": "🚬 po18⁷",
+          "group": "🔞"
+        }
+      ]
+    },
+    {
+      "id": "15f0349bca6c673f3f29b69c3589548ae5b13a8543c6d59233a475b648042ff7",
+      "name": "🚬 烈火中文网②",
+      "group": "🔞",
+      "kind": "text",
+      "host": "m.liehuozw.com",
+      "selected_has_label": true,
+      "raw_label_evidence": [
+        {
+          "index": 442,
+          "host": "m.liehuozw.com",
+          "name": "🚬 烈火中文网②",
+          "group": "🔞"
+        }
+      ]
+    },
+    {
+      "id": "37ac2afdd95fba26d368298c877d91e4f183ec9a3c43359454a47d74a71a20c4",
+      "name": "🚬 御宅屋③",
+      "group": "🔞",
+      "kind": "text",
+      "host": "m.yuzhaiwu520.org",
+      "selected_has_label": true,
+      "raw_label_evidence": [
+        {
+          "index": 443,
+          "host": "m.yuzhaiwu520.org",
+          "name": "🚬 御宅屋③",
+          "group": "🔞"
+        }
+      ]
+    },
+    {
+      "id": "7b8b2b4a84d2dc0c37b8bc035a664f2a04701ab8920dfab9b0aff9145b8dcde5",
+      "name": "🚬 腐文阁",
+      "group": "🔞",
+      "kind": "text",
+      "host": "m.fuwenge.com",
+      "selected_has_label": true,
+      "raw_label_evidence": [
+        {
+          "index": 444,
+          "host": "m.fuwenge.com",
+          "name": "🚬 腐文阁",
+          "group": "🔞"
+        }
+      ]
+    },
+    {
+      "id": "fd43c18e3b6b2020f3f7823c48ae7691362f156e2c3b3a1523d5a7fb5c1bbfbf",
+      "name": "🔰 肉书屋",
+      "group": "",
+      "kind": "text",
+      "host": "m.roushuwu.com",
+      "selected_has_label": false,
+      "raw_label_evidence": [
+        {
+          "index": 484,
+          "host": "m.roushuwu.com",
+          "name": "🔞 肉书屋",
+          "group": "🔞"
+        }
+      ]
+    },
+    {
+      "id": "f44a8401b32f11389a9fadb29cd9dfde45c5e89075290cc97499f332c12b3183",
+      "name": "🚬 新御书屋",
+      "group": "🔞",
+      "kind": "text",
+      "host": "m.yy228.com",
+      "selected_has_label": true,
+      "raw_label_evidence": [
+        {
+          "index": 491,
+          "host": "m.yy228.com",
+          "name": "🚬 新御书屋",
+          "group": "🔞"
+        }
+      ]
+    },
+    {
+      "id": "11880289e42a01f4c52b6dcbea27624ec633b4bea97347d3340bba4b3ac439b7",
+      "name": "久久小说①",
+      "group": "0905校验",
+      "kind": "text",
+      "host": "fu44.pw",
+      "selected_has_label": false,
+      "raw_label_evidence": [
+        {
+          "index": 516,
+          "host": "fu44.pw",
+          "name": "🔞 逆鳞",
+          "group": "🔞"
+        },
+        {
+          "index": 3156,
+          "host": "fu44.pw",
+          "name": "🔞 逆鳞",
+          "group": "18-小说"
+        }
+      ]
+    },
+    {
+      "id": "b0625d5f76e3cbbf67855598e7af21f9bb2b41245b34938d2d270b3a6420cad0",
+      "name": "🔴肉文NP[分页]",
+      "group": "🔞",
+      "kind": "text",
+      "host": "www.rouwennp.club",
+      "selected_has_label": true,
+      "raw_label_evidence": [
+        {
+          "index": 579,
+          "host": "www.rouwennp.club",
+          "name": "🔴肉文NP[分页]",
+          "group": "🔞"
+        }
+      ]
+    },
+    {
+      "id": "78bb43fc7846f079e5418955078001d9e2492d15757c4ba2044f95583ca4422d",
+      "name": "👔 肉肉屋站",
+      "group": "🔞",
+      "kind": "text",
+      "host": "www.rourouwu.info",
+      "selected_has_label": true,
+      "raw_label_evidence": [
+        {
+          "index": 598,
+          "host": "www.rourouwu.info",
+          "name": "☆肉肉屋☆",
+          "group": "🔞"
+        },
+        {
+          "index": 645,
+          "host": "www.rourouwu.info",
+          "name": "👔 肉肉屋站",
+          "group": "🔞"
+        }
+      ]
+    },
+    {
+      "id": "8a0d289f33df57d40389dad547c4e4d7c9f3bd304776fb4d861f40fcb5b9bf01",
+      "name": "🔞 辣妹小说",
+      "group": "🔞",
+      "kind": "text",
+      "host": "m.lamei2.com",
+      "selected_has_label": true,
+      "raw_label_evidence": [
+        {
+          "index": 677,
+          "host": "m.lamei2.com",
+          "name": "🔞 辣妹小说",
+          "group": "🔞"
+        }
+      ]
+    },
+    {
+      "id": "944a8d50f5f1fac15c971e89902a2a7cd75f28167611b4429bbff7469077abac",
+      "name": "🚬 新御宅屋",
+      "group": "🔞",
+      "kind": "text",
+      "host": "mm.xyuzhaiwu.xyz",
+      "selected_has_label": true,
+      "raw_label_evidence": [
+        {
+          "index": 773,
+          "host": "mm.xyuzhaiwu.xyz",
+          "name": "🚬 新御宅屋",
+          "group": "🔞"
+        }
+      ]
+    },
+    {
+      "id": "319e52e029665aa98c459fd3bdbd2e336d07d6317bcea0d981ee1234b2a3369d",
+      "name": "🚬 读书",
+      "group": "🔞",
+      "kind": "text",
+      "host": "readbook.men",
+      "selected_has_label": true,
+      "raw_label_evidence": [
+        {
+          "index": 775,
+          "host": "readbook.men",
+          "name": "🚬 读书",
+          "group": "🔞"
+        },
+        {
+          "index": 2600,
+          "host": "readbook.men",
+          "name": "🚬 读书",
+          "group": "🔞"
+        }
+      ]
+    },
+    {
+      "id": "e4ae37f6bdefe0833589b5fe31bd5c71a04ac93caed2a20f685c962396b4c77b",
+      "name": "🔞 优特",
+      "group": "🔞",
+      "kind": "text",
+      "host": "www.utexs.com",
+      "selected_has_label": true,
+      "raw_label_evidence": [
+        {
+          "index": 784,
+          "host": "www.utexs.com",
+          "name": "🔞 优特",
+          "group": "🔞"
+        }
+      ]
+    },
+    {
+      "id": "db5de6085b56eafa7738c7515a7c18a4111f1cf9f46c76df6640e46b681e48fa",
+      "name": "☘️🔞BL书阁🔞☘️",
+      "group": "🔞",
+      "kind": "text",
+      "host": "www.blshuge.com",
+      "selected_has_label": true,
+      "raw_label_evidence": [
+        {
+          "index": 788,
+          "host": "www.blshuge.com",
+          "name": "☘️🔞BL书阁🔞☘️",
+          "group": "🔞"
+        },
+        {
+          "index": 4565,
+          "host": "www.blshuge.com",
+          "name": "☘️🔞BL书阁🔞☘️",
+          "group": "C组"
+        }
+      ]
+    },
+    {
+      "id": "04bef44f90e876d6c1485efc867efddf7e3315773c2c0129a308c42b1b15f308",
+      "name": "🚬 木小说",
+      "group": "🔞",
+      "kind": "text",
+      "host": "www.muxs.net",
+      "selected_has_label": true,
+      "raw_label_evidence": [
+        {
+          "index": 809,
+          "host": "www.muxs.net",
+          "name": "🚬 木小说",
+          "group": "🔞"
+        }
+      ]
+    },
+    {
+      "id": "fe3bbae11dcbc603cd90368e1e4b21465143215a56b8b70a92def6d7c281fcad",
+      "name": "龙腾小说城",
+      "group": "一",
+      "kind": "text",
+      "host": "m.longtengxiaoshuo.org",
+      "selected_has_label": false,
+      "raw_label_evidence": [
+        {
+          "index": 902,
+          "host": "m.longtengxiaoshuo.org",
+          "name": "🔞📖龙腾小说城",
+          "group": "🔞"
+        },
+        {
+          "index": 3137,
+          "host": "m.longtengxiaoshuo.org",
+          "name": "🔞📖龙腾小说城",
+          "group": "【0.自制】"
+        }
+      ]
+    },
+    {
+      "id": "1a24d0f4ed244690776684d8402a3ceb17dd6fb3c3baa38273a28d6170a87317",
+      "name": "🚬 笔下文学",
+      "group": "🔞",
+      "kind": "text",
+      "host": "www.ybsggzyjyxxw.com",
+      "selected_has_label": true,
+      "raw_label_evidence": [
+        {
+          "index": 928,
+          "host": "www.ybsggzyjyxxw.com",
+          "name": "🚬 笔下文学",
+          "group": "🔞"
+        }
+      ]
+    },
+    {
+      "id": "424fe753b1c84f0e03af11fd757740874e23302fec6c94b3026d64f314c6ae40",
+      "name": "🔞 永远的神小说 🪜",
+      "group": "🔞",
+      "kind": "text",
+      "host": "www.yydsxs.com",
+      "selected_has_label": true,
+      "raw_label_evidence": [
+        {
+          "index": 937,
+          "host": "www.yydsxs.com",
+          "name": "🔞 永远的神小说 🪜",
+          "group": "🔞"
+        },
+        {
+          "index": 1542,
+          "host": "www.yydsxs.com",
+          "name": "🚬 永远的神小说",
+          "group": "🔞"
+        }
+      ]
+    },
+    {
+      "id": "64bdf57f6f6296717a5a15b1e7b6b977451028f06fbb7936e53cd8ce013281b6",
+      "name": "🔞 十八书屋",
+      "group": "🔞",
+      "kind": "text",
+      "host": "www.shibashuwu.net",
+      "selected_has_label": true,
+      "raw_label_evidence": [
+        {
+          "index": 965,
+          "host": "www.shibashuwu.net",
+          "name": "🔞 十八书屋",
+          "group": "🔞"
+        }
+      ]
+    },
+    {
+      "id": "2e9a2b8001febdedfeb6af728f512503014f04863eafd6d310ee4751cee77ce8",
+      "name": "第一版主⑦",
+      "group": "🔞",
+      "kind": "text",
+      "host": "m.diyibanzhu.buzz",
+      "selected_has_label": true,
+      "raw_label_evidence": [
+        {
+          "index": 1044,
+          "host": "m.diyibanzhu.buzz",
+          "name": "第一版主⑦",
+          "group": "🔞"
+        }
+      ]
+    },
+    {
+      "id": "5334f8be01b4cc5d2beeed8bc81d200d83c94220a840ae7af1fdb0b4af2d12f4",
+      "name": "🔞 白马楼小说④",
+      "group": "🔞",
+      "kind": "text",
+      "host": "www.baimalou123.com",
+      "selected_has_label": true,
+      "raw_label_evidence": [
+        {
+          "index": 1089,
+          "host": "www.baimalou123.com",
+          "name": "🔞 白马楼小说④",
+          "group": "🔞"
+        }
+      ]
+    },
+    {
+      "id": "72b80a1b9b127164f5d0e3fc7301525827ea3f1347ed688b20d68952993aa299",
+      "name": "🚬 七色小说",
+      "group": "🔞",
+      "kind": "text",
+      "host": "m.qisexs.com",
+      "selected_has_label": true,
+      "raw_label_evidence": [
+        {
+          "index": 1112,
+          "host": "m.qisexs.com",
+          "name": "🚬 七色小说",
+          "group": "🔞"
+        }
+      ]
+    },
+    {
+      "id": "0c70e7361264fa8ee39a3cc0207e23a892a6eedfa5333c29556874cec83b34fe",
+      "name": "🚬 肉书屋",
+      "group": "🔞",
+      "kind": "text",
+      "host": "m.roushuwu7.com",
+      "selected_has_label": true,
+      "raw_label_evidence": [
+        {
+          "index": 1113,
+          "host": "m.roushuwu7.com",
+          "name": "🚬 肉书屋",
+          "group": "🔞"
+        }
+      ]
+    },
+    {
+      "id": "69963c0ca67d862de3b244a747aa40fa203d3e2fff1b65f96d375b6ced376d2b",
+      "name": "🚬 福书网",
+      "group": "🔞",
+      "kind": "text",
+      "host": "www.fushucun.com",
+      "selected_has_label": true,
+      "raw_label_evidence": [
+        {
+          "index": 1115,
+          "host": "www.fushucun.com",
+          "name": "🚬 福书网",
+          "group": "🔞"
+        }
+      ]
+    },
+    {
+      "id": "35e7a1b90d6cb0a018267c45cfd5b8dd779301449a8cc8b9b67a4e59b40137f3",
+      "name": "🚬 看小说",
+      "group": "🔞",
+      "kind": "text",
+      "host": "m.read52.com",
+      "selected_has_label": true,
+      "raw_label_evidence": [
+        {
+          "index": 1132,
+          "host": "m.read52.com",
+          "name": "🚬 看小说",
+          "group": "🔞"
+        }
+      ]
+    },
+    {
+      "id": "4844827f5d17a25f6978efa8ce0f62924c092927c4601ca454fe79f764bd3706",
+      "name": "🗒 十八禁漫",
+      "group": "动漫",
+      "kind": "comic",
+      "host": "www.18mh.cc",
+      "selected_has_label": true,
+      "raw_label_evidence": [
+        {
+          "index": 1160,
+          "host": "www.18mh.cc",
+          "name": "🗒 十八禁漫",
+          "group": "动漫"
+        },
+        {
+          "index": 3036,
+          "host": "www.18mh.cc",
+          "name": "🗒 十八禁漫",
+          "group": "动漫"
+        }
+      ]
+    },
+    {
+      "id": "1de6d8be1459bb1df6991b86d63e4dd782ff8bb1806fd6c6f09a5e569bc722cc",
+      "name": "老王小说",
+      "group": "校验可用",
+      "kind": "text",
+      "host": "lwkk.xyz",
+      "selected_has_label": false,
+      "raw_label_evidence": [
+        {
+          "index": 1366,
+          "host": "lwkk.xyz",
+          "name": "🔞 老王看书",
+          "group": "🔞"
+        },
+        {
+          "index": 1959,
+          "host": "lwkk.xyz",
+          "name": "🔞 老王看书",
+          "group": "小说"
+        }
+      ]
+    },
+    {
+      "id": "df954ffc66302d0b7d931af18f0c850a51b72baa03054f3ad59196e2c60f1a5f",
+      "name": "🚬 第一版主i12",
+      "group": "🔞",
+      "kind": "text",
+      "host": "i.12bz.net",
+      "selected_has_label": true,
+      "raw_label_evidence": [
+        {
+          "index": 1236,
+          "host": "i.12bz.net",
+          "name": "🚬 第一版主i12",
+          "group": "🔞"
+        },
+        {
+          "index": 3123,
+          "host": "i.12bz.net",
+          "name": "🚬 第一版主i12",
+          "group": "🔞"
+        }
+      ]
+    },
+    {
+      "id": "fb965cc67ab59669795e278347a5fb71a3d1d8aceab0259582fbecbb4330606f",
+      "name": "🚬 御书屋",
+      "group": "🔞",
+      "kind": "text",
+      "host": "m.yushuwu.asia",
+      "selected_has_label": true,
+      "raw_label_evidence": [
+        {
+          "index": 1240,
+          "host": "m.yushuwu.asia",
+          "name": "🚬 御书屋",
+          "group": "🔞"
+        }
+      ]
+    },
+    {
+      "id": "1de929a5b482007aa2af4d5050b33cdcdd62df6d32ae34739f63f0fa25c3af99",
+      "name": "成人小说网（上版发现页1链接写错，重传）",
+      "group": "校验可用",
+      "kind": "text",
+      "host": "crxs.me",
+      "selected_has_label": true,
+      "raw_label_evidence": [
+        {
+          "index": 1274,
+          "host": "crxs.me",
+          "name": "成人小说网（上版发现页1链接写错，重传）",
+          "group": "校验可用"
+        },
+        {
+          "index": 3127,
+          "host": "crxs.me",
+          "name": "成人小说网（上版发现页1链接写错，重传）",
+          "group": "【0.自制】"
+        }
+      ]
+    },
+    {
+      "id": "f58b0efe1ba07ab57605dc7e0bbf05c50ee351e1e714d4aa52e4df225dbd249e",
+      "name": "⚠️第一版主～",
+      "group": "🔞",
+      "kind": "text",
+      "host": "m.xdybz.com",
+      "selected_has_label": true,
+      "raw_label_evidence": [
+        {
+          "index": 1296,
+          "host": "m.xdybz.com",
+          "name": "⚠️第一版主～",
+          "group": "🔞"
+        },
+        {
+          "index": 1734,
+          "host": "m.xdybz.com",
+          "name": "第一版主",
+          "group": "🔞"
+        }
+      ]
+    },
+    {
+      "id": "ab6a00f7cfbbb78e58a0922af47eceb3250621464cf7ee5113284dde19f9308c",
+      "name": "书耽小说（优）",
+      "group": "正版小说 书源",
+      "kind": "text",
+      "host": "app.shubl.com",
+      "selected_has_label": false,
+      "raw_label_evidence": [
+        {
+          "index": 1387,
+          "host": "app.shubl.com",
+          "name": "🔞 书耽",
+          "group": "🔞"
+        },
+        {
+          "index": 3464,
+          "host": "app.shubl.com",
+          "name": "🔞 书耽",
+          "group": "小说"
+        }
+      ]
+    },
+    {
+      "id": "2db845415910d17a6c3f984b2a0aa5e4518e89f1e019e844d11b3f1caa1b371b",
+      "name": "🚬 烟锁重楼",
+      "group": "🔞",
+      "kind": "text",
+      "host": "www.eyushuwu.com",
+      "selected_has_label": true,
+      "raw_label_evidence": [
+        {
+          "index": 1445,
+          "host": "www.eyushuwu.com",
+          "name": "🚬 烟锁重楼",
+          "group": "🔞"
+        }
+      ]
+    },
+    {
+      "id": "eeb57abcf83f5efb22c97c251c55d19e6475a77c608f9eb600c04df018f7944f",
+      "name": "得间小说",
+      "group": "🔞",
+      "kind": "text",
+      "host": "wechat.idejian.com",
+      "selected_has_label": true,
+      "raw_label_evidence": [
+        {
+          "index": 1476,
+          "host": "wechat.idejian.com",
+          "name": "wechat.idejian.com[apiw]",
+          "group": "🔞"
+        },
+        {
+          "index": 1569,
+          "host": "wechat.idejian.com",
+          "name": "得间小说",
+          "group": "🔞"
+        }
+      ]
+    },
+    {
+      "id": "541b325f8b1e85cb6db0bf28179911e99992c7619512357469c9844168cc54d9",
+      "name": "♛得间小说▪︎魔改app26",
+      "group": "🔞",
+      "kind": "text",
+      "host": "wechat.idejian.com",
+      "selected_has_label": true,
+      "raw_label_evidence": [
+        {
+          "index": 1554,
+          "host": "wechat.idejian.com",
+          "name": "♛得间小说▪︎魔改app26",
+          "group": "🔞"
+        }
+      ]
+    },
+    {
+      "id": "08f7d73d1549f1df13d49bfb0bf99e7a5c1e21e485111ae775b9ce3e70690dbf",
+      "name": "🔖靠谱小说",
+      "group": "校验可用",
+      "kind": "text",
+      "host": "www.kptxt.com",
+      "selected_has_label": false,
+      "raw_label_evidence": [
+        {
+          "index": 1559,
+          "host": "www.kptxt.com",
+          "name": "🔞 靠谱小说 🪜",
+          "group": "🔞"
+        },
+        {
+          "index": 1560,
+          "host": "www.kptxt.com",
+          "name": "🚬 靠谱小说",
+          "group": "🔞"
+        },
+        {
+          "index": 3643,
+          "host": "www.kptxt.com",
+          "name": "🔞 靠谱小说 🪜",
+          "group": "🔞 小说,🪜 梯子,0-1文本"
+        }
+      ]
+    },
+    {
+      "id": "8331f056d5f55d30f06d402a554628b75a8d0b3225b633a78e95b3187fd895ea",
+      "name": "🔞 笔趣阁",
+      "group": "🔞",
+      "kind": "text",
+      "host": "m.liquge.com",
+      "selected_has_label": true,
+      "raw_label_evidence": [
+        {
+          "index": 1647,
+          "host": "m.liquge.com",
+          "name": "🔞 笔趣阁",
+          "group": "🔞"
+        },
+        {
+          "index": 3641,
+          "host": "m.liquge.com",
+          "name": "🔞 笔趣阁",
+          "group": "🔞"
+        }
+      ]
+    },
+    {
+      "id": "ed9a887180b7479d8429d5ac6a031869dc963a9ec949879f76e55ef16cee71e8",
+      "name": "🚬 笔趣阁",
+      "group": "🔞",
+      "kind": "text",
+      "host": "www.liquge.com",
+      "selected_has_label": true,
+      "raw_label_evidence": [
+        {
+          "index": 1659,
+          "host": "www.liquge.com",
+          "name": "🚬 笔趣阁",
+          "group": "🔞"
+        }
+      ]
+    },
+    {
+      "id": "1c8825c338786989642b2c0ace2d163fb909f703efbc7db9a0dfcbc67dbb5d19",
+      "name": "一个阅读",
+      "group": "🔞",
+      "kind": "text",
+      "host": "m.wufazhuce.com",
+      "selected_has_label": true,
+      "raw_label_evidence": [
+        {
+          "index": 1667,
+          "host": "m.wufazhuce.com",
+          "name": "一个阅读",
+          "group": "🔞"
+        }
+      ]
+    },
+    {
+      "id": "cea0c53b185a2b3f99fdcd52fe63aed1dc8137c2aaef6329351f88b8a927101a",
+      "name": "🔞 PO18",
+      "group": "🔞",
+      "kind": "text",
+      "host": "m.po18.info",
+      "selected_has_label": true,
+      "raw_label_evidence": [
+        {
+          "index": 1723,
+          "host": "m.po18.info",
+          "name": "🔞 PO18",
+          "group": "🔞"
+        }
+      ]
+    },
+    {
+      "id": "7df90d3beaf532252f0021e506f357948791a895ccaf02e1f39b28aa3a824d6c",
+      "name": "🚬 肉肉屋",
+      "group": "﹅ ㊕ 特殊",
+      "kind": "text",
+      "host": "m.rourouwu10.com",
+      "selected_has_label": false,
+      "raw_label_evidence": [
+        {
+          "index": 1726,
+          "host": "m.rourouwu10.com",
+          "name": "肉肉屋①",
+          "group": "🔞"
+        }
+      ]
+    },
+    {
+      "id": "499444fddef27ad9def70ccce3c2965fe89e2c21467c99e8256107fe1ee9ce09",
+      "name": "👔 肉文阁网",
+      "group": "🔞",
+      "kind": "text",
+      "host": "m.rouwenge.com",
+      "selected_has_label": true,
+      "raw_label_evidence": [
+        {
+          "index": 1727,
+          "host": "m.rouwenge.com",
+          "name": "👔 肉文阁网",
+          "group": "🔞"
+        }
+      ]
+    },
+    {
+      "id": "f9ffbe0993c187ab5f33b9616f653318b0fc14c7ba93376aea19430eaff709bc",
+      "name": "搜小说网",
+      "group": "",
+      "kind": "text",
+      "host": "wap.sou78.com",
+      "selected_has_label": false,
+      "raw_label_evidence": [
+        {
+          "index": 1736,
+          "host": "wap.sou78.com",
+          "name": "🚬 搜小说",
+          "group": "🔞"
+        },
+        {
+          "index": 3687,
+          "host": "wap.sou78.com",
+          "name": "🚬 搜小说",
+          "group": "🔞,校验超时"
+        }
+      ]
+    },
+    {
+      "id": "5035fd0993ef43fceb63ea782d9b63d79e63e3edffb95a189dd2755c708493d9",
+      "name": "🔞 免费小说",
+      "group": "🔞",
+      "kind": "text",
+      "host": "m.b483.com",
+      "selected_has_label": true,
+      "raw_label_evidence": [
+        {
+          "index": 1757,
+          "host": "m.b483.com",
+          "name": "🔞 免费小说",
+          "group": "🔞"
+        }
+      ]
+    },
+    {
+      "id": "dd20c02ee9937525898be0bbdadb09e31a4b5da887c99fe99a4ec100ef2ffb0f",
+      "name": "🎨爱看韩漫🔞",
+      "group": "动漫,🔞",
+      "kind": "comic",
+      "host": "www.ikanhm.top",
+      "selected_has_label": true,
+      "raw_label_evidence": [
+        {
+          "index": 1787,
+          "host": "www.ikanhm.top",
+          "name": "🎨爱看韩漫🔞",
+          "group": "动漫,🔞"
+        },
+        {
+          "index": 3731,
+          "host": "www.ikanhm.top",
+          "name": "🎨爱看韩漫🔞",
+          "group": "漫画"
+        }
+      ]
+    },
+    {
+      "id": "6239f96fea08552591804b4ca0d6adedd6da1a075fc7aa4d788a86b7450b7f32",
+      "name": "🎨亲亲漫画🔞",
+      "group": "🍉漫画",
+      "kind": "comic",
+      "host": "api.acg.gd",
+      "selected_has_label": true,
+      "raw_label_evidence": [
+        {
+          "index": 2139,
+          "host": "api.acg.gd",
+          "name": "🎨亲亲漫画🔞",
+          "group": "🍉漫画"
+        }
+      ]
+    },
+    {
+      "id": "0c6317e420614be60b383b06e99c8967ed905eb88a604a5c82baf1b25e0d078f",
+      "name": "🚬 鄱阳镇庭",
+      "group": "小说",
+      "kind": "text",
+      "host": "www.pyzht.com",
+      "selected_has_label": false,
+      "raw_label_evidence": [
+        {
+          "index": 3788,
+          "host": "www.pyzht.com",
+          "name": "🔞 鄱阳镇庭",
+          "group": "小说"
+        }
+      ]
+    },
+    {
+      "id": "05da1394779860ae58e4ca47f7909034d5f77dfc96fc443d27c400e84dcb5c1e",
+      "name": "🔞 懒人小说 🪜",
+      "group": "18-小说",
+      "kind": "text",
+      "host": "m.lrxs.org",
+      "selected_has_label": true,
+      "raw_label_evidence": [
+        {
+          "index": 3181,
+          "host": "m.lrxs.org",
+          "name": "🔞 懒人小说 🪜",
+          "group": "18-小说"
+        }
+      ]
+    },
+    {
+      "id": "b866227d0b7b693729789e5078d995f87cfdb3e2832b28a8c627fcb0d0f96d28",
+      "name": "🔞🎨丽图·污漫画",
+      "group": "【0.自制】",
+      "kind": "text",
+      "host": "litu100.xyz",
+      "selected_has_label": true,
+      "raw_label_evidence": [
+        {
+          "index": 3309,
+          "host": "litu100.xyz",
+          "name": "🔞🎨丽图·污漫画",
+          "group": "【0.自制】"
+        }
+      ]
+    },
+    {
+      "id": "099b7b6254c86836f0d3954cfadff766916829742736bd810c67f5e72c1c03a8",
+      "name": "🎨亲亲漫画 #Haxc🔞",
+      "group": "🍉漫画",
+      "kind": "text",
+      "host": "api.acg.gd",
+      "selected_has_label": true,
+      "raw_label_evidence": [
+        {
+          "index": 3664,
+          "host": "api.acg.gd",
+          "name": "🎨亲亲漫画 #Haxc🔞",
+          "group": "🍉漫画"
+        }
+      ]
+    },
+    {
+      "id": "4c8e7840a3ef1d71798cef0a6bb848c95c9efe5253d0eb3d1c00b0583a4b46aa",
+      "name": "🎨韩漫画🔞",
+      "group": "🎨漫画",
+      "kind": "text",
+      "host": "www.mhhanman.xyz",
+      "selected_has_label": true,
+      "raw_label_evidence": [
+        {
+          "index": 3741,
+          "host": "www.mhhanman.xyz",
+          "name": "🎨韩漫画🔞",
+          "group": "🎨漫画"
+        }
+      ]
+    },
+    {
+      "id": "25749e82df95e79b09416f4a0eb7e982898b976d4843cd0cd1a0e064de849132",
+      "name": "🔞夜读集 [小说/漫画] (有VIP章节)",
+      "group": "🔞",
+      "kind": "text",
+      "host": "www.yeduji.com",
+      "selected_has_label": true,
+      "raw_label_evidence": [
+        {
+          "index": 3908,
+          "host": "www.yeduji.com",
+          "name": "🔞夜读集 [小说/漫画] (有VIP章节)",
+          "group": "🔞"
+        }
+      ]
+    },
+    {
+      "id": "cebbe9c7723c106d5232232b66b14d203b5edb938ac33315e9217d63a9f28c20",
+      "name": "🔞漫蛙可直连",
+      "group": "9.28校验",
+      "kind": "text",
+      "host": "manwatp.cc",
+      "selected_has_label": true,
+      "raw_label_evidence": [
+        {
+          "index": 3912,
+          "host": "manwatp.cc",
+          "name": "🔞漫蛙可直连",
+          "group": "9.28校验"
+        }
+      ]
+    },
+    {
+      "id": "262c6a593dd39a7481d93915f9e36482686c00ff301bef3154fa17a1a3f8d38c",
+      "name": "肉文小说",
+      "group": "",
+      "kind": "text",
+      "host": "www.xn--7dv141d.com",
+      "selected_has_label": true,
+      "raw_label_evidence": [
+        {
+          "index": 3914,
+          "host": "www.xn--7dv141d.com",
+          "name": "肉文小说",
+          "group": ""
+        }
+      ]
+    },
+    {
+      "id": "cb24bdf6620a08c5177f52faf62db07ec6180a21278f43d22c4bef75e802abb9",
+      "name": "🚭 色情001",
+      "group": "r",
+      "kind": "text",
+      "host": "seqing001.com",
+      "selected_has_label": true,
+      "raw_label_evidence": [
+        {
+          "index": 3923,
+          "host": "seqing001.com",
+          "name": "🚭 色情001",
+          "group": "r"
+        }
+      ]
+    },
+    {
+      "id": "f5ab6f5af54f731aaa7fb044cecc4999c2fafe5072eef32dbeec8c211c9ccc0d",
+      "name": "佩蒲斐榕🎃",
+      "group": "②🔞  束冠",
+      "kind": "text",
+      "host": "m.popofree.com",
+      "selected_has_label": true,
+      "raw_label_evidence": [
+        {
+          "index": 4199,
+          "host": "m.popofree.com",
+          "name": "佩蒲斐榕🎃",
+          "group": "②🔞  束冠"
+        }
+      ]
+    },
+    {
+      "id": "acabac8302878bee212f85c544bfa59011a936a433699eefb9e96167dba6e59d",
+      "name": "👔 肉文屋②",
+      "group": "涩涩",
+      "kind": "text",
+      "host": "www.rouwenwu12.com",
+      "selected_has_label": true,
+      "raw_label_evidence": [
+        {
+          "index": 4235,
+          "host": "www.rouwenwu12.com",
+          "name": "👔 肉文屋②",
+          "group": "涩涩"
+        }
+      ]
+    },
+    {
+      "id": "6880e76d342cef514047cbfd732d731310582f42c1c58822ddcb4052c5213716",
+      "name": "🔞涩涩小说",
+      "group": "",
+      "kind": "text",
+      "host": "sesebooks.com",
+      "selected_has_label": true,
+      "raw_label_evidence": [
+        {
+          "index": 4488,
+          "host": "sesebooks.com",
+          "name": "🔞涩涩小说",
+          "group": ""
+        }
+      ]
+    },
+    {
+      "id": "0fe5c103b33a790ec943c270faa23e310895b05263d9b18a0b6d0034bcc3a375",
+      "name": "肉文NP①",
+      "group": "",
+      "kind": "text",
+      "host": "www.powenxue3.com",
+      "selected_has_label": true,
+      "raw_label_evidence": [
+        {
+          "index": 4659,
+          "host": "www.powenxue3.com",
+          "name": "肉文NP①",
+          "group": ""
+        }
+      ]
+    },
+    {
+      "id": "f959b1086d668b1186e6258f4d77bbdad2ecd2755136d65067ce5cfcf6e6501a",
+      "name": "🍉 91版主",
+      "group": "收藏书源,🔞",
+      "kind": "text",
+      "host": "m.91banzhu.store",
+      "selected_has_label": true,
+      "raw_label_evidence": [
+        {
+          "index": 4670,
+          "host": "m.91banzhu.store",
+          "name": "🍉 91版主",
+          "group": "收藏书源,🔞"
+        }
+      ]
+    },
+    {
+      "id": "5b016cdba1128ce508902bdf8dace4923eb1c21a69da63b447a8a9a82fdec0f1",
+      "name": "🚭肉文ＮＰ",
+      "group": "",
+      "kind": "text",
+      "host": "www.powenxue3.com",
+      "selected_has_label": true,
+      "raw_label_evidence": [
+        {
+          "index": 4673,
+          "host": "www.powenxue3.com",
+          "name": "🚭肉文ＮＰ",
+          "group": ""
+        }
+      ]
+    },
+    {
+      "id": "71cc91e3533ad8b2d3108e5762fd90b5314efd03ab626fb3912706cc56be0556",
+      "name": "🔞18文学",
+      "group": "",
+      "kind": "text",
+      "host": "wap.po18.in",
+      "selected_has_label": true,
+      "raw_label_evidence": [
+        {
+          "index": 4693,
+          "host": "wap.po18.in",
+          "name": "🔞18文学",
+          "group": ""
+        }
+      ]
+    },
+    {
+      "id": "c66d44251a025624cde70bf65038bfe72a2a996daeec901d00e86d8eb8371e12",
+      "name": "🚬 肉文屋",
+      "group": "",
+      "kind": "text",
+      "host": "m.rouwenwu14.com",
+      "selected_has_label": true,
+      "raw_label_evidence": [
+        {
+          "index": 4718,
+          "host": "m.rouwenwu14.com",
+          "name": "🚬 肉文屋",
+          "group": ""
+        }
+      ]
+    },
+    {
+      "id": "b5e12e21a4fb76d5ca24f87d6bbe786f43bb5a8fa23f0aeb95090c5c590876ff",
+      "name": "肉文NP②",
+      "group": "",
+      "kind": "text",
+      "host": "www.rouwennp.org",
+      "selected_has_label": true,
+      "raw_label_evidence": [
+        {
+          "index": 4738,
+          "host": "www.rouwennp.org",
+          "name": "肉文NP②",
+          "group": ""
+        }
+      ]
+    },
+    {
+      "id": "84465cb39e5459e63d1a0298356eaf5289f8f6246e4c525e4be8a1a4ea3e1eb2",
+      "name": "肉文小说",
+      "group": "",
+      "kind": "text",
+      "host": "www.rouwennp.org",
+      "selected_has_label": true,
+      "raw_label_evidence": [
+        {
+          "index": 4777,
+          "host": "www.rouwennp.org",
+          "name": "肉文小说",
+          "group": ""
+        }
+      ]
+    },
+    {
+      "id": "9d4bae13a2ef290dc71470a6bae0471381f140fb0a41538e22a0474d0fbd6644",
+      "name": "🔞乐成漫画",
+      "group": "🔞漫画",
+      "kind": "comic",
+      "host": "www.lcmhx.asia",
+      "selected_has_label": true,
+      "raw_label_evidence": [
+        {
+          "index": 4821,
+          "host": "www.lcmhx.asia",
+          "name": "🔞乐成漫画",
+          "group": "🔞漫画"
+        }
+      ]
+    }
+  ]
+}

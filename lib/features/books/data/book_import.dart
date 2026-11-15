@@ -7,6 +7,7 @@ import 'package:archive/archive.dart';
 import '../../../core/network/document_encoding.dart';
 import '../../sources/data/jsonc_decoder.dart';
 import '../domain/book.dart';
+import '../domain/book_source_risk.dart';
 import 'book_source_links.dart';
 import 'legado/legado_import.dart';
 
@@ -133,6 +134,7 @@ Iterable<Object?> _zipRecords(List<int> bytes) sync* {
 BookSourceImport parseBookSourceRecords(Iterable<Object?> records) {
   final sources = <String, BookSource>{};
   final versions = <String, int>{};
+  final adultEvidence = <String>{};
   final issues = <String, int>{};
   var duplicates = 0;
   var count = 0;
@@ -140,6 +142,7 @@ BookSourceImport parseBookSourceRecords(Iterable<Object?> records) {
     if (++count > 12000) throw const FormatException('单次导入最多解析 12000 条记录');
     try {
       final source = parseBookSourceRecord(record);
+      if (adultBookSource(source)) adultEvidence.add(source.id);
       final version = source.updatedAt;
       final previous = versions[source.id];
       if (previous != null) duplicates++;
@@ -153,7 +156,17 @@ BookSourceImport parseBookSourceRecords(Iterable<Object?> records) {
       issues.update('记录格式无效', (count) => count + 1, ifAbsent: () => 1);
     }
   }
-  return BookSourceImport(sources.values.toList(), duplicates, issues);
+  return BookSourceImport(
+    [
+      for (final source in sources.values)
+        if (adultEvidence.contains(source.id) && !source.adultEvidence)
+          BookSource.fromJson({...source.toJson(), 'adultEvidence': true})
+        else
+          source,
+    ],
+    duplicates,
+    issues,
+  );
 }
 
 Iterable<Object?> _sourceRecords(Object? value, [int depth = 0]) sync* {

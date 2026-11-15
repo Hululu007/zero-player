@@ -162,48 +162,57 @@ class _BookShelfViewState extends State<BookShelfView> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => StatefulBuilder(
-        builder: (context, update) => AlertDialog(
-          title: const Text('归入分组、集合或书单'),
-          content: SizedBox(
-            width: 450,
-            height: 300,
-            child: ListView(
-              children: [
-                for (final list in _lists)
-                  CheckboxListTile(
-                    title: Text(list.name),
-                    subtitle: Text(_labels[list.kind]!),
-                    value: selected.contains(list.id),
-                    onChanged: (value) => update(() {
-                      if (value == true) {
-                        if (list.kind == ShelfListKind.group) {
-                          selected.removeAll(
-                            _lists
-                                .where(
-                                  (item) => item.kind == ShelfListKind.group,
-                                )
-                                .map((item) => item.id),
-                          );
-                        }
-                        selected.add(list.id);
-                      } else {
-                        selected.remove(list.id);
-                      }
-                    }),
+        builder: (context, update) => ListenableBuilder(
+          listenable: Listenable.merge([
+            widget.repository.policy,
+            widget.repository.sourceRiskChanges,
+          ]),
+          builder: (context, _) => !widget.repository.bookAllowed(book)
+              ? const AlertDialog(content: Text('当前内容策略限制访问此作品'))
+              : AlertDialog(
+                  title: const Text('归入分组、集合或书单'),
+                  content: SizedBox(
+                    width: 450,
+                    height: 300,
+                    child: ListView(
+                      children: [
+                        for (final list in _lists)
+                          CheckboxListTile(
+                            title: Text(list.name),
+                            subtitle: Text(_labels[list.kind]!),
+                            value: selected.contains(list.id),
+                            onChanged: (value) => update(() {
+                              if (value == true) {
+                                if (list.kind == ShelfListKind.group) {
+                                  selected.removeAll(
+                                    _lists
+                                        .where(
+                                          (item) =>
+                                              item.kind == ShelfListKind.group,
+                                        )
+                                        .map((item) => item.id),
+                                  );
+                                }
+                                selected.add(list.id);
+                              } else {
+                                selected.remove(list.id);
+                              }
+                            }),
+                          ),
+                      ],
+                    ),
                   ),
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('取消'),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.pop(context, true),
-              child: const Text('保存'),
-            ),
-          ],
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: const Text('取消'),
+                    ),
+                    FilledButton(
+                      onPressed: () => Navigator.pop(context, true),
+                      child: const Text('保存'),
+                    ),
+                  ],
+                ),
         ),
       ),
     );

@@ -19,7 +19,7 @@ final class AudiobookFiles {
   final BookClient client;
   final OfflineServer offline;
   final Future<void> Function(File, CancellationToken, String) validate;
-  Future<void> _writeQueue = Future.value();
+  Future<void>? _writeQueue;
   final _running = <CancellationToken>{};
   bool _closed = false;
 
@@ -69,8 +69,8 @@ final class AudiobookFiles {
     BookChapter? targetChapter,
   }) {
     if (_closed) throw StateError('音频存储已关闭');
-    final operation = _writeQueue.then(
-      (_) => _download(
+    return _enqueue(
+      () => _download(
         source,
         book,
         chapter,
@@ -79,6 +79,14 @@ final class AudiobookFiles {
         authorize,
       ),
     );
+  }
+
+  Future<void> _enqueue(Future<void> Function() action) {
+    if (_closed) throw StateError('音频存储已关闭');
+    final previous = _writeQueue;
+    final operation = previous == null
+        ? Future<void>.sync(action)
+        : previous.then((_) => action());
     _writeQueue = operation.then<void>(
       (_) {},
       onError: (Object _, StackTrace _) {},
@@ -194,23 +202,19 @@ final class AudiobookFiles {
   }
 
   Future<void> remove(Book book, BookChapter chapter) {
-    final operation = _writeQueue.then((_) async {
+    return _enqueue(() async {
       if (offline.isPlaying('books:${book.id}:${chapter.id}')) {
         throw const FormatException('请先关闭正在播放的章节');
       }
       final dir = _directory(book, chapter);
       if (await dir.exists()) await dir.delete(recursive: true);
     });
-    _writeQueue = operation.then<void>(
-      (_) {},
-      onError: (Object _, StackTrace _) {},
-    );
-    return operation;
   }
 
   Future<void> removeSaved(Book book) async {
+    if (_closed) throw StateError('音频存储已关闭');
     final ids = await saved(book);
-    final operation = _writeQueue.then((_) async {
+    await _enqueue(() async {
       for (final id in ids) {
         if (offline.isPlaying('books:${book.id}:$id')) {
           throw const FormatException('请先关闭正在播放的章节');
@@ -221,11 +225,6 @@ final class AudiobookFiles {
         if (await dir.exists()) await dir.delete(recursive: true);
       }
     });
-    _writeQueue = operation.then<void>(
-      (_) {},
-      onError: (Object _, StackTrace _) {},
-    );
-    await operation;
   }
 
   Future<void> close() async {

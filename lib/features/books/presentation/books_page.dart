@@ -62,6 +62,7 @@ final class _BooksPageState extends State<BooksPage> {
     super.initState();
     _policy = _policyState;
     _services.contentPolicy.addListener(_policyChanged);
+    _services.books.sourceRiskChanges.addListener(_sourceRiskChanged);
     _downloadIds = _services.bookDownloads.activeTasks
         .map((task) => task.book.id)
         .toSet();
@@ -104,6 +105,16 @@ final class _BooksPageState extends State<BooksPage> {
       _shelf = [];
     });
     unawaited(_reload());
+  }
+
+  void _sourceRiskChanged() {
+    _followToken?.cancel();
+    if (!mounted) return;
+    setState(() {
+      _sources = null;
+      _shelf = _visibleShelf(_shelf);
+    });
+    if (_active) unawaited(_reload());
   }
 
   List<BookShelfEntry> _visibleShelf(List<BookShelfEntry> entries) => entries
@@ -154,6 +165,7 @@ final class _BooksPageState extends State<BooksPage> {
   }
 
   Future<List<BookShelfEntry>> _readShelf() async {
+    await _services.books.ensureSourceRiskLoaded();
     final shelf = _visibleShelf(await _services.books.store.shelf());
     if (widget.libraryMode != 'downloads') return shelf;
     final downloaded = <BookShelfEntry>[];
@@ -342,6 +354,7 @@ final class _BooksPageState extends State<BooksPage> {
     _followToken?.cancel();
     _services.bookDownloads.removeListener(_downloadsChanged);
     _services.contentPolicy.removeListener(_policyChanged);
+    _services.books.sourceRiskChanges.removeListener(_sourceRiskChanged);
     super.dispose();
   }
 

@@ -8,6 +8,8 @@ import 'package:zero_player/features/books/domain/book.dart';
 import 'package:zero_player/features/books/presentation/book_reader_page.dart';
 import 'package:zero_player/features/books/presentation/reader_pagination.dart';
 
+import '../../test_support/book_fixture_source.dart';
+
 void main() {
   testWidgets('last chapter asks before checking online updates', (
     tester,
@@ -24,8 +26,10 @@ void main() {
     });
     await services.settings.load();
     await services.supervision.load();
+    final source = bookFixtureSource('fixture.test');
+    await services.books.importSources([source]);
     final book = Book(
-      'test',
+      source.id,
       BookKind.text,
       '测试书',
       '作者',

@@ -265,7 +265,7 @@ final class SettingsPage extends StatelessWidget {
         '后台检测源可用性',
         'backgroundProbe',
         s.backgroundProbe,
-        subtitle: '低优先级异步检测，保存延迟和最后检测时间；播放请求优先',
+        subtitle: '低优先级检测来源，并定期抽查已启用书源首页；播放请求优先',
       ),
       _choice(
         context,

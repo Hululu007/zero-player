@@ -6,6 +6,7 @@ import 'dart:math' as math;
 import 'package:crypto/crypto.dart';
 
 import 'package:flutter/services.dart';
+import 'package:flutter/foundation.dart';
 import 'package:path/path.dart' as p;
 
 import '../../../core/network/cancellation_token.dart';
@@ -28,6 +29,7 @@ import 'book_cover_cache.dart';
 import 'book_import.dart';
 import 'book_image_payload.dart';
 import 'book_mixed_content.dart';
+import 'book_source_risk_store.dart';
 import 'book_source_links.dart';
 import 'book_store.dart';
 import 'local_book.dart';
@@ -76,6 +78,7 @@ final class BooksRepository {
     Future<void> Function(File, CancellationToken, String) validateAudio, {
     int coverCacheMiB = 32,
   }) : store = BookStore(db),
+       riskStore = BookSourceRiskStore(db),
        coverCache = BookCoverCache(
          Directory(p.join(root.path, 'book_covers')),
          maxMiB: coverCacheMiB,
@@ -101,6 +104,11 @@ final class BooksRepository {
   File documentFile(Book book, String extension) =>
       File(p.join(documents.path, '${book.id}.$extension'));
   final BookStore store;
+  final BookSourceRiskStore riskStore;
+  final _sourceRiskChanges = ValueNotifier<int>(0);
+  Listenable get sourceRiskChanges => _sourceRiskChanges;
+  bool get sourceRisksReady => _riskLoaded && !_riskSuspended;
+  bool get sourceRisksSuspended => _riskSuspended;
   final BookCoverCache coverCache;
   final ContentPolicy policy;
   late bool _coverSupervisionRestricted;
@@ -124,6 +132,15 @@ final class BooksRepository {
   late final AudiobookFiles audioFiles;
   late final Future<List<BookSource>> _builtins = _loadBuiltins();
   final _verifiedSources = <String, BookSource>{};
+  final _riskSourceEntries = <String, BookSourceEntry>{};
+  final _sourceAssessments = <String, BookSourceAssessment>{};
+  final _blockedSourceIds = <String>{};
+  final _assessedAdultHosts = <String>{};
+  final _assessedQuarantinedHosts = <String>{};
+  Future<void>? _riskLoading;
+  bool _riskLoaded = false;
+  bool _riskSuspended = false;
+  int _riskGeneration = 0;
   final _refreshingSubscriptions = <String>{};
   Future<void>? _seeding;
 
@@ -139,11 +156,17 @@ final class BooksRepository {
 
   Future<void> _seedCatalog() async {
     final catalog = await AoaoStarBookCatalog.load();
-    if (await store.read('books_catalog_revision') == catalog.revision) return;
+    // A filtered import skips restricted rows. Revisit the same snapshot when
+    // the user later changes the filter, or those rows would be lost forever.
+    final filterAdult = policy.filterAdult;
+    final revision =
+        '${catalog.revision}:adult-${filterAdult ? 'filtered' : 'all'}:2';
+    if (await store.read('books_catalog_revision') == revision) return;
     await importSources(
       (await catalog.read()).sources,
       fromCatalog: true,
-      catalogRevision: catalog.revision,
+      catalogRevision: revision,
+      catalogAdultFilter: filterAdult,
     );
   }
 
@@ -165,39 +188,306 @@ final class BooksRepository {
     return builtins;
   }
 
+  /// Load source metadata before exposing saved works or offline chapters.
+  /// Source assessments are separate records and survive removal of a source.
+  Future<void> ensureSourceRiskLoaded() async {
+    if (_riskSuspended) throw const ContentBlocked();
+    if (_riskLoaded) return;
+    final pending = _riskLoading ??= refreshSourceRisks();
+    try {
+      await pending;
+    } finally {
+      if (identical(_riskLoading, pending)) _riskLoading = null;
+    }
+  }
+
+  Future<void> refreshSourceRisks() async {
+    if (_riskSuspended) throw const ContentBlocked();
+    _riskLoaded = false;
+    final generation = _riskGeneration;
+    final entries = await store.sources(await _builtins);
+    final assessments = await riskStore.all();
+    final blocked = await store.blockedSources();
+    if (_riskSuspended) throw const ContentBlocked();
+    // A completed mark/clear may have changed the DB while this snapshot was
+    // loading; never replace the newer restriction with an older snapshot.
+    if (generation != _riskGeneration) return refreshSourceRisks();
+    _riskSourceEntries
+      ..clear()
+      ..addEntries(entries.map((entry) => MapEntry(entry.source.id, entry)));
+    _sourceAssessments
+      ..clear()
+      ..addAll(assessments);
+    _blockedSourceIds
+      ..clear()
+      ..addAll(blocked.keys);
+    _rebuildAssessmentHosts();
+    _riskLoaded = true;
+  }
+
+  void suspendSourceRisks() {
+    _riskSuspended = true;
+    _riskLoaded = false;
+    _riskGeneration++;
+    _sourceRiskChanges.value++;
+  }
+
+  Future<void> resumeSourceRisks() async {
+    _riskSuspended = false;
+    try {
+      await refreshSourceRisks();
+    } finally {
+      _sourceRiskChanges.value++;
+    }
+  }
+
+  void _rebuildAssessmentHosts() {
+    _assessedAdultHosts.clear();
+    _assessedQuarantinedHosts.clear();
+    for (final risk in _sourceAssessments.values) {
+      if (risk.host.isEmpty) continue;
+      if (risk.adultHost) _assessedAdultHosts.add(risk.host);
+      if (risk.quarantinedHost) _assessedQuarantinedHosts.add(risk.host);
+    }
+  }
+
+  bool _assessedAdult(String id, String host) =>
+      _sourceAssessments[id]?.adult == true ||
+      _assessedAdultHosts.contains(host.toLowerCase());
+
+  bool _assessedQuarantined(String id, String host) =>
+      _sourceAssessments[id]?.quarantined == true ||
+      _assessedQuarantinedHosts.contains(host.toLowerCase());
+
+  Future<BookSourceAssessment> _addSourceAssessment(
+    BookSource source, {
+    required bool adult,
+    required bool quarantine,
+    required bool rootPageEvidence,
+  }) async {
+    final previous = await riskStore.get(source.id);
+    final host = source.endpoint.host.toLowerCase();
+    if (previous != null &&
+        (previous.adult || previous.quarantined) &&
+        previous.host.isNotEmpty &&
+        previous.host != host) {
+      throw const FormatException('来源地址已改变，请先人工复核原风险记录');
+    }
+    final assessment = BookSourceAssessment(
+      sourceId: source.id,
+      name: source.name,
+      host: host,
+      adult: adult || previous?.adult == true,
+      quarantined: quarantine || previous?.quarantined == true,
+      adultHost: (adult && rootPageEvidence) || previous?.adultHost == true,
+      quarantinedHost:
+          (quarantine && rootPageEvidence) || previous?.quarantinedHost == true,
+      version: (previous?.version ?? 0) + 1,
+    );
+    await riskStore.write(assessment);
+    return assessment;
+  }
+
+  void _rememberAssessment(BookSourceAssessment assessment) {
+    _riskGeneration++;
+    _sourceAssessments[assessment.sourceId] = assessment;
+    _rebuildAssessmentHosts();
+  }
+
+  /// Called only for independently supported adult or site-mismatch evidence.
+  /// The observed root host applies across kinds and IDs, never sibling hosts.
+  /// A successful health check cannot remove this persistent assessment.
+  Future<void> markSourceRisk(
+    BookSource source, {
+    bool adult = false,
+    bool quarantine = false,
+  }) async {
+    if (!adult && !quarantine) throw const FormatException('没有可保存的风险证据');
+    _requireSubscriptionAccess();
+    await ensureSourceRiskLoaded();
+    late BookSourceAssessment assessment;
+    await store.db.atomic(() async {
+      _requireSubscriptionAccess();
+      final current = await store.source(
+        _verifiedSources[source.id],
+        source.id,
+      );
+      if (current == null ||
+          jsonEncode(current.source.toJson()) != jsonEncode(source.toJson())) {
+        throw const FormatException('来源规则已变化，请重新检测');
+      }
+      assessment = await _addSourceAssessment(
+        source,
+        adult: adult,
+        quarantine: quarantine,
+        rootPageEvidence: true,
+      );
+      _requireSubscriptionAccess();
+    }, tables: {'app_meta'});
+    _rememberAssessment(assessment);
+    policy.refresh();
+  }
+
+  /// Risk review is separate from ordinary source lists, which hide the source.
+  /// Content policy also applies to the review list itself.
+  Future<List<BookSourceRiskEntry>> sourceRiskEntries() async {
+    _requireSubscriptionAccess();
+    await ensureSourceRiskLoaded();
+    final ids = {..._riskSourceEntries.keys, ..._sourceAssessments.keys};
+    final result = <BookSourceRiskEntry>[];
+    for (final id in ids) {
+      final sourceEntry = _riskSourceEntries[id];
+      final assessment = _sourceAssessments[id];
+      final source = sourceEntry?.source;
+      final name = source?.name ?? assessment?.name ?? '';
+      final host = source?.endpoint.host ?? assessment?.host ?? '';
+      final adult =
+          (source != null &&
+              (adultBookSource(source) ||
+                  adultBookLabels(source.name, sourceEntry!.group))) ||
+          adultBookHost(host) ||
+          knownAdultHost(host) ||
+          _assessedAdult(id, host);
+      final fixedQuarantine = source == null
+          ? quarantinedBookHost(host) || quarantinedBookSourceId(id)
+          : quarantinedBookSource(source);
+      final quarantined = fixedQuarantine || _assessedQuarantined(id, host);
+      if ((!adult && !quarantined) ||
+          (policy.filterAdult && adult) ||
+          !policy.textAllowed(
+            '$name $host',
+            category: sourceEntry?.group ?? '',
+          )) {
+        continue;
+      }
+      result.add(
+        BookSourceRiskEntry(
+          sourceId: id,
+          name: name,
+          host: host,
+          adult: adult,
+          quarantined: quarantined,
+          fixedQuarantine: fixedQuarantine,
+          version: assessment?.version ?? 0,
+        ),
+      );
+    }
+    _requireSubscriptionAccess();
+    return result..sort((a, b) => a.name.compareTo(b.name));
+  }
+
+  /// Explicit manual review is required. A stale review cannot clear a newer
+  /// finding, and a bundled fixed quarantine cannot be cleared here.
+  Future<void> clearSourceRisk(BookSourceRiskEntry entry) async {
+    _requireSubscriptionAccess();
+    await ensureSourceRiskLoaded();
+    late BookSourceAssessment cleared;
+    await store.db.atomic(() async {
+      _requireSubscriptionAccess();
+      final current = await riskStore.get(entry.sourceId);
+      if (current == null || current.version != entry.version) {
+        throw const FormatException('风险记录已变化，请刷新后复核');
+      }
+      final sourceEntry = _riskSourceEntries[entry.sourceId];
+      if ((policy.filterAdult &&
+              (current.adult ||
+                  adultBookHost(current.host) ||
+                  knownAdultHost(current.host) ||
+                  (sourceEntry != null &&
+                      (adultBookSource(sourceEntry.source) ||
+                          adultBookLabels(
+                            sourceEntry.source.name,
+                            sourceEntry.group,
+                          ))))) ||
+          !policy.textAllowed(
+            '${current.name} ${current.host}',
+            category: sourceEntry?.group ?? '',
+          )) {
+        throw const ContentBlocked();
+      }
+      // Retain a revision tombstone so an old review cannot clear a finding
+      // that was later rediscovered after an earlier assessment was cleared.
+      cleared = BookSourceAssessment(
+        sourceId: current.sourceId,
+        name: current.name,
+        host: current.host,
+        adult: false,
+        quarantined: false,
+        adultHost: false,
+        quarantinedHost: false,
+        version: current.version + 1,
+      );
+      await riskStore.write(cleared);
+      _requireSubscriptionAccess();
+    }, tables: {'app_meta'});
+    _rememberAssessment(cleared);
+    policy.refresh();
+  }
+
   bool kindAllowed(BookKind kind) =>
       !policy.supervision.corrupted &&
       !((kind == BookKind.audio || kind == BookKind.comic) &&
           policy.supervision.enabled);
 
-  bool sourceAllowed(BookSource source) =>
-      kindAllowed(source.kind) &&
-      !quarantinedComicSource(source) &&
-      (source.kind != BookKind.text ||
-          !_retiredNewsHost(source.endpoint.host)) &&
-      !(policy.filterAdult &&
-          (adultComicSource(source) ||
-              [
-                source.endpoint.host,
-                ...source.mediaHosts,
-              ].any(knownAdultHost))) &&
-      policy.textAllowed(
-        '${source.name} ${source.endpoint.host}',
-        category: source.group,
-      ) &&
-      !(policy.supervision.enabled && !source.builtin);
+  bool sourceAllowed(BookSource source) {
+    if (!_riskLoaded) return false;
+    final hosts = [source.endpoint.host, ...source.mediaHosts];
+    return kindAllowed(source.kind) &&
+        !_blockedSourceIds.contains(source.id) &&
+        !quarantinedBookSource(source) &&
+        !hosts.any(
+          (host) =>
+              quarantinedBookHost(host) ||
+              _assessedQuarantined(source.id, host),
+        ) &&
+        (source.kind != BookKind.text ||
+            !_retiredNewsHost(source.endpoint.host)) &&
+        !(policy.filterAdult &&
+            (adultBookSource(source) ||
+                hosts.any(
+                  (host) =>
+                      adultBookHost(host) ||
+                      knownAdultHost(host) ||
+                      _assessedAdult(source.id, host),
+                ))) &&
+        policy.textAllowed(
+          '${source.name} ${source.endpoint.host}',
+          category: source.group,
+        ) &&
+        !(policy.supervision.enabled && !source.builtin);
+  }
+
+  bool _sourceEntryAllowed(BookSourceEntry entry) =>
+      sourceAllowed(entry.source) &&
+      policy.textAllowed('', category: entry.group) &&
+      !(policy.filterAdult && adultBookLabels(entry.source.name, entry.group));
+
+  /// Evaluate both source metadata and the user's stored group at display time.
+  bool sourceEntryAllowed(BookSourceEntry entry) => _sourceEntryAllowed(entry);
 
   bool bookAllowed(Book book) {
+    if (!_riskLoaded && book.sourceId != 'local') return false;
     final verified = _verifiedSources[book.sourceId];
+    final sourceEntry = _riskSourceEntries[book.sourceId];
     return kindAllowed(book.kind) &&
-        !(book.kind == BookKind.comic && quarantinedComicHost(book.uri.host)) &&
+        !_blockedSourceIds.contains(book.sourceId) &&
+        !(sourceEntry == null && quarantinedBookSourceId(book.sourceId)) &&
+        !(policy.filterAdult &&
+            sourceEntry == null &&
+            verified == null &&
+            book.sourceId != 'local' &&
+            book.sourceId != qidianRecommendationId) &&
+        !quarantinedBookHost(book.uri.host) &&
+        !_assessedQuarantined(book.sourceId, book.uri.host) &&
+        (sourceEntry == null || _sourceEntryAllowed(sourceEntry)) &&
         (book.kind != BookKind.text || !_retiredNewsHost(book.uri.host)) &&
         (!policy.supervision.enabled ||
             (verified != null && sourceAllowed(verified))) &&
         !(policy.filterAdult &&
             (knownAdultHost(book.uri.host) ||
-                (book.kind == BookKind.comic &&
-                    adultComicHost(book.uri.host)))) &&
+                adultBookHost(book.uri.host) ||
+                adultBundledSourceId(book.sourceId) ||
+                _assessedAdult(book.sourceId, book.uri.host))) &&
         policy.textAllowed(
           '${book.title} ${book.author} ${book.description} ${book.category} '
           '${book.latestChapter} ${book.updatedLabel} ${book.rankLabel} ${book.uri.host}',
@@ -208,14 +498,14 @@ final class BooksRepository {
     BookKind kind, {
     bool enabledOnly = false,
   }) async {
+    await ensureSourceRiskLoaded();
     final blocked = await store.blockedSources();
     return (await store.sources(await _builtins, enabledOnly: enabledOnly))
         .where(
           (entry) =>
               entry.source.kind == kind &&
               !blocked.containsKey(entry.source.id) &&
-              sourceAllowed(entry.source) &&
-              policy.textAllowed('', category: entry.group),
+              _sourceEntryAllowed(entry),
         )
         .toList();
   }
@@ -226,27 +516,27 @@ final class BooksRepository {
   }
 
   Future<BookSourceEntry?> sourceEntry(BookKind kind, String id) async {
+    await ensureSourceRiskLoaded();
     await _builtins;
     if (await _blocked(id)) return null;
     final entry = await store.source(_verifiedSources[id], id);
     if (entry == null ||
         entry.source.kind != kind ||
-        !sourceAllowed(entry.source) ||
-        !policy.textAllowed('', category: entry.group)) {
+        !_sourceEntryAllowed(entry)) {
       return null;
     }
     return entry;
   }
 
   Future<BookSource> _enabledSource(BookKind kind, String id) async {
+    await ensureSourceRiskLoaded();
     await _builtins;
     if (await _blocked(id)) throw const ContentBlocked();
     final entry = await store.source(_verifiedSources[id], id);
     if (entry == null || !entry.enabled || entry.source.kind != kind) {
       throw const FormatException('请先启用该来源');
     }
-    if (!sourceAllowed(entry.source) ||
-        !policy.textAllowed('', category: entry.group)) {
+    if (!_sourceEntryAllowed(entry)) {
       throw const ContentBlocked();
     }
     return entry.source;
@@ -291,14 +581,18 @@ final class BooksRepository {
 
   Future<void> restoreDefaultSources(BookKind kind) async {
     policy.supervision.require(SensitiveOperation.channels);
+    await ensureSourceRiskLoaded();
     final builtins = (await _builtins).where((s) => s.kind == kind).toList();
     final blocked = await store.blockedSources();
     final existing = await store.sources(await _builtins);
     await store.db.atomic(() async {
+      policy.supervision.require(SensitiveOperation.channels);
       for (final entry in existing.where((e) => e.source.kind == kind)) {
+        policy.supervision.require(SensitiveOperation.channels);
         await store.saveSource(entry.source, {'enabled': false});
       }
       for (final source in builtins) {
+        policy.supervision.require(SensitiveOperation.channels);
         if (!source.defaultEnabled ||
             blocked.containsKey(source.id) ||
             !sourceAllowed(source)) {
@@ -306,13 +600,17 @@ final class BooksRepository {
         }
         final key = 'books_source:${source.id}';
         final old = await store.read(key);
+        policy.supervision.require(SensitiveOperation.channels);
         await store.write(key, {
           if (old is Map) ...old,
           'enabled': true,
           'removed': false,
         });
       }
+      policy.supervision.require(SensitiveOperation.channels);
     }, tables: {'app_meta'});
+    _riskGeneration++;
+    await refreshSourceRisks();
   }
 
   Future<void> saveSource(
@@ -320,11 +618,45 @@ final class BooksRepository {
     Map<String, Object?> updates,
   ) async {
     policy.supervision.require(SensitiveOperation.channels);
+    await ensureSourceRiskLoaded();
     if (!sourceAllowed(source)) throw const ContentBlocked();
+    BookSourceAssessment? retainedEvidence;
     await store.db.atomic(() async {
+      policy.supervision.require(SensitiveOperation.channels);
       if (await _blocked(source.id)) throw const ContentBlocked();
+      policy.supervision.require(SensitiveOperation.channels);
+      if (!sourceAllowed(source)) throw const ContentBlocked();
+      if (updates.containsKey('group')) {
+        final current = await store.source(
+          _verifiedSources[source.id],
+          source.id,
+        );
+        if (current != null &&
+            (adultBookSource(current.source) ||
+                adultBookLabels(current.source.name, current.group))) {
+          retainedEvidence = await _addSourceAssessment(
+            current.source,
+            adult: true,
+            quarantine: false,
+            rootPageEvidence: false,
+          );
+        }
+      }
+      policy.supervision.require(SensitiveOperation.channels);
+      if (!sourceAllowed(source)) throw const ContentBlocked();
       await store.saveSource(source, updates);
+      policy.supervision.require(SensitiveOperation.channels);
     }, tables: {'app_meta'});
+    if (retainedEvidence != null) _rememberAssessment(retainedEvidence!);
+    if (updates.keys.any(
+      (key) => const {'group', 'enabled', 'removed', 'source'}.contains(key),
+    )) {
+      _riskGeneration++;
+      await refreshSourceRisks();
+      if (updates.containsKey('group') || updates.containsKey('source')) {
+        policy.refresh();
+      }
+    }
   }
 
   Future<void> setSourcesEnabled(
@@ -333,33 +665,55 @@ final class BooksRepository {
     bool enabled,
   ) async {
     policy.supervision.require(SensitiveOperation.channels);
+    var changed = false;
     await store.db.atomic(() async {
       final eligible = (await sources(kind)).where(
         (entry) => ids.contains(entry.source.id) && entry.enabled != enabled,
       );
       policy.supervision.require(SensitiveOperation.channels);
-      await store.setSourcesEnabled(
-        eligible.map((entry) => entry.source.id).toSet(),
-        enabled,
-      );
+      final eligibleIds = eligible.map((entry) => entry.source.id).toSet();
+      if (eligibleIds.isNotEmpty) {
+        await store.setSourcesEnabled(eligibleIds, enabled);
+        changed = true;
+      }
+      policy.supervision.require(SensitiveOperation.channels);
     }, tables: {'app_meta'});
+    if (changed) {
+      _riskGeneration++;
+      await refreshSourceRisks();
+    }
   }
 
-  Future<void> blockSource(BookSource source) => store.db.atomic(() async {
-    policy.supervision.require(SensitiveOperation.channels);
-    if (!sourceAllowed(source)) throw const ContentBlocked();
-    final blocked = await store.blockedSources();
-    await store.write('books_source_blacklist', {
-      ...blocked,
-      source.id: '${source.name} · ${source.endpoint.host}',
-    });
-    final aliases = await store.read('books_source_blacklist_aliases');
-    await store.write('books_source_blacklist_aliases', {
-      if (aliases is Map) ...aliases,
-      _blacklistAlias(source): source.id,
-    });
-    await store.saveSource(source, {'enabled': false});
-  }, tables: {'app_meta'});
+  Future<void> blockSource(BookSource source) async {
+    await ensureSourceRiskLoaded();
+    await store.db.atomic(() async {
+      policy.supervision.require(SensitiveOperation.channels);
+      if (!sourceAllowed(source)) throw const ContentBlocked();
+      final blocked = await store.blockedSources();
+      policy.supervision.require(SensitiveOperation.channels);
+      if (!sourceAllowed(source)) throw const ContentBlocked();
+      await store.write('books_source_blacklist', {
+        ...blocked,
+        source.id: '${source.name} · ${source.endpoint.host}',
+      });
+      final aliases = await store.read('books_source_blacklist_aliases');
+      policy.supervision.require(SensitiveOperation.channels);
+      await store.write('books_source_blacklist_aliases', {
+        if (aliases is Map) ...aliases,
+        _blacklistAlias(source): source.id,
+      });
+      policy.supervision.require(SensitiveOperation.channels);
+      await store.saveSource(source, {'enabled': false});
+      policy.supervision.require(SensitiveOperation.channels);
+    }, tables: {'app_meta'});
+    // Publish the committed restriction before rebuilding the full snapshot,
+    // so an active offline player pauses as soon as the blacklist changes.
+    _blockedSourceIds.add(source.id);
+    _riskGeneration++;
+    policy.refresh();
+    await refreshSourceRisks();
+    policy.refresh();
+  }
 
   Future<bool> _blocked(String id) async =>
       (await store.blockedSources()).containsKey(id);
@@ -370,19 +724,27 @@ final class BooksRepository {
     return '${source.kind.name}:$host$path?${source.endpoint.query}:${source.sourceKey}';
   }
 
-  Future<void> unblockSource(String id) => store.db.atomic(() async {
-    policy.supervision.require(SensitiveOperation.channels);
-    final blocked = await store.blockedSources()
-      ..remove(id);
-    await store.write('books_source_blacklist', blocked);
-    final aliases = await store.read('books_source_blacklist_aliases');
-    if (aliases is Map) {
-      await store.write(
-        'books_source_blacklist_aliases',
-        {...aliases}..removeWhere((_, sourceId) => sourceId == id),
-      );
-    }
-  }, tables: {'app_meta'});
+  Future<void> unblockSource(String id) async {
+    await store.db.atomic(() async {
+      policy.supervision.require(SensitiveOperation.channels);
+      final blocked = await store.blockedSources()
+        ..remove(id);
+      policy.supervision.require(SensitiveOperation.channels);
+      await store.write('books_source_blacklist', blocked);
+      final aliases = await store.read('books_source_blacklist_aliases');
+      policy.supervision.require(SensitiveOperation.channels);
+      if (aliases is Map) {
+        await store.write(
+          'books_source_blacklist_aliases',
+          {...aliases}..removeWhere((_, sourceId) => sourceId == id),
+        );
+      }
+      policy.supervision.require(SensitiveOperation.channels);
+    }, tables: {'app_meta'});
+    _riskGeneration++;
+    await refreshSourceRisks();
+    policy.refresh();
+  }
 
   void _requireSubscriptionAccess() {
     policy.supervision.require(SensitiveOperation.channels);
@@ -466,8 +828,10 @@ final class BooksRepository {
     CancellationToken? token,
     bool fromCatalog = false,
     String? catalogRevision,
+    bool? catalogAdultFilter,
   }) async {
     policy.supervision.require(SensitiveOperation.channels);
+    await ensureSourceRiskLoaded();
     final builtins = await _builtins;
     final subscriptionId = subscription == null
         ? null
@@ -476,6 +840,7 @@ final class BooksRepository {
     var updated = 0;
     var duplicates = 0;
     var skipped = 0;
+    final retainedAssessments = <String, BookSourceAssessment>{};
     await store.db.atomic(() async {
       final current = await store.sources(builtins);
       final existing = {for (final entry in current) entry.source.id: entry};
@@ -499,7 +864,36 @@ final class BooksRepository {
         token?.check();
         policy.supervision.require(SensitiveOperation.channels);
         if (subscription != null || fromCatalog) _requireSubscriptionAccess();
-        final source = _keepLegacyKey(candidate, existing);
+        if (catalogAdultFilter != null &&
+            policy.filterAdult != catalogAdultFilter) {
+          throw const ContentBlocked();
+        }
+        var source = _keepLegacyKey(candidate, existing);
+        final previous = existing[source.id];
+        if (previous != null &&
+            (adultBookSource(previous.source) ||
+                adultBookLabels(previous.source.name, previous.group)) &&
+            !source.adultEvidence) {
+          source = BookSource.fromJson({
+            ...source.toJson(),
+            'adultEvidence': true,
+          });
+        }
+        // A subscription may replace an ordinary source with explicitly
+        // adult-labelled metadata. When filtering rejects that update, the
+        // previous enabled version must not continue to expose its cached data.
+        if (previous != null &&
+            policy.filterAdult &&
+            adultBookSource(source) &&
+            _sourceAssessments[source.id]?.adult != true &&
+            !retainedAssessments.containsKey(source.id)) {
+          retainedAssessments[source.id] = await _addSourceAssessment(
+            previous.source,
+            adult: true,
+            quarantine: false,
+            rootPageEvidence: false,
+          );
+        }
         if (aliases.contains(_blacklistAlias(candidate)) ||
             blocked.containsKey(candidate.id) ||
             blocked.containsKey(source.id) ||
@@ -511,7 +905,6 @@ final class BooksRepository {
           duplicates++;
           continue;
         }
-        final previous = existing[source.id];
         if (previous != null) {
           final owned =
               subscriptionId != null &&
@@ -540,11 +933,26 @@ final class BooksRepository {
       if (pending.isNotEmpty) await flush();
       token?.check();
       if (subscription != null || fromCatalog) _requireSubscriptionAccess();
+      if (catalogAdultFilter != null &&
+          policy.filterAdult != catalogAdultFilter) {
+        throw const ContentBlocked();
+      }
       if (catalogRevision != null) {
         await store.write('books_catalog_revision', catalogRevision);
       }
       await _recordSubscription(subscription, added + updated + duplicates);
+      policy.supervision.require(SensitiveOperation.channels);
     }, tables: {'app_meta'});
+    for (final assessment in retainedAssessments.values) {
+      _rememberAssessment(assessment);
+    }
+    if (added > 0 || updated > 0) {
+      _riskGeneration++;
+      await refreshSourceRisks();
+    }
+    if (retainedAssessments.isNotEmpty) {
+      policy.refresh();
+    }
     return (
       added: added,
       updated: updated,
@@ -587,8 +995,40 @@ final class BooksRepository {
 
   Future<void> removeSource(BookSource source) async {
     policy.supervision.require(SensitiveOperation.channels);
+    await ensureSourceRiskLoaded();
     if (!sourceAllowed(source)) throw const ContentBlocked();
-    await store.deleteSource(source);
+    BookSourceAssessment? retainedEvidence;
+    await store.db.atomic(() async {
+      policy.supervision.require(SensitiveOperation.channels);
+      final current = await store.source(
+        _verifiedSources[source.id],
+        source.id,
+      );
+      policy.supervision.require(SensitiveOperation.channels);
+      if (!sourceAllowed(current?.source ?? source)) {
+        throw const ContentBlocked();
+      }
+      if (current != null &&
+          (adultBookSource(current.source) ||
+              adultBookLabels(current.source.name, current.group))) {
+        retainedEvidence = await _addSourceAssessment(
+          current.source,
+          adult: true,
+          quarantine: false,
+          rootPageEvidence: false,
+        );
+      }
+      policy.supervision.require(SensitiveOperation.channels);
+      if (!sourceAllowed(current?.source ?? source)) {
+        throw const ContentBlocked();
+      }
+      await store.deleteSource(source);
+      policy.supervision.require(SensitiveOperation.channels);
+    }, tables: {'app_meta'});
+    if (retainedEvidence != null) _rememberAssessment(retainedEvidence!);
+    _riskGeneration++;
+    await refreshSourceRisks();
+    policy.refresh();
   }
 
   Future<void> probe(
@@ -597,6 +1037,7 @@ final class BooksRepository {
     CancellationToken token,
   ) async {
     policy.supervision.require(SensitiveOperation.channels);
+    await ensureSourceRiskLoaded();
     if (!sourceAllowed(source) || await _blocked(source.id)) {
       throw const ContentBlocked();
     }
@@ -695,6 +1136,7 @@ final class BooksRepository {
     List<BookSourceEntry>? availableSources,
     void Function(BookSearchUpdate)? onProgress,
   }) async {
+    await ensureSourceRiskLoaded();
     if (!kindAllowed(kind)) throw const ContentBlocked();
     if (query.isNotEmpty && !policy.textAllowed(query)) {
       throw const ContentBlocked();
@@ -704,8 +1146,7 @@ final class BooksRepository {
         .where((entry) {
           if (!entry.enabled ||
               entry.source.kind != kind ||
-              !sourceAllowed(entry.source) ||
-              !policy.textAllowed('', category: entry.group) ||
+              !_currentSearchEntry(entry) ||
               (skipQidian && isQidianHost(entry.source.endpoint.host)) ||
               entry.source.id == excludedSource ||
               (sourceId != null && sourceId != entry.source.id) ||
@@ -760,6 +1201,16 @@ final class BooksRepository {
       ),
   ];
 
+  bool _currentSearchEntry(BookSourceEntry snapshot) {
+    final current = _riskSourceEntries[snapshot.source.id];
+    if (current == null || !current.enabled || !_sourceEntryAllowed(current)) {
+      return false;
+    }
+    return identical(current.source, snapshot.source) ||
+        jsonEncode(current.source.toJson()) ==
+            jsonEncode(snapshot.source.toJson());
+  }
+
   Future<({List<Book> books, int failed})> _searchSources(
     List<BookSourceEntry> selected,
     String query,
@@ -779,12 +1230,15 @@ final class BooksRepository {
     Future<void> fetchSources() async {
       while (cursor < selected.length) {
         token.check();
-        final source = selected[cursor++].source;
+        final entry = selected[cursor++];
+        final source = entry.source;
         var books = <Book>[];
         var failure = false;
         int? latencyMs;
         try {
-          if (sourceAllowed(source) && !await _blocked(source.id)) {
+          if (_currentSearchEntry(entry) &&
+              !await _blocked(source.id) &&
+              _currentSearchEntry(entry)) {
             final watch = Stopwatch()..start();
             final found = await client.books(
               source,
@@ -795,7 +1249,9 @@ final class BooksRepository {
               bookAddress: address,
             );
             latencyMs = watch.elapsedMilliseconds;
-            if (sourceAllowed(source) && !await _blocked(source.id)) {
+            if (_currentSearchEntry(entry) &&
+                !await _blocked(source.id) &&
+                _currentSearchEntry(entry)) {
               final allowEpisodeMatches =
                   source.kind == BookKind.audio &&
                   source.format == BookFormat.feed &&
@@ -846,6 +1302,8 @@ final class BooksRepository {
     CancellationToken token, {
     bool refresh = false,
   }) async {
+    token.check();
+    if (book.sourceId != 'local') await ensureSourceRiskLoaded();
     if (!bookAllowed(book) || await _blocked(book.sourceId)) {
       throw const ContentBlocked();
     }
@@ -877,6 +1335,7 @@ final class BooksRepository {
 
   Future<Book> details(Book book, CancellationToken token) async {
     token.check();
+    if (book.sourceId != 'local') await ensureSourceRiskLoaded();
     if (!bookAllowed(book)) throw const ContentBlocked();
     if (book.sourceId == 'local') return book;
     final source = await _active(book);
@@ -892,6 +1351,7 @@ final class BooksRepository {
   }
 
   Future<void> checkFollowing(BookKind kind, CancellationToken token) async {
+    await ensureSourceRiskLoaded();
     final entries = (await store.shelf()).where(
       (entry) =>
           entry.following && entry.book.kind == kind && bookAllowed(entry.book),
@@ -915,6 +1375,8 @@ final class BooksRepository {
     Iterable<BookShelfEntry> entries,
     CancellationToken token,
   ) async {
+    token.check();
+    await ensureSourceRiskLoaded();
     for (final entry in entries) {
       token.check();
       final book = entry.book;
@@ -1003,6 +1465,8 @@ final class BooksRepository {
     BookChapter chapter,
     CancellationToken token,
   ) async {
+    token.check();
+    if (book.sourceId != 'local') await ensureSourceRiskLoaded();
     requireBook(book, chapter);
     if (await _blocked(book.sourceId)) throw const ContentBlocked();
     final offline = await store.text(book, chapter);
@@ -1055,6 +1519,8 @@ final class BooksRepository {
     BookChapter chapter,
     CancellationToken token,
   ) async {
+    token.check();
+    if (book.sourceId != 'local') await ensureSourceRiskLoaded();
     if (policy.supervision.enabled) return const [];
     requireBook(book, chapter);
     final parts = await store.mixedReading(book, chapter);
@@ -1119,6 +1585,7 @@ final class BooksRepository {
   }
 
   Future<List<int>> coverBytes(Book book, CancellationToken token) async {
+    await ensureSourceRiskLoaded();
     final qidianBook = book.sourceId == qidianRecommendationId;
     final source = qidianBook ? null : await _active(book);
     final uri = qidianBook
@@ -1172,6 +1639,7 @@ final class BooksRepository {
     BookChapter chapter,
     CancellationToken token,
   ) async {
+    await ensureSourceRiskLoaded();
     if (policy.supervision.enabled) throw const ContentBlocked();
     requireBook(book, chapter);
     final offline = await store.offlineImageAddresses(book, chapter);
@@ -1208,6 +1676,7 @@ final class BooksRepository {
     String body,
     CancellationToken token,
   ) async {
+    await ensureSourceRiskLoaded();
     requireBook(book, chapter);
     final source = await _active(book);
     final images = parseBookImageAddresses(source, chapter.uri, body);
@@ -1227,6 +1696,7 @@ final class BooksRepository {
     CancellationToken token, {
     BookChapter? chapter,
   }) async {
+    await ensureSourceRiskLoaded();
     if (policy.supervision.enabled || !bookAllowed(book)) {
       throw const ContentBlocked();
     }
@@ -1292,6 +1762,7 @@ final class BooksRepository {
     List<BookEdition> alternatives = const [],
     bool tryOriginal = true,
   }) async {
+    await ensureSourceRiskLoaded();
     if (book.kind == BookKind.comic) {
       requireBook(book, chapter);
       final images = await chapterImages(book, chapter, token);
@@ -1468,6 +1939,7 @@ final class BooksRepository {
 
   Future<void> close() async {
     policy.removeListener(_coverPolicyChanged);
+    _sourceRiskChanges.dispose();
     _http.close();
     await audioFiles.close();
     await coverCache.waitForIdle();
