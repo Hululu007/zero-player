@@ -22,6 +22,7 @@ const codePaths = [
   'lib/features/books/domain/book.dart',
   'lib/features/books/domain/book_source_risk.dart',
   'lib/features/books/domain/biquge7_legacy_source_fix.dart',
+  'lib/features/books/domain/jhsssd_legacy_source_fix.dart',
   'lib/features/books/domain/com_rdap_legacy_quarantine.dart',
   'lib/features/books/domain/novel_242_legacy_quarantine.dart',
   'lib/features/books/domain/redirected_legacy_quarantine.dart',

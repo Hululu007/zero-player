@@ -5,7 +5,7 @@ import 'book_download_evidence.dart';
 import 'book_source_risk_store.dart';
 import 'book_store.dart';
 
-typedef BookDownloadLease = ({int generation, int policy});
+typedef BookDownloadLease = ({int generation, int policy, int bookPolicy});
 
 /// Checks both the requested work and the source that supplied its bytes.
 final class BookDownloadGuard {
@@ -20,6 +20,7 @@ final class BookDownloadGuard {
     required this.bookAllowed,
     required this.entryAllowed,
     required this.generation,
+    required this.bookPolicyGeneration,
     required this.ensureReady,
   }) {
     policy.addListener(_policyChanged);
@@ -35,12 +36,16 @@ final class BookDownloadGuard {
   final bool Function(Book) bookAllowed;
   final bool Function(BookSourceEntry) entryAllowed;
   final int Function() generation;
+  final int Function() bookPolicyGeneration;
   final Future<void> Function() ensureReady;
   int _policyRevision = 0;
 
   void _policyChanged() => _policyRevision++;
-  BookDownloadLease lease() =>
-      (generation: generation(), policy: _policyRevision);
+  BookDownloadLease lease() => (
+    generation: generation(),
+    policy: _policyRevision,
+    bookPolicy: bookPolicyGeneration(),
+  );
 
   void _requireLease(BookDownloadLease? expected) {
     if (expected != null && expected != lease()) throw const ContentBlocked();

@@ -16,7 +16,7 @@ final class BookSiteMonitor {
     this.startDelay = const Duration(seconds: 30),
     this.interval = const Duration(minutes: 30),
   }) {
-    checks.books.sourceRiskChanges.addListener(_sourceRiskChanged);
+    checks.books.sourceConfigurationChanges.addListener(_sourceRiskChanged);
   }
   final BookSiteChecks checks;
   final SettingsController settings;
@@ -157,7 +157,7 @@ final class BookSiteMonitor {
       settings.removeListener(_policyChanged);
       checks.books.policy.removeListener(_policyChanged);
     }
-    checks.books.sourceRiskChanges.removeListener(_sourceRiskChanged);
+    checks.books.sourceConfigurationChanges.removeListener(_sourceRiskChanged);
     for (final token in _manualTokens.toList()) {
       token.cancel();
     }

@@ -2,6 +2,172 @@ part of 'book_discovery_category_policy_test.dart';
 
 void _detailsTargetTests() {
   test(
+    'restricted detail metadata also blocks stale books and in-flight reads',
+    () async {
+      await _withFixture((f) async {
+        final source = _metadataSource('detail-metadata.example');
+        await f.install(source);
+        final book = _readingBook(source);
+        final another = Book(
+          source.id,
+          BookKind.text,
+          '其他作品',
+          '作者',
+          source.endpoint.resolve('/book/2'),
+        );
+        final unseen = Book(
+          source.id,
+          BookKind.text,
+          '第三本作品',
+          '作者',
+          source.endpoint.resolve('/book/3'),
+        );
+        final saved = BookChapter('第一章', source.endpoint.resolve('/saved/1'));
+        final remote = BookChapter(
+          '第二章',
+          source.endpoint.resolve('/chapter/2'),
+        );
+        await f.repo.store.saveBook(book, chapters: [saved]);
+        await f.repo.store.saveTexts(book, {saved: '普通的离线测试正文'});
+        f.pages['/book/1'] = '<p class="category">高H</p>';
+        f.pages['/chapter/2'] = '<p class="body">普通的在线测试正文</p>';
+        expect(f.repo.bookAllowed(book), isTrue);
+
+        final gate = f.hold('/chapter/2');
+        final inFlight = expectLater(
+          f.repo.readText(book, remote, CancellationToken()),
+          throwsA(anything),
+        );
+        await gate.started.future.timeout(const Duration(seconds: 5));
+        await expectLater(
+          f.repo.details(book, CancellationToken()),
+          throwsA(isA<ContentBlocked>()),
+        );
+        gate.release();
+        await inFlight.timeout(const Duration(seconds: 5));
+        expect(f.repo.bookAllowed(book), isFalse);
+        expect(f.repo.bookAllowed(another), isTrue);
+        expect(await f.repo.store.readingCache(book, remote), isNull);
+        await expectLater(
+          f.repo.chapters(book, CancellationToken()),
+          throwsA(isA<ContentBlocked>()),
+        );
+        await expectLater(
+          f.repo.offlineText(book, saved, CancellationToken()),
+          throwsA(isA<ContentBlocked>()),
+        );
+        expect(
+          () => f.repo.requireBook(book, saved),
+          throwsA(isA<ContentBlocked>()),
+        );
+
+        await f.services.settings.update({'filterAdult': false});
+        expect(f.repo.bookAllowed(book), isTrue);
+        expect(
+          (await f.repo.offlineText(book, saved, CancellationToken())).body,
+          '普通的离线测试正文',
+        );
+        // Metadata observed while filtering is off must still apply to an old
+        // list object when filtering is switched on later.
+        f.pages['/book/2'] = '<p class="category">成人小说</p>';
+        final secondDetails = await f.repo.details(
+          another,
+          CancellationToken(),
+        );
+        expect(secondDetails.category, '成人小说');
+        expect(f.repo.bookAllowed(another), isTrue);
+        await f.services.settings.update({'filterAdult': true});
+        expect(f.repo.bookAllowed(book), isFalse);
+        expect(f.repo.bookAllowed(another), isFalse);
+        expect(f.repo.bookAllowed(unseen), isTrue);
+
+        final stored = await f.repo.store.read(
+          BookPolicyEvidenceStore.key(book.id),
+        );
+        expect((stored as Map)['version'], 1);
+        expect(stored['adult'], isTrue);
+        expect(stored['keywords'], isEmpty);
+        expect(stored['texts'], isNotEmpty);
+        expect(jsonEncode(stored), isNot(contains('/book/1')));
+
+        // A fresh repository has no in-memory observations. Its startup risk
+        // load must recover the restriction before serving cached content.
+        final reopened = BooksRepository(
+          f.services.db,
+          f.services.root,
+          f.services.offline,
+          f.services.contentPolicy,
+          (_, _, _) async {},
+        );
+        try {
+          await reopened.ensureSourceRiskLoaded();
+          expect(reopened.bookAllowed(book), isFalse);
+          expect(reopened.bookAllowed(another), isFalse);
+          expect(reopened.bookAllowed(unseen), isTrue);
+          await expectLater(
+            reopened.offlineText(book, saved, CancellationToken()),
+            throwsA(isA<ContentBlocked>()),
+          );
+          await f.services.settings.update({'filterAdult': false});
+          expect(
+            (await reopened.offlineText(book, saved, CancellationToken())).body,
+            '普通的离线测试正文',
+          );
+        } finally {
+          await reopened.close();
+        }
+
+        await f.services.settings.update({'filterAdult': true});
+        await f.services.db.write(
+          'INSERT OR REPLACE INTO app_meta(key,value) VALUES(?,?)',
+          [BookPolicyEvidenceStore.key(book.id), '{'],
+        );
+        final damaged = BooksRepository(
+          f.services.db,
+          f.services.root,
+          f.services.offline,
+          f.services.contentPolicy,
+          (_, _, _) async {},
+        );
+        try {
+          await damaged.ensureSourceRiskLoaded();
+          expect(damaged.bookAllowed(book), isFalse);
+          expect(damaged.bookAllowed(unseen), isTrue);
+          await f.services.settings.update({'filterAdult': false});
+          expect(damaged.bookAllowed(book), isTrue);
+        } finally {
+          await damaged.close();
+        }
+
+        // No keywords exist at observation time. A later supervision rule must
+        // still match the locally stored, normalized metadata after reload.
+        f.pages['/book/3'] = '<p class="category">星际旅行</p>';
+        await f.repo.details(unseen, CancellationToken());
+        final laterEvidence = (await BookPolicyEvidenceStore(
+          f.services.db,
+        ).load())[unseen.id]!;
+        expect(laterEvidence.keywordHashes, isEmpty);
+        final supervision = f.services.supervision;
+        await supervision.saveCredentials(
+          await supervision.prepareCredentials('fixture-password'),
+        );
+        await supervision.execute(
+          SensitiveOperation.supervision,
+          () => supervision.updateRules(SupervisionRules(keywords: ['星际'])),
+          password: 'fixture-password',
+        );
+        expect(laterEvidence.blocks(f.services.contentPolicy), isTrue);
+        await supervision.execute(
+          SensitiveOperation.supervision,
+          () => supervision.updateRules(SupervisionRules(keywords: ['无关关键词'])),
+          password: 'fixture-password',
+        );
+        expect(laterEvidence.blocks(f.services.contentPolicy), isFalse);
+      });
+    },
+  );
+
+  test(
     'details rejects a restricted redirect but allows an ordinary one',
     () async {
       await _withFixture((f) async {
@@ -58,6 +224,223 @@ void _detailsTargetTests() {
           '/book/1',
           '/safe',
         ]);
+      });
+    },
+  );
+}
+
+BookSource _metadataSource(String host) => BookSource.fromJson({
+  'name': '混合内容测试源',
+  'url': 'https://$host/',
+  'kind': 'text',
+  'format': 'html',
+  'legado': {
+    'rules': {
+      'infoCategory': '.category@text',
+      'chapters': '.chapter',
+      'chapterTitle': '@text',
+      'chapterUrl': '@href',
+      'content': '.body@text',
+    },
+  },
+});
+
+void _pendingDetailEvidenceTests() {
+  test('manual source probe retains a restricted detail observation', () async {
+    await _withFixture((f) async {
+      final base = _source('probe-metadata.example', [
+        {'title': '普通', 'url': '/normal'},
+      ]);
+      final legado = base.legado!.toJson();
+      final source = BookSource.fromJson({
+        ...base.toJson(),
+        'legado': {
+          ...legado,
+          'rules': {
+            ...legado['rules'] as Map,
+            'infoCategory': '.category@text',
+          },
+        },
+      });
+      await f.install(source);
+      f.pages['/book/1'] = '<p class="category">高H</p>';
+      final found = await f.repo.find(
+        BookKind.text,
+        '星际',
+        CancellationToken(),
+        sourceIds: {source.id},
+      );
+      final book = found.books.single;
+      expect(f.repo.bookAllowed(book), isTrue);
+      await f.repo.probe(source, '星际', CancellationToken());
+      expect(f.repo.bookAllowed(book), isFalse);
+      expect(
+        (await BookPolicyEvidenceStore(f.services.db).load())[book.id]!.adult,
+        isTrue,
+      );
+      expect(
+        f.requests.where((request) => request.$2.path == '/book/1'),
+        hasLength(1),
+      );
+    });
+  });
+
+  test(
+    'pending restriction invalidates leases and cancellation restores access',
+    () async {
+      await _withFixture((f) async {
+        final source = _metadataSource('pending-detail.example');
+        await f.install(source);
+        final book = _readingBook(source);
+        f.pages['/book/1'] = '<p class="category">高H</p>';
+        final gate = f.hold('/book/1');
+        final cancellation = CancellationToken();
+        final result = expectLater(
+          f.repo.details(book, cancellation),
+          throwsA(anything),
+        );
+        await gate.started.future.timeout(const Duration(seconds: 5));
+        final acquired = Completer<void>();
+        final release = Completer<void>();
+        final lock = f.services.db.transaction(() async {
+          acquired.complete();
+          await release.future;
+        });
+        await acquired.future.timeout(const Duration(seconds: 5));
+        final blocked = Completer<void>();
+        var notifications = 0;
+        void listener() {
+          notifications++;
+          if (!blocked.isCompleted && !f.repo.bookAllowed(book)) {
+            blocked.complete();
+          }
+        }
+
+        f.repo.bookPolicyChanges.addListener(listener);
+        final oldLease = f.repo.downloadGuard.lease();
+        try {
+          gate.release();
+          await blocked.future.timeout(const Duration(seconds: 5));
+          expect(f.repo.bookAllowed(book), isFalse);
+          expect(f.repo.downloadGuard.lease(), isNot(oldLease));
+          cancellation.cancel();
+        } finally {
+          if (!release.isCompleted) release.complete();
+          gate.release();
+        }
+        await lock;
+        await result.timeout(const Duration(seconds: 5));
+        expect(f.repo.bookAllowed(book), isTrue);
+        expect(notifications, greaterThanOrEqualTo(2));
+        expect(
+          (await BookPolicyEvidenceStore(f.services.db).load())[book.id],
+          isNull,
+        );
+        f.repo.bookPolicyChanges.removeListener(listener);
+      });
+    },
+  );
+
+  test(
+    'last cancelled concurrent observation notifies restored access',
+    () async {
+      await _withFixture((f) async {
+        final source = _metadataSource('parallel-detail.example');
+        await f.install(source);
+        final book = _readingBook(source);
+        f.pages['/book/1'] = '<p class="category">高H</p>';
+        final gate = f.hold('/book/1');
+        final firstToken = CancellationToken();
+        final secondToken = CancellationToken();
+        final first = expectLater(
+          f.repo.details(book, firstToken),
+          throwsA(anything),
+        );
+        final second = expectLater(
+          f.repo.details(book, secondToken),
+          throwsA(anything),
+        );
+        await gate.started.future.timeout(const Duration(seconds: 5));
+        final deadline = DateTime.now().add(const Duration(seconds: 5));
+        while (f.requests.where((item) => item.$2.path == '/book/1').length <
+            2) {
+          if (DateTime.now().isAfter(deadline)) {
+            throw StateError('requests did not start');
+          }
+          await Future<void>.delayed(const Duration(milliseconds: 10));
+        }
+        final acquired = Completer<void>();
+        final release = Completer<void>();
+        final lock = f.services.db.transaction(() async {
+          acquired.complete();
+          await release.future;
+        });
+        await acquired.future.timeout(const Duration(seconds: 5));
+        var notifications = 0;
+        void listener() => notifications++;
+        f.repo.bookPolicyChanges.addListener(listener);
+        try {
+          gate.release();
+          while (f.repo.pendingBookPolicyObservationsForTesting(book.id) < 2) {
+            if (DateTime.now().isAfter(deadline)) {
+              throw StateError('observations did not start');
+            }
+            await Future<void>.delayed(const Duration(milliseconds: 10));
+          }
+          expect(f.repo.bookAllowed(book), isFalse);
+          firstToken.cancel();
+          secondToken.cancel();
+        } finally {
+          firstToken.cancel();
+          secondToken.cancel();
+          gate.release();
+          if (!release.isCompleted) release.complete();
+        }
+        await lock;
+        await Future.wait([first, second]).timeout(const Duration(seconds: 5));
+        expect(f.repo.bookAllowed(book), isTrue);
+        expect(notifications, 2);
+        expect(
+          (await BookPolicyEvidenceStore(f.services.db).load())[book.id],
+          isNull,
+        );
+        f.repo.bookPolicyChanges.removeListener(listener);
+      });
+    },
+  );
+
+  test(
+    'committed evidence remains active if cancellation arrives after commit',
+    () async {
+      await _withFixture((f) async {
+        final source = _metadataSource('committed-detail.example');
+        await f.install(source);
+        final book = _readingBook(source);
+        f.pages['/book/1'] = '<p class="category">高H</p>';
+        final committed = Completer<void>();
+        final resume = Completer<void>();
+        f.repo.afterBookPolicyCommitForTesting = () async {
+          committed.complete();
+          await resume.future;
+        };
+        final cancellation = CancellationToken();
+        final result = expectLater(
+          f.repo.details(book, cancellation),
+          throwsA(anything),
+        );
+        try {
+          await committed.future.timeout(const Duration(seconds: 5));
+          cancellation.cancel();
+        } finally {
+          if (!resume.isCompleted) resume.complete();
+        }
+        await result.timeout(const Duration(seconds: 5));
+        expect(f.repo.bookAllowed(book), isFalse);
+        expect(
+          (await BookPolicyEvidenceStore(f.services.db).load())[book.id]!.adult,
+          isTrue,
+        );
+        f.repo.afterBookPolicyCommitForTesting = null;
       });
     },
   );

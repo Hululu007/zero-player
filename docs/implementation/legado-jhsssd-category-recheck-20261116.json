@@ -1,0 +1,698 @@
+{
+  "schema_version": 1,
+  "purpose": "Bounded search, detail, first TOC and first content samples; category-rule comparison for one exact selected source.",
+  "inputs": {
+    "archive_path": "assets/catalogs/books/legado/catalog.json.bz2",
+    "archive_sha256": "012a0e0d6e6adc8d303c32b578510e14b562088b3e965cb01a1a647b5e7e034d",
+    "historical_commit": "3454dc75b61d5f1156fc7d577d061b01f0dd6a91",
+    "historical_ledger_path": "docs/implementation/legado-source-ledger-20261115.json",
+    "historical_ledger_sha256": "2ad2348ab2d2435297d8d6cc04625b62ee07d1c198d8fd70fc7b73b9b79b5e87",
+    "redacted_temporary_observation_sha256": {
+      "observations-redacted.json": "8cb00768c55c7ba75f2a7c2d61bbd1c6d6deaa4778f3f68d7e454b4fe9fc0be4",
+      "observations2-redacted.json": "a05d8c655995ba64dfdd483fcc74cfbb922ecc754f2a90136a06fdf9f404c35d",
+      "two-work-redacted.json": "a7deaabcb8286f02828554966f4b7cbbc3d3c6127b9d233577e68b04f6f0ac49",
+      "two-work-candidate-redacted.json": "4c4ad20f46de65a231e70d18b71703c11785db2a8da1a44a660ba8efd7f92f9e",
+      "synthetic-redacted.json": "6b775cb18aaa9b89bbb1a1fd1bc979a447b483a220166a0de27451673dbcb398"
+    }
+  },
+  "source": {
+    "index": 4651,
+    "id": "3ea17136a0ff8e7ece79d304346edb613c2230e4c0ce806a0003e4a9b102dcc5",
+    "host": "m.jhsssd.com",
+    "source_key": "",
+    "kind": "text",
+    "format": "html",
+    "endpoint_sha256": "d909b358216691363b04c9b532eb0a0eb9115ed7ac408b6eabaf9146a64667e5",
+    "raw_record_canonical_sha256": "009bad15cab43e2160cdf3a1ba07322f3a38f231738ce104551c73e23754ee13",
+    "old_legado_canonical_sha256": "022794ec9f9953e5468daf7c04e4cec7797bc49d50c28e7fe17f473272a193a3",
+    "candidate_legado_canonical_sha256": "14abaed50f2c2546b6404056b9980533b5d0709064a641415ed9dc3d4573c598",
+    "raw_field_sha256": {
+      "searchUrl": "ad88559fdb4e1109fb76a933cf04f260cd27acb763bb489cd8fc9ef702b3897e",
+      "ruleSearch": "6b2c5557e21413d9e60c38d84ac283e50ce03766885f9e42a532f06b519a1ca9",
+      "ruleBookInfo": "b6e84b54935b074fa3dd3c3a1e64d804fcf26de96695816944642a85405c038f",
+      "ruleToc": "e73655cd2e864df6df8715a1ae1ae86b755d6b35dcd596f4a6b079da8c689b32",
+      "ruleContent": "39e02bbf9373b3dd46e92b20e506f59766bfa6ac522b68f9e78d7bf7587bfc4f"
+    },
+    "old_search_category_empty": true,
+    "old_detail_category_empty": true,
+    "candidate_info_category": "[property=\"og:novel:category\"]@content",
+    "candidate_info_category_sha256": "d493ebcfb6d49a05fd98dea2b6decdb61e2a612ceca3501ed3b33c7e8bd46cc3",
+    "historical_root_get": {
+      "observed_at": "2026-11-15T05:44:35.720552+00:00",
+      "http_status": 200,
+      "sample_bytes": 10803,
+      "sample_sha256": "7ffc17c3fbd433f9efdd46b134970eb80c1bed0663064bac5e475ef0df25e658"
+    }
+  },
+  "method": {
+    "request": "anonymous same-host HTTPS GET",
+    "public_dns_validation_and_ip_pinning": true,
+    "tls_verification": true,
+    "follow_redirect": false,
+    "execute_scripts": false,
+    "send_credentials": false,
+    "submit_post": false,
+    "load_subresources": false,
+    "body_limit_bytes": 524288,
+    "per_request_deadline_seconds": 10,
+    "worker_hard_deadline_seconds": 15,
+    "inter_request_delay_seconds": 1,
+    "parser": "actual script-free Legado Dart VM operations"
+  },
+  "observations": {
+    "pre_repair_initial": {
+      "id": "3ea17136a0ff8e7ece79d304346edb613c2230e4c0ce806a0003e4a9b102dcc5",
+      "index": 4651,
+      "host": "m.jhsssd.com",
+      "steps": [
+        {
+          "observation": {
+            "id": "3ea17136a0ff8e7ece79d304346edb613c2230e4c0ce806a0003e4a9b102dcc5",
+            "host": "m.jhsssd.com",
+            "started_at": "2026-11-16T00:07:18.603069+00:00",
+            "http_status": 200,
+            "sample_bytes": 12080,
+            "truncated": false,
+            "sample_sha256": "ffdaa9cc560f69d976c66f514c6d6c16250e885585a35ab44dee45ff3e0f0f38",
+            "failure": null,
+            "observed_at": "2026-11-16T00:07:19.575342+00:00",
+            "phase": "search",
+            "url_path_sha256": "d9a0dff3ff8b26e86c4174a7f0ed59f0a778da3322fd4565735a18eeaad9ac84"
+          },
+          "analysis": {
+            "stage": "search",
+            "access_gate_signal": false,
+            "adult_page_signal": false,
+            "gambling_page_signal": false,
+            "book_count": 20,
+            "query_matches": 20,
+            "safe_matching_books": 20,
+            "books_with_category": 0
+          }
+        },
+        {
+          "observation": {
+            "id": "3ea17136a0ff8e7ece79d304346edb613c2230e4c0ce806a0003e4a9b102dcc5",
+            "host": "m.jhsssd.com",
+            "started_at": "2026-11-16T00:07:24.594245+00:00",
+            "http_status": 200,
+            "sample_bytes": 12882,
+            "truncated": false,
+            "sample_sha256": "dfc45c65e294f07f59b1d7ab2618c9c02a6030db931573d185ab2bd539e24e44",
+            "failure": null,
+            "observed_at": "2026-11-16T00:07:25.551826+00:00",
+            "phase": "detail",
+            "url_path_sha256": "27292ef063a616ad093a3d0432afacf75be6fe20df11d7b9f3235e47c63a34fb"
+          },
+          "analysis": {
+            "stage": "detail",
+            "access_gate_signal": false,
+            "adult_page_signal": false,
+            "gambling_page_signal": false,
+            "toc_chapter_count": 24,
+            "detail_present": true,
+            "detail_category_length": 0,
+            "detail_category_adult_signal": false,
+            "chapter_candidates": 12,
+            "same_host_safe_chapters": 12,
+            "same_host_toc_links": 12
+          }
+        },
+        {
+          "observation": {
+            "id": "3ea17136a0ff8e7ece79d304346edb613c2230e4c0ce806a0003e4a9b102dcc5",
+            "host": "m.jhsssd.com",
+            "started_at": "2026-11-16T00:07:30.463941+00:00",
+            "http_status": 200,
+            "sample_bytes": 9598,
+            "truncated": false,
+            "sample_sha256": "c61a3f08ac43fb9ddbf0ff48eae40fda433babaab83109224cac6ab01472983a",
+            "failure": null,
+            "observed_at": "2026-11-16T00:07:31.408505+00:00",
+            "phase": "content",
+            "url_path_sha256": "7d19731ca332bdfadfd48c0cf6f8f30da0b77d25c923df03dd2fed0e37e0f9ef"
+          },
+          "analysis": {
+            "stage": "content",
+            "access_gate_signal": false,
+            "adult_page_signal": false,
+            "gambling_page_signal": false,
+            "content_characters": 1241,
+            "content_sha256_utf8": "fae93833e56850014f40bf54b5e386fa3da200fb6639df47717761b9020ac015",
+            "content_adult_signal": false,
+            "content_gate_signal": false,
+            "same_host_next_content_links": 1
+          }
+        }
+      ],
+      "outcome": "one_content_sample"
+    },
+    "pre_repair_two_works": {
+      "started_at": "2026-11-16T00:10:14.748578+00:00",
+      "completed_at": "2026-11-16T00:10:43.171434+00:00",
+      "search": {
+        "observation": {
+          "id": "3ea17136a0ff8e7ece79d304346edb613c2230e4c0ce806a0003e4a9b102dcc5",
+          "host": "m.jhsssd.com",
+          "started_at": "2026-11-16T00:10:14.872534+00:00",
+          "http_status": 200,
+          "sample_bytes": 12080,
+          "truncated": false,
+          "sample_sha256": "ffdaa9cc560f69d976c66f514c6d6c16250e885585a35ab44dee45ff3e0f0f38",
+          "failure": null,
+          "observed_at": "2026-11-16T00:10:15.852065+00:00",
+          "phase": "search",
+          "url_path_sha256": "d9a0dff3ff8b26e86c4174a7f0ed59f0a778da3322fd4565735a18eeaad9ac84"
+        },
+        "analysis": {
+          "stage": "search",
+          "access_gate_signal": false,
+          "adult_page_signal": false,
+          "gambling_page_signal": false,
+          "book_count": 20,
+          "query_matches": 20,
+          "safe_matching_books": 20,
+          "books_with_category": 0
+        }
+      },
+      "works": [
+        {
+          "detail": {
+            "observation": {
+              "id": "3ea17136a0ff8e7ece79d304346edb613c2230e4c0ce806a0003e4a9b102dcc5",
+              "host": "m.jhsssd.com",
+              "started_at": "2026-11-16T00:10:21.076432+00:00",
+              "http_status": 200,
+              "sample_bytes": 12882,
+              "truncated": false,
+              "sample_sha256": "dfc45c65e294f07f59b1d7ab2618c9c02a6030db931573d185ab2bd539e24e44",
+              "failure": null,
+              "observed_at": "2026-11-16T00:10:21.886970+00:00",
+              "phase": "detail",
+              "url_path_sha256": "27292ef063a616ad093a3d0432afacf75be6fe20df11d7b9f3235e47c63a34fb"
+            },
+            "analysis": {
+              "stage": "detail",
+              "access_gate_signal": false,
+              "adult_page_signal": false,
+              "gambling_page_signal": false,
+              "toc_chapter_count": 24,
+              "detail_present": true,
+              "detail_category_length": 0,
+              "detail_category_adult_signal": false,
+              "chapter_candidates": 12,
+              "same_host_safe_chapters": 12,
+              "same_host_toc_links": 12,
+              "category_diag": {
+                "og_category_nonempty": true,
+                "og_category_adult_signal": false,
+                "og_category_known_ordinary": true,
+                "ordinary_category_links": [
+                  {
+                    "label": "女生小说",
+                    "element_class": "",
+                    "parent_tag": "p",
+                    "parent_class": "",
+                    "grandparent_tag": "div",
+                    "grandparent_class": "block_txt2"
+                  }
+                ]
+              }
+            }
+          },
+          "content": {
+            "observation": {
+              "id": "3ea17136a0ff8e7ece79d304346edb613c2230e4c0ce806a0003e4a9b102dcc5",
+              "host": "m.jhsssd.com",
+              "started_at": "2026-11-16T00:10:26.841985+00:00",
+              "http_status": 200,
+              "sample_bytes": 9598,
+              "truncated": false,
+              "sample_sha256": "c61a3f08ac43fb9ddbf0ff48eae40fda433babaab83109224cac6ab01472983a",
+              "failure": null,
+              "observed_at": "2026-11-16T00:10:27.675284+00:00",
+              "phase": "content",
+              "url_path_sha256": "7d19731ca332bdfadfd48c0cf6f8f30da0b77d25c923df03dd2fed0e37e0f9ef"
+            },
+            "analysis": {
+              "stage": "content",
+              "access_gate_signal": false,
+              "adult_page_signal": false,
+              "gambling_page_signal": false,
+              "content_characters": 1241,
+              "content_sha256_utf8": "fae93833e56850014f40bf54b5e386fa3da200fb6639df47717761b9020ac015",
+              "content_adult_signal": false,
+              "content_gate_signal": false,
+              "same_host_next_content_links": 1,
+              "next_links_equal_sampled_toc_chapter": 0,
+              "next_links_match_split_path_pattern": 1
+            }
+          },
+          "outcome": "content_sample"
+        },
+        {
+          "detail": {
+            "observation": {
+              "id": "3ea17136a0ff8e7ece79d304346edb613c2230e4c0ce806a0003e4a9b102dcc5",
+              "host": "m.jhsssd.com",
+              "started_at": "2026-11-16T00:10:32.617834+00:00",
+              "http_status": 200,
+              "sample_bytes": 12435,
+              "truncated": false,
+              "sample_sha256": "6ef42c8de23c06eaa6fd2e3330577cd9821a9d201f54b5823d982827a1d49173",
+              "failure": null,
+              "observed_at": "2026-11-16T00:10:33.531303+00:00",
+              "phase": "detail",
+              "url_path_sha256": "51ccb6bb11ce3aeba76ee9d0f7bb264aa91191fae983a3d9565fb886facb9bc6"
+            },
+            "analysis": {
+              "stage": "detail",
+              "access_gate_signal": false,
+              "adult_page_signal": false,
+              "gambling_page_signal": false,
+              "toc_chapter_count": 24,
+              "detail_present": true,
+              "detail_category_length": 0,
+              "detail_category_adult_signal": false,
+              "chapter_candidates": 12,
+              "same_host_safe_chapters": 12,
+              "same_host_toc_links": 12,
+              "category_diag": {
+                "og_category_nonempty": true,
+                "og_category_adult_signal": false,
+                "og_category_known_ordinary": true,
+                "ordinary_category_links": [
+                  {
+                    "label": "玄幻小说",
+                    "element_class": "",
+                    "parent_tag": "p",
+                    "parent_class": "",
+                    "grandparent_tag": "div",
+                    "grandparent_class": "block_txt2"
+                  }
+                ]
+              }
+            }
+          },
+          "content": {
+            "observation": {
+              "id": "3ea17136a0ff8e7ece79d304346edb613c2230e4c0ce806a0003e4a9b102dcc5",
+              "host": "m.jhsssd.com",
+              "started_at": "2026-11-16T00:10:38.475581+00:00",
+              "http_status": 200,
+              "sample_bytes": 9323,
+              "truncated": false,
+              "sample_sha256": "4fb6027967ebfded0dfd10e2d40c8f048f7a55fb402025a8b4067f7581b32f47",
+              "failure": null,
+              "observed_at": "2026-11-16T00:10:39.264743+00:00",
+              "phase": "content",
+              "url_path_sha256": "6deb2e3191275560841dad9a27e47911a67596b7e1f1717e12570470938da21a"
+            },
+            "analysis": {
+              "stage": "content",
+              "access_gate_signal": false,
+              "adult_page_signal": false,
+              "gambling_page_signal": false,
+              "content_characters": 1316,
+              "content_sha256_utf8": "9860e4421d42a9824dd58ef2bf409e8859716eab5301f76e46487c883e212580",
+              "content_adult_signal": false,
+              "content_gate_signal": false,
+              "same_host_next_content_links": 1,
+              "next_links_equal_sampled_toc_chapter": 0,
+              "next_links_match_split_path_pattern": 1
+            }
+          },
+          "outcome": "content_sample"
+        }
+      ]
+    },
+    "candidate_two_works": {
+      "started_at": "2026-11-16T00:13:59.087311+00:00",
+      "completed_at": "2026-11-16T00:14:27.665784+00:00",
+      "search": {
+        "observation": {
+          "id": "3ea17136a0ff8e7ece79d304346edb613c2230e4c0ce806a0003e4a9b102dcc5",
+          "host": "m.jhsssd.com",
+          "started_at": "2026-11-16T00:13:59.205056+00:00",
+          "http_status": 200,
+          "sample_bytes": 12080,
+          "truncated": false,
+          "sample_sha256": "ffdaa9cc560f69d976c66f514c6d6c16250e885585a35ab44dee45ff3e0f0f38",
+          "failure": null,
+          "observed_at": "2026-11-16T00:14:00.196504+00:00",
+          "phase": "search",
+          "url_path_sha256": "d9a0dff3ff8b26e86c4174a7f0ed59f0a778da3322fd4565735a18eeaad9ac84"
+        },
+        "analysis": {
+          "stage": "search",
+          "access_gate_signal": false,
+          "adult_page_signal": false,
+          "gambling_page_signal": false,
+          "book_count": 20,
+          "query_matches": 20,
+          "safe_matching_books": 20,
+          "books_with_category": 0
+        }
+      },
+      "works": [
+        {
+          "detail": {
+            "observation": {
+              "id": "3ea17136a0ff8e7ece79d304346edb613c2230e4c0ce806a0003e4a9b102dcc5",
+              "host": "m.jhsssd.com",
+              "started_at": "2026-11-16T00:14:05.193848+00:00",
+              "http_status": 200,
+              "sample_bytes": 12882,
+              "truncated": false,
+              "sample_sha256": "dfc45c65e294f07f59b1d7ab2618c9c02a6030db931573d185ab2bd539e24e44",
+              "failure": null,
+              "observed_at": "2026-11-16T00:14:06.037578+00:00",
+              "phase": "detail",
+              "url_path_sha256": "27292ef063a616ad093a3d0432afacf75be6fe20df11d7b9f3235e47c63a34fb"
+            },
+            "analysis": {
+              "stage": "detail",
+              "access_gate_signal": false,
+              "adult_page_signal": false,
+              "gambling_page_signal": false,
+              "toc_chapter_count": 24,
+              "detail_present": true,
+              "detail_category_length": 4,
+              "detail_category_adult_signal": false,
+              "chapter_candidates": 12,
+              "same_host_safe_chapters": 12,
+              "same_host_toc_links": 12,
+              "category_diag": {
+                "og_category_nonempty": true,
+                "og_category_adult_signal": false,
+                "og_category_known_ordinary": true,
+                "ordinary_category_links": [
+                  {
+                    "label": "女生小说",
+                    "element_class": "",
+                    "parent_tag": "p",
+                    "parent_class": "",
+                    "grandparent_tag": "div",
+                    "grandparent_class": "block_txt2"
+                  }
+                ],
+                "engine_matches_og": true
+              }
+            }
+          },
+          "content": {
+            "observation": {
+              "id": "3ea17136a0ff8e7ece79d304346edb613c2230e4c0ce806a0003e4a9b102dcc5",
+              "host": "m.jhsssd.com",
+              "started_at": "2026-11-16T00:14:11.062430+00:00",
+              "http_status": 200,
+              "sample_bytes": 9598,
+              "truncated": false,
+              "sample_sha256": "c61a3f08ac43fb9ddbf0ff48eae40fda433babaab83109224cac6ab01472983a",
+              "failure": null,
+              "observed_at": "2026-11-16T00:14:11.879379+00:00",
+              "phase": "content",
+              "url_path_sha256": "7d19731ca332bdfadfd48c0cf6f8f30da0b77d25c923df03dd2fed0e37e0f9ef"
+            },
+            "analysis": {
+              "stage": "content",
+              "access_gate_signal": false,
+              "adult_page_signal": false,
+              "gambling_page_signal": false,
+              "content_characters": 1241,
+              "content_sha256_utf8": "fae93833e56850014f40bf54b5e386fa3da200fb6639df47717761b9020ac015",
+              "content_adult_signal": false,
+              "content_gate_signal": false,
+              "same_host_next_content_links": 1,
+              "next_links_equal_sampled_toc_chapter": 0,
+              "next_links_match_split_path_pattern": 1
+            }
+          },
+          "outcome": "content_sample"
+        },
+        {
+          "detail": {
+            "observation": {
+              "id": "3ea17136a0ff8e7ece79d304346edb613c2230e4c0ce806a0003e4a9b102dcc5",
+              "host": "m.jhsssd.com",
+              "started_at": "2026-11-16T00:14:16.829755+00:00",
+              "http_status": 200,
+              "sample_bytes": 12435,
+              "truncated": false,
+              "sample_sha256": "6ef42c8de23c06eaa6fd2e3330577cd9821a9d201f54b5823d982827a1d49173",
+              "failure": null,
+              "observed_at": "2026-11-16T00:14:17.682184+00:00",
+              "phase": "detail",
+              "url_path_sha256": "51ccb6bb11ce3aeba76ee9d0f7bb264aa91191fae983a3d9565fb886facb9bc6"
+            },
+            "analysis": {
+              "stage": "detail",
+              "access_gate_signal": false,
+              "adult_page_signal": false,
+              "gambling_page_signal": false,
+              "toc_chapter_count": 24,
+              "detail_present": true,
+              "detail_category_length": 4,
+              "detail_category_adult_signal": false,
+              "chapter_candidates": 12,
+              "same_host_safe_chapters": 12,
+              "same_host_toc_links": 12,
+              "category_diag": {
+                "og_category_nonempty": true,
+                "og_category_adult_signal": false,
+                "og_category_known_ordinary": true,
+                "ordinary_category_links": [
+                  {
+                    "label": "玄幻小说",
+                    "element_class": "",
+                    "parent_tag": "p",
+                    "parent_class": "",
+                    "grandparent_tag": "div",
+                    "grandparent_class": "block_txt2"
+                  }
+                ],
+                "engine_matches_og": true
+              }
+            }
+          },
+          "content": {
+            "observation": {
+              "id": "3ea17136a0ff8e7ece79d304346edb613c2230e4c0ce806a0003e4a9b102dcc5",
+              "host": "m.jhsssd.com",
+              "started_at": "2026-11-16T00:14:22.685466+00:00",
+              "http_status": 200,
+              "sample_bytes": 9323,
+              "truncated": false,
+              "sample_sha256": "4fb6027967ebfded0dfd10e2d40c8f048f7a55fb402025a8b4067f7581b32f47",
+              "failure": null,
+              "observed_at": "2026-11-16T00:14:23.495182+00:00",
+              "phase": "content",
+              "url_path_sha256": "6deb2e3191275560841dad9a27e47911a67596b7e1f1717e12570470938da21a"
+            },
+            "analysis": {
+              "stage": "content",
+              "access_gate_signal": false,
+              "adult_page_signal": false,
+              "gambling_page_signal": false,
+              "content_characters": 1316,
+              "content_sha256_utf8": "9860e4421d42a9824dd58ef2bf409e8859716eab5301f76e46487c883e212580",
+              "content_adult_signal": false,
+              "content_gate_signal": false,
+              "same_host_next_content_links": 1,
+              "next_links_equal_sampled_toc_chapter": 0,
+              "next_links_match_split_path_pattern": 1
+            }
+          },
+          "outcome": "content_sample"
+        }
+      ]
+    }
+  },
+  "synthetic_fixture": {
+    "source": "in-memory synthetic HTML, not a real work",
+    "engine_extraction": {
+      "高H": "高H",
+      "成人小说": "成人小说",
+      "科幻小说": "科幻小说"
+    },
+    "flutter_test_command": "flutter test --no-pub test/books/jhsssd_legado_test.dart",
+    "flutter_test_result": "4 passed",
+    "policy_expected": {
+      "高H": false,
+      "成人小说": false,
+      "科幻小说": true
+    },
+    "limitation": "Synthetic category tests do not establish category availability or meaning on other real pages."
+  },
+  "other_search_probes": [
+    {
+      "id": "350b49ddbad98b9dbab6fd72722eafcb6827fee88de11e722247a06f6577e7e1",
+      "index": 3054,
+      "host": "www.paper027.com",
+      "steps": [
+        {
+          "observation": {
+            "id": "350b49ddbad98b9dbab6fd72722eafcb6827fee88de11e722247a06f6577e7e1",
+            "host": "www.paper027.com",
+            "started_at": "2026-11-16T00:05:38.990137+00:00",
+            "http_status": 404,
+            "sample_bytes": null,
+            "truncated": null,
+            "sample_sha256": null,
+            "failure": "http_status",
+            "observed_at": "2026-11-16T00:05:39.856996+00:00",
+            "phase": "search",
+            "url_path_sha256": "6fb5b7787ecacd9111098c7c0555980b0168c321be3d303790e5a69af68a8a62"
+          },
+          "analysis": null
+        }
+      ],
+      "outcome": "network_or_http_inconclusive"
+    },
+    {
+      "id": "8c0388910159e08cb2f8247cdccf21faec6c093546dc7b8c0cb6dbca7d8686d2",
+      "index": 1055,
+      "host": "www.bxwx5.cc",
+      "steps": [
+        {
+          "observation": {
+            "id": "8c0388910159e08cb2f8247cdccf21faec6c093546dc7b8c0cb6dbca7d8686d2",
+            "host": "www.bxwx5.cc",
+            "started_at": "2026-11-16T00:05:40.979144+00:00",
+            "http_status": null,
+            "sample_bytes": null,
+            "truncated": null,
+            "sample_sha256": null,
+            "failure": "ConnectionResetError",
+            "observed_at": "2026-11-16T00:05:43.259430+00:00",
+            "phase": "search",
+            "url_path_sha256": "d0beddcba48b2cdda553b03c812e27bcfa6d2aaa0d6aa7cb59715b0abd7fae13"
+          },
+          "analysis": null
+        }
+      ],
+      "outcome": "network_or_http_inconclusive"
+    },
+    {
+      "id": "9f6a31e8f55b360db8171bd458f115b99942bd8c5cb655120be8fefb91279e6c",
+      "index": 1576,
+      "host": "www.biqusa.com",
+      "steps": [
+        {
+          "observation": {
+            "id": "9f6a31e8f55b360db8171bd458f115b99942bd8c5cb655120be8fefb91279e6c",
+            "host": "www.biqusa.com",
+            "started_at": "2026-11-16T00:05:44.382685+00:00",
+            "http_status": 200,
+            "sample_bytes": null,
+            "truncated": null,
+            "sample_sha256": null,
+            "failure": "non_html_or_encoded",
+            "observed_at": "2026-11-16T00:05:45.160196+00:00",
+            "phase": "search",
+            "url_path_sha256": "d9a0dff3ff8b26e86c4174a7f0ed59f0a778da3322fd4565735a18eeaad9ac84"
+          },
+          "analysis": null
+        }
+      ],
+      "outcome": "network_or_http_inconclusive"
+    },
+    {
+      "id": "b3162a05bcb980f600d5b9527536ea49faad38baa5153eb14b712dd3b3490bf7",
+      "index": 2627,
+      "host": "m.52biquge.com",
+      "steps": [
+        {
+          "observation": {
+            "id": "b3162a05bcb980f600d5b9527536ea49faad38baa5153eb14b712dd3b3490bf7",
+            "host": "m.52biquge.com",
+            "started_at": "2026-11-16T00:05:46.282592+00:00",
+            "http_status": 200,
+            "sample_bytes": 160,
+            "truncated": false,
+            "sample_sha256": "f65ff37c765e33b5b7bd73676dffce9142620ca77a5ce6f4acd1cf684f47bce6",
+            "failure": null,
+            "observed_at": "2026-11-16T00:05:46.528553+00:00",
+            "phase": "search",
+            "url_path_sha256": "323f8cbe27c22b6917816d67a7f6ea6e2f51659175d35fba15c48606f21db632"
+          },
+          "analysis": {
+            "stage": "search",
+            "access_gate_signal": false,
+            "adult_page_signal": false,
+            "gambling_page_signal": false,
+            "book_count": 0,
+            "query_matches": 0,
+            "safe_matching_books": 0,
+            "books_with_category": 0
+          }
+        }
+      ],
+      "outcome": "no_safe_matching_result_inconclusive"
+    },
+    {
+      "id": "81fcb67f12ea76659569ed6629060fb1b8c679635d099ae37226802676dea089",
+      "index": 4108,
+      "host": "www.maojiuxs.com",
+      "steps": [
+        {
+          "observation": {
+            "id": "81fcb67f12ea76659569ed6629060fb1b8c679635d099ae37226802676dea089",
+            "host": "www.maojiuxs.com",
+            "started_at": "2026-11-16T00:07:36.309388+00:00",
+            "http_status": 301,
+            "sample_bytes": null,
+            "truncated": null,
+            "sample_sha256": null,
+            "failure": "redirect_not_followed",
+            "redirect": {
+              "redirect_host": "www.maojiuxs.com",
+              "redirect_scheme": "http",
+              "redirect": "same_host"
+            },
+            "observed_at": "2026-11-16T00:07:36.485387+00:00",
+            "phase": "search",
+            "url_path_sha256": "1ca84670628f4a4002b2d53440147c66eec65b70a7451eec1c4b390611b7ba7a"
+          },
+          "analysis": null
+        }
+      ],
+      "outcome": "network_or_http_inconclusive"
+    },
+    {
+      "id": "0e2b98a3ba7c54d6f0f68f10e55a8df690e16c3fe41363c056bf4fad6e5a2236",
+      "index": 3404,
+      "host": "m.bjcan8.com",
+      "steps": [
+        {
+          "observation": {
+            "id": "0e2b98a3ba7c54d6f0f68f10e55a8df690e16c3fe41363c056bf4fad6e5a2236",
+            "host": "m.bjcan8.com",
+            "started_at": "2026-11-16T00:07:37.612107+00:00",
+            "http_status": 502,
+            "sample_bytes": null,
+            "truncated": null,
+            "sample_sha256": null,
+            "failure": "http_status",
+            "observed_at": "2026-11-16T00:07:38.513491+00:00",
+            "phase": "search",
+            "url_path_sha256": "c6f1bb97dca5b2fd25ffd07f29edf378238577d702cbed459c5e9022cf3a43f0"
+          },
+          "analysis": null
+        }
+      ],
+      "outcome": "network_or_http_inconclusive"
+    }
+  ],
+  "limitations": [
+    "Two works and the first available content page for each do not establish complete chapters, all works or continuing site availability.",
+    "safe_matching_books counts at most twenty parsed search results whose synthetic query matches, whose address is an anonymous same-host HTTPS GET without query, and whose parsed metadata lacks the limited adult-text signal; it is a transport and text prefilter, not a safety or content-classification verdict.",
+    "The extracted next-page links match the same-stem pattern and are absent from only the first twelve sampled TOC entries; that is not proof of their destinations or full content.",
+    "The old search and detail rules both omit category; this exact repair adds detail metadata only, and search results without categories remain unclassified before details are loaded.",
+    "Only static bundled policy was checked; local settings, user data, dynamic risk assessments and personal blacklists were not read.",
+    "Sampled HTML, work and chapter identities, request queries and IPs were not saved. The temporary collectors and redacted intermediate observations are not version-controlled; these network and parsing results cannot be independently replayed offline.",
+    "The candidate collector checked application files but did not separately fingerprint the new repair file at collection time; its recorded candidate infoCategory rule digest and actual engine outputs are retained.",
+    "HTTP errors, a short response or an empty search result do not establish that an entire source is permanently unavailable; no redirect was followed.",
+    "No result in this evidence proves source safety, maliciousness, whole-site adult status, or regulatory compliance for uncategorized works."
+  ]
+}

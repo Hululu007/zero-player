@@ -48,6 +48,8 @@ final class _BookDetailPageState extends State<BookDetailPage> {
   String _chapterQuery = '';
   bool _favorite = false, _busy = false, _offline = false;
   bool _openingReader = false;
+  bool _checkingDetails = false, _detailsBlocked = false;
+  bool _policyReloadPending = false, _policyReloadScheduled = false;
   bool _reverse = false, _expanded = false, _following = false;
   double _position = 0;
   DateTime? _chapterUpdatedAt;
@@ -65,12 +67,15 @@ final class _BookDetailPageState extends State<BookDetailPage> {
   bool get _audio => _book.kind == BookKind.audio;
   bool get _comic => _book.kind == BookKind.comic;
   bool get _local => _book.sourceId == 'local';
+  bool get _pageBookAllowed =>
+      !_checkingDetails && !_detailsBlocked && _books.bookAllowed(_book);
 
   @override
   void initState() {
     super.initState();
     _books.policy.addListener(_policyChanged);
-    _books.sourceRiskChanges.addListener(_policyChanged);
+    _books.sourceConfigurationChanges.addListener(_policyChanged);
+    _books.bookPolicyChanges.addListener(_bookPolicyChanged);
     _downloadTask = widget.services.bookDownloads.active(_book);
     _downloadTask?.addListener(_downloadChanged);
     _saved.addAll(_downloadTask?.savedChapterIds ?? const {});
@@ -82,7 +87,8 @@ final class _BookDetailPageState extends State<BookDetailPage> {
     _token?.cancel();
     _downloadTask?.removeListener(_downloadChanged);
     _books.policy.removeListener(_policyChanged);
-    _books.sourceRiskChanges.removeListener(_policyChanged);
+    _books.sourceConfigurationChanges.removeListener(_policyChanged);
+    _books.bookPolicyChanges.removeListener(_bookPolicyChanged);
     _catalogScroll.dispose();
     _filter.dispose();
     super.dispose();
@@ -90,7 +96,32 @@ final class _BookDetailPageState extends State<BookDetailPage> {
 
   void _policyChanged() {
     _token?.cancel();
+    if (!mounted) return;
+    if (!_local) {
+      _downloadTask?.pause();
+      _policyReloadPending = true;
+      setState(() => _checkingDetails = true);
+      _queuePolicyReload();
+    } else {
+      setState(() {});
+    }
+  }
+
+  void _bookPolicyChanged() {
     if (mounted) setState(() {});
+  }
+
+  void _queuePolicyReload() {
+    if (!mounted || _busy || !_policyReloadPending || _policyReloadScheduled) {
+      return;
+    }
+    _policyReloadScheduled = true;
+    scheduleMicrotask(() {
+      _policyReloadScheduled = false;
+      if (!mounted || _busy || !_policyReloadPending) return;
+      _policyReloadPending = false;
+      unawaited(_run(_load));
+    });
   }
 
   void _attachDownloadTask(BookDownloadTask? task) {
@@ -174,11 +205,23 @@ final class _BookDetailPageState extends State<BookDetailPage> {
         setState(() => _error = '操作未完成，请检查来源或内容权限');
       }
     } finally {
-      if (mounted) setState(() => _busy = false);
+      if (mounted) {
+        setState(() {
+          _busy = false;
+          if (token.isCancelled && !_policyReloadPending) {
+            _checkingDetails = false;
+          }
+        });
+        _queuePolicyReload();
+      }
     }
   }
 
   Future<void> _load(CancellationToken token, {bool refresh = false}) async {
+    // A listing may omit classification that only appears on the detail page.
+    // Check it before exposing an old directory or loading the offline copy.
+    if (!await _loadDetails(token)) return;
+    token.check();
     final channel = _local
         ? null
         : await _books.sourceEntry(_book.kind, _book.sourceId);
@@ -191,7 +234,6 @@ final class _BookDetailPageState extends State<BookDetailPage> {
     final plan = BookDownloadPlan.fromJson(
       await _books.store.read('books_download:${_book.id}'),
     );
-    final details = _loadDetails(token);
     Object? catalogError;
     final chapters = await _books
         .chapters(_book, token, refresh: refresh)
@@ -226,17 +268,55 @@ final class _BookDetailPageState extends State<BookDetailPage> {
         await _books.store.saveBook(_book, chapters: chapters);
       }
     }
-    await details;
     if (catalogError case final Object error) throw error;
   }
 
-  Future<void> _loadDetails(CancellationToken token) async {
-    if (_local) return;
+  Future<bool> _loadDetails(CancellationToken token) async {
+    if (_local) return true;
+    if (mounted) setState(() => _checkingDetails = true);
     try {
       final details = await _books.details(_book, token);
-      if (mounted && !token.isCancelled) setState(() => _book = details);
+      token.check();
+      if (!mounted) return false;
+      setState(() {
+        _book = details;
+        _checkingDetails = false;
+        _detailsBlocked = false;
+      });
+      return true;
+    } on ContentBlocked {
+      if (!mounted || token.isCancelled) return false;
+      _downloadTask?.pause();
+      setState(() {
+        _checkingDetails = false;
+        _detailsBlocked = true;
+        _chapters = [];
+        _saved = {};
+        _last = null;
+        _plan = null;
+      });
+      return false;
     } on Exception {
-      // Catalog access and saved progress can remain available independently.
+      token.check();
+      if (!mounted) return false;
+      setState(() => _checkingDetails = false);
+      // An ordinary network or parsing failure can use an existing offline
+      // copy, but cannot undo an earlier explicit content-policy rejection.
+      return !_detailsBlocked && _books.bookAllowed(_book);
+    } catch (_) {
+      if (mounted && !token.isCancelled) {
+        setState(() => _checkingDetails = false);
+      }
+      rethrow;
+    }
+  }
+
+  void _requirePageBook(Book book, [BookChapter? chapter]) {
+    if (!_pageBookAllowed || _book.id != book.id) throw const ContentBlocked();
+    if (chapter == null) {
+      if (!_books.bookAllowed(book)) throw const ContentBlocked();
+    } else {
+      _books.requireBook(book, chapter);
     }
   }
 
@@ -245,7 +325,7 @@ final class _BookDetailPageState extends State<BookDetailPage> {
     _openingReader = true;
     final book = _book;
     try {
-      _books.requireBook(book, chapter);
+      _requirePageBook(book, chapter);
       if (_following) await _books.store.saveBook(book, clearUpdates: true);
       if (!mounted) return;
       final chapters = _chapters
@@ -268,7 +348,7 @@ final class _BookDetailPageState extends State<BookDetailPage> {
         }
       }
       if (!mounted) return;
-      _books.requireBook(book, chapter);
+      _requirePageBook(book, chapter);
       reader ??= _audio
           ? AudiobookPlayerPage(
               services: widget.services,
@@ -329,7 +409,7 @@ final class _BookDetailPageState extends State<BookDetailPage> {
     for (final chapter in _chapters) {
       token.check();
       if (!_saved.contains(chapter.id)) continue;
-      _books.requireBook(_book, chapter);
+      _requirePageBook(_book, chapter);
       final saved = await _books.offlineText(_book, chapter, token);
       final body = saved.body;
       if (body == null || !_books.policy.textAllowed(body)) continue;
@@ -342,9 +422,9 @@ final class _BookDetailPageState extends State<BookDetailPage> {
     final name = _book.title.replaceAll(RegExp(r'[\\/:*?"<>|\x00-\x1f]'), '_');
     void validate() {
       token.check();
-      if (!_books.bookAllowed(_book)) throw const ContentBlocked();
+      if (!_pageBookAllowed) throw const ContentBlocked();
       for (final (chapter, body) in included) {
-        _books.requireBook(_book, chapter);
+        _requirePageBook(_book, chapter);
         if (!_books.policy.textAllowed(body)) throw const ContentBlocked();
       }
       for (final validateOrigin in validateOrigins) {
@@ -369,7 +449,7 @@ final class _BookDetailPageState extends State<BookDetailPage> {
     for (final chapter in _chapters) {
       token.check();
       if (!_saved.contains(chapter.id)) continue;
-      _books.requireBook(_book, chapter);
+      _requirePageBook(_book, chapter);
       final images = await _books.store.offlineImages(_book, chapter);
       if (images == null || images.isEmpty) continue;
       chapters++;
@@ -397,9 +477,9 @@ final class _BookDetailPageState extends State<BookDetailPage> {
     if (chapters == 0) throw const FormatException('没有可导出的离线漫画');
     void validate() {
       token.check();
-      if (!_books.bookAllowed(_book)) throw const ContentBlocked();
+      if (!_pageBookAllowed) throw const ContentBlocked();
       for (final chapter in _chapters.where((c) => _saved.contains(c.id))) {
-        _books.requireBook(_book, chapter);
+        _requirePageBook(_book, chapter);
       }
     }
 
@@ -429,6 +509,7 @@ final class _BookDetailPageState extends State<BookDetailPage> {
       validateContent: validateContent,
       validateState: () {
         if (!identical(_book, book) ||
+            !_pageBookAllowed ||
             (book.sourceId != 'local' && !_books.sourceRisksReady) ||
             _books.downloadGuard.lease() != lease) {
           throw const ContentBlocked();
@@ -453,7 +534,7 @@ final class _BookDetailPageState extends State<BookDetailPage> {
         builder: (context, _) => SimpleDialog(
           title: const Text('切换作品来源'),
           children: [
-            if (_books.bookAllowed(_book))
+            if (_pageBookAllowed)
               for (final edition in editions.where(
                 (edition) => _books.bookAllowed(edition.book),
               ))
@@ -469,6 +550,11 @@ final class _BookDetailPageState extends State<BookDetailPage> {
       ),
     );
     if (chosen == null || !mounted || token.isCancelled) return;
+    _requirePageBook(_book);
+    final candidate = await _checkedEdition(chosen.book, token);
+    token.check();
+    if (!mounted) return;
+    _requirePageBook(_book);
     final last = _chapters.where((chapter) => chapter.id == _last).firstOrNull;
     final next = last == null
         ? null
@@ -477,7 +563,7 @@ final class _BookDetailPageState extends State<BookDetailPage> {
       final previous = await _books.store.entry(_book);
       token.check();
       await _books.store.saveBook(
-        chosen.book,
+        candidate,
         chapters: chosen.chapters,
         favorite: _favorite ? true : null,
         last: next,
@@ -486,7 +572,7 @@ final class _BookDetailPageState extends State<BookDetailPage> {
     }
     if (!mounted || token.isCancelled) return;
     setState(() {
-      _book = chosen.book;
+      _book = candidate;
       _chapters = [];
       _plan = null;
       _chapterQuery = '';
@@ -496,9 +582,25 @@ final class _BookDetailPageState extends State<BookDetailPage> {
     await _load(token);
   });
 
+  Future<Book> _checkedEdition(Book candidate, CancellationToken token) async {
+    try {
+      return await _books.details(candidate, token);
+    } on ContentBlocked {
+      rethrow;
+    } on Exception {
+      token.check();
+      if (!_books.bookAllowed(candidate)) throw const ContentBlocked();
+      return candidate;
+    }
+  }
+
   Future<void> _chooseDownload() async {
+    if (!_pageBookAllowed) return;
+    final book = _book;
     final plan = await showBookDownloadDialog(context, _chapters.length);
-    if (mounted && plan != null) await _download(plan);
+    if (mounted && identical(_book, book) && _pageBookAllowed && plan != null) {
+      await _download(plan);
+    }
   }
 
   Widget _downloadActions() => Wrap(
@@ -519,7 +621,7 @@ final class _BookDetailPageState extends State<BookDetailPage> {
   );
 
   Future<void> _download(BookDownloadPlan plan, {bool keepPlan = true}) async {
-    if (_busy || _downloadTask != null) return;
+    if (_busy || _downloadTask != null || !_pageBookAllowed) return;
     final task = widget.services.bookDownloads.start(
       _book,
       _chapters,
@@ -531,6 +633,7 @@ final class _BookDetailPageState extends State<BookDetailPage> {
   }
 
   Future<void> _toggleFollowing() => _run((_) async {
+    _requirePageBook(_book);
     await _books.store.saveBook(
       _book,
       chapters: _chapters,
@@ -595,6 +698,7 @@ final class _BookDetailPageState extends State<BookDetailPage> {
     tooltip: '章节导航',
     icon: const Icon(Icons.format_list_bulleted),
     onSelected: (action) {
+      if (!_pageBookAllowed) return;
       switch (action) {
         case 'directory':
           _showDirectory();
@@ -619,6 +723,7 @@ final class _BookDetailPageState extends State<BookDetailPage> {
     tooltip: '作品操作',
     enabled: !_busy,
     onSelected: (value) {
+      if (!_pageBookAllowed) return;
       switch (value) {
         case 'copyBook':
           copyBookLink(context, _book.uri);
@@ -646,7 +751,9 @@ final class _BookDetailPageState extends State<BookDetailPage> {
     final visible = _visibleChapters;
     return Scaffold(
       appBar: _appBar(last != null),
-      body: !_books.bookAllowed(_book)
+      body: _checkingDetails
+          ? const Center(child: CircularProgressIndicator())
+          : !_pageBookAllowed
           ? const Center(child: Text('当前内容策略限制访问此作品'))
           : CustomScrollView(
               controller: _catalogScroll,
@@ -713,12 +820,12 @@ final class _BookDetailPageState extends State<BookDetailPage> {
 
   AppBar _appBar(bool hasLast) => AppBar(
     title: Text(
-      _books.bookAllowed(_book) ? _book.title : '书籍详情',
+      _pageBookAllowed ? _book.title : '书籍详情',
       maxLines: 1,
       overflow: TextOverflow.ellipsis,
     ),
     actions: [
-      if (_local && _books.bookAllowed(_book))
+      if (_local && _pageBookAllowed)
         IconButton(
           tooltip: '移除本地电子书',
           onPressed: _busy ? null : _removeLocal,
@@ -736,9 +843,8 @@ final class _BookDetailPageState extends State<BookDetailPage> {
           },
           icon: const Icon(Icons.stop_circle_outlined),
         ),
-      if (_books.bookAllowed(_book) && _chapters.isNotEmpty)
-        _directoryMenu(hasLast),
-      if (_books.bookAllowed(_book) && _channel != null)
+      if (_pageBookAllowed && _chapters.isNotEmpty) _directoryMenu(hasLast),
+      if (_pageBookAllowed && _channel != null)
         BookSourceFavorite(
           key: ValueKey(_channel!.source.id),
           repository: _books,
@@ -750,7 +856,7 @@ final class _BookDetailPageState extends State<BookDetailPage> {
             widget.onSourceFavorite?.call(entry.source.id, value);
           },
         ),
-      if (!_local && _books.bookAllowed(_book)) _workActions(),
+      if (!_local && _pageBookAllowed) _workActions(),
     ],
   );
 
@@ -852,7 +958,9 @@ final class _BookDetailPageState extends State<BookDetailPage> {
             OutlinedButton.icon(
               onPressed: _busy
                   ? null
-                  : () => _run((_) async {
+                  : () => _run((token) async {
+                      _requirePageBook(_book);
+                      token.check();
                       await _books.store.saveBook(
                         _book,
                         chapters: _local || _chapters.isEmpty
@@ -962,7 +1070,9 @@ final class _BookDetailPageState extends State<BookDetailPage> {
               onPressed: _busy || _downloadTask != null
                   ? null
                   : saved
-                  ? () => _run((_) async {
+                  ? () => _run((token) async {
+                      _requirePageBook(_book, chapter);
+                      token.check();
                       if (_audio) {
                         await _books.removeSavedAudio(_book, chapter: chapter);
                       } else if (_comic) {

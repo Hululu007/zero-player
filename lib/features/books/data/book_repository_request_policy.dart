@@ -48,22 +48,46 @@ extension _BookRepositoryRequestPolicy on BooksRepository {
     BookSource source,
     Book book,
     CancellationToken token,
-  ) => _withBookRequestGuard(source, book, token, (active, guard) async {
-    final result = await client.details(
-      source,
-      book,
-      active,
-      requestGuard: guard,
-    );
-    active.check();
-    if (!sourceAllowed(source) ||
-        !bookAllowed(result) ||
-        await _blocked(book.sourceId)) {
-      throw const ContentBlocked();
-    }
-    active.check();
-    return result;
-  });
+  ) {
+    final revision = _discoveryRevision;
+    final fingerprint = bookSourceCheckFingerprint(source);
+    return _withBookRequestGuard(source, book, token, (active, guard) async {
+      void authorizeObservation() {
+        active.check();
+        final current = _riskSourceEntries[source.id];
+        if (_evidenceClosing ||
+            _evidenceMutations != 0 ||
+            !sourceRisksReady ||
+            revision != _discoveryRevision ||
+            current == null ||
+            !current.enabled ||
+            !_sourceEntryAllowed(current) ||
+            bookSourceCheckFingerprint(current.source) != fingerprint) {
+          throw const RequestCancelled();
+        }
+      }
+
+      final result = await client.details(
+        source,
+        book,
+        active,
+        requestGuard: guard,
+      );
+      authorizeObservation();
+      await _rememberBookMetadata(book, result, authorizeObservation);
+      authorizeObservation();
+      if (!_bookMetadataAllowed(_bookMetadata(result))) {
+        throw const ContentBlocked();
+      }
+      if (!sourceAllowed(source) ||
+          !bookAllowed(result) ||
+          await _blocked(book.sourceId)) {
+        throw const ContentBlocked();
+      }
+      authorizeObservation();
+      return result;
+    });
+  }
 
   Future<List<BookChapter>> _guardedBookChapters(
     BookSource source,

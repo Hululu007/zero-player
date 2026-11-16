@@ -10,9 +10,12 @@ import 'package:zero_player/core/persistence/app_database.dart';
 import 'package:zero_player/core/persistence/installation_metadata.dart';
 import 'package:zero_player/features/books/data/books_repository.dart';
 import 'package:zero_player/features/books/data/book_import.dart';
+import 'package:zero_player/features/books/data/book_policy_evidence.dart';
 import 'package:zero_player/features/books/domain/book.dart';
 import 'package:zero_player/features/books/domain/legado_source.dart';
 import 'package:zero_player/features/supervision/domain/supervision_rules.dart';
+
+import '../../test_support/verified_temp_directory.dart';
 
 part 'book_discovery_category_reading_cases.dart';
 
@@ -21,6 +24,7 @@ void main() {
   _mixedBookAccessTests();
   _staticBookAccessTests();
   _detailsTargetTests();
+  _pendingDetailEvidenceTests();
   _directoryTargetTests();
   _textAndStoredTargetTests();
   _inFlightPolicyTests();
@@ -915,7 +919,8 @@ BookSource _featured() => BookSource.fromJson({
 
 Future<void> _withFixture(Future<void> Function(_Fixture) body) async {
   final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
-  final root = await Directory.systemTemp.createTemp('category-policy-');
+  final temporary = await VerifiedTempDirectory.create('category-policy-');
+  final root = temporary.directory;
   final requests = <(String, Uri)>[];
   final gates = <String, _Gate>{};
   final nextLinks = <String, String>{};
@@ -1034,7 +1039,7 @@ Future<void> _withFixture(Future<void> Function(_Fixture) body) async {
     );
   } finally {
     await server.close(force: true);
-    await root.delete(recursive: true);
+    await temporary.delete();
   }
 }
 

@@ -76,6 +76,15 @@ bool _adultBookCategoryLabel(String text) {
   return _containsAdultCategory(joined.split(RegExp(r'[,，/|、;；\s·•・.:：]+')));
 }
 
+/// The adult portion of the same category policy, independent of settings.
+/// This permits a detail observed while filtering is off to remain identifiable
+/// if filtering is enabled later.
+bool adultBookCategoryEvidence(String title) =>
+    adultContent(title) ||
+    adultContent(title, category: true) ||
+    adultBookLabels(title, '') ||
+    _adultBookCategoryLabel(title);
+
 /// A category can be restricted without classifying its entire source.
 bool bookCategoryTextAllowed(
   ContentPolicy policy,

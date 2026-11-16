@@ -42,6 +42,9 @@ extension _BookRepositoryProbe on BooksRepository {
               client.details(source, book, active, requestGuard: guard),
           allowDisabled: true,
         );
+        lease.check();
+        await _rememberBookMetadata(book, details, lease.check);
+        lease.check();
         if (!bookAllowed(details)) throw const ContentBlocked();
         stage = '目录';
         final chapters = await _withBookRequestGuard(

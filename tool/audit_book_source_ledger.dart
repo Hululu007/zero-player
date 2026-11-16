@@ -18,6 +18,7 @@ import 'book_source_ledger_com_rdap.dart';
 import 'book_source_ledger_sfwx.dart';
 import 'book_source_ledger_lengmen.dart';
 import 'book_source_ledger_later_chain.dart';
+import 'book_source_ledger_jhsssd.dart';
 
 const _catalogFolder = 'assets/catalogs/books/legado';
 const _evidenceFolder = 'docs/implementation';
@@ -103,6 +104,7 @@ const _evidenceFiles = [
   lengmenEvidenceFile,
   sfwx3984EvidenceFile,
   biquge7EvidenceFile,
+  jhsssdEvidenceFile,
   ..._amsiFiles,
 ];
 const _codePaths = [
@@ -128,6 +130,7 @@ const _codePaths = [
   'lib/features/books/data/legado/legado_rule_tokens.dart',
   'lib/features/books/domain/book.dart',
   'lib/features/books/domain/biquge7_legacy_source_fix.dart',
+  'lib/features/books/domain/jhsssd_legacy_source_fix.dart',
   'lib/features/books/domain/book_source_risk.dart',
   'lib/features/books/domain/com_rdap_legacy_quarantine.dart',
   'lib/features/books/domain/fanfanu_legacy_source_fix.dart',
@@ -162,6 +165,11 @@ const _codePaths = [
   'tool/book_source_ledger_sfwx.dart',
   'tool/book_source_ledger_lengmen.dart',
   'tool/book_source_ledger_later_chain.dart',
+  'tool/book_source_ledger_jhsssd.dart',
+  'test/books/jhsssd_legado_test.dart',
+  'tool/verify_legado_jhsssd_category.py',
+  'tool/test_verify_legado_jhsssd_category.py',
+  'tool/test_audit_book_source_ledger_jhsssd.dart',
   'tool/verify_legado_unresolved_head.py',
   'tool/compare_legado_head_get.py',
   'tool/recheck_legado_failures.py',
@@ -195,6 +203,8 @@ const _runtimePolicyReferencePaths = [
   'lib/features/books/data/book_comic_download.dart',
   'lib/features/books/data/book_discovery_paging.dart',
   'lib/features/books/data/book_download_coordinator.dart',
+  'lib/features/books/data/book_download_guard.dart',
+  'lib/features/books/data/book_policy_evidence.dart',
   'lib/features/books/data/book_repository_discovery.dart',
   'lib/features/books/data/book_repository_media_access.dart',
   'lib/features/books/data/book_repository_mutations.dart',
@@ -210,6 +220,7 @@ const _runtimePolicyReferencePaths = [
   'lib/features/books/data/book_request_guard.dart',
   'lib/features/books/data/book_store.dart',
   'lib/features/books/data/books_repository.dart',
+  'lib/features/books/presentation/book_detail_page.dart',
   'lib/features/books/data/legado/legado_client.dart',
   'lib/features/books/data/lit2go_audio_client.dart',
   'lib/features/books/data/shuyin_audio_client.dart',
@@ -1277,6 +1288,7 @@ Map<String, Object?> _row(
   ComRdapLedgerEvidence topCc,
   SfwxLedgerEvidence sfwx,
   LaterChainLedgerEvidence laterChain,
+  JhsssdLedgerEvidence jhsssd,
   LengmenLedgerEvidence lengmen,
   Map<String, Map> data,
 ) {
@@ -1360,6 +1372,7 @@ Map<String, Object?> _row(
   reading.addAll(selectNov16Evidence(nov16.reading, source, index));
   reading.addAll(selectSfwxEvidence(sfwx, source, index));
   reading.addAll(selectLaterChainEvidence(laterChain, source, index));
+  reading.addAll(selectJhsssdEvidence(jhsssd, source, index));
   final adultReview = selectNov16Evidence(nov16.adultReview, source, index);
   return {
     'source_id': source.id,
@@ -1409,6 +1422,10 @@ void _verifyArchiveAssociation(
   String digest,
   Map<String, String> inputHashes,
 ) {
+  if (file == jhsssdEvidenceFile) {
+    verifyJhsssdInput(evidence, digest, inputHashes);
+    return;
+  }
   if (file == sfwx3984EvidenceFile || file == biquge7EvidenceFile) {
     verifyLaterChainInput(file, evidence, digest, inputHashes);
     return;
@@ -1823,6 +1840,11 @@ void main(List<String> args) {
     hashes,
     catalog.rows,
   );
+  final jhsssd = readJhsssdEvidence(
+    data[jhsssdEvidenceFile]!,
+    hashes,
+    catalog.rows,
+  );
   final lengmen = readLengmenEvidence(
     data[lengmenEvidenceFile]!,
     hashes,
@@ -1879,6 +1901,7 @@ void main(List<String> args) {
         topCc,
         sfwx,
         laterChain,
+        jhsssd,
         lengmen,
         data,
       ),
@@ -1966,6 +1989,7 @@ Map<String, Object?> _ledgerDocument(
     'The three-source redirect recheck uses GET and a possibly different user agent than the earlier HEAD. One old POST search was not submitted, discovery sampled only two entries per source, and fields missing from truncated collector output remain unknown.',
     'The three-source sfwx reading observations are bounded historical samples; the 404 is a single search path, the two sfwx works and three chapters do not establish complete readability or safety, and long-chapter pagination and one old link target remain unverified. The repaired current rule may differ from the sampled historical rule.',
     'The later-chain observations sample two works and limited chapters for two sources; the category test shares one received page across two source IDs, and the two 404 responses concern one search path only. Longer or paginated chapters remain unverified, and repaired current rules may differ from the historical samples.',
+    'The jhsssd observation samples two works and their first content pages only; the exact repair adds detail category metadata but search results without category remain unclassified. Page bodies and collectors are not retained, and neither the sample nor a limited address/text prefilter establishes safety or complete readability.',
     'The lengmen follow-up represents one shared root-page study for two sources, not independent threats; the 302 Location was not captured, the network environment was shared, and engine detections or non-detections do not establish malware, false positive, or safety. HTML and script-wrapped EICAR controls were missed.',
     'Static flags do not include personal settings, enabled state, mutable assessments, user blacklists, supervision, or every private repository policy.',
     'Same-ID historical cache can lack the rule fingerprint needed to attribute old content to a specific source version.',
@@ -2009,6 +2033,16 @@ Map<String, Object?> _ledgerDocument(
     ...(((data[sfwx3984EvidenceFile]!['inputs'] as Map)['historical_files']
             as Map)['ledger']
         as Map),
+    'verified_from_git_object': true,
+  },
+  'jhsssd_historical_ledger_reference': {
+    'git_commit':
+        (data[jhsssdEvidenceFile]!['inputs'] as Map)['historical_commit'],
+    'path':
+        (data[jhsssdEvidenceFile]!['inputs'] as Map)['historical_ledger_path'],
+    'sha256':
+        (data[jhsssdEvidenceFile]!['inputs']
+            as Map)['historical_ledger_sha256'],
     'verified_from_git_object': true,
   },
   'lengmen_historical_ledger_reference': {

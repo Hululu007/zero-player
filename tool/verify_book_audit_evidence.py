@@ -109,7 +109,7 @@ class EvidenceVerifier:
         if 'tool/audit_book_source_ledger.dart' not in code:
             raise ValueError('ledger omits its generator')
         for name, digest in code.items():
-            path = self.ledger_path(name, ('lib', 'tool'))
+            path = self.ledger_path(name, ('lib', 'tool', 'test/books'))
             self.check_digest(path, digest, normalize_lf=True)
         for name, digest in ledger['runtime_policy_reference_only_normalized_sha256'].items():
             path = self.ledger_path(name, ('lib',))
@@ -414,6 +414,14 @@ class EvidenceVerifier:
             for key, path in later_history.items():
                 ref = inputs['historical_files'][key]
                 self.git_snapshot(inputs['historical_commit'], ref['path'], ref['sha256'], path)
+
+        jhsssd = json.loads(self.read(self.docs / 'legado-jhsssd-category-recheck-20261116.json'))
+        inputs = jhsssd['inputs']
+        if inputs['archive_path'] != 'assets/catalogs/books/legado/catalog.json.bz2':
+            raise ValueError('unexpected jhsssd reading-review archive path')
+        self.check_digest(archive, inputs['archive_sha256'])
+        self.git_snapshot(inputs['historical_commit'], inputs['historical_ledger_path'],
+                          inputs['historical_ledger_sha256'], ledger_path)
 
         lengmen = json.loads(self.read(self.docs / 'legado-lengmen-amsi-recheck-20261116.json'))
         inputs = lengmen['inputs']

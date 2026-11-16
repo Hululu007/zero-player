@@ -64,7 +64,9 @@ void main() {
         forged.toJson(),
       );
       f.server.pages[a.endpoint.host] = '<p>在线赌场 立即下注</p>';
-      f.server.pages[b.endpoint.host] = '<p>成人小说 未满18岁</p>';
+      f.server.pages[b.endpoint.host] =
+          '<title>成人小说网</title>'
+          '<meta name="description" content="主要提供成人小说">';
       await f.monitor.check().timeout(_timeout);
       expect(f.injectedCalls, 0);
       expect(f.requested.map((uri) => uri.host).toSet(), {

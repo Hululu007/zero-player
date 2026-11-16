@@ -3,6 +3,7 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:flutter/foundation.dart';
+import 'package:html/dom.dart' as dom;
 import 'package:html/parser.dart' as html;
 
 import '../../../core/network/cancellation_token.dart';
@@ -72,6 +73,13 @@ final class BookSiteInspection {
             BookSiteFinding.sourceChanged => '来源或检查记录需重新确认，待重新抽查',
           };
     final parts = [signal];
+    if (finding == BookSiteFinding.gamblingAndAdultClues) {
+      if (gamblingRisk && !adultRisk) {
+        parts.add('疑似成人文字线索，待复核');
+      } else if (adultRisk && !gamblingRisk) {
+        parts.add('疑似博彩文字线索，待复核');
+      }
+    }
     if (finding != BookSiteFinding.sameSiteRedirect &&
         finding != BookSiteFinding.externalRedirect) {
       switch (redirect) {
@@ -82,6 +90,9 @@ final class BookSiteInspection {
         case BookSiteRedirect.external:
           parts.add('跨站跳转，未跟随，待复核');
       }
+    }
+    if (truncated && finding != BookSiteFinding.sampled) {
+      parts.add('首页静态检查覆盖不完整');
     }
     if (scriptReview.clues.contains(BookPageScriptClue.crossOriginRedirect)) {
       parts.add('本次内联脚本含跨源跳转写法，待复核');
@@ -287,16 +298,307 @@ final _adultSiteDescription = RegExp(
   r'色情(?:小说|小說)|成人(?:漫画|漫畫)|色情(?:漫画|漫畫))'
   r'(?:网站|網站|阅读网|閱讀網|站|网|網|平台)|'
   r'(?:专属|專屬|专门提供|專門提供|主要提供|主打)'
-  r'[^，。；;\n]{0,20}(?:成人(?:小说|小說)|色情(?:小说|小說)|肉文|肉漫)',
+  r'[^，。；;\n]{0,20}(?:成人(?:小说|小說|漫画|漫畫)|'
+  r'色情(?:小说|小說|漫画|漫畫)|肉文|肉漫)',
 );
 final _adultSiteWarning = RegExp(
   r'抵制|远离|遠離|打击|打擊|不提供|不收录|不收錄|拒绝|拒絕|'
   r'禁止(?:传播|傳播|提供|访问|訪問)|危害|举报|舉報',
 );
-final _adultGate = RegExp(
-  r'(?:年|未)?(?:满|滿)\s*(?:[1１][8８]|十八)\s*(?:岁|歲)|'
-  r'未成年人(?:禁止|请勿|請勿)|成人(?:专用|專用|专区|專區)',
+// A category, recommendation or advertisement does not describe the whole
+// host. In particular, an age notice for one section is not a site-wide gate.
+final _adultLocalScope = RegExp(
+  r'专区|專區|分类|分類|频道|頻道|栏目|欄目|专题|專題|'
+  r'书单|書單|推荐|推薦|排行|导航|導航|友链|友鏈|'
+  r'链接|鏈接|广告|廣告',
 );
+final _adultClauseBoundary = RegExp(r'[，,。！？!?；;\r\n|]');
+final _advertisementText = RegExp(
+  r'^\s*(?:广告|廣告|赞助|贊助|(?:ad|advertisement|sponsored)\b)',
+  caseSensitive: false,
+);
+final _exclusiveAdultDescription = RegExp(
+  r'^\s*(?:(?:本站|本网站|本網站|本平台)\s*)?'
+  r'(?:专属|專屬|专营|專營|仅提供|僅提供|只提供|专门提供|專門提供)'
+  r'[^，。；;\n]{0,20}'
+  r'(?:成人(?:黄色|黃色)?(?:小说|小說|漫画|漫畫)|'
+  r'色情(?:小说|小說|漫画|漫畫)|肉文|肉漫|'
+  r'(?:18禁|十八禁)(?:情欲|情慾|色情|情色)(?:类|類)?(?:小说|小說))',
+);
+final _wholeSiteAdultGate = RegExp(
+  r'(?:本站|本网站|本網站|本平台|全站)'
+  r'[^。！？!?；;\n]{0,20}(?:仅限|僅限|只限|必须|必須|请确认|請確認)'
+  r'[^。！？!?；;\n]{0,20}'
+  r'(?:(?:年满|年滿|满|滿)\s*(?:[1１][8８]|十八)\s*(?:岁|歲)?|成年人)',
+);
+final _adultScopeSubject = RegExp(r'成人|色情|情色|肉文|肉漫|18禁|十八禁');
+final _advertisingMarker = RegExp(
+  r'(?:^|[\s_-])(?:ads?|advert(?:isement)?|sponsor(?:ed)?|banner|promo(?:tion)?)(?:$|[\s_-])|广告|廣告',
+  caseSensitive: false,
+);
+
+bool _advertisingElement(dom.Element element) {
+  final tag = element.localName?.toLowerCase();
+  if (tag == 'aside' || element.attributes['role'] == 'complementary') {
+    return true;
+  }
+  return _advertisingMarker.hasMatch(
+    '${element.attributes['id'] ?? ''} ${element.attributes['class'] ?? ''}',
+  );
+}
+
+bool _unscopedAdultClause(String text) =>
+    !_adultLocalScope.hasMatch(text) && !_adultSiteWarning.hasMatch(text);
+
+bool _hasScopedAdultEntry(String text) => text
+    .split(_adultClauseBoundary)
+    .any(
+      (part) =>
+          _adultLocalScope.hasMatch(part) &&
+          (_adultScopeSubject.hasMatch(part) ||
+              _wholeSiteAdultGate.hasMatch(part)),
+    );
+
+final _adultGateControlCharacters = RegExp(
+  r'[\x00-\x08\x0b\x0c\x0e-\x1f\x7f\u202a-\u202e\u2066-\u2069]',
+);
+
+final class _AdultGateBudgetExceeded implements Exception {
+  const _AdultGateBudgetExceeded();
+}
+
+String _cleanAdultGateText(String text) => text
+    .replaceAll('\r', '')
+    .replaceAll(_adultGateControlCharacters, '')
+    .split('\n')
+    .map((line) => line.trim())
+    .where((line) => line.isNotEmpty)
+    .join('\n\n');
+
+/// Bound repeated text extraction even for deeply nested entry containers.
+final class _AdultGateBudget {
+  int _remainingText = BookSiteInspector.maxBytes * 4;
+  int _remainingNodes = BookSiteInspector.maxBytes * 4;
+
+  String read(dom.Element element, {bool prefixOnly = false}) {
+    if (_remainingText <= 0) throw const _AdultGateBudgetExceeded();
+    final limit = prefixOnly ? _remainingText.clamp(0, 2048) : _remainingText;
+    final output = StringBuffer();
+    final pending = <({dom.Node node, bool closing})>[
+      (node: element, closing: false),
+    ];
+    var truncated = false;
+    void append(String value) {
+      final available = limit - output.length;
+      if (value.length > available) {
+        output.write(value.substring(0, available));
+        truncated = true;
+      } else {
+        output.write(value);
+      }
+    }
+
+    while (pending.isNotEmpty && !truncated) {
+      if (--_remainingNodes < 0) throw const _AdultGateBudgetExceeded();
+      final item = pending.removeLast();
+      final node = item.node;
+      if (node is dom.Text) {
+        append(node.data);
+        continue;
+      }
+      final block =
+          node is dom.Element &&
+          const {
+            'p',
+            'div',
+            'section',
+            'article',
+            'li',
+            'blockquote',
+            'br',
+            'h1',
+            'h2',
+            'h3',
+            'pre',
+          }.contains(node.localName);
+      if (item.closing) {
+        if (block && output.isNotEmpty) append('\n');
+        continue;
+      }
+      if (block && output.isNotEmpty) append('\n');
+      pending.add((node: node, closing: true));
+      for (final child in node.nodes.reversed) {
+        pending.add((node: child, closing: false));
+      }
+    }
+    final text = output.toString();
+    _remainingText -= text.length;
+    if (truncated || text.length >= limit) {
+      if (prefixOnly) {
+        final boundary = _adultClauseBoundary.firstMatch(text);
+        if (boundary != null) {
+          return _cleanAdultGateText(text.substring(0, boundary.start));
+        }
+      }
+      throw const _AdultGateBudgetExceeded();
+    }
+    return _cleanAdultGateText(text);
+  }
+}
+
+bool _gateHasLocalLabel(
+  dom.Element gate,
+  Map<dom.Element, bool> labels,
+  _AdultGateBudget budget,
+) {
+  final parent = gate.parent;
+  if (parent == null ||
+      !const {
+        'div',
+        'section',
+        'article',
+        'li',
+        'form',
+      }.contains(parent.localName)) {
+    return false;
+  }
+  return labels.putIfAbsent(parent, () {
+    final label = budget
+        .read(parent, prefixOnly: true)
+        .split(_adultClauseBoundary)
+        .first;
+    return _advertisementText.hasMatch(label) ||
+        (_adultScopeSubject.hasMatch(label) &&
+            _adultLocalScope.hasMatch(label));
+  });
+}
+
+/// Combine the site-wide gate and adult business only inside one entry form,
+/// dialog or leaf text block. An unrelated category elsewhere on the page is
+/// not part of the evidence, and explicit advertising is excluded.
+({bool found, bool complete}) _hasWholeSiteAdultEntryGate(
+  dom.Document document,
+) {
+  final elements = document.querySelectorAll('*');
+  final selfAd = <dom.Element, bool>{};
+  final subtreeAd = <dom.Element, bool>{};
+  final blockDescendant = <dom.Element, bool>{};
+  const blockTags = {
+    'div',
+    'p',
+    'h1',
+    'h2',
+    'h3',
+    'h4',
+    'h5',
+    'h6',
+    'section',
+    'article',
+    'nav',
+    'header',
+    'footer',
+    'form',
+    'ul',
+    'ol',
+    'li',
+    'table',
+    'aside',
+  };
+  // Each edge is visited once, rather than re-querying nested subtrees.
+  for (final element in elements.reversed) {
+    final ad = selfAd[element] = _advertisingElement(element);
+    var adBelow = ad;
+    var blockBelow = false;
+    for (final child in element.children) {
+      adBelow = adBelow || subtreeAd[child] == true;
+      blockBelow =
+          blockBelow ||
+          blockTags.contains(child.localName) ||
+          blockDescendant[child] == true;
+    }
+    subtreeAd[element] = adBelow;
+    blockDescendant[element] = blockBelow;
+  }
+  final adAncestor = <dom.Element, bool>{};
+  for (final element in elements) {
+    adAncestor[element] =
+        selfAd[element] == true || adAncestor[element.parent] == true;
+  }
+
+  final budget = _AdultGateBudget();
+  final labels = <dom.Element, bool>{};
+  final containerTexts = <dom.Element, String>{};
+  String containerText(dom.Element element) =>
+      containerTexts.putIfAbsent(element, () => budget.read(element));
+  bool isContainer(dom.Element element) =>
+      element.localName == 'form' || element.attributes['role'] == 'dialog';
+  final scopedAncestor = <dom.Element, bool>{};
+  bool blockedByScope(dom.Element gate) {
+    final pending = <dom.Element>[];
+    dom.Element? node = gate;
+    var blocked = false;
+    while (node != null) {
+      final known = scopedAncestor[node];
+      if (known != null) {
+        blocked = known;
+        break;
+      }
+      pending.add(node);
+      if (isContainer(node) && _hasScopedAdultEntry(containerText(node))) {
+        blocked = true;
+        break;
+      }
+      node = node.parent;
+    }
+    for (final element in pending) {
+      scopedAncestor[element] = blocked;
+    }
+    return blocked;
+  }
+
+  try {
+    for (final gate in elements) {
+      final container = isContainer(gate);
+      if (!container &&
+          !const {'p', 'h1', 'h2', 'h3', 'div'}.contains(gate.localName)) {
+        continue;
+      }
+      if (!container &&
+          gate.localName == 'div' &&
+          blockDescendant[gate] == true) {
+        continue;
+      }
+      if (adAncestor[gate] == true || subtreeAd[gate] == true) continue;
+      final text = container ? containerText(gate) : budget.read(gate);
+      if (!_adultBusiness.hasMatch(text) ||
+          !_wholeSiteAdultGate.hasMatch(text)) {
+        continue;
+      }
+      if (blockedByScope(gate) ||
+          _advertisementText.hasMatch(text) ||
+          (!container && _gateHasLocalLabel(gate, labels, budget))) {
+        continue;
+      }
+      if (_adultSiteWarning.hasMatch(text)) continue;
+      final clauses = text.split(_adultClauseBoundary);
+      if (clauses.any(
+            (part) =>
+                _unscopedAdultClause(part) && _adultBusiness.hasMatch(part),
+          ) &&
+          clauses.any(
+            (part) =>
+                _unscopedAdultClause(part) &&
+                _wholeSiteAdultGate.hasMatch(part),
+          ) &&
+          _hasAdultBusinessOutsideWarning(text)) {
+        return (found: true, complete: true);
+      }
+    }
+  } on _AdultGateBudgetExceeded {
+    return (found: false, complete: false);
+  }
+  return (found: false, complete: true);
+}
 
 /// A warning applies only to a nearby signal in the same clause. A later
 /// occurrence, or an advertisement in another block, remains independent.
@@ -413,19 +715,33 @@ BookSiteInspection inspectBookSiteHtml(
       _hasGamblingSignalOutsideWarning(text, _gamblingPromotion);
   final title = document.querySelector('title')?.text ?? '';
   final titleNamesAdultSite =
-      (_adultBusiness.hasMatch(title) || _adultSiteTitle.hasMatch(title)) &&
-      !_adultSiteWarning.hasMatch(title);
-  final sitePurpose =
-      titleNamesAdultSite &&
-      descriptions.any(
-        (description) =>
-            _adultSiteDescription.hasMatch(description) &&
-            !_adultSiteWarning.hasMatch(description),
-      );
-  final adultRisk =
-      adult &&
-      _hasAdultBusinessOutsideWarning(text) &&
-      (_adultGate.hasMatch(text) || sitePurpose);
+      !_adultSiteWarning.hasMatch(title) &&
+      title
+          .split(_adultClauseBoundary)
+          .any(
+            (part) =>
+                _unscopedAdultClause(part) &&
+                (_adultBusiness.hasMatch(part) ||
+                    _adultSiteTitle.hasMatch(part)),
+          );
+  final sitePurpose = descriptions.any(
+    (description) =>
+        !_adultSiteWarning.hasMatch(description) &&
+        description
+            .split(_adultClauseBoundary)
+            .any(
+              (part) =>
+                  _unscopedAdultClause(part) &&
+                  (titleNamesAdultSite &&
+                          _adultSiteDescription.hasMatch(part) ||
+                      _exclusiveAdultDescription.hasMatch(part)),
+            ),
+  );
+  final adultBusiness = adult && _hasAdultBusinessOutsideWarning(text);
+  final gate = adultBusiness && !sitePurpose
+      ? _hasWholeSiteAdultEntryGate(document)
+      : (found: false, complete: true);
+  final adultRisk = adultBusiness && (sitePurpose || gate.found);
   final finding = gambling && adult
       ? BookSiteFinding.gamblingAndAdultClues
       : gambling
@@ -441,7 +757,7 @@ BookSiteInspection inspectBookSiteHtml(
     finding,
     gamblingRisk: bettingRisk,
     adultRisk: adultRisk,
-    truncated: truncated,
+    truncated: truncated || !gate.complete,
     scriptReview: scriptReview,
     redirect: !refresh
         ? BookSiteRedirect.none

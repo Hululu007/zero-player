@@ -33,6 +33,7 @@ import 'book_discovery_paging.dart';
 import 'book_import.dart';
 import 'book_image_payload.dart';
 import 'book_mixed_content.dart';
+import 'book_policy_evidence.dart';
 import 'book_request_guard.dart';
 import 'book_site_check.dart';
 import 'book_site_inspection.dart';
@@ -127,11 +128,18 @@ final class BooksRepository {
   final BookStore store;
   final BookSourceRiskStore riskStore;
   final _sourceRiskChanges = ValueNotifier<int>(0);
+  final _bookPolicyChanges = ValueNotifier<int>(0);
+  late final _allRiskChanges = Listenable.merge([
+    _sourceRiskChanges,
+    _bookPolicyChanges,
+  ]);
   final _discoveryTokens = <CancellationToken>{};
   final _discoveryCursors = <String, _DiscoveryCursor>{};
   late String _discoveryPolicySnapshot;
   int _discoveryRevision = 0;
-  Listenable get sourceRiskChanges => _sourceRiskChanges;
+  Listenable get sourceRiskChanges => _allRiskChanges;
+  Listenable get sourceConfigurationChanges => _sourceRiskChanges;
+  Listenable get bookPolicyChanges => _bookPolicyChanges;
   bool get sourceRisksReady => _riskLoaded && !_riskSuspended;
   bool get sourceRisksSuspended => _riskSuspended;
   bool get sourceRiskMutationPending =>
@@ -178,6 +186,13 @@ final class BooksRepository {
   final _assessedQuarantinedIds = <String>{};
   final _assessedAdultHosts = <String>{};
   final _assessedQuarantinedHosts = <String>{};
+  // A pending observation blocks immediately, but becomes durable only after
+  // its source lease and database transaction have both been validated.
+  final _pendingBookPolicyEvidence =
+      <String, Map<Object, BookPolicyEvidence>>{};
+  late final _bookPolicyEvidenceStore = BookPolicyEvidenceStore(store.db);
+  final _bookPolicyEvidence = <String, BookPolicyEvidence>{};
+  int _bookPolicyGeneration = 0;
   Future<void>? _riskLoading;
   bool _riskLoaded = false;
   bool _riskSuspended = false;
@@ -197,6 +212,11 @@ final class BooksRepository {
   Future<void> Function()? afterSiteRiskWriteForTesting;
   @visibleForTesting
   Future<void> Function()? afterSiteRiskCommitForTesting;
+  @visibleForTesting
+  Future<void> Function()? afterBookPolicyCommitForTesting;
+  @visibleForTesting
+  int pendingBookPolicyObservationsForTesting(String id) =>
+      _pendingBookPolicyEvidence[id]?.length ?? 0;
 
   BookDownloadGuard? _downloadGuard;
   BookDownloadGuard get downloadGuard => _downloadGuard ??= BookDownloadGuard(
@@ -211,6 +231,7 @@ final class BooksRepository {
     bookAllowed: bookAllowed,
     entryAllowed: _sourceEntryAllowed,
     generation: () => _riskGeneration,
+    bookPolicyGeneration: () => _bookPolicyGeneration,
     ensureReady: ensureSourceRiskLoaded,
   );
 
@@ -280,6 +301,7 @@ final class BooksRepository {
     final assessments = await riskStore.all();
     final contentEpochs = await store.contentEpochs();
     final blocked = await store.blockedSources();
+    final bookEvidence = await _bookPolicyEvidenceStore.load();
     if (_riskSuspended) throw const ContentBlocked();
     // A completed mark/clear may have changed the DB while this snapshot was
     // loading; never replace the newer restriction with an older snapshot.
@@ -296,6 +318,13 @@ final class BooksRepository {
     _blockedSourceIds
       ..clear()
       ..addAll(blocked.keys);
+    for (final entry in bookEvidence.entries) {
+      _bookPolicyEvidence.update(
+        entry.key,
+        (current) => current.merge(entry.value),
+        ifAbsent: () => entry.value,
+      );
+    }
     _rebuildAssessmentHosts();
     _riskLoaded = true;
   }
@@ -607,6 +636,89 @@ final class BooksRepository {
   /// Evaluate both source metadata and the user's stored group at display time.
   bool sourceEntryAllowed(BookSourceEntry entry) => _sourceEntryAllowed(entry);
 
+  ({String category, String text, String stableText}) _bookMetadata(
+    Book book,
+  ) => (
+    category: book.category,
+    text:
+        '${book.title} ${book.author} ${book.description} ${book.category} '
+        '${book.latestChapter} ${book.updatedLabel} ${book.rankLabel} ${book.uri.host}',
+    stableText:
+        '${book.title} ${book.author} ${book.description} ${book.category}',
+  );
+
+  bool _bookMetadataAllowed(
+    ({String category, String text, String stableText}) metadata,
+  ) =>
+      bookCategoryTextAllowed(policy, metadata.category) &&
+      policy.textAllowed(metadata.text);
+
+  Future<void> _rememberBookMetadata(
+    Book original,
+    Book details,
+    void Function() authorize,
+  ) async {
+    if (original.id != details.id || original.sourceId != details.sourceId) {
+      return;
+    }
+    final wasAllowed = bookAllowed(original);
+    final metadata = _bookMetadata(details);
+    final evidence = BookPolicyEvidence.observe(
+      policy,
+      category: metadata.category,
+      text: metadata.text,
+      stableText: metadata.stableText,
+    );
+    final operation = Object();
+    _pendingBookPolicyEvidence.putIfAbsent(original.id, () => {})[operation] =
+        evidence;
+    final pendingBlocked = wasAllowed && !bookAllowed(original);
+    if (pendingBlocked) {
+      _bookPolicyGeneration++;
+      _bookPolicyChanges.value++;
+    }
+    void retain(BookPolicyEvidence value) {
+      if (value.isEmpty) return;
+      _bookPolicyEvidence.update(
+        original.id,
+        (current) => current.merge(value),
+        ifAbsent: () => value,
+      );
+    }
+
+    try {
+      final persisted = await _bookPolicyEvidenceStore.merge(
+        original.id,
+        evidence,
+        authorize,
+        afterCommit: afterBookPolicyCommitForTesting,
+      );
+      retain(persisted);
+      authorize();
+    } catch (_) {
+      // A write failure must not reopen a known restriction in this process.
+      // A cancelled or superseded source response is not valid evidence.
+      try {
+        authorize();
+        retain(evidence);
+      } catch (_) {
+        // The pending observation is discarded below.
+      }
+      rethrow;
+    } finally {
+      final wasBlocked = !bookAllowed(original);
+      final pending = _pendingBookPolicyEvidence[original.id];
+      pending?.remove(operation);
+      if (pending != null && pending.isEmpty) {
+        _pendingBookPolicyEvidence.remove(original.id);
+      }
+      if (wasBlocked && bookAllowed(original) && !_evidenceClosing) {
+        _bookPolicyGeneration++;
+        _bookPolicyChanges.value++;
+      }
+    }
+  }
+
   bool bookAllowed(Book book) {
     if (!_riskLoaded && book.sourceId != 'local') return false;
     final verified = _verifiedSources[book.sourceId];
@@ -647,11 +759,12 @@ final class BooksRepository {
                 adultBookHost(book.uri.host) ||
                 adultBundledSourceId(book.sourceId) ||
                 _assessedAdult(book.sourceId, book.uri.host))) &&
-        bookCategoryTextAllowed(policy, book.category) &&
-        policy.textAllowed(
-          '${book.title} ${book.author} ${book.description} ${book.category} '
-          '${book.latestChapter} ${book.updatedLabel} ${book.rankLabel} ${book.uri.host}',
-        );
+        _bookMetadataAllowed(_bookMetadata(book)) &&
+        !(_pendingBookPolicyEvidence[book.id]?.values.any(
+              (evidence) => evidence.blocks(policy),
+            ) ??
+            false) &&
+        !(_bookPolicyEvidence[book.id]?.blocks(policy) ?? false);
   }
 
   Future<List<BookSourceEntry>> sources(
@@ -2275,6 +2388,7 @@ final class BooksRepository {
     policy.removeListener(_discoveryPolicyChanged);
     _sourceRiskChanges.removeListener(_discoveryRiskChanged);
     _downloadGuard?.dispose();
+    _bookPolicyChanges.dispose();
     _sourceRiskChanges.dispose();
     _http.close();
     await audioFiles.close();
