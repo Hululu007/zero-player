@@ -22,6 +22,7 @@ const _timeout = Duration(seconds: 8);
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
+  _batchLeaseSupervisedTests();
 
   test(
     'supervised checks use real requests and cannot accept fake results',
@@ -831,6 +832,130 @@ void main() {
           await f.close();
         }
       }
+    },
+  );
+}
+
+void _batchLeaseSupervisedTests() {
+  test(
+    'supervised policy cancellation does not cancel the caller token',
+    () async {
+      final f = await _Fixture.create();
+      addTearDown(f.close);
+      await f.supervise();
+      final source = f.first.source;
+      final gate = f.server.hold(source.endpoint.host, '<p>普通首页</p>');
+      addTearDown(gate.release);
+      final caller = CancellationToken();
+      final running = expectLater(
+        f.services.books.checkSupervisedBuiltinSites(caller),
+        throwsA(isA<RequestCancelled>()),
+      );
+      await gate.started.future.timeout(_timeout);
+      await f.services.supervision.execute(
+        SensitiveOperation.settings,
+        () => f.services.settings.update({'backgroundProbe': false}),
+        password: _password,
+      );
+      expect(caller.isCancelled, isFalse);
+      gate.release();
+      await running.timeout(_timeout);
+      expect(caller.isCancelled, isFalse);
+    },
+  );
+
+  test(
+    'an in-flight supervised batch prevents an older overwrite of manual clues',
+    () async {
+      final f = await _Fixture.create();
+      addTearDown(f.close);
+      await f.supervise();
+      final source = f.first.source;
+      final gate = f.server.hold(
+        source.endpoint.host,
+        '<html><body><p>普通首页</p></body></html>',
+      );
+      addTearDown(gate.release);
+      final supervised = f.services.books.checkSupervisedBuiltinSites(
+        CancellationToken(),
+      );
+      await gate.started.future.timeout(_timeout);
+      final manual = BookSiteChecks(
+        f.services.books,
+        inspect: (source, _) async => inspectBookSiteHtml(
+          Uri(scheme: 'https', host: source.endpoint.host, path: '/'),
+          '<html><body><h1>This domain is for sale</h1>'
+          '<h3>Contact the owner</h3><form></form>'
+          "<script>location.href='https://other.example/';</script>"
+          '</body></html>',
+        ),
+      );
+      await f.channels(() async {
+        await expectLater(
+          manual.run([f.first], CancellationToken()),
+          throwsFormatException,
+        );
+      });
+      gate.release();
+      await supervised.timeout(_timeout);
+      await f.channels(() async {
+        expect((await manual.run([f.first], CancellationToken())).checked, 1);
+      });
+      final stored = BookSiteCheck.fromJson(
+        await f.services.books.store.read('books_site_check:${source.id}'),
+        source,
+      )!;
+      expect(stored.pendingSaleClue, isNotNull);
+      expect(
+        stored.pendingScriptClues.keys,
+        contains(BookPageScriptClue.crossOriginRedirect),
+      );
+      expect(await f.services.books.riskStore.get(source.id), isNull);
+    },
+  );
+
+  test(
+    'manual batch blocks supervised overlap; later trusted strong evidence is kept',
+    () async {
+      final f = await _Fixture.create();
+      addTearDown(f.close);
+      await f.supervise();
+      final source = f.first.source;
+      final started = Completer<void>(), release = Completer<void>();
+      addTearDown(() {
+        if (!release.isCompleted) release.complete();
+      });
+      final manual = BookSiteChecks(
+        f.services.books,
+        inspect: (source, _) async {
+          started.complete();
+          await release.future;
+          return inspectBookSiteHtml(
+            Uri(scheme: 'https', host: source.endpoint.host, path: '/'),
+            '<html><body><h1>This domain is for sale</h1>'
+            '<h3>Contact the owner</h3><form></form></body></html>',
+          );
+        },
+      );
+      await f.channels(() async {
+        final running = manual.run([f.first], CancellationToken());
+        await started.future.timeout(_timeout);
+        await expectLater(
+          f.services.books.checkSupervisedBuiltinSites(CancellationToken()),
+          throwsFormatException,
+        );
+        release.complete();
+        expect((await running.timeout(_timeout)).checked, 1);
+      });
+      f.server.pages[source.endpoint.host] = '<p>在线赌场 立即下注</p>';
+      await f.services.books
+          .checkSupervisedBuiltinSites(CancellationToken())
+          .timeout(_timeout);
+      expect(
+        (await f.services.books.riskStore.get(source.id))!.quarantinedHost,
+        isTrue,
+      );
+      expect(f.services.books.sourceAllowed(source), isFalse);
     },
   );
 }

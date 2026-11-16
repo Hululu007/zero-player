@@ -7,6 +7,7 @@ import 'moe_rdap_legacy_quarantine.dart';
 import 'net_rdap_legacy_quarantine.dart';
 import 'novel_242_legacy_quarantine.dart';
 import 'redirected_legacy_quarantine.dart';
+import 'sanyou_legacy_quarantine.dart';
 import 'taotaoshu_legacy_quarantine.dart';
 import 'top_rdap_legacy_quarantine.dart';
 
@@ -199,6 +200,7 @@ bool knownUnavailableBookRule(BookSource source) =>
     unavailableTopRdapLegacySource(source) ||
     unavailableComRdapLegacySource(source) ||
     unavailable242NovelLegacySource(source) ||
+    unavailableSanyouLegacySource(source) ||
     unavailableRedirectedLegacySource(source);
 
 bool _hasKnownRemoteCodeRule(BookSource source) {

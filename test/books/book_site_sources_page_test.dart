@@ -20,6 +20,144 @@ void main() {
   _sourceListPolicyRaceTests();
   _ruleCluePageTests();
   _pageScriptClueTests();
+  _domainSaleCluePageTests();
+}
+
+void _domainSaleCluePageTests() {
+  testWidgets(
+    'sale filter includes current and historical clues without enabling sources',
+    (tester) async {
+      tester.view.physicalSize = const Size(480, 900);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+      late VerifiedTempDirectory temp;
+      late AppServices services;
+      final current = _source('出售测试当前', 'sale-current.example');
+      final historical = _source('出售测试历史', 'sale-history.example');
+      final normal = _source('出售测试普通', 'sale-normal.example');
+      final checks = <String, BookSiteCheck>{};
+      const saleHtml =
+          '<html><body><h1>This domain is for sale</h1>'
+          '<h3>Contact the owner</h3><form></form></body></html>';
+      await tester.runAsync(() async {
+        temp = await VerifiedTempDirectory.create('book-page-sale-ui-');
+        services = AppServices.scoped(temp.directory, AppDatabase.memory());
+        await services.supervision.load();
+        await services.settings.load();
+        await _skipCatalogSeed(services);
+        await services.books.importSources([current, historical, normal]);
+        await services.books.saveSource(historical, {'enabled': false});
+        for (final source in [current, historical]) {
+          await _primeCurrentSample(services, source);
+          final revision = (await services.books.store.siteRevisions.get(
+            source.id,
+          ))!;
+          final root = Uri(
+            scheme: 'https',
+            host: source.endpoint.host,
+            path: '/',
+          );
+          final first = BookSiteCheck.after(
+            inspectBookSiteHtml(root, saleHtml),
+            DateTime(2026, 11, 15, 8, 30),
+            source,
+            null,
+            siteRevision: revision,
+          );
+          final observed = source == historical
+              ? BookSiteCheck.after(
+                  const BookSiteInspection(BookSiteFinding.timeout),
+                  DateTime(2026, 11, 15, 9, 30),
+                  source,
+                  first,
+                  siteRevision: revision,
+                )
+              : first;
+          checks[source.id] = observed;
+          await services.books.store.write(
+            'books_site_check:${source.id}',
+            observed.toJson(),
+          );
+        }
+      });
+      addTearDown(() => _close(tester, services, temp));
+      await tester.pumpWidget(
+        MaterialApp(
+          home: BookSourcesPage(services: services, kind: BookKind.text),
+        ),
+      );
+      await tester.enterText(find.byType(TextField).first, '出售测试');
+      final currentTile = find.widgetWithText(ListTile, current.name);
+      final historicalTile = find.widgetWithText(ListTile, historical.name);
+      final ordinaryTile = find.widgetWithText(ListTile, normal.name);
+      await _waitFor(
+        tester,
+        () =>
+            currentTile.evaluate().isNotEmpty &&
+            historicalTile.evaluate().isNotEmpty &&
+            ordinaryTile.evaluate().isNotEmpty,
+      );
+      expect(
+        find.descendant(
+          of: currentTile,
+          matching: find.textContaining('疑似域名出售静态结构'),
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(
+          of: historicalTile,
+          matching: find.textContaining('历史域名出售线索'),
+        ),
+        findsOneWidget,
+      );
+      await tester.tap(find.text('域名出售线索'));
+      await tester.pump();
+      expect(currentTile, findsOneWidget);
+      expect(historicalTile, findsOneWidget);
+      expect(ordinaryTile, findsNothing);
+      await tester.runAsync(() async {
+        expect(
+          (await services.books.sourceEntry(
+            BookKind.text,
+            historical.id,
+          ))!.enabled,
+          isFalse,
+        );
+        expect(await services.books.riskStore.get(current.id), isNull);
+        for (final source in [current, historical]) {
+          final root = Uri(
+            scheme: 'https',
+            host: source.endpoint.host,
+            path: '/',
+          );
+          final previous = checks[source.id]!;
+          final completed = BookSiteCheck.after(
+            inspectBookSiteHtml(root, '<html><body><p>普通书站</p></body></html>'),
+            DateTime(2026, 11, 15, 10, 30),
+            source,
+            previous,
+            siteRevision: previous.siteRevision,
+          );
+          await services.books.store.write(
+            'books_site_check:${source.id}',
+            completed.toJson(),
+          );
+        }
+      });
+      await _waitFor(
+        tester,
+        () =>
+            currentTile.evaluate().isEmpty &&
+            historicalTile.evaluate().isEmpty &&
+            find.text('没有符合条件的来源').evaluate().isNotEmpty,
+      );
+      expect(tester.takeException(), isNull);
+    },
+  );
 }
 
 void _pageScriptClueTests() {

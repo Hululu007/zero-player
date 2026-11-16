@@ -18,7 +18,8 @@ final _reviewTerms = RegExp(
   r'色情|情色|成人|肉文|肉漫|黄文|黄漫|黃文|黃漫|春宫|春宮|黄片|黃片|无码|無碼|'
   r'限制级|限制級|高\s*h|h\s*(?:文|小说|小說|漫)|情欲|情慾|hentai|nsfw|porn|'
   r'18\s*[+禁]|十八禁|r\s*18|强奸|強姦|性[爱愛]|自慰|乱伦|亂倫|艳情|豔情|'
-  r'卖淫|賣淫|色欲|色慾|性爱|媚药|媚藥|淫乱|淫亂|禁忌之恋|禁忌之戀',
+  r'卖淫|賣淫|色欲|色慾|性爱|媚药|媚藥|淫乱|淫亂|禁忌之恋|禁忌之戀|群交|性奴|'
+  r'bdsm|sm调教|sm調教',
   caseSensitive: false,
 );
 
@@ -156,7 +157,7 @@ Future<void> _verifyCatalog(AppServices services) async {
     }
   }
   expect(categoryCount, 44109);
-  expect(candidateCount, 124);
+  expect(candidateCount, 136);
   expect(po18Matches, 3);
   expect(exceptionsSeen, _ambiguousOrOrdinary);
   if (unexpected.isNotEmpty) {

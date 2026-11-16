@@ -1,0 +1,187 @@
+{
+  "schema": 1,
+  "started_at": "2026-11-16T03:15:24.139849+00:00",
+  "ledger_git_commit": "1247df93222ac993e04c6db57ba0471fc713a63e",
+  "ledger_sha256": "b6afb51bcce7af5f7f152ffa3f1c3bce824a0419970253e2c110eed299e09448",
+  "archive_sha256": "012a0e0d6e6adc8d303c32b578510e14b562088b3e965cb01a1a647b5e7e034d",
+  "prior_evidence_sha256": {
+    "legado-amsi-other-hosts-20261115.json": "25180e804c1df15165af8bb20ae58c5b4dd6b2e24f6a0a092d50281ca5e25750",
+    "legado-amsi-template-clusters-20261115.json": "0aaff7d86529327f67ea09f741d62a00a0cf47a03a90175b982619beeed9de3e"
+  },
+  "sources": [
+    {
+      "host": "kuronavi.blog",
+      "selected_record_index": 4838,
+      "source_id": "825bca65b0ffd75ab89a26aafc8b0f956f0075f28ee56305201766c2c86b70d0",
+      "kind": "text",
+      "format": "html",
+      "endpoint_sha256": "df957d27c917e25550f587b8f906cadd6c2e1be04d1ec353a7af33c3a84c0091",
+      "raw_record_sha256": "3f9f1bde2c7952b9992a8263263b6f07b7f5eba91c12ad2e91d4847a8429a729",
+      "normalized_legado_sha256": "53fd11c63af3a2d5f12e92d51101773023703aedcd4ed0e84a22be7f0c02129e"
+    },
+    {
+      "host": "m.69shu.la",
+      "selected_record_index": 3558,
+      "source_id": "b0764c15a1a2830da1600ae84b8ac459a73a8dcbabe968630e10a66c9618137b",
+      "kind": "text",
+      "format": "html",
+      "endpoint_sha256": "4044f101332ff9360e5d7a251335bd9b2292f70e087d39261b435bb11ab36762",
+      "raw_record_sha256": "8e546ffe239470fe1013e4e37e6d250ab3d6b91039b21e03a83a5c16aaa96753",
+      "normalized_legado_sha256": "26d58f87b3f69ed69ce0a81e598d2d87c4dc5ab28b6bc4789877670b8ffa5826"
+    }
+  ],
+  "method": "Each exact host: at most two anonymous HTTPS GET /; all DNS results must be public, one numeric IP pinned per request, verified TLS, eight-second deadline, no redirects, no JS execution, cookies, subresources or response body persisted. At most 32768 response bytes plus one truncation byte.",
+  "limitations": "Only short bounded homepage samples; text and regex matches do not establish execution, malware, whole-site adult classification, source parsing or safety. Inline samples are bounded, comments and strings may match; no redirect targets are requested. AMSI provider may use cloud protection or submit samples. Controls cover a test marker, not actual malware; repeated matching templates are not independent threats. Original responses and interactive collector were not distributed; offline verification checks recorded evidence consistency, not the authenticity of network events. HTTP 302 Location was not collected.",
+  "control": {
+    "observed_at": "2026-11-16T03:15:24.795208+00:00",
+    "negative": {
+      "phase": "scan",
+      "hresult": "0x00000000",
+      "amsi_result": 1,
+      "classification": "not_detected"
+    },
+    "eicar": {
+      "phase": "scan",
+      "hresult": "0x00000000",
+      "amsi_result": 32768,
+      "classification": "detected"
+    },
+    "html_wrapped_eicar": {
+      "phase": "scan",
+      "hresult": "0x00000000",
+      "amsi_result": 1,
+      "classification": "not_detected"
+    },
+    "inline_script_with_eicar": {
+      "phase": "scan",
+      "hresult": "0x00000000",
+      "amsi_result": 1,
+      "classification": "not_detected"
+    },
+    "passed": true
+  },
+  "observations": [
+    {
+      "host": "kuronavi.blog",
+      "attempt": 1,
+      "started_at": "2026-11-16T03:15:24.795244+00:00",
+      "http_status": 302,
+      "failure": "redirect_not_followed",
+      "observed_at": "2026-11-16T03:15:26.219504+00:00"
+    },
+    {
+      "host": "m.69shu.la",
+      "attempt": 1,
+      "started_at": "2026-11-16T03:15:26.720072+00:00",
+      "failure": "tls_error",
+      "observed_at": "2026-11-16T03:15:27.183227+00:00"
+    },
+    {
+      "host": "kuronavi.blog",
+      "attempt": 2,
+      "started_at": "2026-11-16T03:15:27.683350+00:00",
+      "http_status": 200,
+      "content_type": "text/html",
+      "truncated": false,
+      "sample_bytes": 475,
+      "sample_sha256": "73d4d931862fc720b6918c6e0c94dfaeca8d9f6706b08f3d0d88a2d870f85412",
+      "structure": {
+        "complete_eicar_control_present": false,
+        "eicar_word_present_case_insensitive": false,
+        "contains_404_text": false,
+        "meta_refresh_pattern_present": false,
+        "iframe_tag_present": false,
+        "script_location_reference_present": true,
+        "script_eval_reference_present": false,
+        "script_base64_decode_reference_present": false,
+        "script_document_write_reference_present": false,
+        "external_script_attribute_present": false
+      },
+      "unverified_literal_navigation": {
+        "location_mentions": 1,
+        "targets": [
+          {
+            "category": "http_or_protocol_relative",
+            "target_host_is_source": true,
+            "scheme": "https",
+            "path_kind": "root_or_empty",
+            "has_query": true
+          }
+        ]
+      },
+      "visible_text_signal_counts": {
+        "adult": 0,
+        "gambling": 0
+      },
+      "inline_summary": {
+        "script_tags_observed": 1,
+        "nonempty_inline_scripts_observed": 1,
+        "inline_scripts_selected": 1,
+        "inline_scripts_omitted": 0
+      },
+      "amsi": {
+        "phase": "scan",
+        "hresult": "0x00000000",
+        "amsi_result": 32768,
+        "classification": "detected"
+      },
+      "inline_scans": [
+        {
+          "ordinal": 1,
+          "sample_bytes": 371,
+          "sample_sha256": "582fc11edfac502a89c13e49dbd2f07c1c063cb25091b486b71f522429cdbcf1",
+          "truncated": false,
+          "amsi": {
+            "phase": "scan",
+            "hresult": "0x00000000",
+            "amsi_result": 1,
+            "classification": "not_detected"
+          }
+        }
+      ],
+      "observed_at": "2026-11-16T03:15:28.949677+00:00"
+    },
+    {
+      "host": "m.69shu.la",
+      "attempt": 2,
+      "started_at": "2026-11-16T03:15:29.449959+00:00",
+      "failure": "tls_error",
+      "observed_at": "2026-11-16T03:15:29.931782+00:00"
+    }
+  ],
+  "completed_at": "2026-11-16T03:15:30.432273+00:00",
+  "provenance_limits": {
+    "ledger_object_identifies_entire_runtime": false,
+    "collector_distributed": false,
+    "response_body_or_script_saved": false,
+    "offline_can_authenticate_network_response": false,
+    "http_redirect_target_recorded": false,
+    "historical_git_object_required": true
+  },
+  "method_details": {
+    "max_requests_per_host": 2,
+    "max_sample_bytes": 32768,
+    "truncation_probe_bytes": 1,
+    "timeout_seconds": 8,
+    "dns_all_answers_checked_public": true,
+    "connect_to_checked_address": true,
+    "tls_hostname_validation": true,
+    "http_redirects_followed": false,
+    "page_or_source_scripts_executed": false,
+    "subresources_requested": false,
+    "credentials_or_cookies_sent": false,
+    "antimalware_provider_may_upload_samples": true
+  },
+  "interpretation": {
+    "current_host_security_verified": null,
+    "current_host_malware_confirmed": null,
+    "sitewide_adult_classification": null,
+    "full_source_readability_verified": null,
+    "permanent_unavailability_verified": null,
+    "legacy_rules_executed": false,
+    "script_samples_executed": false,
+    "tls_errors_prove_permanent_failure": false,
+    "wrapped_control_misses_do_not_prove_safety": true,
+    "same_template_does_not_prove_independent_threats": true
+  }
+}

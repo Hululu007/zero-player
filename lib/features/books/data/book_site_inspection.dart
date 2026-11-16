@@ -13,6 +13,7 @@ import '../../../core/network/media_http_client.dart';
 import '../../../core/network/request_scheduler.dart';
 import '../domain/book.dart';
 import 'book_html.dart';
+import 'book_site_sale_clues.dart';
 import 'book_site_script_clues.dart';
 
 /// A page sample is evidence for review, never a statement that a site is safe.
@@ -41,6 +42,7 @@ final class BookSiteInspection {
     this.statusCode,
     this.redirect = BookSiteRedirect.none,
     this.scriptReview = const BookPageScriptReview(),
+    this.saleReview = const BookPageSaleReview(),
   });
 
   final BookSiteFinding finding;
@@ -51,6 +53,19 @@ final class BookSiteInspection {
   final int? statusCode;
   final BookSiteRedirect redirect;
   final BookPageScriptReview scriptReview;
+  final BookPageSaleReview saleReview;
+
+  BookSiteInspection withSaleReview(BookPageSaleReview review) =>
+      BookSiteInspection(
+        finding,
+        gamblingRisk: gamblingRisk,
+        adultRisk: adultRisk,
+        truncated: truncated,
+        statusCode: statusCode,
+        redirect: redirect,
+        scriptReview: scriptReview,
+        saleReview: review,
+      );
 
   String get label {
     final signal = gamblingRisk && adultRisk
@@ -73,6 +88,12 @@ final class BookSiteInspection {
             BookSiteFinding.sourceChanged => '来源或检查记录需重新确认，待重新抽查',
           };
     final parts = [signal];
+    if (saleReview.suspected) {
+      parts.add('疑似域名出售静态结构（可见性未确认），待复核');
+    }
+    if (saleReview.coverage == BookPageSaleCoverage.partial) {
+      parts.add('域名出售静态结构检查不完整');
+    }
     if (finding == BookSiteFinding.gamblingAndAdultClues) {
       if (gamblingRisk && !adultRisk) {
         parts.add('疑似成人文字线索，待复核');
@@ -653,6 +674,18 @@ BookSiteInspection inspectBookSiteHtml(
   bool truncated = false,
 }) {
   final document = html.parse(input);
+  BookPageSaleReview saleReview;
+  try {
+    saleReview = inspectBookPageSale(
+      document,
+      target,
+      input,
+      truncated: truncated,
+    );
+  } catch (_) {
+    // A malformed sample cannot clear earlier observations.
+    saleReview = const BookPageSaleReview();
+  }
   BookPageScriptReview scriptReview;
   try {
     scriptReview = inspectBookPageScripts(
@@ -759,6 +792,7 @@ BookSiteInspection inspectBookSiteHtml(
     adultRisk: adultRisk,
     truncated: truncated || !gate.complete,
     scriptReview: scriptReview,
+    saleReview: saleReview,
     redirect: !refresh
         ? BookSiteRedirect.none
         : externalRefresh

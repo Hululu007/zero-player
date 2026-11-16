@@ -114,12 +114,36 @@ final class BookSiteChecks {
 
   Future<BookSiteCheckSummary> run(
     List<BookSourceEntry> entries,
-    CancellationToken token, {
+    CancellationToken cancellation, {
     bool enabledOnly = false,
     void Function(int processed, int total)? onProgress,
   }) async {
     if (_running) throw const FormatException('书源网页抽查正在进行，请稍后再试');
+    final lease = _acquireSiteScanLease(
+      books,
+      cancellation,
+      useCallerToken: true,
+    );
     _running = true;
+    try {
+      return await _runBatch(
+        entries,
+        lease.token,
+        enabledOnly: enabledOnly,
+        onProgress: onProgress,
+      );
+    } finally {
+      _running = false;
+      lease.release(books);
+    }
+  }
+
+  Future<BookSiteCheckSummary> _runBatch(
+    List<BookSourceEntry> entries,
+    CancellationToken token, {
+    required bool enabledOnly,
+    void Function(int processed, int total)? onProgress,
+  }) async {
     var next = 0, checked = 0, skipped = 0, failed = 0;
     var processed = 0, quarantined = 0, adult = 0;
     final policySnapshot = bookSitePolicySnapshot(books.policy);
@@ -201,7 +225,6 @@ final class BookSiteChecks {
       );
     } finally {
       books.policy.removeListener(policyChanged);
-      _running = false;
     }
   }
 

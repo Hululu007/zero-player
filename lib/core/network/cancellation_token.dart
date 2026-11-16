@@ -25,9 +25,18 @@ final class CancellationToken {
   void cancel() {
     if (_cancelled) return;
     _cancelled = true;
-    for (final callback in _listeners.toList()) {
-      callback();
-    }
+    final listeners = _listeners.toList(growable: false);
     _listeners.clear();
+    Object? firstError;
+    StackTrace? firstStack;
+    for (final callback in listeners) {
+      try {
+        callback();
+      } catch (error, stack) {
+        firstError ??= error;
+        firstStack ??= stack;
+      }
+    }
+    if (firstError != null) Error.throwWithStackTrace(firstError, firstStack!);
   }
 }

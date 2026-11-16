@@ -10,6 +10,11 @@ const _categoryRanking = r'(?:(?:日|周|月|总)(?:排行|推荐|收藏)|(?:字
 final _explicitAdultBookCategory = RegExp(
   '^(?:$_adultHCategory|情欲(?:小说)?|强奸)$_categoryRanking\$',
 );
+// Additional explicit labels are matched only as complete category tokens.
+// Keeping them separate preserves the older, unconditional separator rule.
+final _explicitSexualCategory = RegExp(
+  '^(?:(?:多人)?群交|性奴|bdsm|sm调教)$_categoryRanking\$',
+);
 final _spacedAdultHCategory = RegExp(
   r'(?:高\s*h(?:\s*(?:文|小说|小說))?|(?:激情\s*)?h\s*(?:文|小说|小說))',
   caseSensitive: false,
@@ -38,12 +43,16 @@ String _normalizedCategoryLabel(String text) => normalizeContent(text)
     .replaceAll('總', '总')
     .replaceAll('推薦', '推荐')
     .replaceAll('數', '数')
-    .replaceAll('強姦', '强奸');
+    .replaceAll('強姦', '强奸')
+    .replaceAll('調教', '调教');
 
 bool _containsAdultCategory(List<String> parts) {
   for (var i = 0; i < parts.length; i++) {
     final label = _normalizedCategoryLabel(parts[i]);
-    if (!_explicitAdultBookCategory.hasMatch(label)) continue;
+    if (!_explicitAdultBookCategory.hasMatch(label) &&
+        !_explicitSexualCategory.hasMatch(label)) {
+      continue;
+    }
     if (i > 0 &&
         _categoryWarningPrefixes.contains(
           _normalizedCategoryLabel(parts[i - 1]),

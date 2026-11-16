@@ -1,0 +1,342 @@
+{
+  "schema_version": 1,
+  "scope": "One selected bundled source; six bounded static observations, not a safety, sitewide classification, permanent failure or full-readability verdict.",
+  "provenance": {
+    "archive": {
+      "path": "assets/catalogs/books/legado/catalog.json.bz2",
+      "sha256": "012a0e0d6e6adc8d303c32b578510e14b562088b3e965cb01a1a647b5e7e034d"
+    },
+    "import_inventory": {
+      "path": "docs/implementation/legado-import-inventory-20261115.json",
+      "sha256": "ad4e347888cad71812ee7da9477f027baf0bee5bceb1d4247fc69d6c4df8764c"
+    },
+    "historical_ledger": {
+      "git_commit": "1247df93222ac993e04c6db57ba0471fc713a63e",
+      "path": "docs/implementation/legado-source-ledger-20261115.json",
+      "sha256": "b6afb51bcce7af5f7f152ffa3f1c3bce824a0419970253e2c110eed299e09448",
+      "identifies_entire_runtime": false
+    },
+    "local_redacted_capture_sha256": "b5bbca7befd094f1924c39a764ba4f95611e7438b78c32c4b6f8f60aea0bc66d",
+    "local_capture_distributed": false,
+    "collector_or_dependencies_distributed": false,
+    "network_authenticity_verifiable_offline": false
+  },
+  "source": {
+    "selected_record_index": 4371,
+    "source_id": "22fd5687b4cd8b42ce1d69d0701148e989f39833d7d94b1e1dae73795084e242",
+    "endpoint_host": "www.bsxiaoshuo.com",
+    "kind": "text",
+    "format": "html",
+    "endpoint_sha256": "8e502f1b8e3c81cbd0ce27e302bdf745660e2fe347b5e4373e02ef30966d2f8a",
+    "raw_record_canonical_sha256": "5f5f1694a131bca90865399a6a3e9c1e57a44a7e37db649c3ad71da9080342b5",
+    "normalized_legado_sha256": "5e0ce5b6c43db101d89212f26fab8528e17f91a7c1c2cd82085c62d84e45c43c",
+    "normalized_source_sha256": "f225c4019a6dd2f134b691fcf4231de5009273abaaec692f94f655f7b35d3db7"
+  },
+  "method": {
+    "request_count": 6,
+    "method": "GET",
+    "synthetic_searches": 2,
+    "synthetic_keywords_distinct": true,
+    "category_pages": 1,
+    "works": 1,
+    "chapters": 1,
+    "dns_validator": "Python ipaddress.is_global; no independent multicast exclusion",
+    "dns_addresses_persisted": false,
+    "socket_pinned_to_checked_address": true,
+    "tls_hostname_verified": true,
+    "redirects_followed": false,
+    "cookies_or_credentials_sent": false,
+    "page_or_source_scripts_executed": false,
+    "capture_requests_fetched_subresources": false,
+    "max_sample_bytes": 65536,
+    "truncation_probe_bytes": 1,
+    "timeout_seconds_per_dns_connect_or_read": 7,
+    "overall_wall_deadline_enforced": false
+  },
+  "observations": [
+    {
+      "stage": "old_search",
+      "old_search_items": 1,
+      "items_with_anchor_and_bold": 0,
+      "no_results_placeholder_count": 1,
+      "http": {
+        "started_at_utc": "2026-11-16T03:42:13.842707+00:00",
+        "method": "GET",
+        "status": 200,
+        "dns_public_answers": 1,
+        "media_type": "text/html",
+        "sample_bytes": 2045,
+        "sample_sha256": "883d655ae2accd5249e8a3bef3cf22975eb0f29d3417dd40362acd1632b9cf7c",
+        "truncated": false,
+        "outcome": "html_sampled",
+        "title_clues": {
+          "gambling_business": false,
+          "gambling_invitation": false,
+          "adult_business": false,
+          "age_gate": false,
+          "ordinary_genres": false,
+          "challenge": false
+        },
+        "description_clues": {
+          "gambling_business": false,
+          "gambling_invitation": false,
+          "adult_business": false,
+          "age_gate": false,
+          "ordinary_genres": false,
+          "challenge": false
+        },
+        "visible_text_clues": {
+          "gambling_business": false,
+          "gambling_invitation": false,
+          "adult_business": false,
+          "age_gate": false,
+          "ordinary_genres": false,
+          "challenge": false
+        },
+        "script_tags": 3,
+        "external_script_tags_not_requested": 1,
+        "iframe_tags_not_requested": 0
+      }
+    },
+    {
+      "stage": "old_search",
+      "old_search_items": 1,
+      "items_with_anchor_and_bold": 0,
+      "no_results_placeholder_count": 1,
+      "http": {
+        "started_at_utc": "2026-11-16T03:42:14.282527+00:00",
+        "method": "GET",
+        "status": 200,
+        "dns_public_answers": 1,
+        "media_type": "text/html",
+        "sample_bytes": 2045,
+        "sample_sha256": "daf0b49a0589f3bf84bf94a01e846fb1eef066d213ad251688caa3fb7b2b2ac1",
+        "truncated": false,
+        "outcome": "html_sampled",
+        "title_clues": {
+          "gambling_business": false,
+          "gambling_invitation": false,
+          "adult_business": false,
+          "age_gate": false,
+          "ordinary_genres": false,
+          "challenge": false
+        },
+        "description_clues": {
+          "gambling_business": false,
+          "gambling_invitation": false,
+          "adult_business": false,
+          "age_gate": false,
+          "ordinary_genres": false,
+          "challenge": false
+        },
+        "visible_text_clues": {
+          "gambling_business": false,
+          "gambling_invitation": false,
+          "adult_business": false,
+          "age_gate": false,
+          "ordinary_genres": false,
+          "challenge": false
+        },
+        "script_tags": 3,
+        "external_script_tags_not_requested": 1,
+        "iframe_tags_not_requested": 0
+      }
+    },
+    {
+      "stage": "old_category",
+      "old_table_rows": 50,
+      "http": {
+        "started_at_utc": "2026-11-16T03:42:14.685399+00:00",
+        "method": "GET",
+        "status": 200,
+        "dns_public_answers": 1,
+        "media_type": "text/html",
+        "sample_bytes": 31571,
+        "sample_sha256": "657784fe43f93bd61492662005b2d7287ddc491c767921edf7242341f7683035",
+        "truncated": false,
+        "outcome": "html_sampled",
+        "title_clues": {
+          "gambling_business": false,
+          "gambling_invitation": false,
+          "adult_business": false,
+          "age_gate": false,
+          "ordinary_genres": true,
+          "challenge": false
+        },
+        "description_clues": {
+          "gambling_business": false,
+          "gambling_invitation": false,
+          "adult_business": false,
+          "age_gate": false,
+          "ordinary_genres": true,
+          "challenge": false
+        },
+        "visible_text_clues": {
+          "gambling_business": false,
+          "gambling_invitation": false,
+          "adult_business": false,
+          "age_gate": false,
+          "ordinary_genres": true,
+          "challenge": false
+        },
+        "script_tags": 4,
+        "external_script_tags_not_requested": 2,
+        "iframe_tags_not_requested": 0
+      }
+    },
+    {
+      "stage": "selected_detail",
+      "old_summary_nodes": 1,
+      "old_category_nodes": 1,
+      "same_host_toc_candidate": true,
+      "http": {
+        "started_at_utc": "2026-11-16T03:42:15.133581+00:00",
+        "method": "GET",
+        "status": 200,
+        "dns_public_answers": 1,
+        "media_type": "text/html",
+        "sample_bytes": 10761,
+        "sample_sha256": "3f99e40ac1b6a8d613f0bd795722ea26427d9afe2f3423d2153ff67ddd4be997",
+        "truncated": false,
+        "outcome": "html_sampled",
+        "title_clues": {
+          "gambling_business": false,
+          "gambling_invitation": false,
+          "adult_business": false,
+          "age_gate": false,
+          "ordinary_genres": false,
+          "challenge": false
+        },
+        "description_clues": {
+          "gambling_business": false,
+          "gambling_invitation": false,
+          "adult_business": false,
+          "age_gate": false,
+          "ordinary_genres": false,
+          "challenge": false
+        },
+        "visible_text_clues": {
+          "gambling_business": false,
+          "gambling_invitation": false,
+          "adult_business": false,
+          "age_gate": false,
+          "ordinary_genres": true,
+          "challenge": false
+        },
+        "script_tags": 6,
+        "external_script_tags_not_requested": 2,
+        "iframe_tags_not_requested": 0
+      }
+    },
+    {
+      "stage": "selected_toc",
+      "same_host_safe_chapter_candidates": 19,
+      "http": {
+        "started_at_utc": "2026-11-16T03:42:15.482356+00:00",
+        "method": "GET",
+        "status": 200,
+        "dns_public_answers": 1,
+        "media_type": "text/html",
+        "sample_bytes": 6565,
+        "sample_sha256": "7807e02ac63baef3d572985c32102ebee741b4819dc9f9d995ed81d57d8bd45e",
+        "truncated": false,
+        "outcome": "html_sampled",
+        "title_clues": {
+          "gambling_business": false,
+          "gambling_invitation": false,
+          "adult_business": false,
+          "age_gate": false,
+          "ordinary_genres": false,
+          "challenge": false
+        },
+        "description_clues": {
+          "gambling_business": false,
+          "gambling_invitation": false,
+          "adult_business": false,
+          "age_gate": false,
+          "ordinary_genres": false,
+          "challenge": false
+        },
+        "visible_text_clues": {
+          "gambling_business": false,
+          "gambling_invitation": false,
+          "adult_business": false,
+          "age_gate": false,
+          "ordinary_genres": false,
+          "challenge": false
+        },
+        "script_tags": 4,
+        "external_script_tags_not_requested": 2,
+        "iframe_tags_not_requested": 0
+      }
+    },
+    {
+      "stage": "selected_chapter",
+      "old_content_nodes": 1,
+      "visible_characters": 2056,
+      "http": {
+        "started_at_utc": "2026-11-16T03:42:15.725907+00:00",
+        "method": "GET",
+        "status": 200,
+        "dns_public_answers": 1,
+        "media_type": "text/html",
+        "sample_bytes": 10253,
+        "sample_sha256": "e7bfb077536d40bf37092eeb537754575be9d7af13f06fb2ae89b9f18ab84845",
+        "truncated": false,
+        "outcome": "html_sampled",
+        "title_clues": {
+          "gambling_business": false,
+          "gambling_invitation": false,
+          "adult_business": false,
+          "age_gate": false,
+          "ordinary_genres": false,
+          "challenge": false
+        },
+        "description_clues": {
+          "gambling_business": false,
+          "gambling_invitation": false,
+          "adult_business": false,
+          "age_gate": false,
+          "ordinary_genres": false,
+          "challenge": false
+        },
+        "visible_text_clues": {
+          "gambling_business": false,
+          "gambling_invitation": false,
+          "adult_business": false,
+          "age_gate": false,
+          "ordinary_genres": false,
+          "challenge": false
+        },
+        "script_tags": 4,
+        "external_script_tags_not_requested": 2,
+        "iframe_tags_not_requested": 0
+      }
+    }
+  ],
+  "interpretation": {
+    "site_security_verified": null,
+    "site_malware_verified": null,
+    "sitewide_adult_verified": null,
+    "whole_source_unavailable_verified": null,
+    "whole_source_readability_verified": null,
+    "application_parser_executed": false,
+    "webpage_scripts_executed": false,
+    "automatic_quarantine_proposed": false,
+    "one_chapter_does_not_prove_full_reading": true,
+    "search_placeholder_does_not_prove_permanent_failure": true,
+    "safe_candidates_are_collector_path_predicate_only": true
+  },
+  "limitations": [
+    "The six request observations are a short single-time-window sample; HTTP 200 and missing keyword clues do not establish safety, usability or sitewide classification.",
+    "The collector, its local dependencies and raw pages are not distributed; offline checks cannot replay the capture or authenticate the network observations.",
+    "Only the six requests in this capture are represented. A separate same-host script request occurred outside this capture and is not assessed here; its relative timing was not recorded.",
+    "The DNS validator used ipaddress.is_global without a separate IPv4 multicast exclusion; DNS answers and connection addresses were not recorded and cannot be verified offline.",
+    "Seven seconds applied independently to DNS, connect and socket operations; there was no overall wall-clock deadline.",
+    "Two synthetic search queries and one category, one work and one chapter do not establish permanent search failure or complete reading behavior.",
+    "The 19 chapter candidates passed only the collector same-host path predicate; they were not established to be safe content or successfully read.",
+    "Structural selector counts approximate old rules; the application Legado engine and webpage scripts were not executed.",
+    "HTML bodies, scripts, work titles, search words, paths, query strings, cookies and IP addresses are not included.",
+    "Historical Git and its matching ledger object are required for offline identity checks; a shallow clone may omit them."
+  ]
+}

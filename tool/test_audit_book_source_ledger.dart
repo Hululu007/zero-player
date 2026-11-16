@@ -1379,8 +1379,13 @@ void checkReplayPilot(List<Map> rows) {
   check(
     rows
             .where(
-              (row) =>
-                  (row['search_and_discovery_observations'] as List).isNotEmpty,
+              (row) => (row['search_and_discovery_observations'] as List)
+                  .cast<Map>()
+                  .any(
+                    (event) =>
+                        event['evidence'] ==
+                        'legado-static-search-pilot-20261115.json',
+                  ),
             )
             .length ==
         5,

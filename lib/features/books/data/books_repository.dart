@@ -53,6 +53,8 @@ part 'book_repository_policy_review.dart';
 part 'book_repository_request_policy.dart';
 part 'book_repository_probe.dart';
 part 'book_repository_site_checks.dart';
+part 'book_repository_site_lease.dart';
+part 'book_repository_shutdown.dart';
 part 'book_site_observed_sources.dart';
 part 'book_supervised_site_scan.dart';
 
@@ -221,6 +223,7 @@ final class BooksRepository {
   bool _evidenceClosing = false;
   Future<void>? _closing;
   final _pendingEvidenceMutations = <Completer<void>>{};
+  _SiteScanLease? _siteScanLease;
   final _supervisedScans = <CancellationToken>{};
   final _supervisedScanDone = <Completer<void>>{};
   @visibleForTesting
@@ -2460,25 +2463,5 @@ final class BooksRepository {
     return done.future;
   }
 
-  Future<void> _close() async {
-    _sourceRiskChanges.value++;
-    for (final token in _supervisedScans.toList()) {
-      token.cancel();
-    }
-    await Future.wait(_supervisedScanDone.map((done) => done.future).toList());
-    await Future.wait(
-      _pendingEvidenceMutations.map((done) => done.future).toList(),
-    );
-    policy.removeListener(_coverPolicyChanged);
-    policy.removeListener(_discoveryPolicyChanged);
-    policy.removeListener(_bookReviewPolicyChanged);
-    _sourceRiskChanges.removeListener(_discoveryRiskChanged);
-    _downloadGuard?.dispose();
-    _bookObservationChanges.dispose();
-    _bookPolicyChanges.dispose();
-    _sourceRiskChanges.dispose();
-    _http.close();
-    await audioFiles.close();
-    await coverCache.waitForIdle();
-  }
+  Future<void> _close() => _closeBooksRepository(this);
 }

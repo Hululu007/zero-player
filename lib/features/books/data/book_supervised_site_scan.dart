@@ -13,9 +13,16 @@ extension BookSupervisedSiteScan on BooksRepository {
     if (_supervisedScans.isNotEmpty) {
       throw const FormatException('书源网页抽查正在进行，请稍后再试');
     }
-    final token = CancellationToken();
+    final lease = _acquireSiteScanLease(this, cancellation);
+    try {
+      await _runSupervisedBuiltinSites(lease.token);
+    } finally {
+      lease.release(this);
+    }
+  }
+
+  Future<void> _runSupervisedBuiltinSites(CancellationToken token) async {
     final done = Completer<void>();
-    final unlink = cancellation.listen(token.cancel);
     final run = _SupervisedSiteRun(
       this,
       token,
@@ -25,10 +32,16 @@ extension BookSupervisedSiteScan on BooksRepository {
     _supervisedScans.add(token);
     _supervisedScanDone.add(done);
     final cancelIfChanged = run._cancelIfChanged;
-    _sourceRiskChanges.addListener(cancelIfChanged);
-    policy.addListener(cancelIfChanged);
-    policy.settings.addListener(cancelIfChanged);
+    var sourceListening = false,
+        policyListening = false,
+        settingsListening = false;
     try {
+      _sourceRiskChanges.addListener(cancelIfChanged);
+      sourceListening = true;
+      policy.addListener(cancelIfChanged);
+      policyListening = true;
+      policy.settings.addListener(cancelIfChanged);
+      settingsListening = true;
       run._requireCurrent();
       await ensureSiteObservations();
       run._requireCurrent();
@@ -38,10 +51,9 @@ extension BookSupervisedSiteScan on BooksRepository {
       await run._runWorkers(selected);
       run._requireCurrent();
     } finally {
-      _sourceRiskChanges.removeListener(cancelIfChanged);
-      policy.removeListener(cancelIfChanged);
-      policy.settings.removeListener(cancelIfChanged);
-      unlink();
+      if (sourceListening) _sourceRiskChanges.removeListener(cancelIfChanged);
+      if (policyListening) policy.removeListener(cancelIfChanged);
+      if (settingsListening) policy.settings.removeListener(cancelIfChanged);
       _supervisedScans.remove(token);
       _supervisedScanDone.remove(done);
       done.complete();

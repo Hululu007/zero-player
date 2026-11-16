@@ -23,6 +23,9 @@ import 'book_source_ledger_recovered_four.dart';
 import 'book_source_ledger_eight_source.dart';
 import 'book_source_ledger_four_risk.dart';
 import 'book_source_ledger_rdap_org_yqxz.dart';
+import 'book_source_ledger_two_selected_amsi.dart';
+import 'book_source_ledger_sanyou.dart';
+import 'book_source_ledger_4371_structural.dart';
 
 const _catalogFolder = 'assets/catalogs/books/legado';
 const _evidenceFolder = 'docs/implementation';
@@ -115,6 +118,9 @@ const _evidenceFiles = [
   eightSourceEvidenceFile,
   fourRiskEvidenceFile,
   rdapOrgYqxzEvidenceFile,
+  twoSelectedAmsiFile,
+  sanyouEvidenceFile,
+  structural4371EvidenceFile,
   ..._amsiFiles,
 ];
 const _codePaths = [
@@ -147,6 +153,7 @@ const _codePaths = [
   'lib/features/books/domain/net_rdap_legacy_quarantine.dart',
   'lib/features/books/domain/moe_rdap_legacy_quarantine.dart',
   'lib/features/books/domain/top_rdap_legacy_quarantine.dart',
+  'lib/features/books/domain/sanyou_legacy_quarantine.dart',
   'lib/features/books/domain/novel_242_legacy_quarantine.dart',
   'lib/features/books/domain/iqiyi_legacy_quarantine.dart',
   'lib/features/books/domain/taotaoshu_legacy_quarantine.dart',
@@ -199,6 +206,19 @@ const _codePaths = [
   'tool/test_audit_book_source_ledger_rdap_org_yqxz.dart',
   'tool/verify_legado_rdap_org_yqxz.py',
   'tool/test_verify_legado_rdap_org_yqxz.py',
+  'tool/book_source_ledger_two_selected_amsi.dart',
+  'tool/test_audit_book_source_ledger_two_selected_amsi.dart',
+  'tool/verify_legado_two_selected_amsi_static.py',
+  'tool/test_verify_legado_two_selected_amsi_static.py',
+  'tool/book_source_ledger_sanyou.dart',
+  'tool/test_audit_book_source_ledger_sanyou.dart',
+  'tool/verify_legado_sanyou_sale_recheck.py',
+  'tool/test_verify_legado_sanyou_sale_recheck.py',
+  'test/books/sanyou_legacy_quarantine_test.dart',
+  'tool/book_source_ledger_4371_structural.dart',
+  'tool/test_audit_book_source_ledger_4371_structural.dart',
+  'tool/verify_legado_4371_structural_review.py',
+  'tool/test_verify_legado_4371_structural_review.py',
   'tool/verify_legado_unresolved_943.py',
   'tool/verify_legado_recovered_four.py',
   'tool/test_verify_legado_recovered_four.py',
@@ -245,9 +265,12 @@ const _runtimePolicyReferencePaths = [
   'lib/features/books/data/book_repository_probe.dart',
   'lib/features/books/data/book_repository_request_policy.dart',
   'lib/features/books/data/book_repository_site_checks.dart',
+  'lib/features/books/data/book_repository_site_lease.dart',
+  'lib/features/books/data/book_repository_shutdown.dart',
   'lib/features/books/data/book_site_check.dart',
   'lib/features/books/data/book_site_inspection.dart',
   'lib/features/books/data/book_site_observed_sources.dart',
+  'lib/features/books/data/book_site_sale_clues.dart',
   'lib/features/books/data/book_site_revision.dart',
   'lib/features/books/data/book_site_script_clues.dart',
   'lib/features/books/data/book_source_risk_store.dart',
@@ -1329,6 +1352,9 @@ Map<String, Object?> _row(
   EightSourceLedgerEvidence eightSource,
   FourRiskRevisitLedgerEvidence fourRisk,
   RdapOrgYqxzLedgerEvidence orgYqxz,
+  TwoSelectedAmsiEvidence twoSelectedAmsi,
+  SanyouLedgerEvidence sanyou,
+  Structural4371Evidence structural4371,
   LengmenLedgerEvidence lengmen,
   Map<String, Map> data,
 ) {
@@ -1414,6 +1440,7 @@ Map<String, Object?> _row(
     source,
     index,
   );
+  searchPilot.addAll(selectSanyouEvidence(sanyou, source, index));
   final categories = selectRecentEvidence(
     recent.categories,
     source.id,
@@ -1431,7 +1458,12 @@ Map<String, Object?> _row(
   reading.addAll(selectLaterChainEvidence(laterChain, source, index));
   reading.addAll(selectJhsssdEvidence(jhsssd, source, index));
   reading.addAll(selectEightSourceEvidence(eightSource, source, index));
+  reading.addAll(selectStructural4371Evidence(structural4371, source, index));
   final adultReview = selectNov16Evidence(nov16.adultReview, source, index);
+  final engineFollowup = selectLengmenEvidence(lengmen, source, index);
+  engineFollowup.addAll(
+    selectTwoSelectedAmsiEvidence(twoSelectedAmsi, source, index),
+  );
   return {
     'source_id': source.id,
     'name': source.name,
@@ -1452,11 +1484,7 @@ Map<String, Object?> _row(
     'network_coverage': networkCoverage(network),
     'network_observations': network,
     'amsi_observations': amsi,
-    'historical_engine_followup_observations': selectLengmenEvidence(
-      lengmen,
-      source,
-      index,
-    ),
+    'historical_engine_followup_observations': engineFollowup,
     'registry_and_doh_observations': registry,
     'community_list_clues': community,
     'historical_raw_rule_review': ruleReview,
@@ -1482,6 +1510,18 @@ void _verifyArchiveAssociation(
   String digest,
   Map<String, String> inputHashes,
 ) {
+  if (file == structural4371EvidenceFile) {
+    verifyStructural4371Input(evidence, inputHashes);
+    return;
+  }
+  if (file == sanyouEvidenceFile) {
+    verifySanyouInput(evidence, digest, inputHashes);
+    return;
+  }
+  if (file == twoSelectedAmsiFile) {
+    verifyTwoSelectedAmsiInput(evidence, inputHashes);
+    return;
+  }
   if (file == rdapOrgYqxzEvidenceFile) {
     verifyRdapOrgYqxzInput(evidence, digest, inputHashes);
     return;
@@ -2004,6 +2044,23 @@ void main(List<String> args) {
     hashes,
     catalog.rows,
   );
+  final twoSelectedAmsi = readTwoSelectedAmsiEvidence(
+    data[twoSelectedAmsiFile]!,
+    data['legado-amsi-other-hosts-20261115.json']!,
+    data[_amsiClusters]!,
+    hashes,
+    catalog.rows,
+  );
+  final sanyou = readSanyouEvidence(
+    data[sanyouEvidenceFile]!,
+    hashes,
+    catalog.rows,
+  );
+  final structural4371 = readStructural4371Evidence(
+    data[structural4371EvidenceFile]!,
+    hashes,
+    catalog.rows,
+  );
   final rows = [
     for (final source in catalog.imported.sources)
       _row(
@@ -2024,6 +2081,9 @@ void main(List<String> args) {
         eightSource,
         fourRisk,
         orgYqxz,
+        twoSelectedAmsi,
+        sanyou,
+        structural4371,
         lengmen,
         data,
       ),

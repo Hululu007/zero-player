@@ -5,6 +5,7 @@ import 'package:crypto/crypto.dart';
 import '../../supervision/application/content_policy.dart';
 import '../domain/book.dart';
 import 'book_site_inspection.dart';
+import 'book_site_sale_clues.dart';
 import 'book_site_script_clues.dart';
 
 const bookSiteCheckInterval = Duration(days: 7);
@@ -35,7 +36,9 @@ final class BookSiteCheck {
     this.fingerprint, {
     this.consecutiveFailures = 0,
     this.legacyScriptReviewMissing = false,
+    this.legacySaleReviewMissing = false,
     this.scriptCluesLastObserved = const {},
+    this.saleClueLastObserved,
     this.sourceHostSha256,
     this.sourceId,
     this.siteRevision,
@@ -45,10 +48,18 @@ final class BookSiteCheck {
   final String fingerprint;
   final int consecutiveFailures;
   final bool legacyScriptReviewMissing;
+  final bool legacySaleReviewMissing;
   final Map<BookPageScriptClue, DateTime> scriptCluesLastObserved;
+  final DateTime? saleClueLastObserved;
   final String? sourceHostSha256;
   final String? sourceId;
   final String? siteRevision;
+
+  /// This is only a historical static homepage clue, not a risk decision.
+  DateTime? get pendingSaleClue =>
+      inspection.saleReview.suspected ? checkedAt : saleClueLastObserved;
+  DateTime? get historicalSaleClue =>
+      inspection.saleReview.suspected ? null : saleClueLastObserved;
 
   /// Pending clues are bounded enum codes, each with its own observation time.
   /// v1 records predating this field retain clues from their last sample.
@@ -89,7 +100,9 @@ final class BookSiteCheck {
       return DateTime.fromMillisecondsSinceEpoch(0);
     }
     // Revisit pre-feature successful samples without bypassing failure backoff.
-    if (legacyScriptReviewMissing && !needsRetry) return checkedAt;
+    if ((legacyScriptReviewMissing || legacySaleReviewMissing) && !needsRetry) {
+      return checkedAt;
+    }
     if (!needsRetry) return checkedAt.add(bookSiteCheckInterval);
     final minutes = bookSiteRetryInterval.inMinutes << (_failureCount - 1);
     final retry = Duration(
@@ -114,7 +127,14 @@ final class BookSiteCheck {
     String? siteRevision,
   }) {
     final fingerprint = bookSourceCheckFingerprint(source);
-    final current = BookSiteCheck(inspection, now, fingerprint);
+    final currentHost = bookSiteHostFingerprint(source);
+    final origin = bookSiteSaleOriginFingerprint(
+      Uri(scheme: 'https', host: source.endpoint.host, path: '/'),
+    );
+    final acceptedInspection = inspection.saleReview.originSha256 == origin
+        ? inspection
+        : inspection.withSaleReview(const BookPageSaleReview());
+    final current = BookSiteCheck(acceptedInspection, now, fingerprint);
     final previousFailures = previous?.fingerprint == fingerprint
         ? previous!._failureCount
         : 0;
@@ -131,13 +151,31 @@ final class BookSiteCheck {
         ...history!.pendingScriptClues,
       for (final clue in inspection.scriptReview.clues) clue: now,
     };
+    final saleComplete =
+        !current.needsRetry &&
+        !inspection.truncated &&
+        acceptedInspection.saleReview.coverage == BookPageSaleCoverage.complete;
+    DateTime? saleClue;
+    // The shared record is authoritative when a supervised check follows a
+    // manual full sample, which may already have cleared the older clue.
+    final saleHistory = scriptHistoryPrevious ?? previous;
+    if (!saleComplete &&
+        saleHistory != null &&
+        saleHistory.fingerprint == fingerprint &&
+        (saleHistory.sourceId == null || saleHistory.sourceId == source.id) &&
+        (saleHistory.sourceHostSha256 == null ||
+            saleHistory.sourceHostSha256 == currentHost)) {
+      saleClue = saleHistory.pendingSaleClue;
+    }
+    if (acceptedInspection.saleReview.suspected) saleClue = now;
     return BookSiteCheck(
-      inspection,
+      acceptedInspection,
       now,
       fingerprint,
       consecutiveFailures: failures,
       scriptCluesLastObserved: Map.unmodifiable(clues),
-      sourceHostSha256: bookSiteHostFingerprint(source),
+      saleClueLastObserved: saleClue,
+      sourceHostSha256: currentHost,
       sourceId: source.id,
       siteRevision: siteRevision,
     );
@@ -159,6 +197,9 @@ final class BookSiteCheck {
     'consecutiveFailures': _failureCount,
     if (!legacyScriptReviewMissing)
       'scriptReview': inspection.scriptReview.toJson(),
+    if (!legacySaleReviewMissing) 'saleReview': inspection.saleReview.toJson(),
+    if (pendingSaleClue case final observed?)
+      'saleClueLastObserved': observed.millisecondsSinceEpoch,
     'scriptCluesLastObserved': {
       for (final clue in BookPageScriptClue.values)
         if (pendingScriptClues[clue] case final observed?)
@@ -214,6 +255,21 @@ final class BookSiteCheck {
       }
     }
     final review = BookPageScriptReview.fromJson(value['scriptReview']);
+    final origin = bookSiteSaleOriginFingerprint(
+      Uri(scheme: 'https', host: source.endpoint.host, path: '/'),
+    );
+    final parsedSaleReview = BookPageSaleReview.fromJson(value['saleReview']);
+    final saleReview = parsedSaleReview.originSha256 == origin
+        ? parsedSaleReview
+        : const BookPageSaleReview();
+    final rawSaleTime = value['saleClueLastObserved'];
+    DateTime? saleTime =
+        rawSaleTime is int && rawSaleTime > 0 && rawSaleTime <= 253402300799999
+        ? DateTime.fromMillisecondsSinceEpoch(rawSaleTime)
+        : null;
+    if (saleReview.suspected) {
+      saleTime = DateTime.fromMillisecondsSinceEpoch(stamp);
+    }
     final revisionChanged =
         requireRevision &&
         (currentRevision == null || value['siteRevision'] != currentRevision);
@@ -231,6 +287,7 @@ final class BookSiteCheck {
         observedAt,
         currentFingerprint,
         scriptCluesLastObserved: Map.unmodifiable(scriptClues),
+        saleClueLastObserved: saleTime,
         sourceHostSha256: currentHost,
         sourceId: source.id,
       );
@@ -253,6 +310,7 @@ final class BookSiteCheck {
         statusCode: code is int && code >= 100 && code <= 599 ? code : null,
         redirect: redirect,
         scriptReview: review,
+        saleReview: saleReview,
       ),
       DateTime.fromMillisecondsSinceEpoch(stamp),
       value['fingerprint'] as String,
@@ -262,7 +320,12 @@ final class BookSiteCheck {
       legacyScriptReviewMissing: !BookPageScriptReview.validJson(
         value['scriptReview'],
       ),
+      legacySaleReviewMissing:
+          !BookPageSaleReview.validJson(value['saleReview']) ||
+          (parsedSaleReview.originSha256 != null &&
+              parsedSaleReview.originSha256 != origin),
       scriptCluesLastObserved: Map.unmodifiable(scriptClues),
+      saleClueLastObserved: saleTime,
       sourceHostSha256: value['sourceHostSha256'] == currentHost
           ? currentHost
           : null,

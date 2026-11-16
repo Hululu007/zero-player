@@ -45,7 +45,7 @@ final class BookSourcesPage extends StatefulWidget {
 final class _BookSourcesPageState extends State<BookSourcesPage> {
   List<BookSourceEntry> _entries = [];
   bool _busy = false, _favorites = false, _dynamicRules = false;
-  bool _historicalAmsi = false, _pageScriptClues = false;
+  bool _historicalAmsi = false, _pageScriptClues = false, _saleClues = false;
   bool? _enabled;
   String _query = '';
   bool _selecting = false;
@@ -847,6 +847,8 @@ final class _BookSourcesPageState extends State<BookSourcesPage> {
                               ?.pendingScriptClues
                               .isNotEmpty ==
                           true) &&
+                  (!_saleClues ||
+                      _siteResults[entry.source.id]?.pendingSaleClue != null) &&
                   (!_historicalAmsi ||
                       bookSourceHasHistoricalAmsiClue(entry.source)) &&
                   (_enabled == null || entry.enabled == _enabled) &&
@@ -998,6 +1000,11 @@ final class _BookSourcesPageState extends State<BookSourcesPage> {
               onSelected: (value) => setState(() => _pageScriptClues = value),
             ),
             FilterChip(
+              label: const Text('域名出售线索'),
+              selected: _saleClues,
+              onSelected: (value) => setState(() => _saleClues = value),
+            ),
+            FilterChip(
               label: const Text('历史检出'),
               selected: _historicalAmsi,
               onSelected: (value) => setState(() => _historicalAmsi = value),
@@ -1103,6 +1110,8 @@ final class _BookSourcesPageState extends State<BookSourcesPage> {
           if (siteCheck != null)
             for (final clue in siteCheck.historicalScriptClues.entries)
               '历史网页脚本待复核：${_scriptClueLabel(clue.key)}（上次发现 ${_siteTime(clue.value)}）',
+          if (siteCheck?.historicalSaleClue case final observed?)
+            '历史域名出售线索，待复核（上次发现 ${_siteTime(observed)}）',
         ].join(' · '),
       ),
       trailing: Row(

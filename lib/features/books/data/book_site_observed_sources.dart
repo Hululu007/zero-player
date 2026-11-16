@@ -5,7 +5,7 @@ const _missingSiteSource = 'missing';
 
 /// Increase when homepage or script-clue interpretation changes, so previous
 /// samples are revisited without clearing their history or strong risk marks.
-const bookSiteInspectionRevision = 1;
+const bookSiteInspectionRevision = 2;
 
 Map<String, Object> _siteObservedValue(String fingerprint) => {
   'fingerprint': fingerprint,

@@ -68,6 +68,29 @@ const _sources = <int, (String, String, String)>{
   ),
 };
 
+const _explicitMixedSources = <int, (String, String, String)>{
+  1241: (
+    '6162b5466fc44c4267a66deb458e84a6abc9bff377dda53b662ed8c38ac208fe',
+    'SM调教',
+    '玄幻',
+  ),
+  1368: (
+    '261fef0f5f5a04e6476e2aadc282c7018b4d69e4a9e995bf1664b2056a0bbedf',
+    '群交',
+    '校园师生',
+  ),
+  4246: (
+    'bf922ddc62d163a364f76893d01341391becf04acaae2d2cc07dc3340338a016',
+    '性奴',
+    '校园',
+  ),
+  4721: (
+    'ff2ec8f4386ffbc4447fc220f6e309e2339aaa01ce4b1cd90998bd8dcd68811d',
+    'SM调教',
+    '快穿',
+  ),
+};
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
@@ -425,6 +448,247 @@ void main() {
       });
     },
   );
+
+  test('additional explicit categories stay local to mixed sources', () async {
+    await _withServices((services, requests) async {
+      final records = await _catalogRecords();
+      for (final entry in _explicitMixedSources.entries) {
+        final source = parseBookSourceRecord(records[entry.key]);
+        final (id, adultLabel, ordinaryLabel) = entry.value;
+        expect(source.id, id, reason: 'record ${entry.key}');
+        expect(adultBookSource(source), isFalse);
+        final categories = source.legado!.categories;
+        final restricted = categories.firstWhere(
+          (item) => item.title == adultLabel,
+        );
+        final ordinary = categories.firstWhere(
+          (item) => item.title == ordinaryLabel,
+        );
+        expect(
+          bookCategoryAllowed(services.contentPolicy, restricted),
+          isFalse,
+        );
+        expect(bookCategoryAllowed(services.contentPolicy, ordinary), isTrue);
+
+        expect((await services.books.importSources([source])).added, 1);
+        await services.books.saveSource(source, {'enabled': true});
+        expect(services.books.sourceAllowed(source), isTrue);
+        final visible = await services.books.categories(
+          source.kind,
+          source.id,
+          CancellationToken(),
+        );
+        expect(visible.map((item) => item.title), isNot(contains(adultLabel)));
+        expect(visible.map((item) => item.title), contains(ordinaryLabel));
+        await expectLater(
+          services.books.discover(
+            source.kind,
+            source.id,
+            CancellationToken(),
+            category: restricted,
+          ),
+          throwsA(isA<ContentBlocked>()),
+        );
+
+        Book book(String category) => Book(
+          source.id,
+          source.kind,
+          '普通标题',
+          '作者',
+          source.endpoint.resolve('/book/1'),
+          category: category,
+        );
+        expect(services.books.bookAllowed(book(adultLabel)), isFalse);
+        expect(services.books.bookAllowed(book(ordinaryLabel)), isTrue);
+        final ordinaryBookWithWarningTitle = Book(
+          source.id,
+          source.kind,
+          '关于群交与性奴问题的法律评论',
+          '作者',
+          source.endpoint.resolve('/book/2'),
+          category: ordinaryLabel,
+        );
+        expect(
+          services.books.bookAllowed(ordinaryBookWithWarningTitle),
+          isTrue,
+        );
+        expect(
+          services.contentPolicy.textAllowed('这是一篇关于群交与性奴问题的法律评论。'),
+          isTrue,
+        );
+
+        await services.settings.update({'filterAdult': false});
+        expect(bookCategoryAllowed(services.contentPolicy, restricted), isTrue);
+        expect(services.books.bookAllowed(book(adultLabel)), isTrue);
+        await services.settings.update({'filterAdult': true});
+      }
+      expect(requests, isEmpty);
+    });
+  });
+
+  test(
+    'bundled BDSM categories are limited without marking the source',
+    () async {
+      await _withServices((services, requests) async {
+        final source = parseBookSourceRecord((await _catalogRecords())[207]);
+        expect(
+          source.id,
+          '4ff1a96e1eebe685af2bbfec61669271888c6e2eae6f801fdb5478ab2fde6441',
+        );
+        expect(adultBookSource(source), isFalse);
+        final categories = source.legado!.categories;
+        final restricted = categories
+            .where((item) => item.title == 'BDSM')
+            .toList();
+        final ordinary = categories
+            .where((item) => item.title == '破鏡重圓')
+            .toList();
+        expect(restricted.map((item) => item.group).toSet(), {
+          '全部',
+          'BL',
+          'BG',
+          '青文学',
+        });
+        expect(restricted, hasLength(4));
+        expect(ordinary, hasLength(4));
+        expect(
+          restricted.every(
+            (item) => !bookCategoryAllowed(services.contentPolicy, item),
+          ),
+          isTrue,
+        );
+        expect(
+          ordinary.every(
+            (item) => bookCategoryAllowed(services.contentPolicy, item),
+          ),
+          isTrue,
+        );
+        expect((await services.books.importSources([source])).added, 1);
+        await services.books.saveSource(source, {'enabled': true});
+        expect(services.books.sourceAllowed(source), isTrue);
+        final visible = await services.books.categories(
+          source.kind,
+          source.id,
+          CancellationToken(),
+        );
+        expect(visible.map((item) => item.title), isNot(contains('BDSM')));
+        // The old POST templates include credential expressions which cannot be
+        // compared safely; the existing alias guard also hides ordinary entries.
+        expect(visible.map((item) => item.title), isNot(contains('破鏡重圓')));
+        await expectLater(
+          services.books.discover(
+            source.kind,
+            source.id,
+            CancellationToken(),
+            category: restricted.first,
+          ),
+          throwsA(isA<ContentBlocked>()),
+        );
+        await expectLater(
+          services.books.discover(
+            source.kind,
+            source.id,
+            CancellationToken(),
+            category: ordinary.first,
+          ),
+          throwsA(isA<ContentBlocked>()),
+        );
+
+        Book book(String category) => Book(
+          source.id,
+          source.kind,
+          '普通标题',
+          '作者',
+          source.endpoint.resolve('/book/1'),
+          category: category,
+        );
+        expect(services.books.bookAllowed(book('BDSM')), isFalse);
+        expect(services.books.bookAllowed(book('破鏡重圓')), isTrue);
+        await services.settings.update({'filterAdult': false});
+        expect(
+          restricted.every(
+            (item) => bookCategoryAllowed(services.contentPolicy, item),
+          ),
+          isTrue,
+        );
+        expect(services.books.bookAllowed(book('BDSM')), isTrue);
+        expect(requests, isEmpty);
+      });
+    },
+  );
+
+  test('new category tokens preserve ordinary words and warnings', () async {
+    await _withServices((services, requests) async {
+      for (final value in [
+        '群交',
+        '多人群交',
+        '性奴',
+        '群交日排行',
+        'BDSM',
+        'ｂｄｓｍ',
+        'SM调教',
+        'sM調教',
+        '校园·群交',
+        '类型：性奴',
+        '校园·BDSM',
+        '类型：SM调教',
+        '反对 强奸 · 群交',
+        '禁止 性奴 · 群交',
+        '反对 BDSM · SM调教',
+        '反对,强奸',
+        '反对,高H',
+      ]) {
+        expect(
+          bookCategoryTextAllowed(services.contentPolicy, value),
+          isFalse,
+          reason: value,
+        );
+      }
+      for (final value in [
+        '普通言情',
+        '校园',
+        '群交流活动',
+        '性奴役制度批判',
+        'SM',
+        'SMILE',
+        'BDSM教育',
+        'SM调教法律研究',
+        '反对性奴',
+        '反对 群交',
+        '禁止 性奴',
+        '反对,群交',
+        '禁止,性奴',
+        '反对 BDSM',
+        '反对, BDSM',
+        '禁止 SM调教',
+      ]) {
+        expect(
+          bookCategoryTextAllowed(services.contentPolicy, value),
+          isTrue,
+          reason: value,
+        );
+      }
+      expect(
+        bookCategoryTextAllowed(services.contentPolicy, '普通', '群交'),
+        isFalse,
+      );
+      expect(
+        bookCategoryTextAllowed(services.contentPolicy, '普通', '反对 群交'),
+        isTrue,
+      );
+      expect(adultBookCategoryEvidence('校园·群交'), isTrue);
+      expect(adultBookCategoryEvidence('性奴'), isTrue);
+      expect(adultBookCategoryEvidence('BDSM'), isTrue);
+      expect(adultBookCategoryEvidence('SM调教'), isTrue);
+      expect(adultBookCategoryEvidence('反对 群交'), isFalse);
+      await services.settings.update({'filterAdult': false});
+      expect(bookCategoryTextAllowed(services.contentPolicy, '群交'), isTrue);
+      expect(bookCategoryTextAllowed(services.contentPolicy, '性奴'), isTrue);
+      expect(bookCategoryTextAllowed(services.contentPolicy, 'BDSM'), isTrue);
+      expect(bookCategoryTextAllowed(services.contentPolicy, 'SM调教'), isTrue);
+      expect(requests, isEmpty);
+    });
+  });
 
   test(
     'ordinary H text remains available and filtering can be disabled',

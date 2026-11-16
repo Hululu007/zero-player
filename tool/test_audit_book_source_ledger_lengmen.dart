@@ -209,7 +209,11 @@ void checkFullReplay() {
     final linked = sources
         .where(
           (row) => (row['historical_engine_followup_observations'] as List)
-              .isNotEmpty,
+              .cast<Map>()
+              .any(
+                (observation) =>
+                    observation['evidence'] == audit.lengmenEvidenceFile,
+              ),
         )
         .toList();
     check(
