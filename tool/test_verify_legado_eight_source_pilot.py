@@ -18,6 +18,17 @@ class EightSourcePilotEvidenceTest(unittest.TestCase):
         self.assertEqual(result['sources'],8)
         self.assertEqual(result['one_work_chain_samples'],2)
         self.assertFalse(result['later_complete_runtime_reconstructable'])
+        later=result['later_risk_single_file_git_match']
+        self.assertEqual(later['matching_git_commit'],verifier.LATER_RISK_MATCHING_COMMIT)
+        self.assertEqual(later['sha256'],verifier.LATER_RISK_SHA)
+        self.assertTrue(later['matching_object_identified_after_sampling'])
+        self.assertIsNone(later['complete_runtime_git_commit'])
+        self.assertFalse(later['complete_runtime_reconstructed'])
+
+    def test_later_risk_single_git_file_tampering_rejected(self):
+        with patch.object(verifier,'git_blob_at',return_value=b'changed file'):
+            with self.assertRaisesRegex(ValueError,'later risk single-file Git object mismatch'):
+                verifier.verify_later_risk_single_file()
 
     def test_identity_and_sampled_rules_tampering_rejected(self):
         changed=copy.deepcopy(self.draft);changed['sources'][0]['id']='0'*64

@@ -19,6 +19,7 @@ INVENTORY='docs/implementation/legado-import-inventory-20261115.json'
 INVENTORY_SHA='ad4e347888cad71812ee7da9477f027baf0bee5bceb1d4247fc69d6c4df8764c'
 RISK='lib/features/books/domain/book_source_risk.dart'
 LATER_RISK_SHA='96d56f4a01b80073ea52269320b7a3a22461aff7fa9a60ca25495c6744c35efc'
+LATER_RISK_MATCHING_COMMIT='d02eb41033e22932273e0613fb133f9e395e11df'
 CANONICAL_SHA='f6cf238328f3e74352d4b946e2c0752bda111a74550dea7ae6cbafaa65b531b6'
 COLLECTED={
  'observations-redacted.json':'ee40a792323876481050f04b9f88dbfaebc16f88489bb0a85b3f88199c4da887',
@@ -58,8 +59,20 @@ def canonical(value):return json.dumps(value,ensure_ascii=False,sort_keys=True,s
 
 
 @lru_cache(maxsize=None)
-def git_blob(path):
-    return subprocess.check_output(['git','show',f'{COMMIT}:{path}'],cwd=ROOT,stderr=subprocess.DEVNULL)
+def git_blob_at(commit,path):
+    return subprocess.check_output(['git','show',f'{commit}:{path}'],cwd=ROOT,stderr=subprocess.DEVNULL)
+
+
+def git_blob(path):return git_blob_at(COMMIT,path)
+
+
+def verify_later_risk_single_file():
+    """Verify a later-discovered matching blob, not the environment at sampling."""
+    digest=sha(git_blob_at(LATER_RISK_MATCHING_COMMIT,RISK))
+    require(digest==LATER_RISK_SHA,'later risk single-file Git object mismatch')
+    return {'matching_git_commit':LATER_RISK_MATCHING_COMMIT,'path':RISK,'sha256':digest,
+            'matching_object_identified_after_sampling':True,
+            'complete_runtime_git_commit':None,'complete_runtime_reconstructed':False}
 
 
 def selected_indices(rows,inventory):
@@ -108,6 +121,7 @@ def historical_snapshot(recorded):
 
 def verify(draft,context,*,pinned=True):
     if pinned and CANONICAL_SHA is not None:require(sha(canonical(draft))==CANONICAL_SHA,'evidence changed')
+    later_risk_git=verify_later_risk_single_file()
     refs=draft['inputs'];require(draft['status']=='formal_initial_git_bound_later_policy_digest_unbound' and
         refs['archive_path']==ARCHIVE and refs['archive_sha256']==ARCHIVE_SHA and
         refs['inventory_path']==INVENTORY and refs['inventory_sha256']==INVENTORY_SHA and
@@ -174,6 +188,7 @@ def verify(draft,context,*,pinned=True):
         except ValueError:continue
         raise ValueError('IP address retained')
     return {'sources':8,'initial_404':3,'one_work_chain_samples':2,'network_requests':0,
+            'later_risk_single_file_git_match':later_risk_git,
             'later_complete_runtime_reconstructable':False}
 
 

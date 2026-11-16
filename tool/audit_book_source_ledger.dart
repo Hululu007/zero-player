@@ -20,6 +20,7 @@ import 'book_source_ledger_lengmen.dart';
 import 'book_source_ledger_later_chain.dart';
 import 'book_source_ledger_jhsssd.dart';
 import 'book_source_ledger_recovered_four.dart';
+import 'book_source_ledger_eight_source.dart';
 
 const _catalogFolder = 'assets/catalogs/books/legado';
 const _evidenceFolder = 'docs/implementation';
@@ -109,6 +110,7 @@ const _evidenceFiles = [
   jhsssdEvidenceFile,
   later943EvidenceFile,
   recoveredFourEvidenceFile,
+  eightSourceEvidenceFile,
   ..._amsiFiles,
 ];
 const _codePaths = [
@@ -180,6 +182,11 @@ const _codePaths = [
   'tool/test_verify_legado_jhsssd_category.py',
   'tool/test_audit_book_source_ledger_jhsssd.dart',
   'tool/book_source_ledger_recovered_four.dart',
+  'tool/book_source_ledger_eight_source.dart',
+  'tool/test_audit_book_source_ledger_eight_source.dart',
+  'tool/verify_legado_eight_source_pilot.py',
+  'tool/test_verify_legado_eight_source_pilot.py',
+  'tool/verify_legado_eight_source_rules.dart',
   'tool/verify_legado_unresolved_943.py',
   'tool/verify_legado_recovered_four.py',
   'tool/test_verify_legado_recovered_four.py',
@@ -1306,6 +1313,7 @@ Map<String, Object?> _row(
   LaterChainLedgerEvidence laterChain,
   JhsssdLedgerEvidence jhsssd,
   RecoveredFourLedgerEvidence recoveredFour,
+  EightSourceLedgerEvidence eightSource,
   LengmenLedgerEvidence lengmen,
   Map<String, Map> data,
 ) {
@@ -1406,6 +1414,7 @@ Map<String, Object?> _row(
   reading.addAll(selectSfwxEvidence(sfwx, source, index));
   reading.addAll(selectLaterChainEvidence(laterChain, source, index));
   reading.addAll(selectJhsssdEvidence(jhsssd, source, index));
+  reading.addAll(selectEightSourceEvidence(eightSource, source, index));
   final adultReview = selectNov16Evidence(nov16.adultReview, source, index);
   return {
     'source_id': source.id,
@@ -1455,6 +1464,10 @@ void _verifyArchiveAssociation(
   String digest,
   Map<String, String> inputHashes,
 ) {
+  if (file == eightSourceEvidenceFile) {
+    verifyEightSourceInput(evidence, digest, inputHashes);
+    return;
+  }
   if (file == later943EvidenceFile || file == recoveredFourEvidenceFile) {
     verifyRecoveredFourInput(file, evidence, inputHashes);
     return;
@@ -1945,6 +1958,11 @@ void main(List<String> args) {
   for (final entry in topLater.registry.entries) {
     topCc.registry.putIfAbsent(entry.key, () => []).addAll(entry.value);
   }
+  final eightSource = readEightSourceEvidence(
+    data[eightSourceEvidenceFile]!,
+    hashes,
+    catalog.rows,
+  );
   final rows = [
     for (final source in catalog.imported.sources)
       _row(
@@ -1962,6 +1980,7 @@ void main(List<String> args) {
         laterChain,
         jhsssd,
         recoveredFour,
+        eightSource,
         lengmen,
         data,
       ),

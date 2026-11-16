@@ -94,6 +94,7 @@
     "docs/implementation/legado-jhsssd-category-recheck-20261116.json": "1c6c3974a4c321af8dc9d1321b227c823980d047785fa0af035110b4c7c80431",
     "docs/implementation/legado-unresolved-943-recheck-20261116.json": "9925c34398debb413de438d0ac6a709c8b41f1abc7be26365bec1319ce0e23e0",
     "docs/implementation/legado-recovered-four-amsi-20261116.json": "9e135e064dc6aa31f379defe31bfb03add9674cbce78d99f66f34da449ceb1a8",
+    "docs/implementation/legado-eight-source-pilot-20261116.json": "ab615d995deb1998f1e2cf048168610ae22fe8fb516c6d6af46f714b6c24222f",
     "docs/implementation/legado-amsi-pilot-20261115.json": "09b2cdc14e2032814fd7d6b4615a8682ad4bf989f380ea8d4a22a949a216615f",
     "docs/implementation/legado-amsi-prior-html-20261115.json": "04dd4ee143e9de7fc6d16ab649fbe9796bae40f7c045bfdb7632e6b4ad5061c8",
     "docs/implementation/legado-amsi-other-hosts-20261115.json": "25180e804c1df15165af8bb20ae58c5b4dd6b2e24f6a0a092d50281ca5e25750"
@@ -146,7 +147,7 @@
     "lib/features/books/domain/yingyu_legacy_source_fix.dart": "a979ed63e5b91a6ff5d992a959e4fc5bcffdf23141ff5586e77da0017c82bb8a",
     "lib/features/supervision/domain/content_classification.dart": "0f22950b5a1e5696fa1e60bb353c53a24f9b4546314290abab0081ed08e6146a",
     "lib/features/supervision/domain/adult_source_evidence.dart": "7dd20620b923e14687f8a7c58aafa923ece02172cd38aa260ac9bfe107795206",
-    "tool/audit_book_source_ledger.dart": "1d5179614b8ef224a30524ce3e6827d30658547f234c8a4503ce7382d17df8db",
+    "tool/audit_book_source_ledger.dart": "622fe37ca967da0109aabc24da7fd4fc3cce2f66cd400a7a1bd40afaeebd2581",
     "tool/book_source_ledger_recent_evidence.dart": "d1048d2426001a992d59095a6cd3bd600a1aa1a07fe470d81b265d8c94b0aeed",
     "tool/book_source_ledger_nov16_evidence.dart": "12caae27fa8275f5a3bc1363b71391aff0e6b632cd64e34cee117adbef46c965",
     "tool/book_source_ledger_com_rdap.dart": "d52cdc6c3b2734743d36ae9bd6f63167a823ae3741927912a801f3be39365d81",
@@ -167,6 +168,11 @@
     "tool/test_verify_legado_jhsssd_category.py": "eca33740d55c0179ecb51ac539dd009c311194495d874abfcda9ddb926b6647c",
     "tool/test_audit_book_source_ledger_jhsssd.dart": "466855f40cf91fe67a217de03b7f942283c923e1c941d5c8804d55b7f382406c",
     "tool/book_source_ledger_recovered_four.dart": "32e47668aaa75a43a506bd79ab04c3587462c4b2dac10a352d896ebc6c7b18ab",
+    "tool/book_source_ledger_eight_source.dart": "d0bf563016dbf808ceb35f4f8396b4e14df837630aab1fb6091d275a02b47d26",
+    "tool/test_audit_book_source_ledger_eight_source.dart": "2a96bf01a5ef0756616102528734a3bf02279232ba44ae67cae514b19e75bcd9",
+    "tool/verify_legado_eight_source_pilot.py": "1fab5013eeff7989b5f93342aeb8f13afcd94ec273b7e81e579e0fce08528c2c",
+    "tool/test_verify_legado_eight_source_pilot.py": "f9e9cbdff883c8b2e9c930b7a1fbe11ac6642714139c0d4f88d358526fb39ba1",
+    "tool/verify_legado_eight_source_rules.dart": "ef1a42a71d6f9893b7f9846337ef3eec79708d6150fba8cea42d1f0f7a4e1f7f",
     "tool/verify_legado_unresolved_943.py": "d637b8229274c8371f842b12ec17c7db849c60b56f330be0ac8f120ea78f5c46",
     "tool/verify_legado_recovered_four.py": "26f64ec05dfbf3682fab67edbad5942621ea3a29cdaca3421a1a266d02051c90",
     "tool/test_verify_legado_recovered_four.py": "4f4ae3757ea4cb0814d5cd695d756d1558b67b812e564832855fc4f6cb120353",
@@ -385,7 +391,7 @@
     "sources_with_recent_redirect_observations": 2,
     "sources_with_historical_category_observations": 2,
     "sources_with_historical_adult_source_review_observations": 18,
-    "sources_with_specialized_reading_observations": 16,
+    "sources_with_specialized_reading_observations": 24,
     "network_no_observation": 0,
     "network_no_response_recorded": 904,
     "network_status_and_failure_not_recorded": 0,
@@ -24308,7 +24314,130 @@
       "search_and_discovery_observations": [],
       "historical_category_observations": [],
       "historical_adult_source_review_observations": [],
-      "specialized_reading_observations": [],
+      "specialized_reading_observations": [
+        {
+          "evidence": "legado-eight-source-pilot-20261116.json",
+          "observation_kind": "bounded_historical_search_and_reading_samples",
+          "historical_selected_record_index": 3954,
+          "historical_raw_record_sha256": "02ed39479e5b60c27e3b1951729e9f61b83ff4f75920eb8a6514fe9fc988c86f",
+          "historical_normalized_legado_sha256": "790c822722e21213becd6dd594ed46e098f2b86c76c0463c0dff005d87e41893",
+          "historical_endpoint_sha256": "ab158698b9721e608bb15ee7840164ab5239dd7cd93efaf19898baae17e68e47",
+          "initial_recorded_files_git_commit": "dfb4c9cb71fd6de1607bcbf8ca427ef4361ca307",
+          "followup_risk_policy_sha256": "96d56f4a01b80073ea52269320b7a3a22461aff7fa9a60ca25495c6744c35efc",
+          "followup_risk_policy_git_commit": null,
+          "followup_direct_dependency_hashes_complete": false,
+          "historical_runtime_fully_reconstructed": false,
+          "raw_pages_and_collectors_replayable": false,
+          "url_text_prefilter_confirms_site_safety": false,
+          "http_method": "GET",
+          "redirects_followed": false,
+          "post_sent": false,
+          "scripts_executed": false,
+          "subresources_loaded": false,
+          "samples": {
+            "initial": {
+              "outcome": "no_safe_matching_result_inconclusive",
+              "steps": [
+                {
+                  "stage": "search",
+                  "started_at_utc": "2026-11-16T01:33:35.308175+00:00",
+                  "observed_at_utc": "2026-11-16T01:33:35.621994+00:00",
+                  "status": 200,
+                  "failure": null,
+                  "content_type_family": "html",
+                  "sample_bytes": 15000,
+                  "sample_sha256": "adbe554e2f6ecd5311544a9fec7215fafd3df80deb1c8ec885d15855df6fada9",
+                  "sample_truncated": false,
+                  "url_path_sha256": "201b6d8e6a3d9fbcc3cf8466de84b9b4f15a5acb3435ac6b58b38844ae34f290",
+                  "book_count": 11,
+                  "query_matches": 0,
+                  "books_with_category": 0,
+                  "matching_results_after_limited_url_text_prefilter": 0
+                }
+              ]
+            },
+            "followup": {
+              "outcome": "one_content_sample",
+              "started_at_utc": "2026-11-16T01:37:06.799367+00:00",
+              "completed_at_utc": "2026-11-16T01:37:28.260558+00:00",
+              "steps": [
+                {
+                  "stage": "search",
+                  "started_at_utc": "2026-11-16T01:37:06.917220+00:00",
+                  "observed_at_utc": "2026-11-16T01:37:07.812145+00:00",
+                  "status": 200,
+                  "failure": null,
+                  "content_type_family": "html",
+                  "sample_bytes": 14688,
+                  "sample_sha256": "d637f8aa2cd220a17f8c5dc5df617e705e173692d55c8f2a11a30eb1083486ae",
+                  "sample_truncated": false,
+                  "url_path_sha256": "201b6d8e6a3d9fbcc3cf8466de84b9b4f15a5acb3435ac6b58b38844ae34f290",
+                  "book_count": 11,
+                  "query_matches": 8,
+                  "books_with_category": 0,
+                  "matching_results_after_limited_url_text_prefilter": 8
+                },
+                {
+                  "stage": "detail",
+                  "started_at_utc": "2026-11-16T01:37:12.703274+00:00",
+                  "observed_at_utc": "2026-11-16T01:37:12.922500+00:00",
+                  "status": 200,
+                  "failure": null,
+                  "content_type_family": "html",
+                  "sample_bytes": 18304,
+                  "sample_sha256": "f797d9f432d20dcbd36bca0373f304e9f4a0a984b486c31e7d77f5a2f3801404",
+                  "sample_truncated": false,
+                  "url_path_sha256": "443d7128c372d67c88bba8d466f3e65ae22a3c838e580dac9da1be680bc6f5cf",
+                  "toc_chapter_count": 0,
+                  "detail_present": true,
+                  "detail_category_length": 0,
+                  "same_host_toc_links": 1,
+                  "og_category_nonempty": false,
+                  "category_matches_og": false
+                },
+                {
+                  "stage": "toc",
+                  "started_at_utc": "2026-11-16T01:37:17.842390+00:00",
+                  "observed_at_utc": "2026-11-16T01:37:18.049825+00:00",
+                  "status": 200,
+                  "failure": null,
+                  "content_type_family": "html",
+                  "sample_bytes": 10461,
+                  "sample_sha256": "cc519fb400ce64fa3dc66de3bf77fd4ad355dd2b9508f9fdcbf96ecbdbe34124",
+                  "sample_truncated": false,
+                  "url_path_sha256": "e38f281a35d2d06e755a019361cf42e0684244857a5480654fa3ce8a1467a62b",
+                  "toc_chapter_count": 32,
+                  "same_host_toc_links": 0
+                },
+                {
+                  "stage": "content",
+                  "started_at_utc": "2026-11-16T01:37:22.942130+00:00",
+                  "observed_at_utc": "2026-11-16T01:37:23.206716+00:00",
+                  "status": 200,
+                  "failure": null,
+                  "content_type_family": "html",
+                  "sample_bytes": 22123,
+                  "sample_sha256": "68f082d4f4059f0b5c6200f2489d8888af5e3e417b0bdc63a6f26e68b328dc4d",
+                  "sample_truncated": false,
+                  "url_path_sha256": "ce58f576d1b25b7ba0ef6e2e914b8bbff6867221ebb55d852e8013ba9c27c6b2",
+                  "content_characters": 3025,
+                  "content_sha256_utf8": "7402a9122b42d9e2e60d5084f6e4eff726760f8dbd010141552fe1343f25a5d3",
+                  "same_host_next_content_links": 0
+                }
+              ]
+            }
+          },
+          "site_security_verified": null,
+          "full_readability_verified": null,
+          "whole_source_unavailable_verified": null,
+          "current_rule_validity_verified": null,
+          "matches_current_selected_raw_record": true,
+          "matches_current_source_kind": true,
+          "matches_current_source_format": true,
+          "matches_current_full_endpoint": true,
+          "matches_current_normalized_legado_rule": true
+        }
+      ],
       "review_clues": {
         "amsi_detection_recorded": false,
         "community_exact_endpoint_current_selected_raw": false,
@@ -55253,7 +55382,57 @@
       "search_and_discovery_observations": [],
       "historical_category_observations": [],
       "historical_adult_source_review_observations": [],
-      "specialized_reading_observations": [],
+      "specialized_reading_observations": [
+        {
+          "evidence": "legado-eight-source-pilot-20261116.json",
+          "observation_kind": "bounded_historical_search_and_reading_samples",
+          "historical_selected_record_index": 4371,
+          "historical_raw_record_sha256": "5f5f1694a131bca90865399a6a3e9c1e57a44a7e37db649c3ad71da9080342b5",
+          "historical_normalized_legado_sha256": "5e0ce5b6c43db101d89212f26fab8528e17f91a7c1c2cd82085c62d84e45c43c",
+          "historical_endpoint_sha256": "8e502f1b8e3c81cbd0ce27e302bdf745660e2fe347b5e4373e02ef30966d2f8a",
+          "initial_recorded_files_git_commit": "dfb4c9cb71fd6de1607bcbf8ca427ef4361ca307",
+          "historical_runtime_fully_reconstructed": false,
+          "raw_pages_and_collectors_replayable": false,
+          "url_text_prefilter_confirms_site_safety": false,
+          "http_method": "GET",
+          "redirects_followed": false,
+          "post_sent": false,
+          "scripts_executed": false,
+          "subresources_loaded": false,
+          "samples": {
+            "initial": {
+              "outcome": "no_safe_matching_result_inconclusive",
+              "steps": [
+                {
+                  "stage": "search",
+                  "started_at_utc": "2026-11-16T01:33:30.014613+00:00",
+                  "observed_at_utc": "2026-11-16T01:33:30.447584+00:00",
+                  "status": 200,
+                  "failure": null,
+                  "content_type_family": "html",
+                  "sample_bytes": 2027,
+                  "sample_sha256": "cb9f223465ca8ff9b97550469bd2e605564b6e8ee454b3dae06e3b5a77179e1c",
+                  "sample_truncated": false,
+                  "url_path_sha256": "6291e76eb148534a10bfe26a414555642b478aef27488177847e534b70d75336",
+                  "book_count": 0,
+                  "query_matches": 0,
+                  "books_with_category": 0,
+                  "matching_results_after_limited_url_text_prefilter": 0
+                }
+              ]
+            }
+          },
+          "site_security_verified": null,
+          "full_readability_verified": null,
+          "whole_source_unavailable_verified": null,
+          "current_rule_validity_verified": null,
+          "matches_current_selected_raw_record": true,
+          "matches_current_source_kind": true,
+          "matches_current_source_format": true,
+          "matches_current_full_endpoint": true,
+          "matches_current_normalized_legado_rule": true
+        }
+      ],
       "review_clues": {
         "amsi_detection_recorded": false,
         "community_exact_endpoint_current_selected_raw": false,
@@ -130728,7 +130907,53 @@
       "search_and_discovery_observations": [],
       "historical_category_observations": [],
       "historical_adult_source_review_observations": [],
-      "specialized_reading_observations": [],
+      "specialized_reading_observations": [
+        {
+          "evidence": "legado-eight-source-pilot-20261116.json",
+          "observation_kind": "bounded_historical_search_and_reading_samples",
+          "historical_selected_record_index": 3817,
+          "historical_raw_record_sha256": "132dd89ede8e70903a0ddb0a5c1f120c9d4fe4bc02e0d0a573538ac424a4917c",
+          "historical_normalized_legado_sha256": "dda95675e785330330521c1f894ea8229d413fb6e8ab4993ea4aaddbad35207c",
+          "historical_endpoint_sha256": "671cf78df04727471e3ab5b4aa8402fbcc4e12c1d927c0dbdc99083cd75eb47c",
+          "initial_recorded_files_git_commit": "dfb4c9cb71fd6de1607bcbf8ca427ef4361ca307",
+          "historical_runtime_fully_reconstructed": false,
+          "raw_pages_and_collectors_replayable": false,
+          "url_text_prefilter_confirms_site_safety": false,
+          "http_method": "GET",
+          "redirects_followed": false,
+          "post_sent": false,
+          "scripts_executed": false,
+          "subresources_loaded": false,
+          "samples": {
+            "initial": {
+              "outcome": "network_or_http_inconclusive",
+              "steps": [
+                {
+                  "stage": "search",
+                  "started_at_utc": "2026-11-16T01:33:45.638565+00:00",
+                  "observed_at_utc": "2026-11-16T01:33:45.807847+00:00",
+                  "status": 404,
+                  "failure": "http_status",
+                  "content_type_family": null,
+                  "sample_bytes": null,
+                  "sample_sha256": null,
+                  "sample_truncated": null,
+                  "url_path_sha256": "d7b2c0e557e880f10724140a216596836d33796f5c6ec14d7bd5fbae39908c2b"
+                }
+              ]
+            }
+          },
+          "site_security_verified": null,
+          "full_readability_verified": null,
+          "whole_source_unavailable_verified": null,
+          "current_rule_validity_verified": null,
+          "matches_current_selected_raw_record": true,
+          "matches_current_source_kind": true,
+          "matches_current_source_format": true,
+          "matches_current_full_endpoint": true,
+          "matches_current_normalized_legado_rule": true
+        }
+      ],
       "review_clues": {
         "amsi_detection_recorded": false,
         "community_exact_endpoint_current_selected_raw": false,
@@ -147081,7 +147306,53 @@
       "search_and_discovery_observations": [],
       "historical_category_observations": [],
       "historical_adult_source_review_observations": [],
-      "specialized_reading_observations": [],
+      "specialized_reading_observations": [
+        {
+          "evidence": "legado-eight-source-pilot-20261116.json",
+          "observation_kind": "bounded_historical_search_and_reading_samples",
+          "historical_selected_record_index": 4491,
+          "historical_raw_record_sha256": "a1ba111fd4844ccc39b9f4f621791c3f8fdfe41a086e014be0f744b2187a8cc9",
+          "historical_normalized_legado_sha256": "2f6a43ac942e0317b63d6d026c730ad58d4af9b2745006bfc082df044c95f74b",
+          "historical_endpoint_sha256": "437a20617a182b179ca7d35dcb9ee264e5698aeba6be0db69ee3c77786bc10af",
+          "initial_recorded_files_git_commit": "dfb4c9cb71fd6de1607bcbf8ca427ef4361ca307",
+          "historical_runtime_fully_reconstructed": false,
+          "raw_pages_and_collectors_replayable": false,
+          "url_text_prefilter_confirms_site_safety": false,
+          "http_method": "GET",
+          "redirects_followed": false,
+          "post_sent": false,
+          "scripts_executed": false,
+          "subresources_loaded": false,
+          "samples": {
+            "initial": {
+              "outcome": "network_or_http_inconclusive",
+              "steps": [
+                {
+                  "stage": "search",
+                  "started_at_utc": "2026-11-16T01:33:46.936845+00:00",
+                  "observed_at_utc": "2026-11-16T01:33:47.771490+00:00",
+                  "status": 404,
+                  "failure": "http_status",
+                  "content_type_family": null,
+                  "sample_bytes": null,
+                  "sample_sha256": null,
+                  "sample_truncated": null,
+                  "url_path_sha256": "8f2a6d6bcbf773ed424a7bb37c59751058c86f3b4831c0479934b7a0c7c43147"
+                }
+              ]
+            }
+          },
+          "site_security_verified": null,
+          "full_readability_verified": null,
+          "whole_source_unavailable_verified": null,
+          "current_rule_validity_verified": null,
+          "matches_current_selected_raw_record": true,
+          "matches_current_source_kind": true,
+          "matches_current_source_format": true,
+          "matches_current_full_endpoint": true,
+          "matches_current_normalized_legado_rule": true
+        }
+      ],
       "review_clues": {
         "amsi_detection_recorded": false,
         "community_exact_endpoint_current_selected_raw": false,
@@ -225189,7 +225460,116 @@
       "search_and_discovery_observations": [],
       "historical_category_observations": [],
       "historical_adult_source_review_observations": [],
-      "specialized_reading_observations": [],
+      "specialized_reading_observations": [
+        {
+          "evidence": "legado-eight-source-pilot-20261116.json",
+          "observation_kind": "bounded_historical_search_and_reading_samples",
+          "historical_selected_record_index": 1056,
+          "historical_raw_record_sha256": "6f686778fd32645588760e0c62a033ce0be8f7ec7f022b0dac61328759efd4bb",
+          "historical_normalized_legado_sha256": "b26bc4405a031ca215d99155430e9bb99768f66e548caa6ccabc623611e201dc",
+          "historical_endpoint_sha256": "039f610a1a071350145767cf0f4a48200eba046a0aba2ff17fc6a8056ea380e0",
+          "initial_recorded_files_git_commit": "dfb4c9cb71fd6de1607bcbf8ca427ef4361ca307",
+          "followup_risk_policy_sha256": "96d56f4a01b80073ea52269320b7a3a22461aff7fa9a60ca25495c6744c35efc",
+          "followup_risk_policy_git_commit": null,
+          "followup_direct_dependency_hashes_complete": false,
+          "historical_runtime_fully_reconstructed": false,
+          "raw_pages_and_collectors_replayable": false,
+          "url_text_prefilter_confirms_site_safety": false,
+          "http_method": "GET",
+          "redirects_followed": false,
+          "post_sent": false,
+          "scripts_executed": false,
+          "subresources_loaded": false,
+          "samples": {
+            "initial": {
+              "outcome": "no_safe_matching_result_inconclusive",
+              "steps": [
+                {
+                  "stage": "search",
+                  "started_at_utc": "2026-11-16T01:33:40.506197+00:00",
+                  "observed_at_utc": "2026-11-16T01:33:40.742290+00:00",
+                  "status": 200,
+                  "failure": null,
+                  "content_type_family": "html",
+                  "sample_bytes": 7279,
+                  "sample_sha256": "e4d076c5644fc8e3b155dc22d740502b575d10d24e637b4f236f2140b5d796e2",
+                  "sample_truncated": false,
+                  "url_path_sha256": "e63a2d04275b46f91e14bbad81e2a6103cac82dc035dd06eb36e66387a0f6060",
+                  "book_count": 1,
+                  "query_matches": 0,
+                  "books_with_category": 0,
+                  "matching_results_after_limited_url_text_prefilter": 0
+                }
+              ]
+            },
+            "followup": {
+              "outcome": "one_content_sample",
+              "started_at_utc": "2026-11-16T01:38:17.749898+00:00",
+              "completed_at_utc": "2026-11-16T01:38:33.738491+00:00",
+              "steps": [
+                {
+                  "stage": "search",
+                  "started_at_utc": "2026-11-16T01:38:17.887592+00:00",
+                  "observed_at_utc": "2026-11-16T01:38:18.359218+00:00",
+                  "status": 200,
+                  "failure": null,
+                  "content_type_family": "html",
+                  "sample_bytes": 17109,
+                  "sample_sha256": "0319ed4c024d01ddf7c6bb98768a547631771dcc4a8dd1c1283306c8730dbb28",
+                  "sample_truncated": false,
+                  "url_path_sha256": "e63a2d04275b46f91e14bbad81e2a6103cac82dc035dd06eb36e66387a0f6060",
+                  "book_count": 8,
+                  "query_matches": 8,
+                  "books_with_category": 0,
+                  "matching_results_after_limited_url_text_prefilter": 8
+                },
+                {
+                  "stage": "detail",
+                  "started_at_utc": "2026-11-16T01:38:23.255220+00:00",
+                  "observed_at_utc": "2026-11-16T01:38:23.534593+00:00",
+                  "status": 200,
+                  "failure": null,
+                  "content_type_family": "html",
+                  "sample_bytes": 19936,
+                  "sample_sha256": "1aad7ca7d81982d48c29fa746d6d4cf3721f601dc23ace18d6fc0747c31e6308",
+                  "sample_truncated": false,
+                  "url_path_sha256": "d5a55949bec6c93091ec7e5166e97c6e0885a6e01c5e375354249fc10dd960ca",
+                  "toc_chapter_count": 75,
+                  "detail_present": true,
+                  "detail_category_length": 8,
+                  "same_host_toc_links": 0,
+                  "og_category_nonempty": false,
+                  "category_matches_og": false
+                },
+                {
+                  "stage": "content",
+                  "started_at_utc": "2026-11-16T01:38:28.599715+00:00",
+                  "observed_at_utc": "2026-11-16T01:38:28.874271+00:00",
+                  "status": 200,
+                  "failure": null,
+                  "content_type_family": "html",
+                  "sample_bytes": 13479,
+                  "sample_sha256": "935ffde1139ef9651f40a3916f277c412fc4721f2d0723bc1cc9de75b7cc10e3",
+                  "sample_truncated": false,
+                  "url_path_sha256": "7bce15c2784bcc599c7bace1408f58ba585b5f5da9339aaed2a5a08ec23838d0",
+                  "content_characters": 2001,
+                  "content_sha256_utf8": "1873c482e06e35fa42720619bce313e6ff50f1040ed2b318341c1371d61ca229",
+                  "same_host_next_content_links": 0
+                }
+              ]
+            }
+          },
+          "site_security_verified": null,
+          "full_readability_verified": null,
+          "whole_source_unavailable_verified": null,
+          "current_rule_validity_verified": null,
+          "matches_current_selected_raw_record": true,
+          "matches_current_source_kind": true,
+          "matches_current_source_format": true,
+          "matches_current_full_endpoint": true,
+          "matches_current_normalized_legado_rule": true
+        }
+      ],
       "review_clues": {
         "amsi_detection_recorded": false,
         "community_exact_endpoint_current_selected_raw": false,
@@ -280435,7 +280815,83 @@
       "search_and_discovery_observations": [],
       "historical_category_observations": [],
       "historical_adult_source_review_observations": [],
-      "specialized_reading_observations": [],
+      "specialized_reading_observations": [
+        {
+          "evidence": "legado-eight-source-pilot-20261116.json",
+          "observation_kind": "bounded_historical_search_and_reading_samples",
+          "historical_selected_record_index": 3134,
+          "historical_raw_record_sha256": "e21aeed9e48a5137e0a84fe97914f09a29303750a77ad2dcdb9446c51d1e1009",
+          "historical_normalized_legado_sha256": "719bcc073e57846c8fa64d94d46537f5fc764f7588af24e29c6fffdf8b210834",
+          "historical_endpoint_sha256": "461bb4c162e0a7f0abd078b194ff10a4258333273760510ceda34710edeb8c4a",
+          "initial_recorded_files_git_commit": "dfb4c9cb71fd6de1607bcbf8ca427ef4361ca307",
+          "followup_risk_policy_sha256": "96d56f4a01b80073ea52269320b7a3a22461aff7fa9a60ca25495c6744c35efc",
+          "followup_risk_policy_git_commit": null,
+          "followup_direct_dependency_hashes_complete": false,
+          "historical_runtime_fully_reconstructed": false,
+          "raw_pages_and_collectors_replayable": false,
+          "url_text_prefilter_confirms_site_safety": false,
+          "http_method": "GET",
+          "redirects_followed": false,
+          "post_sent": false,
+          "scripts_executed": false,
+          "subresources_loaded": false,
+          "samples": {
+            "initial": {
+              "outcome": "no_safe_matching_result_inconclusive",
+              "steps": [
+                {
+                  "stage": "search",
+                  "started_at_utc": "2026-11-16T01:33:24.213223+00:00",
+                  "observed_at_utc": "2026-11-16T01:33:25.156757+00:00",
+                  "status": 200,
+                  "failure": null,
+                  "content_type_family": "html",
+                  "sample_bytes": 6990,
+                  "sample_sha256": "0b17983c1b73f8693a74aaf2dcc588a12891ba2d539441251183b6a4ac4cee2c",
+                  "sample_truncated": false,
+                  "url_path_sha256": "edf6508577b882d2416cedd81e06a64bd74b85b2971e7a68ba10a9992d1acc06",
+                  "book_count": 0,
+                  "query_matches": 0,
+                  "books_with_category": 0,
+                  "matching_results_after_limited_url_text_prefilter": 0
+                }
+              ]
+            },
+            "followup": {
+              "outcome": "no_safe_matching_result_inconclusive",
+              "started_at_utc": "2026-11-16T01:39:35.706724+00:00",
+              "completed_at_utc": "2026-11-16T01:39:41.352234+00:00",
+              "steps": [
+                {
+                  "stage": "search",
+                  "started_at_utc": "2026-11-16T01:39:35.843544+00:00",
+                  "observed_at_utc": "2026-11-16T01:39:36.570474+00:00",
+                  "status": 200,
+                  "failure": null,
+                  "content_type_family": "html",
+                  "sample_bytes": 6990,
+                  "sample_sha256": "16216eb5f70c6f5290edba1a1165d9d3d773b86b2104539795bd2197baa98191",
+                  "sample_truncated": false,
+                  "url_path_sha256": "edf6508577b882d2416cedd81e06a64bd74b85b2971e7a68ba10a9992d1acc06",
+                  "book_count": 0,
+                  "query_matches": 0,
+                  "books_with_category": 0,
+                  "matching_results_after_limited_url_text_prefilter": 0
+                }
+              ]
+            }
+          },
+          "site_security_verified": null,
+          "full_readability_verified": null,
+          "whole_source_unavailable_verified": null,
+          "current_rule_validity_verified": null,
+          "matches_current_selected_raw_record": true,
+          "matches_current_source_kind": true,
+          "matches_current_source_format": true,
+          "matches_current_full_endpoint": true,
+          "matches_current_normalized_legado_rule": true
+        }
+      ],
       "review_clues": {
         "amsi_detection_recorded": false,
         "community_exact_endpoint_current_selected_raw": false,
@@ -300481,7 +300937,57 @@
       "search_and_discovery_observations": [],
       "historical_category_observations": [],
       "historical_adult_source_review_observations": [],
-      "specialized_reading_observations": [],
+      "specialized_reading_observations": [
+        {
+          "evidence": "legado-eight-source-pilot-20261116.json",
+          "observation_kind": "bounded_historical_search_and_reading_samples",
+          "historical_selected_record_index": 1399,
+          "historical_raw_record_sha256": "c11c5421ea54810735c25cb622a158c40973223638f3387ae6aa694aa9640b22",
+          "historical_normalized_legado_sha256": "c0147ec0b555c712e33559ddd311b42a06c187600d152dea7af473e3bbab340c",
+          "historical_endpoint_sha256": "9312b4898838d67a1a41242a6dfcdb87a10589972bc811dbc62baf336559d544",
+          "initial_recorded_files_git_commit": "dfb4c9cb71fd6de1607bcbf8ca427ef4361ca307",
+          "historical_runtime_fully_reconstructed": false,
+          "raw_pages_and_collectors_replayable": false,
+          "url_text_prefilter_confirms_site_safety": false,
+          "http_method": "GET",
+          "redirects_followed": false,
+          "post_sent": false,
+          "scripts_executed": false,
+          "subresources_loaded": false,
+          "samples": {
+            "initial": {
+              "outcome": "no_safe_matching_result_inconclusive",
+              "steps": [
+                {
+                  "stage": "search",
+                  "started_at_utc": "2026-11-16T01:33:18.539040+00:00",
+                  "observed_at_utc": "2026-11-16T01:33:19.340466+00:00",
+                  "status": 200,
+                  "failure": null,
+                  "content_type_family": "html",
+                  "sample_bytes": 53,
+                  "sample_sha256": "c729b6ce2a2219febfb38e448eaaffbce712cf3775cfa5f9264e678d62fd9a76",
+                  "sample_truncated": false,
+                  "url_path_sha256": "48f11ad2af671dcb99cc95dd1c1d8ff108ad1d4f61b19a6c392630bc54732feb",
+                  "book_count": 0,
+                  "query_matches": 0,
+                  "books_with_category": 0,
+                  "matching_results_after_limited_url_text_prefilter": 0
+                }
+              ]
+            }
+          },
+          "site_security_verified": null,
+          "full_readability_verified": null,
+          "whole_source_unavailable_verified": null,
+          "current_rule_validity_verified": null,
+          "matches_current_selected_raw_record": true,
+          "matches_current_source_kind": true,
+          "matches_current_source_format": true,
+          "matches_current_full_endpoint": true,
+          "matches_current_normalized_legado_rule": true
+        }
+      ],
       "review_clues": {
         "amsi_detection_recorded": false,
         "community_exact_endpoint_current_selected_raw": false,
@@ -371038,7 +371544,87 @@
       "search_and_discovery_observations": [],
       "historical_category_observations": [],
       "historical_adult_source_review_observations": [],
-      "specialized_reading_observations": [],
+      "specialized_reading_observations": [
+        {
+          "evidence": "legado-eight-source-pilot-20261116.json",
+          "observation_kind": "bounded_historical_search_and_reading_samples",
+          "historical_selected_record_index": 407,
+          "historical_raw_record_sha256": "8055258386ca4e4d3138926c99afc6c86cd650c63389dc10e87a2436d2c86a0b",
+          "historical_normalized_legado_sha256": "bc163492a07a7cab73842ce8d030952223ff821310d4188686e80473c926e7ce",
+          "historical_endpoint_sha256": "f289d889d1eb1b9b70f050b6944ff73a0aa8583875f59fce283d5826d42f556c",
+          "initial_recorded_files_git_commit": "dfb4c9cb71fd6de1607bcbf8ca427ef4361ca307",
+          "followup_risk_policy_sha256": "96d56f4a01b80073ea52269320b7a3a22461aff7fa9a60ca25495c6744c35efc",
+          "followup_risk_policy_git_commit": null,
+          "followup_direct_dependency_hashes_complete": false,
+          "historical_runtime_fully_reconstructed": false,
+          "raw_pages_and_collectors_replayable": false,
+          "url_text_prefilter_confirms_site_safety": false,
+          "http_method": "GET",
+          "redirects_followed": false,
+          "post_sent": false,
+          "scripts_executed": false,
+          "subresources_loaded": false,
+          "samples": {
+            "initial": {
+              "outcome": "network_or_http_inconclusive",
+              "steps": [
+                {
+                  "stage": "search",
+                  "started_at_utc": "2026-11-16T01:33:16.393716+00:00",
+                  "observed_at_utc": "2026-11-16T01:33:17.409933+00:00",
+                  "status": 404,
+                  "failure": "http_status",
+                  "content_type_family": null,
+                  "sample_bytes": null,
+                  "sample_sha256": null,
+                  "sample_truncated": null,
+                  "url_path_sha256": "d0beddcba48b2cdda553b03c812e27bcfa6d2aaa0d6aa7cb59715b0abd7fae13"
+                }
+              ]
+            },
+            "followup": {
+              "outcome": "no_safe_matching_result_inconclusive",
+              "started_at_utc": "2026-11-16T01:41:07.865262+00:00",
+              "completed_at_utc": "2026-11-16T01:41:12.174390+00:00",
+              "steps": [
+                {
+                  "stage": "discover",
+                  "started_at_utc": "2026-11-16T01:41:08.007429+00:00",
+                  "observed_at_utc": "2026-11-16T01:41:09.019192+00:00",
+                  "status": 404,
+                  "failure": "http_status",
+                  "content_type_family": null,
+                  "sample_bytes": null,
+                  "sample_sha256": null,
+                  "sample_truncated": null,
+                  "url_path_sha256": "5c8fecd9bcac7f0ef624b826c709e493fadc1a81520129c571d5976a44bab5f5"
+                },
+                {
+                  "stage": "discover",
+                  "started_at_utc": "2026-11-16T01:41:10.150601+00:00",
+                  "observed_at_utc": "2026-11-16T01:41:11.155630+00:00",
+                  "status": 404,
+                  "failure": "http_status",
+                  "content_type_family": null,
+                  "sample_bytes": null,
+                  "sample_sha256": null,
+                  "sample_truncated": null,
+                  "url_path_sha256": "cc3e36e55b5129c346698a090b69ebd4207fc5a6b5a500ab51ea081db7b82974"
+                }
+              ]
+            }
+          },
+          "site_security_verified": null,
+          "full_readability_verified": null,
+          "whole_source_unavailable_verified": null,
+          "current_rule_validity_verified": null,
+          "matches_current_selected_raw_record": true,
+          "matches_current_source_kind": true,
+          "matches_current_source_format": true,
+          "matches_current_full_endpoint": true,
+          "matches_current_normalized_legado_rule": true
+        }
+      ],
       "review_clues": {
         "amsi_detection_recorded": false,
         "community_exact_endpoint_current_selected_raw": false,
