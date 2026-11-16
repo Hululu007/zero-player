@@ -11,16 +11,27 @@ extension _ComicDownload on BooksRepository {
     await _withBookRequestGuard(source, book, token, (active, guard) async {
       final images = await chapterImages(book, chapter, active);
       if (images.isEmpty) throw const FormatException('章节没有可保存的图片');
+      if (images.length > BookResourceLimits.chapterImages) {
+        throw const FormatException('章节图片数量无效');
+      }
       final content = <Uri, List<int>>{};
+      var used = 0;
       for (final image in images) {
         active.check();
         guard?.call(image, null);
-        content[image] = await chapterImageBytes(
+        final remaining = BookResourceLimits.chapterImageBytes - used;
+        if (remaining <= 0) {
+          throw const FormatException('单章图片超过离线空间限制');
+        }
+        final bytes = await chapterImageBytes(
           book,
           image,
           active,
           chapter: chapter,
+          maxBytes: remaining.clamp(1, BookResourceLimits.imageBytes),
         );
+        used += bytes.length;
+        content[image] = bytes;
       }
       await store.saveOfflineImages(book, chapter, content, () async {
         active.check();

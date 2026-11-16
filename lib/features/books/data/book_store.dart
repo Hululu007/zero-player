@@ -9,6 +9,8 @@ import 'book_source_links.dart';
 import 'book_mixed_content.dart';
 import 'book_download_evidence.dart';
 import 'book_site_revision.dart';
+import 'book_image_payload.dart';
+import 'book_resource_limits.dart';
 
 final class ProvenBookText {
   const ProvenBookText(this.body, this.evidence, this.segments);
@@ -555,6 +557,24 @@ final class BookStore {
     }, tables: {'app_meta'});
   }
 
+  /// Clear resume state while retaining shelf membership and offline content.
+  Future<void> clearHistory(Iterable<Book> books) => db.atomic(() async {
+    for (final book in books) {
+      final key = 'books_shelf:${book.id}';
+      final raw = await read(key);
+      if (raw is! Map) continue;
+      await write(key, {
+        ...raw,
+        'last': null,
+        'position': 0,
+        'textOffset': null,
+      });
+      await db.customStatement('DELETE FROM app_meta WHERE key=?', [
+        'rich_position_${book.id}',
+      ]);
+    }
+  }, tables: {'app_meta'});
+
   Future<void> saveRichPosition(
     Book book,
     BookChapter chapter, {
@@ -941,8 +961,13 @@ final class BookStore {
     final encoded = await read(_imageCacheKey(book, image));
     if (encoded is! String) return null;
     try {
-      return base64Decode(encoded);
+      final bytes = base64Decode(encoded);
+      await validateReadableBookImage(image, bytes);
+      return bytes;
     } on FormatException {
+      await db.customStatement('DELETE FROM app_meta WHERE key=?', [
+        _imageCacheKey(book, image),
+      ]);
       return null;
     }
   }
@@ -953,7 +978,8 @@ final class BookStore {
     List<int> bytes, {
     void Function()? validate,
   }) async {
-    if (bytes.length > 4 * 1024 * 1024) return;
+    if (bytes.length > BookResourceLimits.imageBytes) return;
+    await validateReadableBookImage(image, bytes);
     await db.atomic(() async {
       validate?.call();
       await db.customStatement(
@@ -967,7 +993,7 @@ final class BookStore {
       var used = 0;
       for (final row in rows) {
         used += row['bytes'] as int;
-        if (used > 24 * 1024 * 1024) {
+        if (used > BookResourceLimits.readingBytes) {
           await db.customStatement('DELETE FROM app_meta WHERE key=?', [
             row['key'],
           ]);
@@ -1040,16 +1066,29 @@ final class BookStore {
     Map<Uri, List<int>> images,
     Future<void> Function() validate,
   ) async {
-    if (images.isEmpty || images.length > 100) {
+    if (images.isEmpty || images.length > BookResourceLimits.chapterImages) {
       throw const FormatException('章节图片数量无效');
     }
-    final values = [
-      for (final bytes in images.values) jsonEncode(base64Encode(bytes)),
-    ];
-    final bytes = values.fold<int>(0, (total, value) => total + value.length);
-    if (bytes > 48 * 1024 * 1024) {
+    final rawBytes = images.values.fold<int>(
+      0,
+      (total, value) => total + value.length,
+    );
+    if (rawBytes > BookResourceLimits.chapterImageBytes ||
+        images.values.any(
+          (bytes) => bytes.length > BookResourceLimits.imageBytes,
+        )) {
       throw const FormatException('单章图片超过离线空间限制');
     }
+    for (final entry in images.entries) {
+      await validate();
+      await validateReadableBookImage(entry.key, entry.value);
+    }
+    // Account for base64 and JSON quotes without holding another chapter-sized
+    // collection. Encode and release only one image at a time in the transaction.
+    final bytes = images.values.fold<int>(
+      0,
+      (total, value) => total + ((value.length + 2) ~/ 3) * 4 + 2,
+    );
     await db.atomic(() async {
       final key = _offlineImageKey(book, chapter);
       final prefix = _offlineImagePartPrefix(book, chapter);
@@ -1060,19 +1099,21 @@ final class BookStore {
                 ['$prefix*'],
               )).single['bytes']
               as int;
-      if (used + bytes > 192 * 1024 * 1024) {
+      if (used + bytes > BookResourceLimits.offlineImageBytes) {
         throw const FormatException('离线图片空间已满');
       }
       await validate();
       await db.customStatement('DELETE FROM app_meta WHERE key GLOB ?', [
         '$prefix*',
       ]);
-      for (var index = 0; index < values.length; index++) {
+      var index = 0;
+      for (final image in images.values) {
         await db.customStatement(
           'INSERT INTO app_meta(key,value) VALUES(?,?)',
-          ['$prefix$index', values[index]],
+          ['$prefix${index++}', jsonEncode(base64Encode(image))],
         );
       }
+      await validate();
       await db.customStatement(
         'INSERT OR REPLACE INTO app_meta(key,value) VALUES(?,?)',
         [key, jsonEncode(images.keys.map((uri) => uri.toString()).toList())],

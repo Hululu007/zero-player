@@ -2,6 +2,24 @@
 
 更新：2026-11-16（Asia/Shanghai）。本文件是项目当前进度的唯一入口；下文日期章节和需求矩阵保留历史验收范围。
 
+## 小说审查问题修复与重新打包（2026-11-16）
+
+- 依据 [小说模块审查](BOOKS-CODE-REVIEW-2026-11-16.md) 修复 B-01～B-10：提前限制漫画请求和原始字节总量，逐图编码入库；阅读缓存和离线图片先做解码及像素校验；提供小说／听书单条历史删除和确认清空；发现页阈值浮动返回顶部；快捷行距／边距；漫画翻页和进度；图文墨色／排版；自动阅读偏好与面板交接；分页末行两端对齐。漫画仿真设置映射横向分页，不模拟纸页卷曲。另修复筛选 chip 刷新和分类行大字号高度，发现页工具栏／分类栏已拆分。
+- 全量 Flutter 回归 **1275 项通过、12 项跳过**（`build/books-review-fix-full-20261116.log`）；定向第二轮 50 项通过，最终拆分／访问修正后定向 17 项通过；正式源码和测试 `flutter analyze --no-pub lib test integration_test tool test_support` 无问题（`build/books-review-fix-analyze-final-20261116.log`）。全工作区 analyze 曾因原有 `tmp/preset_probe.dart` 的 print 提示返回失败；未删除或改动该临时探针。
+- Windows 原生受控回归 **1 项业务用例通过**，不将 tearDownAll 计入用例数；实际验证离线图片解码、翻页／缩放／键盘、清历史后收藏和离线保留。日志 `.dart_tool/native-5c9049a5/books_review_native_test.log`；既有 integration_test 插件检测提示仍保留，实际退出码 0。没有连接 Android 设备。
+- 源码规模工具仍失败（`build/books-review-fix-size-final-20261116.log`）：仓库类 2488 行在复杂源码 2500 行边界内、超过工具统一 1500 行提示，另有既有长函数与工具／测试超限。发现页已低于 1500 行；本轮新图片访问函数和新增回归分组低于 100 行。后续按下载／换源／策略职责继续整理仓库类，不为通过尺寸检查机械拆分。
+- Windows x64 普通 Release 与 Android ARM64 devtest Release 构建／重新打包完成（`build/books-review-fix-windows-20261116.log`、`build/books-review-fix-android-20261116.log`、`build/books-review-fix-package-20261116.log`）。交付目录 `artifacts/device-test/0.7.4-20261116-232253/`：Android APK 78015114 字节（74.4 MiB）、Windows 安装器 79155049 字节（75.5 MiB）、便携 ZIP 103244301 字节（98.5 MiB），附声明、原生来源、构建信息与 SHA256SUMS。APK 包名 `dev.zeroplayer.zero_player.devtest`、版本 `0.7.4+74`，v2 证书 SHA-256 与既有测试包相同（`d66972b598062015bc4092c1e45e05d8b4b437d6a1be8069e07907c1a97c14d6`）；APK SHA-256 `7b290edf96623a7792c9049d2801629a1805589e6375b816c14b6d20eff4c5ee`。ZIP CRC、全部摘要与 Windows 104 个构建文件逐项一致，APK 无 integration_test 插件类，证据 `build/books-review-fix-package-check-20261116.json`。Windows 三个注册文件与构建前逐字节一致；Android 普通 Release 只移除了 integration_test 注册项，原文件已保留在本轮构建证据中。
+- 本轮临时移除本机失效 Gradle 代理后构建，已确认 `E:/gradle-cache/gradle.properties` 原始字节完全恢复；未改变签名材料或用户数据库。复用已有测试签名与独立包名，不改为正式签名；没有执行 Git 提交、推送或公开发布，也未执行干净 Windows 安装／卸载。
+- 待验收仍包括 Android／TV 实机、系统大字号与超长标题叠加、长章节压力、真实站点并发带宽及长时后台下载；缓存全表扫描和预扫描事务优化保留为后续性能工作，未据本轮受控测试宣称完成。监管、内容过滤及网络访问边界未放宽。
+
+## 网络小说阅读器排版、手机端折叠与并发下载（2026-11-16）
+
+- 阅读器排版新增字号 12–44、行距 1.2–2.6、字间距 0–2、加粗正文与两端对齐，旧偏好缺少新键时保持原行为；正文样式统一由 `ReaderPreferences.bodyStyle` 生成，分页布局把对齐方式纳入布局键与 `TextPainter`，翻页、仿真与滚动三种模式共用。阅读页顶部新增「字号与排版」快捷面板（紧凑／标准／大字／特大预设、字号滑杆与 ±1、对齐与加粗、更多样式入口），完整面板补预设、字号滑杆、字间距与两端对齐开关；EPUB 阅读页同样应用该正文样式。真机上的字重与两端对齐实际渲染、以及系统级大字号叠加尚未核对。
+- 手机端断点统一 620 px：发现页搜索框收为提示胶囊，点击展开、收起按钮或滚动结果（输入框为空且未聚焦）时折叠，只有结果列表自身的滚动会折叠它（分类条与渠道按钮的横向滚动被排除）；渠道操作与分类条在窄屏改为单行横向滚动，不隐藏、不换行；书架把追更与状态／类型筛选折进带激活角标的「筛选与追更」按钮；搜索页字段筛选与下载管理页两个下拉在窄屏并排。320／390 px 布局回归无溢出异常，未覆盖超长书名与系统大字号叠加；折叠路径由 `test/widgets/book_discovery_phone_search_test.dart` 覆盖。
+- 章节下载并发按类型设为文本 4、漫画 3、听书 2，并提供 `BookDownloadCoordinator.maxConcurrency` 注入；离线证据预扫描由逐章串行改为最多 8 路并发，仍沿用每章的证据、租约与监管校验。协调器测试把有界并发上界改为 4；真实站点带宽与限流下的提速幅度未测，来源触发 `ContentBlocked` 时仍整单暂停。
+- 验证：`flutter analyze --no-pub` 无问题（`build/verified-analyze-novel-20261116.log`）；全量 Flutter 回归 1268 项通过、12 项按配置跳过（`build/verified-full-novel-20261116.log`）。本轮新增测试覆盖排版面板与偏好往返（`test/books/reader_enhancements_test.dart`、`test/books/local_formats_test.dart`）、并发上界与显式注入（`test/books/book_download_coordinator_test.dart`）、手机搜索折叠（`test/widgets/book_discovery_phone_search_test.dart`）。源码规模工具仍失败：`books_repository.dart` 2480 行、`book_discovery_view.dart` 1638 行超过 1500 行提示（仍在 2500 行界限内），其余为既有工具与测试函数超 100 行（`build/verified-size-novel-20261116.log`）。
+- 开发测试包已重新构建（2026-11-16 21:32—21:44，`build/verified-package-20261116.log`）：Windows x64 Release 与 Android ARM64 devtest Release（`0.7.4+74`，包名 `dev.zeroplayer.zero_player.devtest`，标签「Zero Player 测试」，v2 签名证书 SHA-256 `d66972b598062015bc4092c1e45e05d8b4b437d6a1be8069e07907c1a97c14d6` 与既有测试包一致，APK 内无 `integration_test` 条目）。产物在 `artifacts/device-test/0.7.4-20261116-214242/`：`zero-player-0.7.4-android-arm64.apk`（74.4 MiB，仅 arm64-v8a）、`zero-player-0.7.4-windows-x64-setup.exe`（75.5 MiB）、`zero-player-0.7.4-windows-x64-portable.zip`（97.1 MiB）、声明与原生来源 ZIP、`TEST-INFO.txt`、`SHA256SUMS.txt`。构建时本机 `E:\gradle-cache\gradle.properties` 配置的 127.0.0.1:7890 代理已失效，仅在该次构建临时禁用并已恢复原文件；包体未做实机验收。
+
 ## Legado 书源审核、监管与持续检测（2026-11-15—16）
 
 - 最新修复：详情识别的受限作品证据会关联同一来源与请求的旧对象，写入本机后在重启及离线读取前加载；页面先校验详情再开放目录，手动解析检测也保存证据。普通详情也保留有限规范化标题、作者、简介、分类及最近更新信息，以供后续监管关键词判断；简介可能含来源返回的敏感内容，具体上限、备份和误报处理限制见[使用说明](USER-GUIDE.md)。未曾观察分类且详情失败时仍不能识别未知内容，旧更新信息只保留最近一次。

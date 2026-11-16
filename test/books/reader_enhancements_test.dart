@@ -372,6 +372,96 @@ void _fallbackTest() {
       expect(await repository.store.text(original, chapter), isNull);
     },
   );
+
+  testWidgets('compact typography sheet applies presets and opens full style', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(390, 720);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    final root = (await tester.runAsync(
+      () => Directory.systemTemp.createTemp('reader-quick-style-'),
+    ))!;
+    final services = AppServices.scoped(root, AppDatabase.memory());
+    addTearDown(
+      () => tester.runAsync(() async {
+        await services.close();
+        await root.delete(recursive: true);
+      }),
+    );
+    await services.settings.load();
+    await services.supervision.load();
+    final book = Book(
+      'local',
+      BookKind.text,
+      '测试书',
+      '作者',
+      Uri.parse('book:quick-style'),
+    );
+    final chapters = [BookChapter('第一章', Uri.parse('book:quick-style#1'))];
+    await services.books.store.saveTexts(book, {
+      chapters.first: List.filled(12, '这是一段用于验证排版设置的正文。').join('\n'),
+    });
+    await services.books.store.write(
+      'books_reader_preferences',
+      const ReaderPreferences(autoEnabled: true, autoSeconds: 60).toJson(),
+    );
+    await tester.pumpWidget(
+      MaterialApp(
+        home: BookReaderPage(
+          repository: services.books,
+          book: book,
+          chapters: chapters,
+          initial: chapters.first,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tapAt(tester.getCenter(find.byType(ReaderViewport)));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('字号与排版'));
+    await tester.pumpAndSettle();
+    expect(find.text('字号与排版'), findsOneWidget);
+    expect(find.widgetWithText(ChoiceChip, '特大'), findsOneWidget);
+    await tester.tap(find.text('大字'));
+    await tester.pumpAndSettle();
+    final justify = find.widgetWithText(FilterChip, '两端对齐');
+    expect(tester.widget<FilterChip>(justify).selected, isFalse);
+    await tester.tap(justify);
+    await tester.pumpAndSettle();
+    expect(tester.widget<FilterChip>(justify).selected, isTrue);
+    final bold = find.widgetWithText(FilterChip, '加粗正文');
+    await tester.tap(bold);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('更多样式'));
+    await tester.pumpAndSettle();
+    expect(find.text('阅读样式'), findsOneWidget);
+    // Passing between sheets must not persist the outer sheet early.
+    final pending =
+        await services.books.store.read('books_reader_preferences') as Map;
+    expect(pending['font'], 21);
+    expect(pending['autoEnabled'], isTrue);
+    await tester.drag(find.text('阅读样式'), const Offset(0, -420));
+    await tester.pumpAndSettle();
+    expect(find.text('字间距'), findsOneWidget);
+    await tester.tapAt(const Offset(8, 8));
+    await tester.pumpAndSettle();
+    final stored =
+        await services.books.store.read('books_reader_preferences') as Map;
+    expect(stored['font'], 26);
+    expect(stored['line'], 1.9);
+    expect(stored['margin'], 24);
+    expect(stored['justify'], isTrue);
+    expect(stored['bold'], isTrue);
+    expect(stored['autoEnabled'], isTrue);
+    final viewport = tester.widget<ReaderViewport>(find.byType(ReaderViewport));
+    expect(viewport.style.fontSize, 26);
+    expect(viewport.style.fontWeight, FontWeight.w600);
+    expect(viewport.align, TextAlign.justify);
+    expect(tester.takeException(), isNull);
+    await tester.pumpWidget(const SizedBox());
+    await tester.pumpAndSettle();
+  });
 }
 
 Future<void> _checkFallbackContent(

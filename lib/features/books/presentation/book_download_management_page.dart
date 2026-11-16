@@ -257,13 +257,11 @@ final class _BookDownloadManagementPageState
 
   Widget _filters() => Padding(
     padding: const EdgeInsets.fromLTRB(12, 6, 12, 6),
-    child: Wrap(
-      spacing: 8,
-      runSpacing: 4,
-      crossAxisAlignment: WrapCrossAlignment.center,
-      children: [
-        DropdownButton<BookKind?>(
+    child: LayoutBuilder(
+      builder: (context, constraints) {
+        final kinds = DropdownButton<BookKind?>(
           value: _kind,
+          isExpanded: constraints.maxWidth < 620,
           items: const [
             DropdownMenuItem(value: null, child: Text('全部类型')),
             DropdownMenuItem(value: BookKind.text, child: Text('文字')),
@@ -271,9 +269,10 @@ final class _BookDownloadManagementPageState
             DropdownMenuItem(value: BookKind.audio, child: Text('听书')),
           ],
           onChanged: (value) => setState(() => _kind = value),
-        ),
-        DropdownButton<_DownloadFilter>(
+        );
+        final states = DropdownButton<_DownloadFilter>(
           value: _filter,
+          isExpanded: constraints.maxWidth < 620,
           items: const [
             DropdownMenuItem(value: _DownloadFilter.all, child: Text('全部状态')),
             DropdownMenuItem(
@@ -288,8 +287,25 @@ final class _BookDownloadManagementPageState
           ],
           onChanged: (value) =>
               setState(() => _filter = value ?? _DownloadFilter.all),
-        ),
-      ],
+        );
+        if (constraints.maxWidth >= 620) {
+          return Wrap(
+            spacing: 8,
+            runSpacing: 4,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [kinds, states],
+          );
+        }
+        // On phones keep both filters on a single row so they never wrap into
+        // a second line above the list.
+        return Row(
+          children: [
+            Expanded(child: kinds),
+            const SizedBox(width: 8),
+            Expanded(child: states),
+          ],
+        );
+      },
     ),
   );
 

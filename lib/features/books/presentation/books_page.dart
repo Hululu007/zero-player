@@ -398,6 +398,7 @@ final class _BooksPageState extends State<BooksPage> {
                           onManage: _manageSources,
                         ),
                         BookShelfView(
+                          historyMode: widget.libraryMode == 'history',
                           repository: _services.books,
                           kind: widget.kind,
                           entries: _shelf,

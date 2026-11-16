@@ -40,11 +40,13 @@ void main() {
     );
     final chapter = BookChapter('第一话', Uri.parse('https://fixture.test/1'));
     final image = Uri.parse('https://fixture.test/1.png');
-    await services.books.store.saveOfflineImages(book, chapter, {
-      image: base64Decode(
-        'iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAYAAABytg0kAAAAEUlEQVR4nGP4z8DwH4QZYAwAR8oH+WdZbrcAAAAASUVORK5CYII=',
-      ),
-    }, () async {});
+    await tester.runAsync(
+      () => services.books.store.saveOfflineImages(book, chapter, {
+        image: base64Decode(
+          'iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAYAAABytg0kAAAAEUlEQVR4nGP4z8DwH4QZYAwAR8oH+WdZbrcAAAAASUVORK5CYII=',
+        ),
+      }, () async {}),
+    );
     await tester.pumpWidget(
       MaterialApp(
         home: BookReaderPage(
@@ -70,6 +72,10 @@ void main() {
     await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
     await tester.pump(const Duration(milliseconds: 16));
     await tester.pump(const Duration(milliseconds: 250));
+    expect(
+      tester.widget<PageView>(find.byType(PageView)).scrollDirection,
+      Axis.horizontal,
+    );
     final scrollable = find.descendant(
       of: find.byType(BookImageChapter),
       matching: find.byType(Scrollable),

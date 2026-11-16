@@ -11,7 +11,7 @@ import 'package:zero_player/features/supervision/domain/supervision_rules.dart';
 
 void main() {
   test(
-    'paused download resumes with bounded concurrency and cleans up',
+    'paused download resumes with bounded per-kind concurrency and cleans up',
     () async {
       TestWidgetsFlutterBinding.ensureInitialized();
       final root = await Directory.systemTemp.createTemp('book-download-task-');
@@ -70,7 +70,7 @@ void main() {
       final first = coordinator.start(book, chapters, plan);
       await firstThree.future.timeout(const Duration(seconds: 5));
       expect(coordinator.active(book), same(first));
-      expect(peak, 3);
+      expect(peak, 4);
       first.pause();
       services.contentPolicy.refresh();
       gate.complete();
@@ -91,7 +91,7 @@ void main() {
       expect(resumed.status, BookDownloadStatus.completed);
       expect(resumed.failures, 0);
       expect(resumed.finished, 6);
-      expect(peak, 3);
+      expect(peak, 4);
       expect(await services.books.store.savedText(book), hasLength(6));
       expect(
         await services.books.store.read('books_download:${book.id}'),
@@ -100,6 +100,58 @@ void main() {
       expect(coordinator.active(book), isNull);
     },
   );
+
+  test('explicit concurrency cap bounds parallel chapter fetches', () async {
+    TestWidgetsFlutterBinding.ensureInitialized();
+    final root = await Directory.systemTemp.createTemp('book-download-cap-');
+    final services = AppServices.scoped(root, AppDatabase.memory());
+    addTearDown(() async {
+      await services.close();
+      await root.delete(recursive: true);
+    });
+    await services.settings.load();
+    await services.supervision.load();
+    final book = Book(
+      'source',
+      BookKind.text,
+      '并发上限测试',
+      '作者',
+      Uri.parse('https://fixture.test/capped'),
+    );
+    final chapters = List.generate(
+      5,
+      (index) => BookChapter(
+        '第${index + 1}章',
+        Uri.parse('https://fixture.test/capped/${index + 1}'),
+      ),
+    );
+    var active = 0, peak = 0;
+    final coordinator = BookDownloadCoordinator(
+      services.books,
+      maxConcurrency: 2,
+      downloadChapter: (book, chapter, token) async {
+        active++;
+        if (active > peak) peak = active;
+        try {
+          await Future<void>.delayed(const Duration(milliseconds: 15));
+          token.check();
+          await services.books.store.saveText(book, chapter, chapter.title);
+        } finally {
+          active--;
+        }
+      },
+    );
+    addTearDown(coordinator.close);
+    final task = coordinator.start(
+      book,
+      chapters,
+      const BookDownloadPlan(1, 5, false),
+    );
+    await task.done.timeout(const Duration(seconds: 5));
+    expect(task.status, BookDownloadStatus.completed);
+    expect(task.finished, 5);
+    expect(peak, 2);
+  });
 
   test(
     'policy revocation identifies the pause without changing user pause',

@@ -746,7 +746,9 @@ void _comicTargetTests() {
         f.pages['/chapter/1'] = '<img src="/safe.png">';
         f.media['/safe.png'] = (
           ContentType('image', 'png'),
-          [137, 80, 78, 71, 1, 2, 3],
+          base64Decode(
+            'iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAYAAABytg0kAAAAEUlEQVR4nGP4z8DwH4QZYAwAR8oH+WdZbrcAAAAASUVORK5CYII=',
+          ),
         );
         await f.repo.download(book, chapter, CancellationToken());
         expect(
@@ -768,7 +770,9 @@ void _comicTargetTests() {
         f.pages['/chapter/2'] = '<img src="/slow.png">';
         f.media['/slow.png'] = (
           ContentType('image', 'png'),
-          [137, 80, 78, 71, 9],
+          base64Decode(
+            'iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAYAAABytg0kAAAAEUlEQVR4nGP4z8DwH4QZYAwAR8oH+WdZbrcAAAAASUVORK5CYII=',
+          ),
         );
         final gate = f.hold('/slow.png');
         final pending = expectLater(
@@ -788,7 +792,12 @@ void _comicTargetTests() {
           source.endpoint.resolve('/chapter/3'),
         );
         f.pages['/chapter/3'] = '<img src="/adult">';
-        f.media['/adult'] = (ContentType('image', 'png'), [137, 80, 78, 71, 5]);
+        f.media['/adult'] = (
+          ContentType('image', 'png'),
+          base64Decode(
+            'iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAYAAABytg0kAAAAEUlEQVR4nGP4z8DwH4QZYAwAR8oH+WdZbrcAAAAASUVORK5CYII=',
+          ),
+        );
         final images = await f.repo.chapterImages(
           book,
           unfiltered,
@@ -801,7 +810,9 @@ void _comicTargetTests() {
             CancellationToken(),
             chapter: unfiltered,
           ),
-          [137, 80, 78, 71, 5],
+          base64Decode(
+            'iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAYAAABytg0kAAAAEUlEQVR4nGP4z8DwH4QZYAwAR8oH+WdZbrcAAAAASUVORK5CYII=',
+          ),
         );
         expect(f.requests.map((request) => request.$2.path), [
           '/chapter/3',
@@ -950,4 +961,64 @@ void _mediaProbeTargetTests() {
       }
     });
   });
+}
+
+void _comicBudgetTests() {
+  test(
+    'comic download stops requesting images at the raw chapter budget',
+    () async {
+      await _withFixture((f) async {
+        final source = _mediaSource('comic-budget.example', BookKind.comic);
+        await f.install(source);
+        final book = _mediaBook(source);
+        final chapter = BookChapter(
+          '大章节',
+          source.endpoint.resolve('/chapter/budget'),
+        );
+        final png = base64Decode(
+          'iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAYAAABytg0kAAAAEUlEQVR4nGP4z8DwH4QZYAwAR8oH+WdZbrcAAAAASUVORK5CYII=',
+        );
+        final payload = List<int>.filled(4 * 1024 * 1024, 0)
+          ..setRange(0, png.length, png);
+        f.pages['/chapter/budget'] = [
+          for (var i = 0; i < 13; i++) '<img src="/budget-$i.png">',
+        ].join();
+        for (var i = 0; i < 13; i++) {
+          f.media['/budget-$i.png'] = (ContentType('image', 'png'), payload);
+        }
+        await expectLater(
+          f.repo.download(book, chapter, CancellationToken()),
+          throwsFormatException,
+        );
+        expect(
+          f.requests.where((r) => r.$2.path.startsWith('/budget-')),
+          hasLength(12),
+        );
+        expect(await f.repo.store.offlineImageAddresses(book, chapter), isNull);
+      });
+    },
+  );
+  test(
+    'a corrupt image MIME response is rejected before caching or publishing',
+    () async {
+      await _withFixture((f) async {
+        final source = _mediaSource('comic-corrupt.example', BookKind.comic);
+        await f.install(source);
+        final book = _mediaBook(source);
+        final chapter = BookChapter(
+          '损坏章节',
+          source.endpoint.resolve('/chapter/corrupt'),
+        );
+        final image = source.endpoint.resolve('/corrupt.png');
+        f.pages['/chapter/corrupt'] = '<img src="/corrupt.png">';
+        f.media['/corrupt.png'] = (ContentType('image', 'png'), [1, 2, 3]);
+        await expectLater(
+          f.repo.download(book, chapter, CancellationToken()),
+          throwsFormatException,
+        );
+        expect(await f.repo.store.readingImage(book, image), isNull);
+        expect(await f.repo.store.offlineImageAddresses(book, chapter), isNull);
+      });
+    },
+  );
 }

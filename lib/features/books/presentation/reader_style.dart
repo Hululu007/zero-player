@@ -74,7 +74,10 @@ final class ReaderPreferences {
     this.family = 'NotoSerifSC',
     this.fontSize = 21,
     this.lineHeight = 1.8,
+    this.letterSpacing = 0,
     this.margin = 22,
+    this.bold = false,
+    this.justify = false,
     this.texture = true,
     this.animate = true,
     this.automatic = true,
@@ -99,9 +102,12 @@ final class ReaderPreferences {
     family: _fonts.containsKey(data['family'])
         ? data['family'] as String
         : 'NotoSerifSC',
-    fontSize: _number(data['font'], 21, 14, 38),
-    lineHeight: _number(data['line'], 1.8, 1.3, 2.4),
+    fontSize: _number(data['font'], 21, 12, 44),
+    lineHeight: _number(data['line'], 1.8, 1.2, 2.6),
+    letterSpacing: _number(data['spacing'], 0, 0, 2),
     margin: _number(data['margin'], 22, 12, 48),
+    bold: data['bold'] == true,
+    justify: data['justify'] == true,
     texture: data['texture'] != false,
     animate: data['animate'] != false,
     automatic: data['automatic'] != false,
@@ -115,9 +121,20 @@ final class ReaderPreferences {
   final ReaderTurnMode mode;
   final ReaderPaper paper;
   final String family;
-  final double fontSize, lineHeight, margin;
+  final double fontSize, lineHeight, letterSpacing, margin;
   final bool texture, animate, automatic, status, immersive, autoEnabled;
+  final bool bold, justify;
   final double autoSeconds, scrollSpeed;
+
+  /// Body text style for this preference set. Headings add their own weight in
+  /// the pagination layer, so bold here only lifts the reading weight.
+  TextStyle get bodyStyle => TextStyle(
+    fontFamily: family,
+    fontSize: fontSize,
+    height: lineHeight,
+    letterSpacing: letterSpacing,
+    fontWeight: bold ? FontWeight.w600 : FontWeight.w400,
+  );
 
   ReaderPreferences copyWith({
     ReaderTurnMode? mode,
@@ -125,7 +142,10 @@ final class ReaderPreferences {
     String? family,
     double? fontSize,
     double? lineHeight,
+    double? letterSpacing,
     double? margin,
+    bool? bold,
+    bool? justify,
     bool? texture,
     bool? animate,
     bool? automatic,
@@ -140,7 +160,10 @@ final class ReaderPreferences {
     family: family ?? this.family,
     fontSize: fontSize ?? this.fontSize,
     lineHeight: lineHeight ?? this.lineHeight,
+    letterSpacing: letterSpacing ?? this.letterSpacing,
     margin: margin ?? this.margin,
+    bold: bold ?? this.bold,
+    justify: justify ?? this.justify,
     texture: texture ?? this.texture,
     animate: animate ?? this.animate,
     automatic: automatic ?? this.automatic,
@@ -157,7 +180,10 @@ final class ReaderPreferences {
     'family': family,
     'font': fontSize,
     'line': lineHeight,
+    'spacing': letterSpacing,
     'margin': margin,
+    'bold': bold,
+    'justify': justify,
     'texture': texture,
     'animate': animate,
     'automatic': automatic,
@@ -308,6 +334,97 @@ Future<void> showReaderSettings(
   },
 );
 
+/// Compact style sheet for phones: presets, font size, alignment and weight in
+/// one short sheet, with a link to the full settings when more is needed.
+Future<bool?> showReaderQuickStyle(
+  BuildContext context,
+  ReaderPreferences initial,
+  ValueChanged<ReaderPreferences> onChange,
+) => showModalBottomSheet<bool>(
+  context: context,
+  isScrollControlled: true,
+  showDragHandle: true,
+  builder: (context) {
+    var settings = initial;
+    return StatefulBuilder(
+      builder: (context, update) {
+        void change(ReaderPreferences next) {
+          update(() => settings = next);
+          onChange(next);
+        }
+
+        return SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(18, 0, 18, 18),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        '字号与排版',
+                        style: Theme.of(context).textTheme.titleLarge,
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: () => Navigator.of(context).pop(true),
+                      child: const Text('更多样式'),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                Wrap(
+                  spacing: 6,
+                  runSpacing: 6,
+                  children: [
+                    for (final preset in _typePresets)
+                      ChoiceChip(
+                        label: Text(preset.label),
+                        selected: preset.matches(settings),
+                        onSelected: (_) => change(preset.apply(settings)),
+                      ),
+                  ],
+                ),
+                _fontSizeSlider(settings, change),
+                _lineHeightSlider(settings, change),
+                _StyleSlider(
+                  label: '页边距',
+                  value: settings.margin,
+                  min: 12,
+                  max: 48,
+                  divisions: 18,
+                  onChanged: (value) =>
+                      change(settings.copyWith(margin: value)),
+                ),
+                Wrap(
+                  spacing: 7,
+                  runSpacing: 6,
+                  children: [
+                    FilterChip(
+                      label: const Text('两端对齐'),
+                      selected: settings.justify,
+                      onSelected: (value) =>
+                          change(settings.copyWith(justify: value)),
+                    ),
+                    FilterChip(
+                      label: const Text('加粗正文'),
+                      selected: settings.bold,
+                      onSelected: (value) =>
+                          change(settings.copyWith(bold: value)),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  },
+);
+
 List<Widget> _paperSettings(
   BuildContext context,
   ReaderPreferences settings,
@@ -382,22 +499,29 @@ List<Widget> _typography(
     ],
     onChanged: (value) => change(settings.copyWith(family: value)),
   ),
-  _StyleSlider(
-    label: '字号',
-    value: settings.fontSize,
-    min: 14,
-    max: 38,
-    divisions: 24,
-    onChanged: (value) => change(settings.copyWith(fontSize: value)),
+  const SizedBox(height: 10),
+  Wrap(
+    spacing: 6,
+    runSpacing: 6,
+    children: [
+      for (final preset in _typePresets)
+        ChoiceChip(
+          label: Text(preset.label),
+          selected: preset.matches(settings),
+          onSelected: (_) => change(preset.apply(settings)),
+        ),
+    ],
   ),
+  _fontSizeSlider(settings, change),
+  _lineHeightSlider(settings, change),
   _StyleSlider(
-    label: '行距',
-    value: settings.lineHeight,
-    min: 1.3,
-    max: 2.4,
-    divisions: 11,
+    label: '字间距',
+    value: settings.letterSpacing,
+    min: 0,
+    max: 2,
+    divisions: 20,
     precision: 1,
-    onChanged: (value) => change(settings.copyWith(lineHeight: value)),
+    onChanged: (value) => change(settings.copyWith(letterSpacing: value)),
   ),
   _StyleSlider(
     label: '页边距',
@@ -407,7 +531,106 @@ List<Widget> _typography(
     divisions: 18,
     onChanged: (value) => change(settings.copyWith(margin: value)),
   ),
+  const SizedBox(height: 4),
+  Wrap(
+    spacing: 7,
+    runSpacing: 6,
+    children: [
+      FilterChip(
+        label: const Text('两端对齐'),
+        selected: settings.justify,
+        onSelected: (value) => change(settings.copyWith(justify: value)),
+      ),
+      FilterChip(
+        label: const Text('加粗正文'),
+        selected: settings.bold,
+        onSelected: (value) => change(settings.copyWith(bold: value)),
+      ),
+    ],
+  ),
 ];
+
+/// Named typography presets keep the sheet usable on a phone: one tap sets a
+/// coherent font size, line height and margin instead of three slider drags.
+final class _ReaderPreset {
+  const _ReaderPreset(this.label, this.fontSize, this.lineHeight, this.margin);
+  final String label;
+  final double fontSize, lineHeight, margin;
+
+  bool matches(ReaderPreferences settings) =>
+      settings.fontSize == fontSize &&
+      (settings.lineHeight - lineHeight).abs() < .0001 &&
+      settings.margin == margin;
+
+  ReaderPreferences apply(ReaderPreferences settings) => settings.copyWith(
+    fontSize: fontSize,
+    lineHeight: lineHeight,
+    margin: margin,
+  );
+}
+
+const _typePresets = [
+  _ReaderPreset('紧凑', 16, 1.6, 16),
+  _ReaderPreset('标准', 21, 1.8, 22),
+  _ReaderPreset('大字', 26, 1.9, 24),
+  _ReaderPreset('特大', 32, 2.0, 26),
+];
+
+Widget _lineHeightSlider(
+  ReaderPreferences settings,
+  ValueChanged<ReaderPreferences> change,
+) => _StyleSlider(
+  label: '行距',
+  value: settings.lineHeight,
+  min: 1.2,
+  max: 2.6,
+  divisions: 28,
+  precision: 2,
+  onChanged: (value) =>
+      change(settings.copyWith(lineHeight: (value * 100).round() / 100)),
+);
+
+Widget _fontSizeSlider(
+  ReaderPreferences settings,
+  ValueChanged<ReaderPreferences> change,
+) {
+  final size = settings.fontSize;
+  return Row(
+    children: [
+      const Text('字号'),
+      IconButton(
+        tooltip: '减小字号',
+        visualDensity: VisualDensity.compact,
+        icon: const Icon(Icons.text_decrease, size: 20),
+        onPressed: size > 12
+            ? () => change(settings.copyWith(fontSize: size - 1))
+            : null,
+      ),
+      Expanded(
+        child: Slider(
+          value: size,
+          min: 12,
+          max: 44,
+          divisions: 32,
+          label: size.round().toString(),
+          onChanged: (value) => change(settings.copyWith(fontSize: value)),
+        ),
+      ),
+      IconButton(
+        tooltip: '增大字号',
+        visualDensity: VisualDensity.compact,
+        icon: const Icon(Icons.text_increase, size: 20),
+        onPressed: size < 44
+            ? () => change(settings.copyWith(fontSize: size + 1))
+            : null,
+      ),
+      SizedBox(
+        width: 24,
+        child: Text(size.round().toString(), textAlign: TextAlign.center),
+      ),
+    ],
+  );
+}
 
 final class _StyleSlider extends StatelessWidget {
   const _StyleSlider({

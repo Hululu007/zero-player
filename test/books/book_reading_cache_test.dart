@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:zero_player/core/persistence/app_database.dart';
 import 'package:zero_player/features/books/data/book_store.dart';
@@ -5,6 +6,10 @@ import 'package:zero_player/features/books/data/book_mixed_content.dart';
 import 'package:zero_player/features/books/domain/book.dart';
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+  final png = base64Decode(
+    'iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAYAAABytg0kAAAAEUlEQVR4nGP4z8DwH4QZYAwAR8oH+WdZbrcAAAAASUVORK5CYII=',
+  );
   test(
     'policy revocation inside a cache transaction preserves old data',
     () async {
@@ -48,13 +53,13 @@ void main() {
         '旧混排',
       );
       final image = Uri.parse('https://fixture.test/1.png');
-      await store.cacheReadingImage(book, image, [1, 2, 3]);
+      await store.cacheReadingImage(book, image, png);
       checks = 0;
       await expectLater(
-        store.cacheReadingImage(book, image, [4, 5, 6], validate: revoked),
+        store.cacheReadingImage(book, image, png, validate: revoked),
         throwsStateError,
       );
-      expect(await store.readingImage(book, image), [1, 2, 3]);
+      expect(await store.readingImage(book, image), png);
     },
   );
 
@@ -72,14 +77,14 @@ void main() {
     final chapter = BookChapter('第一章', Uri.parse('https://fixture.test/1'));
     await store.cacheReading(book, chapter, '自动缓存');
     final image = Uri.parse('https://fixture.test/pages/1.png');
-    await store.cacheReadingImage(book, image, [137, 80, 78, 71]);
+    await store.cacheReadingImage(book, image, png);
     await store.cacheMixedReading(book, chapter, [
       const BookTextSegment('图前文字'),
       BookImageSegment(image),
     ]);
     await store.saveText(book, chapter, '离线下载');
     expect(await store.readingCache(book, chapter), '自动缓存');
-    expect(await store.readingImage(book, image), [137, 80, 78, 71]);
+    expect(await store.readingImage(book, image), png);
     expect(await store.mixedReading(book, chapter), hasLength(2));
     await store.clearReadingCache(book);
     expect(await store.readingCache(book, chapter), isNull);
@@ -101,16 +106,12 @@ void main() {
     );
     final chapter = BookChapter('第一话', Uri.parse('https://fixture.test/1'));
     final address = Uri.parse('https://fixture.test/1.png');
-    await store.saveOfflineImages(book, chapter, {
-      address: [1, 2, 3],
-    }, () async {});
-    await store.cacheReadingImage(book, address, [4, 5, 6]);
+    await store.saveOfflineImages(book, chapter, {address: png}, () async {});
+    await store.cacheReadingImage(book, address, png);
     expect(await store.savedImages(book), contains(chapter.id));
     await store.clearReadingCache(book);
     expect(await store.readingImage(book, address), isNull);
-    expect(await store.offlineImages(book, chapter), {
-      address: [1, 2, 3],
-    });
+    expect(await store.offlineImages(book, chapter), {address: png});
     await store.deleteImages(book, chapter);
     expect(await store.savedImages(book), isEmpty);
   });

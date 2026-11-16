@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -45,6 +46,10 @@ void main() {
     },
   );
 
+  _accessAndPublicationTests();
+}
+
+void _accessAndPublicationTests() {
   test(
     'a disabled comic source cannot publish and preserves old images',
     () async {
@@ -97,7 +102,9 @@ void main() {
           f.book,
           f.chapter,
           {
-            f.images.keys.first: [9, 9, 9],
+            f.images.keys.first: base64Decode(
+              'iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAYAAABytg0kAAAAEUlEQVR4nGP4z8DwH4QZYAwAR8oH+WdZbrcAAAAASUVORK5CYII=',
+            ),
           },
           () async {
             validated = true;
@@ -131,8 +138,12 @@ final class _Fixture {
   );
   late final chapter = BookChapter('第一话', source.endpoint.resolve('/chapter'));
   late final images = <Uri, List<int>>{
-    source.endpoint.resolve('/first.png'): [137, 80, 78, 71, 1],
-    source.endpoint.resolve('/second.png'): [137, 80, 78, 71, 2],
+    source.endpoint.resolve('/first.png'): base64Decode(
+      'iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAYAAABytg0kAAAAEUlEQVR4nGP4z8DwH4QZYAwAR8oH+WdZbrcAAAAASUVORK5CYII=',
+    ),
+    source.endpoint.resolve('/second.png'): base64Decode(
+      'iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAYAAABytg0kAAAAEUlEQVR4nGP4z8DwH4QZYAwAR8oH+WdZbrcAAAAASUVORK5CYII=',
+    ),
   };
 
   static Future<_Fixture> create() async {

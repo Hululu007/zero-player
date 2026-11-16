@@ -509,6 +509,8 @@ class _BookSearchPageState extends State<BookSearchPage> {
             child: groups.isEmpty
                 ? Center(child: Text(_emptyMessage()))
                 : ListView.builder(
+                    keyboardDismissBehavior:
+                        ScrollViewKeyboardDismissBehavior.onDrag,
                     itemCount: groups.length,
                     itemBuilder: (_, index) => _result(groups[index]),
                   ),
@@ -572,59 +574,75 @@ class _BookSearchPageState extends State<BookSearchPage> {
 
   Widget _toolbar() => Padding(
     padding: const EdgeInsets.fromLTRB(14, 8, 14, 4),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
+    child: LayoutBuilder(
+      builder: (context, constraints) {
+        final compact = constraints.maxWidth < 620;
+        final chips = <Widget>[
+          for (final (field, label) in const [
+            (BookSearchField.all, '全部'),
+            (BookSearchField.title, '书名'),
+            (BookSearchField.author, '作者'),
+          ])
+            ChoiceChip(
+              label: Text(label),
+              selected: _field == field,
+              onSelected: (_) {
+                if (_field == field) return;
+                _field = field;
+                _submit();
+              },
+            ),
+          if (_scoped)
+            InputChip(
+              label: Text(widget.favoritesOnly ? '收藏渠道' : _scopeName()),
+              onDeleted: () {
+                setState(() => _scoped = false);
+                _submit();
+              },
+            ),
+        ];
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Expanded(
-              child: TextField(
-                controller: _input,
-                textInputAction: TextInputAction.search,
-                onSubmitted: (_) => _submit(),
-                maxLength: 2048,
-                decoration: const InputDecoration(
-                  hintText: '输入书名、作者或书籍链接',
-                  counterText: '',
-                  prefixIcon: Icon(Icons.search),
+            Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _input,
+                    textInputAction: TextInputAction.search,
+                    onSubmitted: (_) => _submit(),
+                    maxLength: 2048,
+                    decoration: const InputDecoration(
+                      hintText: '输入书名、作者或书籍链接',
+                      counterText: '',
+                      prefixIcon: Icon(Icons.search),
+                    ),
+                  ),
                 ),
-              ),
+                IconButton(
+                  tooltip: _busy ? '取消搜索' : '搜索',
+                  icon: Icon(_busy ? Icons.stop : Icons.search),
+                  onPressed: _busy ? _cancelSearch : _submit,
+                ),
+              ],
             ),
-            IconButton(
-              tooltip: _busy ? '取消搜索' : '搜索',
-              icon: Icon(_busy ? Icons.stop : Icons.search),
-              onPressed: _busy ? _cancelSearch : _submit,
-            ),
+            if (compact)
+              // Keep the field chips on one scrolling row on phones instead of
+              // letting them wrap into a taller block.
+              SizedBox(
+                height: 42,
+                child: ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: chips.length,
+                  separatorBuilder: (_, _) => const SizedBox(width: 6),
+                  itemBuilder: (_, index) => chips[index],
+                ),
+              )
+            else
+              Wrap(spacing: 6, children: chips),
           ],
-        ),
-        Wrap(
-          spacing: 6,
-          children: [
-            for (final (field, label) in const [
-              (BookSearchField.all, '全部'),
-              (BookSearchField.title, '书名'),
-              (BookSearchField.author, '作者'),
-            ])
-              ChoiceChip(
-                label: Text(label),
-                selected: _field == field,
-                onSelected: (_) {
-                  if (_field == field) return;
-                  _field = field;
-                  _submit();
-                },
-              ),
-            if (_scoped)
-              InputChip(
-                label: Text(widget.favoritesOnly ? '收藏渠道' : _scopeName()),
-                onDeleted: () {
-                  _scoped = false;
-                  _submit();
-                },
-              ),
-          ],
-        ),
-      ],
+        );
+      },
     ),
   );
 

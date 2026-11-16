@@ -33,7 +33,11 @@ final class BookDownloadTask extends ChangeNotifier {
 
 /// Owns downloads for the lifetime of the repository, independently of routes.
 final class BookDownloadCoordinator extends ChangeNotifier {
-  BookDownloadCoordinator(this.repository, {this.downloadChapter}) {
+  BookDownloadCoordinator(
+    this.repository, {
+    this.downloadChapter,
+    this.maxConcurrency,
+  }) {
     repository.policy.addListener(_policyChanged);
     repository.sourceRiskChanges.addListener(_policyChanged);
   }
@@ -41,6 +45,22 @@ final class BookDownloadCoordinator extends ChangeNotifier {
   final BooksRepository repository;
   final Future<void> Function(Book, BookChapter, CancellationToken)?
   downloadChapter;
+
+  /// Optional cap on parallel chapter fetches; defaults are tuned per kind.
+  final int? maxConcurrency;
+
+  /// Text pages are cheap and latency-bound, so a wider pool pays off; image
+  /// and audio payloads are heavier, so they keep a narrower one.
+  static const _parallelByKind = <BookKind, int>{
+    BookKind.text: 4,
+    BookKind.comic: 3,
+    BookKind.audio: 2,
+  };
+
+  int _concurrencyFor(Book book, int chapters) {
+    final cap = maxConcurrency ?? _parallelByKind[book.kind] ?? 2;
+    return math.max(1, math.min(cap, chapters));
+  }
   final Map<String, BookDownloadTask> _tasks = {};
   bool _closed = false;
 
@@ -148,10 +168,7 @@ final class BookDownloadCoordinator extends ChangeNotifier {
       }
 
       await Future.wait(
-        List.generate(
-          math.min(book.kind == BookKind.text ? 3 : 2, chapters.length),
-          (_) => worker(),
-        ),
+        List.generate(_concurrencyFor(book, chapters.length), (_) => worker()),
       );
       token.check();
       if (task.failures == 0 && keepPlan) {

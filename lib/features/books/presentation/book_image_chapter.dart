@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 
 import '../../../core/network/cancellation_token.dart';
 import '../data/book_mixed_content.dart';
+import 'reader_style.dart';
 
 typedef ChapterImageLoader =
     Future<List<int>> Function(Uri address, CancellationToken token);
@@ -20,6 +21,12 @@ class BookImageChapter extends StatefulWidget {
     this.onPrevious,
     this.initialFraction = 0,
     this.onProgress,
+    this.mode = ReaderTurnMode.scroll,
+    this.animate = true,
+    this.textStyle,
+    this.textAlign = TextAlign.start,
+    this.margin = 22,
+    this.onMenu,
   });
 
   final ChapterImageLoader loadImage;
@@ -29,6 +36,12 @@ class BookImageChapter extends StatefulWidget {
   final VoidCallback? onPrevious;
   final double initialFraction;
   final ValueChanged<double>? onProgress;
+  final ReaderTurnMode mode;
+  final bool animate;
+  final TextStyle? textStyle;
+  final TextAlign textAlign;
+  final double margin;
+  final VoidCallback? onMenu;
 
   @override
   BookImageChapterState createState() => BookImageChapterState();
@@ -36,6 +49,16 @@ class BookImageChapter extends StatefulWidget {
 
 class BookImageChapterState extends State<BookImageChapter> {
   final ScrollController _scroll = ScrollController();
+  late PageController _pager = PageController(initialPage: _initialPage);
+  late int _page = _initialPage;
+  List<BookChapterSegment> get _parts =>
+      widget.segments ??
+      [for (final image in widget.images) BookImageSegment(image)];
+  int get _initialPage =>
+      (widget.initialFraction.clamp(0, 1) * _parts.length).round();
+  bool get _scrolling => widget.mode == ReaderTurnMode.scroll;
+  bool get _animate =>
+      widget.animate && !MediaQuery.disableAnimationsOf(context);
   bool _restoring = true;
   bool _userMoved = false;
   bool _restoreScheduled = false;
@@ -49,7 +72,7 @@ class BookImageChapterState extends State<BookImageChapter> {
 
   void _restore() {
     _restoreScheduled = false;
-    if (!mounted || !_scroll.hasClients) return;
+    if (!mounted || !_scrolling || !_scroll.hasClients) return;
     if (_userMoved) return;
     final max = _scroll.position.maxScrollExtent;
     if (max > 0 && widget.initialFraction > 0) {
@@ -72,7 +95,48 @@ class BookImageChapterState extends State<BookImageChapter> {
     widget.onProgress?.call(max <= 0 ? 0 : (_scroll.offset / max).clamp(0, 1));
   }
 
+  @override
+  void didUpdateWidget(covariant BookImageChapter oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.mode == widget.mode) return;
+    if (!_scrolling) {
+      _page = _initialPage;
+      final previous = _pager;
+      _pager = PageController(initialPage: _page);
+      WidgetsBinding.instance.addPostFrameCallback((_) => previous.dispose());
+    } else {
+      _userMoved = false;
+      _restoring = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) => _restore());
+    }
+  }
+
+  void _boundary(int direction) {
+    if (direction > 0) {
+      widget.onNext?.call();
+    } else {
+      widget.onPrevious?.call();
+    }
+  }
+
   void turn(int direction) {
+    if (!_scrolling) {
+      final target = _page + direction;
+      if (target < 0 || target > _parts.length) {
+        _boundary(direction);
+      } else if (_pager.hasClients) {
+        if (_animate) {
+          _pager.animateToPage(
+            target,
+            duration: const Duration(milliseconds: 225),
+            curve: Curves.easeOutCubic,
+          );
+        } else {
+          _pager.jumpToPage(target);
+        }
+      }
+      return;
+    }
     if (!_scroll.hasClients || direction == 0) return;
     final position = _scroll.position;
     final target =
@@ -80,31 +144,83 @@ class BookImageChapterState extends State<BookImageChapter> {
             .clamp(position.minScrollExtent, position.maxScrollExtent)
             .toDouble();
     if ((target - position.pixels).abs() < 1) {
-      if (direction > 0) {
-        widget.onNext?.call();
-      } else {
-        widget.onPrevious?.call();
-      }
+      _boundary(direction);
       return;
     }
-    _scroll.animateTo(
-      target,
-      duration: const Duration(milliseconds: 180),
-      curve: Curves.easeOut,
-    );
+    if (_animate) {
+      _scroll.animateTo(
+        target,
+        duration: const Duration(milliseconds: 180),
+        curve: Curves.easeOutCubic,
+      );
+    } else {
+      _scroll.jumpTo(target);
+    }
   }
 
   @override
   void dispose() {
     _scroll.dispose();
+    _pager.dispose();
     super.dispose();
+  }
+
+  Widget _part(BuildContext context, int index) {
+    final parts = _parts;
+    if (index == parts.length) {
+      return Padding(
+        padding: const EdgeInsets.all(24),
+        child: Center(
+          child: FilledButton.icon(
+            onPressed: widget.onNext,
+            icon: const Icon(Icons.navigate_next),
+            label: Text(widget.onNext == null ? '本章已结束' : '下一章'),
+          ),
+        ),
+      );
+    }
+    final part = parts[index];
+    if (part is BookTextSegment) {
+      final text = Padding(
+        padding: EdgeInsets.symmetric(horizontal: widget.margin, vertical: 14),
+        child: SelectableText(
+          part.text,
+          style: widget.textStyle ?? Theme.of(context).textTheme.bodyLarge,
+          textAlign: widget.textAlign,
+        ),
+      );
+      return _scrolling ? text : SingleChildScrollView(child: text);
+    }
+    final address = (part as BookImageSegment).address;
+    return _ChapterImage(
+      key: ValueKey('$index:$address'),
+      loadImage: widget.loadImage,
+      address: address,
+      index: parts.take(index + 1).whereType<BookImageSegment>().length,
+      paged: !_scrolling,
+      horizontal: widget.mode.horizontal,
+      onTurn: turn,
+      onMenu: widget.onMenu,
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    final parts =
-        widget.segments ??
-        [for (final image in widget.images) BookImageSegment(image)];
+    if (!_scrolling) {
+      return PageView.builder(
+        key: ValueKey(_pager),
+        controller: _pager,
+        scrollDirection: widget.mode.horizontal
+            ? Axis.horizontal
+            : Axis.vertical,
+        itemCount: _parts.length + 1,
+        onPageChanged: (index) {
+          _page = index;
+          widget.onProgress?.call(_parts.isEmpty ? 0 : index / _parts.length);
+        },
+        itemBuilder: _part,
+      );
+    }
     return NotificationListener<ScrollMetricsNotification>(
       onNotification: (_) {
         _scheduleRestore();
@@ -112,38 +228,8 @@ class BookImageChapterState extends State<BookImageChapter> {
       },
       child: ListView.builder(
         controller: _scroll,
-        itemCount: parts.length + 1,
-        itemBuilder: (context, index) {
-          if (index == parts.length) {
-            return Padding(
-              padding: const EdgeInsets.all(24),
-              child: Center(
-                child: FilledButton.icon(
-                  onPressed: widget.onNext,
-                  icon: const Icon(Icons.navigate_next),
-                  label: Text(widget.onNext == null ? '本章已结束' : '下一章'),
-                ),
-              ),
-            );
-          }
-          final part = parts[index];
-          if (part is BookTextSegment) {
-            return Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 14),
-              child: SelectableText(
-                part.text,
-                style: Theme.of(context).textTheme.bodyLarge,
-              ),
-            );
-          }
-          final address = (part as BookImageSegment).address;
-          return _ChapterImage(
-            key: ValueKey('$index:$address'),
-            loadImage: widget.loadImage,
-            address: address,
-            index: parts.take(index + 1).whereType<BookImageSegment>().length,
-          );
-        },
+        itemCount: _parts.length + 1,
+        itemBuilder: _part,
       ),
     );
   }
@@ -155,11 +241,18 @@ class _ChapterImage extends StatefulWidget {
     required this.loadImage,
     required this.address,
     required this.index,
+    required this.paged,
+    required this.horizontal,
+    required this.onTurn,
+    this.onMenu,
   });
 
   final ChapterImageLoader loadImage;
   final Uri address;
   final int index;
+  final bool paged, horizontal;
+  final ValueChanged<int> onTurn;
+  final VoidCallback? onMenu;
 
   @override
   State<_ChapterImage> createState() => _ChapterImageState();
@@ -199,6 +292,34 @@ class _ChapterImageState extends State<_ChapterImage> {
     super.dispose();
   }
 
+  void _zoom(Uint8List bytes) {
+    showDialog<void>(
+      context: context,
+      builder: (context) => Dialog.fullscreen(
+        child: Stack(
+          children: [
+            InteractiveViewer(
+              minScale: 0.5,
+              maxScale: 5,
+              child: Center(child: Image.memory(bytes)),
+            ),
+            Positioned(
+              top: 8,
+              right: 8,
+              child: SafeArea(
+                child: IconButton(
+                  tooltip: '关闭图片',
+                  onPressed: () => Navigator.pop(context),
+                  icon: const Icon(Icons.close),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) =>
       FutureBuilder<({Uint8List bytes, double aspect})>(
@@ -225,37 +346,30 @@ class _ChapterImageState extends State<_ChapterImage> {
           return Semantics(
             label: '第 ${widget.index} 张章节图片',
             child: InkWell(
-              onTap: () => showDialog<void>(
-                context: context,
-                builder: (context) => Dialog.fullscreen(
-                  child: Stack(
-                    children: [
-                      InteractiveViewer(
-                        minScale: 0.5,
-                        maxScale: 5,
-                        child: Center(child: Image.memory(bytes)),
-                      ),
-                      Positioned(
-                        top: 8,
-                        right: 8,
-                        child: SafeArea(
-                          child: IconButton(
-                            tooltip: '关闭图片',
-                            onPressed: () => Navigator.pop(context),
-                            icon: const Icon(Icons.close),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
+              onLongPress: widget.onMenu,
+              onTapUp: (details) {
+                final box = context.findRenderObject()! as RenderBox;
+                final fraction = widget.horizontal
+                    ? details.localPosition.dx / box.size.width
+                    : details.localPosition.dy / box.size.height;
+                if (fraction < .28) {
+                  widget.onTurn(-1);
+                  return;
+                }
+                if (fraction > .72) {
+                  widget.onTurn(1);
+                  return;
+                }
+                _zoom(bytes);
+              },
               child: LayoutBuilder(
                 builder: (context, constraints) => Image.memory(
                   bytes,
                   width: constraints.maxWidth,
-                  height: constraints.maxWidth * content.aspect,
-                  fit: BoxFit.fitWidth,
+                  height: widget.paged
+                      ? constraints.maxHeight
+                      : constraints.maxWidth * content.aspect,
+                  fit: widget.paged ? BoxFit.contain : BoxFit.fitWidth,
                   cacheWidth:
                       (constraints.maxWidth *
                               MediaQuery.devicePixelRatioOf(context))

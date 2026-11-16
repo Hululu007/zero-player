@@ -32,8 +32,9 @@ final class _ReadingSlice {
     this.visibleEnd,
     this.top,
     this.height,
+    this.lines,
   );
-  final int start, end, visibleEnd;
+  final int start, end, visibleEnd, lines;
   final double top, height;
 }
 
@@ -45,6 +46,7 @@ final class _ReaderLayout {
     this.scaler,
     this.direction, {
     this.headingEnd = 0,
+    this.textAlign = TextAlign.start,
   }) {
     final fontSize = scaler.scale(style.fontSize ?? 21).clamp(1, 160);
     final capacity =
@@ -77,14 +79,23 @@ final class _ReaderLayout {
         final visibleEnd = text.codeUnitAt(end - 1) == 10 ? end - 1 : end;
         painter.text = span(start, visibleEnd);
         painter.layout(maxWidth: size.width);
-        slices.add(_ReadingSlice(start, end, visibleEnd, top, painter.height));
+        slices.add(
+          _ReadingSlice(
+            start,
+            end,
+            visibleEnd,
+            top,
+            painter.height,
+            painter.computeLineMetrics().length,
+          ),
+        );
         top += painter.height;
         start = end;
       }
     } finally {
       painter.dispose();
     }
-    if (slices.isEmpty) slices.add(const _ReadingSlice(0, 0, 0, 0, 0));
+    if (slices.isEmpty) slices.add(const _ReadingSlice(0, 0, 0, 0, 0, 1));
     totalHeight = top;
   }
 
@@ -94,14 +105,18 @@ final class _ReaderLayout {
   final TextScaler scaler;
   final TextDirection direction;
   final int headingEnd;
+  final TextAlign textAlign;
   final slices = <_ReadingSlice>[];
   late final double totalHeight;
   double get maxScroll => math.max(0, totalHeight - size.height);
 
   static bool _lowSurrogate(int value) => value >= 0xdc00 && value <= 0xdfff;
 
-  TextPainter _painter() =>
-      TextPainter(textDirection: direction, textScaler: scaler);
+  TextPainter _painter() => TextPainter(
+    textDirection: direction,
+    textScaler: scaler,
+    textAlign: textAlign,
+  );
 
   int _lastVisibleOffset(TextPainter painter, int start, int end) {
     final metrics = painter.computeLineMetrics();
@@ -224,6 +239,7 @@ class ReaderViewport extends StatefulWidget {
     required this.onSelection,
     required this.onAnnotate,
     this.highlight,
+    this.align = TextAlign.start,
   });
 
   final String text;
@@ -236,6 +252,7 @@ class ReaderViewport extends StatefulWidget {
   final double margin;
   final ReaderProgress initial;
   final TextRange? highlight;
+  final TextAlign align;
   final ValueChanged<ReaderProgress> onProgress;
   final bool Function(int direction) canCross;
   final ValueChanged<int> onBoundary;
@@ -448,6 +465,7 @@ class ReaderViewportState extends State<ReaderViewport> {
       size,
       scaler,
       direction,
+      widget.align,
     );
     if (_layoutKey != key) {
       _layout = _ReaderLayout(
@@ -457,6 +475,7 @@ class ReaderViewportState extends State<ReaderViewport> {
         scaler,
         direction,
         headingEnd: widget.titleLength,
+        textAlign: widget.align,
       );
       _layoutKey = key;
     }
@@ -506,13 +525,26 @@ class ReaderViewportState extends State<ReaderViewport> {
   Widget _text(int index) {
     final layout = _layout!;
     final page = layout.slices[index];
+    // Keep paragraph continuation in the paragraph layout, then clip at the
+    // page's line count. Otherwise Flutter treats every page as a paragraph end
+    // and leaves its last soft-wrapped line unjustified.
+    final continues =
+        widget.align == TextAlign.justify &&
+        page.end < widget.text.length &&
+        page.visibleEnd == page.end;
+    final end = continues
+        ? layout.slices[index + 1].visibleEnd
+        : page.visibleEnd;
     return Text.rich(
       layout.span(
         page.start,
-        page.visibleEnd,
+        end,
         highlight: widget.highlight,
         highlightColor: widget.palette.accent.withValues(alpha: .28),
       ),
+      textAlign: widget.align,
+      maxLines: page.lines,
+      overflow: TextOverflow.clip,
     );
   }
 
@@ -565,6 +597,7 @@ class ReaderViewportState extends State<ReaderViewport> {
         size,
         scaler,
         direction,
+        widget.align,
       );
       if (_layoutKey != key || _laidOutMode != widget.mode) {
         _relayout(size, scaler, direction);

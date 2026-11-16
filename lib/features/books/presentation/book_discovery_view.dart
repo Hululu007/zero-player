@@ -19,6 +19,8 @@ import 'book_source_favorite.dart';
 import 'qidian_book_preview.dart';
 import 'qidian_browser_import.dart';
 
+part 'book_discovery_toolbar.dart';
+
 final class BookDiscoveryView extends StatefulWidget {
   const BookDiscoveryView({
     super.key,
@@ -48,6 +50,9 @@ final class BookDiscoveryView extends StatefulWidget {
 final class _BookDiscoveryViewState extends State<BookDiscoveryView> {
   final _search = TextEditingController();
   final _scroll = ScrollController();
+  final _searchFocus = FocusNode();
+  bool _searchOpen = false;
+  bool _showTop = false;
   final _results = <String, List<Book>>{};
   final _failures = <String>{};
   final _resultOrder = <String>[];
@@ -463,6 +468,8 @@ final class _BookDiscoveryViewState extends State<BookDiscoveryView> {
   };
 
   void _nearEnd() {
+    final showTop = _scroll.hasClients && _scroll.offset > 500;
+    if (mounted && showTop != _showTop) setState(() => _showTop = showTop);
     if (widget.active &&
         _next != null &&
         _moreError == null &&
@@ -635,11 +642,37 @@ final class _BookDiscoveryViewState extends State<BookDiscoveryView> {
     final query = _search.text.trim();
     if (query.isEmpty) return;
     FocusManager.instance.primaryFocus?.unfocus();
+    if (_searchOpen) setState(() => _searchOpen = false);
     widget.onSearch(
       query,
       _sourceId,
       _sourceId == null && !_showQidian && _favorites,
     );
+  }
+
+  void _openSearch() {
+    setState(() => _searchOpen = true);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _searchFocus.requestFocus();
+    });
+  }
+
+  void _closeSearch() {
+    _searchFocus.unfocus();
+    FocusManager.instance.primaryFocus?.unfocus();
+    setState(() => _searchOpen = false);
+  }
+
+  bool _onResultsScroll(ScrollUpdateNotification notification) {
+    // Only the result list may fold the search box: the horizontal category and
+    // channel rows report their own scroll updates through this listener.
+    if (notification.depth != 0) return false;
+    if ((notification.scrollDelta ?? 0) <= 0) return false;
+    if (!_searchOpen) return false;
+    if (_search.text.trim().isEmpty && !_searchFocus.hasFocus) {
+      setState(() => _searchOpen = false);
+    }
+    return false;
   }
 
   Future<void> _openMode() async {
@@ -676,6 +709,7 @@ final class _BookDiscoveryViewState extends State<BookDiscoveryView> {
     widget.repository.policy.removeListener(_discoveryPolicyChanged);
     _token?.cancel();
     _search.dispose();
+    _searchFocus.dispose();
     _scroll.dispose();
     super.dispose();
   }
@@ -687,27 +721,53 @@ final class _BookDiscoveryViewState extends State<BookDiscoveryView> {
     }
     return LayoutBuilder(
       builder: (context, constraints) {
-        final gutter = constraints.maxWidth < 620 ? 16.0 : 26.0;
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
+        final compact = constraints.maxWidth < 620;
+        final gutter = compact ? 16.0 : 26.0;
+        return Stack(
           children: [
-            _toolbar(gutter),
-            Expanded(
-              child: CustomScrollView(
-                controller: _scroll,
-                keyboardDismissBehavior:
-                    ScrollViewKeyboardDismissBehavior.onDrag,
-                slivers: [
-                  SliverToBoxAdapter(child: _browseHeader(gutter)),
-                  ..._content(gutter, constraints.maxWidth),
-                ],
-              ),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _toolbar(gutter, compact: compact),
+                Expanded(
+                  child: NotificationListener<ScrollUpdateNotification>(
+                    onNotification: _onResultsScroll,
+                    child: CustomScrollView(
+                      controller: _scroll,
+                      keyboardDismissBehavior:
+                          ScrollViewKeyboardDismissBehavior.onDrag,
+                      slivers: [
+                        SliverToBoxAdapter(
+                          child: _browseHeader(
+                            gutter,
+                            compact: compact && constraints.maxWidth < 520,
+                          ),
+                        ),
+                        ..._content(gutter, constraints.maxWidth),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
             ),
+            if (_showTop)
+              Positioned(
+                right: 16,
+                bottom: 16,
+                child: FloatingActionButton.small(
+                  heroTag: null,
+                  tooltip: '返回顶部',
+                  onPressed: _returnToTop,
+                  child: const Icon(Icons.vertical_align_top),
+                ),
+              ),
           ],
         );
       },
     );
   }
+
+  void _updateToolbar(VoidCallback change) => setState(change);
 
   void _returnToTop() {
     if (!_scroll.hasClients) return;
@@ -718,7 +778,7 @@ final class _BookDiscoveryViewState extends State<BookDiscoveryView> {
       unawaited(
         _scroll.animateTo(
           position.minScrollExtent,
-          duration: const Duration(milliseconds: 240),
+          duration: const Duration(milliseconds: 350),
           curve: Curves.easeOutCubic,
         ),
       );
@@ -733,207 +793,6 @@ final class _BookDiscoveryViewState extends State<BookDiscoveryView> {
     } else if (!_channelsOnly) {
       _checkAfterLayout();
     }
-  }
-
-  Widget _toolbar(double gutter) => Padding(
-    padding: EdgeInsets.fromLTRB(gutter, 8, gutter, 8),
-    child: LayoutBuilder(
-      builder: (context, constraints) {
-        final search = TextField(
-          controller: _search,
-          maxLength: 2048,
-          textInputAction: TextInputAction.search,
-          onSubmitted: (_) => _submitSearch(),
-          onChanged: (_) => setState(() {}),
-          decoration: InputDecoration(
-            isDense: true,
-            hintText: widget.kind == BookKind.audio ? '搜索作品' : '搜书名、作者或书籍链接',
-            counterText: '',
-            prefixIcon: const Icon(Icons.search),
-            suffixIcon: _search.text.isEmpty
-                ? null
-                : IconButton(
-                    tooltip: '清空搜索',
-                    onPressed: () {
-                      _search.clear();
-                      setState(() {});
-                    },
-                    icon: const Icon(Icons.close),
-                  ),
-          ),
-        );
-        final actions = <Widget>[
-          IconButton.filledTonal(
-            tooltip: '搜索',
-            icon: const Icon(Icons.search),
-            onPressed: _search.text.trim().isEmpty ? null : _submitSearch,
-          ),
-          if (_source == null)
-            IconButton(
-              tooltip: _channelsOnly ? '展开全部书单' : '折叠书单，仅显示渠道',
-              isSelected: _channelsOnly,
-              onPressed: _toggleChannelsOnly,
-              icon: const Icon(Icons.unfold_less),
-              selectedIcon: const Icon(Icons.unfold_more),
-            ),
-          IconButton(
-            tooltip: '返回顶部',
-            onPressed: _returnToTop,
-            icon: const Icon(Icons.vertical_align_top),
-          ),
-        ];
-        if (constraints.maxWidth < 420) {
-          return Column(
-            children: [
-              search,
-              Align(
-                alignment: Alignment.centerRight,
-                child: Row(mainAxisSize: MainAxisSize.min, children: actions),
-              ),
-            ],
-          );
-        }
-        return Row(
-          children: [
-            Expanded(child: search),
-            ...actions,
-          ],
-        );
-      },
-    ),
-  );
-
-  Widget _browseHeader(double gutter) {
-    final theme = Theme.of(context);
-    final source = _source?.source;
-    final status =
-        _error != null &&
-            (_recommended.isNotEmpty || _results[_sourceId]?.isNotEmpty == true)
-        ? _error
-        : _busy && (source == null || _page == 1)
-        ? (_total == 0 ? '正在加载…' : '$_completed / $_total 个渠道')
-        : _failures.isEmpty
-        ? null
-        : '${_failures.length} 个渠道加载失败';
-    return Padding(
-      padding: EdgeInsets.fromLTRB(gutter, 6, gutter, 8),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          LayoutBuilder(
-            builder: (context, constraints) {
-              final picker = Align(
-                alignment: Alignment.centerLeft,
-                child: OutlinedButton(
-                  onPressed: _pickSource,
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(Icons.hub_outlined, size: 18),
-                      const SizedBox(width: 8),
-                      Flexible(
-                        child: Text(
-                          source?.name ?? (_aggregate ? '聚合渠道' : '精选推荐'),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                      const Icon(Icons.expand_more, size: 18),
-                    ],
-                  ),
-                ),
-              );
-              final actions = _browseActions(source);
-              if (constraints.maxWidth < 420) {
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    picker,
-                    Wrap(spacing: 2, children: actions),
-                  ],
-                );
-              }
-              return Row(
-                children: [
-                  Expanded(child: picker),
-                  ...actions,
-                ],
-              );
-            },
-          ),
-          if (status != null)
-            Padding(
-              padding: const EdgeInsets.only(top: 6, left: 2),
-              child: Text(status, style: theme.textTheme.bodySmall),
-            ),
-          if (_categories.any(
-            (item) => bookCategoryAllowed(widget.repository.policy, item),
-          ))
-            _categoryBar(),
-          if (source == null && widget.kind == BookKind.text && !_channelsOnly)
-            _recommendationControls(),
-        ],
-      ),
-    );
-  }
-
-  List<Widget> _browseActions(BookSource? source) => [
-    if (source == null && !_showQidian)
-      IconButton(
-        tooltip: '选择发现渠道',
-        onPressed: _pickVisibleSources,
-        icon: const Icon(Icons.checklist),
-      ),
-    if (source == null && !_showQidian)
-      IconButton(
-        tooltip: _favorites ? '显示全部渠道' : '仅收藏源',
-        isSelected: _favorites,
-        icon: const Icon(Icons.star_border),
-        selectedIcon: const Icon(Icons.star),
-        onPressed: () {
-          setState(() => _favorites = !_favorites);
-          unawaited(_load());
-        },
-      ),
-    if (_source case final BookSourceEntry entry) _favoriteButton(entry),
-    if (source != null) _selectedSourceMenu(source),
-    if (source == null && _aggregate)
-      IconButton(
-        tooltip: '渠道书单点击方式',
-        onPressed: _openMode,
-        icon: const Icon(Icons.settings_outlined),
-      ),
-    IconButton(
-      tooltip: '刷新当前页面',
-      onPressed: _busy ? null : _refreshListing,
-      icon: const Icon(Icons.refresh),
-    ),
-  ];
-
-  Widget _categoryBar() {
-    final category = _category;
-    return Padding(
-      padding: const EdgeInsets.only(top: 8),
-      child: Wrap(
-        spacing: 8,
-        runSpacing: 4,
-        crossAxisAlignment: WrapCrossAlignment.center,
-        children: [
-          for (final item in _categories)
-            if (item.address.isNotEmpty &&
-                bookCategoryAllowed(widget.repository.policy, item))
-              ChoiceChip(
-                label: Text(
-                  bookCategoryLabel(item, _categories.indexOf(item)),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                selected: item == category,
-                onSelected: (_) => _selectCategory(item),
-              ),
-        ],
-      ),
-    );
   }
 
   Iterable<BookSourceEntry> get _orderedResults sync* {

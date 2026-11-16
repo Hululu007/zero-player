@@ -855,12 +855,7 @@ class _RichReaderState extends State<RichReaderPage>
             child: HtmlWidget(
               section.html,
               factoryBuilder: () => _EpubWidgetFactory(),
-              textStyle: TextStyle(
-                fontFamily: _style.family,
-                fontSize: _style.fontSize,
-                height: _style.lineHeight,
-                color: palette.ink,
-              ),
+              textStyle: _style.bodyStyle.copyWith(color: palette.ink),
               onTapUrl: (_) => true,
               customStylesBuilder: (e) => e.localName == 'pre'
                   ? {

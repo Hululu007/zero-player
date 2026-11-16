@@ -27,6 +27,7 @@ class BookShelfView extends StatefulWidget {
     required this.onRefresh,
     required this.onCheckUpdates,
     required this.checking,
+    this.historyMode = false,
   });
   final BooksRepository repository;
   final BookKind kind;
@@ -36,6 +37,7 @@ class BookShelfView extends StatefulWidget {
   final Future<void> Function() onRefresh;
   final Future<void> Function(List<BookShelfEntry>) onCheckUpdates;
   final bool checking;
+  final bool historyMode;
 
   @override
   State<BookShelfView> createState() => _BookShelfViewState();
@@ -45,6 +47,7 @@ class _BookShelfViewState extends State<BookShelfView> {
   List<ShelfList> _lists = [];
   String _selected = '';
   bool _following = false;
+  bool _filtersOpen = false;
   _ShelfFilter _filter = _ShelfFilter.all;
   String _type = '';
   Set<String> _offlineIds = {};
@@ -229,11 +232,48 @@ class _BookShelfViewState extends State<BookShelfView> {
       await _assign(entry.book);
       return;
     }
+    if (action == 'history') {
+      await _clearHistory([entry.book]);
+      return;
+    }
     await widget.repository.store.saveBook(
       entry.book,
       following: !entry.following,
     );
     if (mounted) widget.onFollowChanged();
+  }
+
+  Future<void> _clearHistory(List<Book> books, {bool confirm = false}) async {
+    if (confirm) {
+      final accepted = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('清空历史？'),
+          content: const Text('将清除当前历史列表的阅读进度，保留书架、收藏与离线内容。'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('取消'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('清空'),
+            ),
+          ],
+        ),
+      );
+      if (accepted != true) return;
+    }
+    try {
+      await widget.repository.store.clearHistory(books);
+      if (mounted) widget.onFollowChanged();
+    } on Exception {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('历史删除失败，请重试')));
+      }
+    }
   }
 
   @override
@@ -255,48 +295,150 @@ class _BookShelfViewState extends State<BookShelfView> {
         _ShelfFilter.updated => entry.newChapters > 0,
       };
     }).toList();
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(14, 8, 14, 6),
-          child: _toolbar(list),
-        ),
-        if (widget.checking) const LinearProgressIndicator(minHeight: 2),
-        Expanded(
-          child: entries.isEmpty
-              ? const Center(child: Text('这里还没有作品'))
-              : ListView.builder(
-                  itemCount: entries.length,
-                  itemBuilder: (_, index) => _tile(entries[index]),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final compact = constraints.maxWidth < 620;
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            if (widget.historyMode)
+              Align(
+                alignment: Alignment.centerRight,
+                child: TextButton.icon(
+                  onPressed: widget.entries.isEmpty
+                      ? null
+                      : () => _clearHistory(
+                          widget.entries.map((entry) => entry.book).toList(),
+                          confirm: true,
+                        ),
+                  icon: const Icon(Icons.delete_sweep_outlined),
+                  label: const Text('清空历史'),
                 ),
-        ),
-      ],
+              ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(14, 8, 14, 6),
+              child: _toolbar(list, compact: compact),
+            ),
+            if (widget.checking) const LinearProgressIndicator(minHeight: 2),
+            Expanded(
+              child: entries.isEmpty
+                  ? const Center(child: Text('这里还没有作品'))
+                  : ListView.builder(
+                      keyboardDismissBehavior:
+                          ScrollViewKeyboardDismissBehavior.onDrag,
+                      itemCount: entries.length,
+                      itemBuilder: (_, index) => _tile(entries[index]),
+                    ),
+            ),
+          ],
+        );
+      },
     );
   }
 
-  Widget _toolbar(ShelfList? list) => Wrap(
+  bool get _filtersActive =>
+      _following || _filter != _ShelfFilter.all || _type.isNotEmpty;
+
+  Widget _toolbar(ShelfList? list, {required bool compact}) {
+    if (!compact) return _wideToolbar(list);
+    final rows = <Widget>[
+      Row(
+        children: [
+          Expanded(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 180),
+              child: _listPicker(),
+            ),
+          ),
+          Badge(
+            smallSize: 8,
+            isLabelVisible: _filtersActive,
+            child: IconButton(
+              tooltip: _filtersOpen ? '收起筛选' : '筛选与追更',
+              isSelected: _filtersOpen,
+              onPressed: () => setState(() => _filtersOpen = !_filtersOpen),
+              icon: const Icon(Icons.tune),
+            ),
+          ),
+          IconButton(
+            tooltip: '检查追更',
+            onPressed: widget.checking ? null : widget.onRefresh,
+            icon: const Icon(Icons.refresh),
+          ),
+          PopupMenuButton<ShelfListKind>(
+            tooltip: '新建书架列表',
+            icon: const Icon(Icons.add),
+            onSelected: _edit,
+            itemBuilder: (_) => [
+              for (final type in ShelfListKind.values)
+                PopupMenuItem(value: type, child: Text('新建${_labels[type]}')),
+            ],
+          ),
+          if (list != null) _listMenu(list),
+        ],
+      ),
+      if (_filtersOpen)
+        Padding(
+          padding: const EdgeInsets.only(top: 6),
+          child: Wrap(
+            spacing: 6,
+            runSpacing: 4,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              FilterChip(
+                label: const Text('追更'),
+                selected: _following,
+                onSelected: (value) => setState(() => _following = value),
+              ),
+              _statusFilter(),
+              _typeFilter(),
+            ],
+          ),
+        ),
+    ];
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: rows);
+  }
+
+  Widget _listPicker() => DropdownButton<String>(
+    isExpanded: true,
+    value: _selected,
+    items: [
+      const DropdownMenuItem(value: '', child: Text('全部书籍')),
+      for (final item in _lists)
+        DropdownMenuItem(
+          value: item.id,
+          child: Text(
+            '${_labels[item.kind]} · ${item.name}',
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+    ],
+    onChanged: (value) => setState(() => _selected = value ?? ''),
+  );
+
+  Widget _listMenu(ShelfList list) => PopupMenuButton<bool>(
+    tooltip: '管理当前列表',
+    onSelected: (rename) async {
+      if (rename) {
+        await _edit(list.kind, list);
+      } else {
+        await _store.delete(list.id);
+        await _reload();
+      }
+    },
+    itemBuilder: (_) => const [
+      PopupMenuItem(value: true, child: Text('重命名')),
+      PopupMenuItem(value: false, child: Text('删除列表')),
+    ],
+  );
+
+  Widget _wideToolbar(ShelfList? list) => Wrap(
     spacing: 6,
     crossAxisAlignment: WrapCrossAlignment.center,
     children: [
       ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 180),
-        child: DropdownButton<String>(
-          isExpanded: true,
-          value: _selected,
-          items: [
-            const DropdownMenuItem(value: '', child: Text('全部书籍')),
-            for (final item in _lists)
-              DropdownMenuItem(
-                value: item.id,
-                child: Text(
-                  '${_labels[item.kind]} · ${item.name}',
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-          ],
-          onChanged: (value) => setState(() => _selected = value ?? ''),
-        ),
+        child: _listPicker(),
       ),
       FilterChip(
         label: const Text('追更'),
@@ -319,22 +461,7 @@ class _BookShelfViewState extends State<BookShelfView> {
             PopupMenuItem(value: type, child: Text('新建${_labels[type]}')),
         ],
       ),
-      if (list != null)
-        PopupMenuButton<bool>(
-          tooltip: '管理当前列表',
-          onSelected: (rename) async {
-            if (rename) {
-              await _edit(list.kind, list);
-            } else {
-              await _store.delete(list.id);
-              await _reload();
-            }
-          },
-          itemBuilder: (_) => const [
-            PopupMenuItem(value: true, child: Text('重命名')),
-            PopupMenuItem(value: false, child: Text('删除列表')),
-          ],
-        ),
+      if (list != null) _listMenu(list),
     ],
   );
 
@@ -414,6 +541,8 @@ class _BookShelfViewState extends State<BookShelfView> {
         tooltip: '书架操作',
         onSelected: (action) => _bookAction(entry, action),
         itemBuilder: (_) => [
+          if (entry.last != null)
+            const PopupMenuItem(value: 'history', child: Text('删除阅读历史')),
           const PopupMenuItem(value: 'lists', child: Text('归入分组、集合或书单')),
           if (book.sourceId != 'local')
             PopupMenuItem(

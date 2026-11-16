@@ -3,6 +3,7 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:archive/archive.dart';
+import 'package:flutter/painting.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:zero_player/app/app_services.dart';
 import 'package:zero_player/core/persistence/app_database.dart';
@@ -29,6 +30,35 @@ void main() {
       expect(p.scrollSpeed, 150);
       expect(ReaderPreferences.fromJson(p.toJson()).toJson(), p.toJson());
       expect(const ReaderPreferences().immersive, isTrue);
+    },
+  );
+  test(
+    'typography preferences clamp untrusted values and map into a text style',
+    () {
+      final p = ReaderPreferences.fromJson({
+        'font': 99,
+        'line': 9,
+        'spacing': -3,
+        'bold': 1,
+        'justify': 'yes',
+      });
+      expect(p.fontSize, 44);
+      expect(p.lineHeight, 2.6);
+      expect(p.letterSpacing, 0);
+      expect(p.bold, isFalse);
+      expect(p.justify, isFalse);
+      expect(ReaderPreferences.fromJson(p.toJson()).toJson(), p.toJson());
+      final style = const ReaderPreferences(
+        fontSize: 26,
+        lineHeight: 1.9,
+        letterSpacing: 1.2,
+        bold: true,
+      ).bodyStyle;
+      expect(style.fontSize, 26);
+      expect(style.height, 1.9);
+      expect(style.letterSpacing, 1.2);
+      expect(style.fontWeight, FontWeight.w600);
+      expect(const ReaderPreferences().bodyStyle.fontWeight, FontWeight.w400);
     },
   );
 }

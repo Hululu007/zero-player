@@ -52,6 +52,7 @@ migrate_working_dir/
 !/docs/implementation/STATUS.md
 !/docs/implementation/COMIC_SOURCE_AUDIT.md
 !/docs/implementation/BOOK_SOURCE_AUDIT.md
+!/docs/implementation/BOOKS-CODE-REVIEW-2026-11-16.md
 !/docs/implementation/legado-host-audit-20261115.json
 !/docs/implementation/legado-host-recheck-20261115.json
 !/docs/implementation/legado-dns-address-recheck-20261115.json

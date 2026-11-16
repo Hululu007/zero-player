@@ -503,34 +503,47 @@ final class _BookReaderPageState extends State<BookReaderPage>
     return KeyEventResult.ignored;
   }
 
-  Future<void> _settings() async {
+  Future<void> _settings() =>
+      _editStyle(() => showReaderSettings(context, _style, _applyStyle));
+
+  /// Shared by the full style sheet and the compact phone sheet.
+  void _applyStyle(ReaderPreferences settings) {
+    if (!mounted) return;
+    final previous = _style;
+    if (previous.immersive != settings.immersive) {
+      _systemUi.apply(settings.immersive);
+    }
+    setState(() => _style = settings);
+    if (!settings.autoEnabled) {
+      _stopAutomation();
+    } else if (!previous.autoEnabled ||
+        previous.mode != settings.mode ||
+        previous.autoSeconds != settings.autoSeconds) {
+      _startAutomation();
+    }
+  }
+
+  Future<void> _quickStyle() => _editStyle(() async {
+    final more = await showReaderQuickStyle(context, _style, _applyStyle);
+    if (mounted && more == true) {
+      await showReaderSettings(context, _style, _applyStyle);
+    }
+  });
+
+  /// Opens a style sheet and persists the result once it closes; both sheets
+  /// write the same preference record.
+  Future<void> _editStyle(Future<void> Function() open) async {
     _configuring = true;
-    await showReaderSettings(
-      context,
-      _style.copyWith(autoEnabled: _autoRunning),
-      (settings) {
-        if (!mounted) return;
-        final previous = _style;
-        if (previous.immersive != settings.immersive) {
-          _systemUi.apply(settings.immersive);
-        }
-        setState(() => _style = settings);
-        if (!settings.autoEnabled) {
-          _stopAutomation();
-        } else if (!_autoRunning ||
-            previous.mode != settings.mode ||
-            previous.autoSeconds != settings.autoSeconds) {
-          _startAutomation();
-        }
-      },
-    );
-    _configuring = false;
-    if (mounted) {
-      try {
-        await _books.store.write('books_reader_preferences', _style.toJson());
-      } on Exception {
-        if (mounted) _readerNotice('阅读设置保存失败，请重试');
-      }
+    try {
+      await open();
+    } finally {
+      _configuring = false;
+    }
+    if (!mounted) return;
+    try {
+      await _books.store.write('books_reader_preferences', _style.toJson());
+    } on Exception {
+      if (mounted) _readerNotice('阅读设置保存失败，请重试');
     }
   }
 
@@ -664,6 +677,12 @@ final class _BookReaderPageState extends State<BookReaderPage>
           ),
           images: _images,
           segments: _mixedSegments,
+          mode: _style.mode,
+          animate: _style.animate,
+          textStyle: _style.bodyStyle.copyWith(color: palette.ink),
+          textAlign: _style.justify ? TextAlign.justify : TextAlign.start,
+          margin: _style.margin,
+          onMenu: _toggleControls,
           initialFraction: _progress.value.fraction,
           onProgress: (fraction) => _moved(readerProgress(fraction)),
           onPrevious: () => _cross(-1),
@@ -684,17 +703,13 @@ final class _BookReaderPageState extends State<BookReaderPage>
           key: _viewport,
           text: _text,
           titleLength: _chapter.title.length,
-          style: TextStyle(
-            fontFamily: _style.family,
-            fontSize: _style.fontSize,
-            height: _style.lineHeight,
-            color: palette.ink,
-          ),
+          style: _style.bodyStyle.copyWith(color: palette.ink),
           palette: palette,
           mode: _style.mode,
           animate: _style.animate,
           texture: _style.texture,
           margin: _style.margin,
+          align: _style.justify ? TextAlign.justify : TextAlign.start,
           initial: _progress.value,
           highlight: _highlight,
           onProgress: _moved,
@@ -745,6 +760,12 @@ final class _BookReaderPageState extends State<BookReaderPage>
               ),
             ),
             if (_ready) ...[
+              IconButton(
+                tooltip: '字号与排版',
+                color: palette.ink,
+                icon: const Icon(Icons.format_size),
+                onPressed: _quickStyle,
+              ),
               IconButton(
                 tooltip: '书签与笔记',
                 color: palette.ink,

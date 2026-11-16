@@ -66,6 +66,9 @@ void main() {
       );
       await tester.pumpAndSettle();
       expect(tester.takeException(), isNull);
+      // Phones keep the shelf filters collapsed behind the tune button.
+      await tester.tap(find.byTooltip('筛选与追更'));
+      await tester.pumpAndSettle();
       await tester.tap(find.text('全部状态'));
       await tester.pumpAndSettle();
       await tester.tap(find.text('本地离线').last);

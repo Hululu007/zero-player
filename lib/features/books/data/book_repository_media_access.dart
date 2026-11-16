@@ -58,7 +58,9 @@ extension _BookRepositoryMediaAccess on BooksRepository {
     Uri image,
     CancellationToken token, {
     BookChapter? chapter,
+    int maxBytes = BookResourceLimits.imageBytes,
   }) async {
+    maxBytes = maxBytes.clamp(1, BookResourceLimits.imageBytes);
     await ensureSourceRiskLoaded();
     if (policy.supervision.enabled || !bookAllowed(book)) {
       throw const ContentBlocked();
@@ -74,24 +76,11 @@ extension _BookRepositoryMediaAccess on BooksRepository {
         ? null
         : await store.offlineImageBytes(book, chapter, image);
     if (offlineBytes != null) {
-      token.check();
-      if (chapter != null) requireBook(book, chapter);
-      if (policy.supervision.enabled ||
-          !bookAllowed(book) ||
-          await _blocked(book.sourceId)) {
-        throw const ContentBlocked();
+      if (offlineBytes.length > maxBytes) {
+        throw const FormatException('章节图片超过大小限制');
       }
-      final latest =
-          _riskSourceEntries[book.sourceId]?.source ??
-          _verifiedSources[book.sourceId];
-      if (latest != null && _restrictedBookTarget(latest, image, null)) {
-        throw const ContentBlocked();
-      }
-      token.check();
-      if (chapter != null) requireBook(book, chapter);
-      if (policy.supervision.enabled || !bookAllowed(book)) {
-        throw const ContentBlocked();
-      }
+      await validateReadableBookImage(image, offlineBytes);
+      await _authorizeOfflineImage(book, image, token, chapter);
       return readableBookImageBytes(image, offlineBytes);
     }
     final source = await _active(book);
@@ -112,7 +101,7 @@ extension _BookRepositoryMediaAccess on BooksRepository {
               uri,
               active,
               media: true,
-              maxBytes: 4 * 1024 * 1024,
+              maxBytes: maxBytes,
               requestGuard: guard,
             )
           : null;
@@ -130,6 +119,11 @@ extension _BookRepositoryMediaAccess on BooksRepository {
       final bytes = cached == null
           ? readableBookImageBytes(uri, document!.bytes)
           : readableBookImageBytes(uri, cached);
+      if (bytes.length > maxBytes) {
+        throw const FormatException('章节图片超过大小限制');
+      }
+      await validateReadableBookImage(uri, bytes);
+      validate();
       if (document != null) {
         try {
           await store.cacheReadingImage(book, uri, bytes, validate: validate);
@@ -146,5 +140,31 @@ extension _BookRepositoryMediaAccess on BooksRepository {
       }
       return bytes;
     });
+  }
+
+  Future<void> _authorizeOfflineImage(
+    Book book,
+    Uri image,
+    CancellationToken token,
+    BookChapter? chapter,
+  ) async {
+    token.check();
+    if (chapter != null) requireBook(book, chapter);
+    if (policy.supervision.enabled ||
+        !bookAllowed(book) ||
+        await _blocked(book.sourceId)) {
+      throw const ContentBlocked();
+    }
+    final latest =
+        _riskSourceEntries[book.sourceId]?.source ??
+        _verifiedSources[book.sourceId];
+    if (latest != null && _restrictedBookTarget(latest, image, null)) {
+      throw const ContentBlocked();
+    }
+    token.check();
+    if (chapter != null) requireBook(book, chapter);
+    if (policy.supervision.enabled || !bookAllowed(book)) {
+      throw const ContentBlocked();
+    }
   }
 }

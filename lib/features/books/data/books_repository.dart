@@ -32,6 +32,7 @@ import 'book_download_guard.dart';
 import 'book_discovery_paging.dart';
 import 'book_import.dart';
 import 'book_image_payload.dart';
+import 'book_resource_limits.dart';
 import 'book_mixed_content.dart';
 import 'book_policy_evidence.dart';
 import 'book_request_guard.dart';
@@ -1864,44 +1865,56 @@ final class BooksRepository {
     if (book.kind == BookKind.comic) return store.savedImages(book);
     final type = book.kind == BookKind.audio ? 'audio' : 'text';
     final indexed = await store.provenChapters(type, book);
+    final pending = chapters
+        .where((chapter) => indexed.contains(chapter.id))
+        .toList();
     final result = <String>{};
-    for (final chapter in chapters) {
-      token.check();
-      if (!indexed.contains(chapter.id)) continue;
-      try {
-        if (book.kind == BookKind.audio) {
-          final audio = await store.provenAudio(book, chapter);
-          if (audio == null) continue;
-          final lease = downloadGuard.lease();
-          await downloadGuard.validate(audio.evidence, expected: lease);
-          final session = await audioFiles.openProven(
-            book,
-            chapter,
-            audio.directory,
-            audio.evidence,
-          );
-          try {
+    // Proofs are independent per chapter, so validating a few at a time keeps
+    // the pre-scan off the critical path for long catalogs.
+    var cursor = 0;
+    Future<void> scan() async {
+      while (cursor < pending.length) {
+        final chapter = pending[cursor++];
+        token.check();
+        try {
+          if (book.kind == BookKind.audio) {
+            final audio = await store.provenAudio(book, chapter);
+            if (audio == null) continue;
+            final lease = downloadGuard.lease();
             await downloadGuard.validate(audio.evidence, expected: lease);
-            token.check();
-          } finally {
-            session.close();
+            final session = await audioFiles.openProven(
+              book,
+              chapter,
+              audio.directory,
+              audio.evidence,
+            );
+            try {
+              await downloadGuard.validate(audio.evidence, expected: lease);
+              token.check();
+            } finally {
+              session.close();
+            }
+          } else {
+            final text = await store.provenText(book, chapter);
+            if (text == null) continue;
+            await downloadGuard.validate(text.evidence);
+            if (!policy.textAllowed(text.body)) continue;
           }
-        } else {
-          final text = await store.provenText(book, chapter);
-          if (text == null) continue;
-          await downloadGuard.validate(text.evidence);
-          if (!policy.textAllowed(text.body)) continue;
+          token.check();
+          result.add(chapter.id);
+        } on RequestCancelled {
+          rethrow;
+        } on Exception {
+          // A stale or damaged proof is not usable; a fresh download can replace
+          // the pointer while retaining all previous records and files.
+          token.check();
         }
-        token.check();
-        result.add(chapter.id);
-      } on RequestCancelled {
-        rethrow;
-      } on Exception {
-        // A stale or damaged proof is not usable; a fresh download can replace
-        // the pointer while retaining all previous records and files.
-        token.check();
       }
     }
+
+    await Future.wait(
+      List.generate(math.max(1, math.min(8, pending.length)), (_) => scan()),
+    );
     return result;
   }
 
@@ -2213,7 +2226,14 @@ final class BooksRepository {
     Uri image,
     CancellationToken token, {
     BookChapter? chapter,
-  }) => _guardedChapterImageBytes(book, image, token, chapter: chapter);
+    int maxBytes = BookResourceLimits.imageBytes,
+  }) => _guardedChapterImageBytes(
+    book,
+    image,
+    token,
+    chapter: chapter,
+    maxBytes: maxBytes,
+  );
 
   Future<void> download(
     Book book,

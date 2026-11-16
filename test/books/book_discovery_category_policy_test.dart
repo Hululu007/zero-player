@@ -30,6 +30,7 @@ void main() {
   _inFlightPolicyTests();
   _nonLegadoTargetTests();
   _comicTargetTests();
+  _comicBudgetTests();
   _audioTargetTests();
   _mediaProbeTargetTests();
   _restrictedDiscoveryTests();

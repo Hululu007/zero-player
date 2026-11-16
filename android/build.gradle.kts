@@ -23,6 +23,10 @@ subprojects {
         afterEvaluate {
             extensions.configure<com.android.build.gradle.LibraryExtension> {
                 sourceSets.getByName("main").jniLibs.setSrcDirs(listOf(file(".lib/chromium%2F7520")))
+                // The project ships arm64-v8a and x86_64 only; without this filter
+                // CMake tries to download unsupported 32-bit PDFium at configure time.
+                defaultConfig.ndk.abiFilters.clear()
+                defaultConfig.ndk.abiFilters.addAll(listOf("arm64-v8a", "x86_64"))
             }
             tasks.matching { it.name.startsWith("merge") && it.name.endsWith("JniLibFolders") }.configureEach {
                 doFirst {
