@@ -30,6 +30,8 @@ extension BookSupervisedSiteScan on BooksRepository {
     policy.settings.addListener(cancelIfChanged);
     try {
       run._requireCurrent();
+      await ensureSiteObservations();
+      run._requireCurrent();
       await ensureSourceRiskLoaded();
       run._requireCurrent();
       final selected = await run._selectDue();
@@ -234,6 +236,7 @@ final class _SupervisedSiteRun {
           '$_siteCheckPrefix${latest.source.id}',
           check.toJson(),
         );
+        await _recordObservedSiteSource(books.store, latest.source);
         _requireCurrent();
         if (await books.store.siteRevisions.get(entry.source.id) !=
             siteRevision) {

@@ -42,6 +42,16 @@ final class BookSiteMonitor {
   void start() {
     if (_started || _closed) return;
     _started = true;
+    unawaited(
+      checks.books.ensureSiteObservations().catchError((
+        Object error,
+        StackTrace stack,
+      ) {
+        if (error is! RequestCancelled) {
+          debugPrint('书源抽查版本初始化未完成: ${error.runtimeType}');
+        }
+      }),
+    );
     _policySnapshot = bookSitePolicySnapshot(checks.books.policy);
     settings.addListener(_policyChanged);
     checks.books.policy.addListener(_policyChanged);

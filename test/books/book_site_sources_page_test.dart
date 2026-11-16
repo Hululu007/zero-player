@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:zero_player/app/app_services.dart';
+import 'package:zero_player/core/network/cancellation_token.dart';
 import 'package:zero_player/core/persistence/app_database.dart';
 import 'package:zero_player/core/persistence/installation_metadata.dart';
 import 'package:zero_player/features/books/application/book_site_checks.dart';
@@ -100,6 +101,7 @@ void _pageScriptClueTests() {
         await services.settings.load();
         await _skipCatalogSeed(services);
         await services.books.importSources([source]);
+        await _primeCurrentSample(services, source);
         final revision = (await services.books.store.siteRevisions.get(
           source.id,
         ))!;
@@ -215,6 +217,7 @@ void _pageScriptClueTests() {
       await services.settings.load();
       await _skipCatalogSeed(services);
       await services.books.importSources([warning, ordinary]);
+      await _primeCurrentSample(services, warning);
       final revision = (await services.books.store.siteRevisions.get(
         warning.id,
       ))!;
@@ -344,6 +347,7 @@ void _quarantineReviewPageTests() {
         await services.books.importSources([shown, risk]);
         await services.books.saveSource(shown, {'enabled': true});
         await services.books.markSourceRisk(risk, quarantine: true);
+        await _primeCurrentSample(services, shown);
         final check = BookSiteCheck.after(
           const BookSiteInspection(BookSiteFinding.gamblingClue),
           DateTime(2026, 11, 15, 8, 30),
@@ -489,6 +493,21 @@ Future<void> _skipCatalogSeed(AppServices services) async {
     'books_catalog_revision',
     '$revision:adult-$filter:2',
   );
+}
+
+Future<void> _primeCurrentSample(
+  AppServices services,
+  BookSource source,
+) async {
+  final entry = (await services.books.sources(
+    source.kind,
+  )).singleWhere((entry) => entry.source.id == source.id);
+  final checks = BookSiteChecks(
+    services.books,
+    inspect: (_, _) async => const BookSiteInspection(BookSiteFinding.sampled),
+  );
+  final result = await checks.run([entry], CancellationToken());
+  expect(result.checked, 1);
 }
 
 Future<void> _waitFor(WidgetTester tester, bool Function() complete) async {

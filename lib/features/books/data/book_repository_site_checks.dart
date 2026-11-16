@@ -107,8 +107,10 @@ final class BookSiteChecks {
   _inspect;
   bool _running = false;
 
-  Future<Map<String, BookSiteCheck>> load(List<BookSourceEntry> entries) =>
-      _loadSiteChecks(books.store, entries, _prefix);
+  Future<Map<String, BookSiteCheck>> load(List<BookSourceEntry> entries) async {
+    await books.ensureSiteObservations();
+    return _loadSiteChecks(books.store, entries, _prefix);
+  }
 
   Future<BookSiteCheckSummary> run(
     List<BookSourceEntry> entries,
@@ -179,6 +181,8 @@ final class BookSiteChecks {
 
     books.policy.addListener(policyChanged);
     try {
+      _checkPolicy(token, policySnapshot);
+      await books.ensureSiteObservations();
       _checkPolicy(token, policySnapshot);
       revisions = await books.store.siteRevisions.ensure(
         entries.map((entry) => entry.source.id).toSet(),
@@ -282,6 +286,7 @@ final class BookSiteChecks {
         );
         _checkPolicy(token, policySnapshot);
         await books.store.write('$_prefix${entry.source.id}', check.toJson());
+        await _recordObservedSiteSource(books.store, entry.source);
         _checkPolicy(token, policySnapshot);
         if (!_configurationCurrent(configurationSnapshot) ||
             await books.store.siteRevisions.get(entry.source.id) !=

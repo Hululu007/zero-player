@@ -21,6 +21,8 @@ import 'book_source_ledger_later_chain.dart';
 import 'book_source_ledger_jhsssd.dart';
 import 'book_source_ledger_recovered_four.dart';
 import 'book_source_ledger_eight_source.dart';
+import 'book_source_ledger_four_risk.dart';
+import 'book_source_ledger_rdap_org_yqxz.dart';
 
 const _catalogFolder = 'assets/catalogs/books/legado';
 const _evidenceFolder = 'docs/implementation';
@@ -111,6 +113,8 @@ const _evidenceFiles = [
   later943EvidenceFile,
   recoveredFourEvidenceFile,
   eightSourceEvidenceFile,
+  fourRiskEvidenceFile,
+  rdapOrgYqxzEvidenceFile,
   ..._amsiFiles,
 ];
 const _codePaths = [
@@ -187,6 +191,14 @@ const _codePaths = [
   'tool/verify_legado_eight_source_pilot.py',
   'tool/test_verify_legado_eight_source_pilot.py',
   'tool/verify_legado_eight_source_rules.dart',
+  'tool/book_source_ledger_four_risk.dart',
+  'tool/test_audit_book_source_ledger_four_risk.dart',
+  'tool/verify_legado_four_risk_revisit.py',
+  'tool/test_verify_legado_four_risk_revisit.py',
+  'tool/book_source_ledger_rdap_org_yqxz.dart',
+  'tool/test_audit_book_source_ledger_rdap_org_yqxz.dart',
+  'tool/verify_legado_rdap_org_yqxz.py',
+  'tool/test_verify_legado_rdap_org_yqxz.py',
   'tool/verify_legado_unresolved_943.py',
   'tool/verify_legado_recovered_four.py',
   'tool/test_verify_legado_recovered_four.py',
@@ -235,6 +247,7 @@ const _runtimePolicyReferencePaths = [
   'lib/features/books/data/book_repository_site_checks.dart',
   'lib/features/books/data/book_site_check.dart',
   'lib/features/books/data/book_site_inspection.dart',
+  'lib/features/books/data/book_site_observed_sources.dart',
   'lib/features/books/data/book_site_revision.dart',
   'lib/features/books/data/book_site_script_clues.dart',
   'lib/features/books/data/book_source_risk_store.dart',
@@ -1314,6 +1327,8 @@ Map<String, Object?> _row(
   JhsssdLedgerEvidence jhsssd,
   RecoveredFourLedgerEvidence recoveredFour,
   EightSourceLedgerEvidence eightSource,
+  FourRiskRevisitLedgerEvidence fourRisk,
+  RdapOrgYqxzLedgerEvidence orgYqxz,
   LengmenLedgerEvidence lengmen,
   Map<String, Map> data,
 ) {
@@ -1388,6 +1403,7 @@ Map<String, Object?> _row(
   registry.addAll(selectComRdapEvidence(rdapNine, source, index));
   registry.addAll(selectComRdapEvidence(rdapFive, source, index));
   registry.addAll(selectComRdapEvidence(topCc, source, index));
+  registry.addAll(selectRdapOrgYqxzEvidence(orgYqxz, source, index));
   registry.addAll(
     selectRecoveredFourEvidence(recoveredFour.registry, source, index),
   );
@@ -1447,6 +1463,8 @@ Map<String, Object?> _row(
     'search_and_discovery_observations': searchPilot,
     'historical_category_observations': categories,
     'historical_adult_source_review_observations': adultReview,
+    'historical_static_risk_revisit_observations':
+        selectFourRiskRevisitEvidence(fourRisk, source, index),
     'specialized_reading_observations': reading,
     'review_clues': _reviewClues(
       network: network,
@@ -1464,6 +1482,14 @@ void _verifyArchiveAssociation(
   String digest,
   Map<String, String> inputHashes,
 ) {
+  if (file == rdapOrgYqxzEvidenceFile) {
+    verifyRdapOrgYqxzInput(evidence, digest, inputHashes);
+    return;
+  }
+  if (file == fourRiskEvidenceFile) {
+    verifyFourRiskRevisitInput(evidence, inputHashes);
+    return;
+  }
   if (file == eightSourceEvidenceFile) {
     verifyEightSourceInput(evidence, digest, inputHashes);
     return;
@@ -1794,6 +1820,10 @@ Map<String, int> _summary(List<Map<String, Object?>> sources) {
     'sources_with_specialized_reading_observations': count(
       (row) => (row['specialized_reading_observations'] as List).isNotEmpty,
     ),
+    'sources_with_historical_static_risk_revisit_observations': count(
+      (row) => (row['historical_static_risk_revisit_observations'] as List)
+          .isNotEmpty,
+    ),
     for (final state in [
       'no_observation',
       'no_response_recorded',
@@ -1963,6 +1993,17 @@ void main(List<String> args) {
     hashes,
     catalog.rows,
   );
+  final fourRisk = readFourRiskRevisitEvidence(
+    data[fourRiskEvidenceFile]!,
+    data[_amsiClusters]!,
+    hashes,
+    catalog.rows,
+  );
+  final orgYqxz = readRdapOrgYqxzEvidence(
+    data[rdapOrgYqxzEvidenceFile]!,
+    hashes,
+    catalog.rows,
+  );
   final rows = [
     for (final source in catalog.imported.sources)
       _row(
@@ -1981,6 +2022,8 @@ void main(List<String> args) {
         jhsssd,
         recoveredFour,
         eightSource,
+        fourRisk,
+        orgYqxz,
         lengmen,
         data,
       ),

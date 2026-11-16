@@ -1,0 +1,717 @@
+{
+  "schema_version": 1,
+  "scope": "Four bundled selected sources; bounded redacted static observations, not a safety or permanent-availability verdict.",
+  "provenance": {
+    "archive": {
+      "path": "assets/catalogs/books/legado/catalog.json.bz2",
+      "sha256": "012a0e0d6e6adc8d303c32b578510e14b562088b3e965cb01a1a647b5e7e034d"
+    },
+    "import_inventory": {
+      "path": "docs/implementation/legado-import-inventory-20261115.json",
+      "sha256": "ad4e347888cad71812ee7da9477f027baf0bee5bceb1d4247fc69d6c4df8764c"
+    },
+    "historical_amsi": {
+      "path": "docs/implementation/legado-amsi-template-clusters-20261115.json",
+      "sha256": "0aaff7d86529327f67ea09f741d62a00a0cf47a03a90175b982619beeed9de3e"
+    },
+    "sampling_ledger": {
+      "path": "docs/implementation/legado-source-ledger-20261115.json",
+      "sha256": "170da0a6054483e83ae0827b7d6f7af18b44f8c20a5a5231856a656fb148fae4",
+      "matching_git_commit": "d02eb41033e22932273e0613fb133f9e395e11df",
+      "matching_commit_at_utc": "2026-11-16T02:26:02+00:00",
+      "matching_object_identified_after_initial_observations": true,
+      "commit_does_not_identify_entire_runtime": true
+    },
+    "summary_ledger": {
+      "path": "docs/implementation/legado-source-ledger-20261115.json",
+      "sha256": "cfd87a165b3fb175d603385eb7a64192f9ae11e5c0441ff35d94323594b7265e",
+      "matching_git_commit": "56955b3d441678f4734d4c8cb4bf377a373212c4",
+      "matching_commit_at_utc": "2026-11-16T02:31:18+00:00",
+      "scope": "ledger bytes at local summary assembly; not the collection-time runtime"
+    },
+    "legado_request_static_source": {
+      "path": "lib/features/books/data/legado/legado_request.dart",
+      "matching_git_commit": "d02eb41033e22932273e0613fb133f9e395e11df",
+      "normalized_lf_sha256": "da65df24e85c72e12e9b6305407612084bd8ea2f6d9197ce66fc96e0bd717914",
+      "scope": "later-matched single parser file; static inspection, not the collection-time runtime"
+    },
+    "local_redacted_summary_sha256": "bff455ac6a1a96b134d9a16130251799540c501de2282aadf31c137d15c150d6",
+    "local_summary_assembled_at_utc": "2026-11-16T02:31:49.046766+00:00",
+    "local_redacted_files_distributed": false,
+    "collector_distributed": false,
+    "local_capture_or_network_authenticity_offline_verifiable": false
+  },
+  "method": {
+    "observation_window_utc": [
+      "2026-11-16T02:19:48.112159+00:00",
+      "2026-11-16T02:27:23.525768+00:00"
+    ],
+    "http_requests": 17,
+    "counts_by_record_index": {
+      "36": 3,
+      "1439": 3,
+      "2098": 4,
+      "4568": 7
+    },
+    "all_resolved_dns_answers_checked_public": true,
+    "connection_pinned_to_checked_address": true,
+    "tls_hostname_verified": true,
+    "redirects_followed": false,
+    "cookies_or_credentials_sent": false,
+    "source_or_page_scripts_executed": false,
+    "subresources_fetched": false,
+    "get_requests": 16,
+    "synthetic_search_post_requests": 1,
+    "max_sample_bytes": 65536,
+    "timeout_seconds_per_dns_connect_or_read": 7,
+    "overall_wall_deadline_enforced": false
+  },
+  "sources": [
+    {
+      "record_index": 36,
+      "source_id": "1f08fd713aac15e302299bffa11eaed3964cb16a0d6c6024cbaf0cb2e2539c9f",
+      "endpoint_host": "get.xiashuzhan.com",
+      "name": "下书文学",
+      "kind": "text",
+      "format": "html",
+      "raw_record_canonical_sha256": "2f866e00625c4cb3ae588b8ba552a5080cef53122b3e59b892a123a2c22bf146",
+      "sample_ledger_endpoint_sha256": "e20dbc187f422a7e2095742d12587128ded79e4efdd187cb4921db014400661e",
+      "sample_ledger_normalized_legado_sha256": "6490a492a6a94ae381ccb087912038b8ffd40c8f353a41692b3a2afde850e976",
+      "prior_amsi": {
+        "evidence": "docs/implementation/legado-amsi-template-clusters-20261115.json",
+        "observed_at_utc": "2026-11-15T05:58:58.096562+00:00",
+        "root_classification": "detected",
+        "sample_bytes": 480,
+        "sample_sha256": "6bf4acd0a0a42e7fcd8cea6cc2fceb944b4388048a1a23f137858824483ee6eb",
+        "separate_inline_classification": "not_detected"
+      }
+    },
+    {
+      "record_index": 1439,
+      "source_id": "49288d9a4a46a7b884896dab3a61500fb815269d48f710dbd640dfed9848bf1b",
+      "endpoint_host": "s.fjwhcbsh.com",
+      "name": "🔖书枫迟诗",
+      "kind": "text",
+      "format": "html",
+      "raw_record_canonical_sha256": "d4293faefb80c70c39457c330482dbb0d59c0b256b0952a6c9675c3e55bd2803",
+      "sample_ledger_endpoint_sha256": "29074d784795d1dc00e4e9229bb3db59e70eb02051c6d24076fc57dd43c89aaf",
+      "sample_ledger_normalized_legado_sha256": "5d24b4d4cf792e57b427e148a5c6f416a9558c7b176e88de783622c5c8a894a8",
+      "prior_amsi": {
+        "evidence": "docs/implementation/legado-amsi-template-clusters-20261115.json",
+        "observed_at_utc": "2026-11-15T05:59:07.031080+00:00",
+        "root_classification": "detected",
+        "sample_bytes": 476,
+        "sample_sha256": "b2e5dfd2044b59fec684636582fc0280b3b273e09e0fe63e0281eea4bf55cf26",
+        "separate_inline_classification": "not_detected"
+      }
+    },
+    {
+      "record_index": 2098,
+      "source_id": "5395fcb9dde14042bb1d7f37a878fe7400d5e87d0f96178b0e48561e386879e2",
+      "endpoint_host": "wap.18biquge.com",
+      "name": "笔趣小说",
+      "kind": "text",
+      "format": "html",
+      "raw_record_canonical_sha256": "0b87860643f8f46f6614e6b99fdf2d4f01a55be934054aa9c892a868311c8756",
+      "sample_ledger_endpoint_sha256": "1477c903d0b18c5185b3ae03fe6f44c8639cf6dc439f0721d0b69ebbe11247db",
+      "sample_ledger_normalized_legado_sha256": "2aaaadeb68bf5898c57f73220e6122c703f686dba7b5a5f75f19d870b99262b2",
+      "prior_amsi": {
+        "evidence": "docs/implementation/legado-amsi-template-clusters-20261115.json",
+        "observed_at_utc": "2026-11-15T05:59:09.405908+00:00",
+        "root_classification": "detected",
+        "sample_bytes": 478,
+        "sample_sha256": "6ddaea1357ba2ef705ec784d3e8beeec5ca16034dcd13186dcb3262f9fdefffa",
+        "separate_inline_classification": "not_detected"
+      }
+    },
+    {
+      "record_index": 4568,
+      "source_id": "b580d46efc572f59d536293067e2671c03744bddfda42321e19ff36a058da206",
+      "endpoint_host": "www.zongcaixiaoshuow.com",
+      "name": "总裁小说",
+      "kind": "text",
+      "format": "html",
+      "raw_record_canonical_sha256": "7b8a39bf2d0ad92cfce4a58ba5bfa1b9f48fc0c07a1adac9b042f87e5ff29fb0",
+      "sample_ledger_endpoint_sha256": "59377888a95dabb813daa6550212a6ef14d7f9065aebd6f12b37decd02453254",
+      "sample_ledger_normalized_legado_sha256": "b78bfa4a65c8a8fb1063d9943cee00c5796f2748f8ede3e3e1ec7b89f6d3e690",
+      "prior_amsi": null
+    }
+  ],
+  "observations": [
+    {
+      "record_index": 36,
+      "stage": "initial_home",
+      "path_role": "homepage",
+      "started_at_utc": "2026-11-16T02:19:48.112159+00:00",
+      "method": "GET",
+      "http_status": 302,
+      "outcome": "http_response_no_html_sample",
+      "redirect": {
+        "followed": false,
+        "same_host": false,
+        "scheme": "http",
+        "destination_host": null
+      },
+      "sample": null,
+      "structural_checks": null
+    },
+    {
+      "record_index": 1439,
+      "stage": "initial_home",
+      "path_role": "homepage",
+      "started_at_utc": "2026-11-16T02:19:50.120387+00:00",
+      "method": "GET",
+      "http_status": 302,
+      "outcome": "http_response_no_html_sample",
+      "redirect": {
+        "followed": false,
+        "same_host": false,
+        "scheme": "http",
+        "destination_host": null
+      },
+      "sample": null,
+      "structural_checks": null
+    },
+    {
+      "record_index": 2098,
+      "stage": "initial_home",
+      "path_role": "homepage",
+      "started_at_utc": "2026-11-16T02:19:51.986173+00:00",
+      "method": "GET",
+      "http_status": 302,
+      "outcome": "http_response_no_html_sample",
+      "redirect": {
+        "followed": false,
+        "same_host": false,
+        "scheme": "https",
+        "destination_host": null
+      },
+      "sample": null,
+      "structural_checks": null
+    },
+    {
+      "record_index": 4568,
+      "stage": "initial_home",
+      "path_role": "homepage",
+      "started_at_utc": "2026-11-16T02:19:54.290633+00:00",
+      "method": "GET",
+      "http_status": 200,
+      "outcome": "html_sampled",
+      "redirect": null,
+      "sample": {
+        "bytes": 20598,
+        "sha256": "f5dc8f8eebb11eb2d10c58b901894efe867c9c12a417dff9ba865e3658178048",
+        "truncated": false,
+        "visible_text_clues": {
+          "gambling_business": false,
+          "gambling_invitation": false,
+          "adult_business": true,
+          "age_gate": false,
+          "ordinary_genres": true,
+          "challenge": false
+        },
+        "title_clues": {
+          "gambling_business": false,
+          "gambling_invitation": false,
+          "adult_business": false,
+          "age_gate": false,
+          "ordinary_genres": false,
+          "challenge": false
+        },
+        "description_clues": {
+          "gambling_business": false,
+          "gambling_invitation": false,
+          "adult_business": false,
+          "age_gate": false,
+          "ordinary_genres": false,
+          "challenge": false
+        },
+        "script_tags": 5,
+        "external_script_tags": 4,
+        "visible_characters": 2623
+      },
+      "structural_checks": null
+    },
+    {
+      "record_index": 36,
+      "stage": "repeat_home",
+      "path_role": "homepage",
+      "started_at_utc": "2026-11-16T02:21:39.967978+00:00",
+      "method": "GET",
+      "http_status": 200,
+      "outcome": "headers_received_only",
+      "redirect": null,
+      "sample": null,
+      "structural_checks": null
+    },
+    {
+      "record_index": 1439,
+      "stage": "repeat_home",
+      "path_role": "homepage",
+      "started_at_utc": "2026-11-16T02:21:41.776287+00:00",
+      "method": "GET",
+      "http_status": 200,
+      "outcome": "headers_received_only",
+      "redirect": null,
+      "sample": null,
+      "structural_checks": null
+    },
+    {
+      "record_index": 2098,
+      "stage": "repeat_home",
+      "path_role": "homepage",
+      "started_at_utc": "2026-11-16T02:21:43.689392+00:00",
+      "method": "GET",
+      "http_status": 302,
+      "outcome": "headers_received_only",
+      "redirect": {
+        "followed": false,
+        "same_host": false,
+        "scheme": "https",
+        "destination_host": "zairuc.com"
+      },
+      "sample": null,
+      "structural_checks": null
+    },
+    {
+      "record_index": 2098,
+      "stage": "old_category_headers",
+      "path_role": "old_genre_page",
+      "started_at_utc": "2026-11-16T02:21:45.990380+00:00",
+      "method": "GET",
+      "http_status": 200,
+      "outcome": "headers_received_only",
+      "redirect": null,
+      "sample": null,
+      "structural_checks": null
+    },
+    {
+      "record_index": 36,
+      "stage": "later_home_html",
+      "path_role": "homepage",
+      "started_at_utc": "2026-11-16T02:24:59.944631+00:00",
+      "method": "GET",
+      "http_status": 200,
+      "outcome": "html_sampled",
+      "redirect": null,
+      "sample": {
+        "bytes": 480,
+        "sha256": "bf76c07e70e38debab47ceac2c15f3519ae38554caccec2f5b29f55aad37cc39",
+        "truncated": false,
+        "visible_text_clues": {
+          "gambling_business": false,
+          "gambling_invitation": false,
+          "adult_business": false,
+          "age_gate": false,
+          "ordinary_genres": false,
+          "challenge": false
+        },
+        "title_clues": {
+          "gambling_business": false,
+          "gambling_invitation": false,
+          "adult_business": false,
+          "age_gate": false,
+          "ordinary_genres": false,
+          "challenge": false
+        },
+        "description_clues": {
+          "gambling_business": false,
+          "gambling_invitation": false,
+          "adult_business": false,
+          "age_gate": false,
+          "ordinary_genres": false,
+          "challenge": false
+        },
+        "script_tags": 1,
+        "external_script_tags": 0,
+        "visible_characters": 0
+      },
+      "structural_checks": null
+    },
+    {
+      "record_index": 1439,
+      "stage": "later_home_html",
+      "path_role": "homepage",
+      "started_at_utc": "2026-11-16T02:25:01.902921+00:00",
+      "method": "GET",
+      "http_status": 200,
+      "outcome": "html_sampled",
+      "redirect": null,
+      "sample": {
+        "bytes": 476,
+        "sha256": "19407dfed055c52f9150cb93b2eee073521aecf50780d58d2a8a2260a059d442",
+        "truncated": false,
+        "visible_text_clues": {
+          "gambling_business": false,
+          "gambling_invitation": false,
+          "adult_business": false,
+          "age_gate": false,
+          "ordinary_genres": false,
+          "challenge": false
+        },
+        "title_clues": {
+          "gambling_business": false,
+          "gambling_invitation": false,
+          "adult_business": false,
+          "age_gate": false,
+          "ordinary_genres": false,
+          "challenge": false
+        },
+        "description_clues": {
+          "gambling_business": false,
+          "gambling_invitation": false,
+          "adult_business": false,
+          "age_gate": false,
+          "ordinary_genres": false,
+          "challenge": false
+        },
+        "script_tags": 1,
+        "external_script_tags": 0,
+        "visible_characters": 0
+      },
+      "structural_checks": null
+    },
+    {
+      "record_index": 2098,
+      "stage": "old_category_html",
+      "path_role": "old_genre_page",
+      "started_at_utc": "2026-11-16T02:25:03.641998+00:00",
+      "method": "GET",
+      "http_status": 200,
+      "outcome": "html_sampled",
+      "redirect": null,
+      "sample": {
+        "bytes": 487,
+        "sha256": "a03ca6e13b45057c1eec65545b4bd9ee48a7aa2cffde290ed612dac193b7af7e",
+        "truncated": false,
+        "visible_text_clues": {
+          "gambling_business": false,
+          "gambling_invitation": false,
+          "adult_business": false,
+          "age_gate": false,
+          "ordinary_genres": false,
+          "challenge": false
+        },
+        "title_clues": {
+          "gambling_business": false,
+          "gambling_invitation": false,
+          "adult_business": false,
+          "age_gate": false,
+          "ordinary_genres": false,
+          "challenge": false
+        },
+        "description_clues": {
+          "gambling_business": false,
+          "gambling_invitation": false,
+          "adult_business": false,
+          "age_gate": false,
+          "ordinary_genres": false,
+          "challenge": false
+        },
+        "script_tags": 1,
+        "external_script_tags": 0,
+        "visible_characters": null
+      },
+      "structural_checks": null
+    },
+    {
+      "record_index": 4568,
+      "stage": "synthetic_search",
+      "path_role": "old_search_form",
+      "started_at_utc": "2026-11-16T02:25:06.698647+00:00",
+      "method": "POST",
+      "http_status": 200,
+      "outcome": "html_sampled",
+      "redirect": null,
+      "sample": {
+        "bytes": 1103,
+        "sha256": "efd683c46b336efcf4ce411530a5cbabcc6581d2aca49def7eb864cee9d35bc9",
+        "truncated": false,
+        "visible_text_clues": {
+          "gambling_business": false,
+          "gambling_invitation": false,
+          "adult_business": false,
+          "age_gate": false,
+          "ordinary_genres": false,
+          "challenge": false
+        },
+        "title_clues": {
+          "gambling_business": false,
+          "gambling_invitation": false,
+          "adult_business": false,
+          "age_gate": false,
+          "ordinary_genres": false,
+          "challenge": false
+        },
+        "description_clues": {
+          "gambling_business": false,
+          "gambling_invitation": false,
+          "adult_business": false,
+          "age_gate": false,
+          "ordinary_genres": false,
+          "challenge": false
+        },
+        "script_tags": 1,
+        "external_script_tags": 0,
+        "visible_characters": null
+      },
+      "structural_checks": {
+        "tbody_rows": 0,
+        "usable_links": 0
+      }
+    },
+    {
+      "record_index": 4568,
+      "stage": "genre_1",
+      "path_role": "old_ordinary_genre",
+      "started_at_utc": "2026-11-16T02:26:05.971848+00:00",
+      "method": "GET",
+      "http_status": 200,
+      "outcome": "html_sampled",
+      "redirect": null,
+      "sample": {
+        "bytes": 13869,
+        "sha256": "1c11d5ba8a1656f32bd85278d907b629a91828747a4262073dff1a592464800d",
+        "truncated": false,
+        "visible_text_clues": {
+          "gambling_business": false,
+          "gambling_invitation": false,
+          "adult_business": true,
+          "age_gate": false,
+          "ordinary_genres": true,
+          "challenge": false
+        },
+        "title_clues": {
+          "gambling_business": false,
+          "gambling_invitation": false,
+          "adult_business": false,
+          "age_gate": false,
+          "ordinary_genres": true,
+          "challenge": false
+        },
+        "description_clues": {
+          "gambling_business": false,
+          "gambling_invitation": false,
+          "adult_business": false,
+          "age_gate": false,
+          "ordinary_genres": true,
+          "challenge": false
+        },
+        "script_tags": 3,
+        "external_script_tags": 3,
+        "visible_characters": null
+      },
+      "structural_checks": {
+        "tbody_rows": 25,
+        "eligible_book_links": 25
+      }
+    },
+    {
+      "record_index": 4568,
+      "stage": "detail_1",
+      "path_role": "derived_same_host_detail",
+      "started_at_utc": "2026-11-16T02:26:07.704552+00:00",
+      "method": "GET",
+      "http_status": 200,
+      "outcome": "html_sampled",
+      "redirect": null,
+      "sample": {
+        "bytes": 65536,
+        "sha256": "cd89ddc0997a74898c557f29e2c3874b9e7cc193363d76479676d6478774d725",
+        "truncated": true,
+        "visible_text_clues": {
+          "gambling_business": false,
+          "gambling_invitation": false,
+          "adult_business": false,
+          "age_gate": false,
+          "ordinary_genres": true,
+          "challenge": false
+        },
+        "title_clues": {
+          "gambling_business": false,
+          "gambling_invitation": false,
+          "adult_business": false,
+          "age_gate": false,
+          "ordinary_genres": false,
+          "challenge": false
+        },
+        "description_clues": {
+          "gambling_business": false,
+          "gambling_invitation": false,
+          "adult_business": false,
+          "age_gate": false,
+          "ordinary_genres": false,
+          "challenge": false
+        },
+        "script_tags": 2,
+        "external_script_tags": 2,
+        "visible_characters": null
+      },
+      "structural_checks": {
+        "old_toc_anchor_count": 366
+      }
+    },
+    {
+      "record_index": 4568,
+      "stage": "genre_2",
+      "path_role": "old_ordinary_genre",
+      "started_at_utc": "2026-11-16T02:27:19.273234+00:00",
+      "method": "GET",
+      "http_status": 200,
+      "outcome": "html_sampled",
+      "redirect": null,
+      "sample": {
+        "bytes": 13869,
+        "sha256": "1c11d5ba8a1656f32bd85278d907b629a91828747a4262073dff1a592464800d",
+        "truncated": false,
+        "visible_text_clues": {
+          "gambling_business": false,
+          "gambling_invitation": false,
+          "adult_business": true,
+          "age_gate": false,
+          "ordinary_genres": true,
+          "challenge": false
+        },
+        "title_clues": {
+          "gambling_business": false,
+          "gambling_invitation": false,
+          "adult_business": false,
+          "age_gate": false,
+          "ordinary_genres": true,
+          "challenge": false
+        },
+        "description_clues": {
+          "gambling_business": false,
+          "gambling_invitation": false,
+          "adult_business": false,
+          "age_gate": false,
+          "ordinary_genres": true,
+          "challenge": false
+        },
+        "script_tags": 3,
+        "external_script_tags": 3,
+        "visible_characters": null
+      },
+      "structural_checks": {
+        "tbody_rows": 25,
+        "eligible_book_links": 25
+      }
+    },
+    {
+      "record_index": 4568,
+      "stage": "detail_2",
+      "path_role": "derived_same_host_detail",
+      "started_at_utc": "2026-11-16T02:27:21.016506+00:00",
+      "method": "GET",
+      "http_status": 200,
+      "outcome": "html_sampled",
+      "redirect": null,
+      "sample": {
+        "bytes": 65536,
+        "sha256": "cd89ddc0997a74898c557f29e2c3874b9e7cc193363d76479676d6478774d725",
+        "truncated": true,
+        "visible_text_clues": {
+          "gambling_business": false,
+          "gambling_invitation": false,
+          "adult_business": false,
+          "age_gate": false,
+          "ordinary_genres": true,
+          "challenge": false
+        },
+        "title_clues": {
+          "gambling_business": false,
+          "gambling_invitation": false,
+          "adult_business": false,
+          "age_gate": false,
+          "ordinary_genres": false,
+          "challenge": false
+        },
+        "description_clues": {
+          "gambling_business": false,
+          "gambling_invitation": false,
+          "adult_business": false,
+          "age_gate": false,
+          "ordinary_genres": false,
+          "challenge": false
+        },
+        "script_tags": 2,
+        "external_script_tags": 2,
+        "visible_characters": null
+      },
+      "structural_checks": {
+        "old_toc_anchor_count": 366
+      }
+    },
+    {
+      "record_index": 4568,
+      "stage": "chapter_1",
+      "path_role": "derived_same_host_chapter",
+      "started_at_utc": "2026-11-16T02:27:23.525768+00:00",
+      "method": "GET",
+      "http_status": 200,
+      "outcome": "html_sampled",
+      "redirect": null,
+      "sample": {
+        "bytes": 11765,
+        "sha256": "e440cff6e9446babfd9a79b459dbecd6eb5ec97424052a9f076ee6fd10b51fd7",
+        "truncated": false,
+        "visible_text_clues": {
+          "gambling_business": false,
+          "gambling_invitation": false,
+          "adult_business": true,
+          "age_gate": false,
+          "ordinary_genres": true,
+          "challenge": false
+        },
+        "title_clues": {
+          "gambling_business": false,
+          "gambling_invitation": false,
+          "adult_business": false,
+          "age_gate": false,
+          "ordinary_genres": false,
+          "challenge": false
+        },
+        "description_clues": {
+          "gambling_business": false,
+          "gambling_invitation": false,
+          "adult_business": false,
+          "age_gate": false,
+          "ordinary_genres": false,
+          "challenge": false
+        },
+        "script_tags": 11,
+        "external_script_tags": 8,
+        "visible_characters": null
+      },
+      "structural_checks": {
+        "old_content_selector_matches": 1,
+        "old_content_visible_characters": 1646
+      }
+    }
+  ],
+  "interpretation": {
+    "historical_amsi_is_sample_only_not_site_malware_proof": true,
+    "source36_and1439_signed_rules_or_other_hosts_not_tested": true,
+    "source2098_old_post_search_and_reading_not_tested": true,
+    "source4568_synthetic_search_zero_matches_not_permanent_failure": true,
+    "source4568_mixed_keyword_clues_do_not_prove_sitewide_adult": true,
+    "source4568_old_chapter_rule_declares_webview_true": true,
+    "source4568_inspected_parser_implements_webview_option": false,
+    "source4568_one_chapter_does_not_establish_full_reading": true,
+    "actual_legado_engine_or_webview_executed": false,
+    "automatic_sitewide_classification_or_quarantine_proposed": false
+  },
+  "limitations": [
+    "The original web responses, temporary collectors, actual network observations, application Legado engine and WebView cannot be recreated or authenticated by offline verification.",
+    "The sampling-ledger byte-identical Git object was committed after the first observations; it does not establish the full runtime or prove a commit existed at collection time.",
+    "The later summary-ledger Git object matches the ledger at local summary assembly, not the collection-time runtime.",
+    "The historical rule declares webView: true; the inspected LegadoRequest parser source does not implement that option, and application behavior was not run.",
+    "Git and both named historical objects are required for offline association; a shallow clone may not contain them.",
+    "A 7-second bound applies separately to DNS, connection and socket read operations; there was no total wall-clock deadline.",
+    "No webpage, chapter text, work title, work path, query data, cookie, source IP or account information is included.",
+    "Text clue booleans cover only the defined terms in sampled prefixes; missing terms do not establish safety or absence of adult content.",
+    "The sample uses one anonymous synthetic search; zero structural matches does not establish permanent failure.",
+    "The two detail samples are limited to 65536 bytes and both truncate; a single chapter and static selector counts do not establish full reading or safety.",
+    "Network paths, public DNS caches, security providers and hosted content can change; repeated observations do not prove independent infrastructure."
+  ]
+}

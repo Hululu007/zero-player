@@ -53,6 +53,7 @@ part 'book_repository_policy_review.dart';
 part 'book_repository_request_policy.dart';
 part 'book_repository_probe.dart';
 part 'book_repository_site_checks.dart';
+part 'book_site_observed_sources.dart';
 part 'book_supervised_site_scan.dart';
 
 typedef BookEdition = ({Book book, List<BookChapter> chapters});
@@ -180,6 +181,12 @@ final class BooksRepository {
   late final qidian = QidianCatalog(client.network, policy, store.db);
   late final AudiobookFiles audioFiles;
   late final Future<List<BookSource>> _builtins = _loadBuiltins();
+  Future<void>? _siteObservation;
+  int _siteObservationRestoreRevision = 0;
+  @visibleForTesting
+  Future<void> Function()? beforeSiteObservationTransactionForTesting;
+  @visibleForTesting
+  Future<void> Function()? afterSiteObservationWriteForTesting;
   final _verifiedSources = <String, BookSource>{};
   final _riskSourceEntries = <String, BookSourceEntry>{};
   final _sourceAssessments = <String, BookSourceAssessment>{};
@@ -351,6 +358,8 @@ final class BooksRepository {
 
   void suspendSourceRisks() {
     _sourceConfigurationRevision++;
+    _siteObservationRestoreRevision++;
+    _siteObservation = null;
     _riskSuspended = true;
     _riskLoaded = false;
     _riskGeneration++;
@@ -363,6 +372,15 @@ final class BooksRepository {
       await refreshSourceRisks();
     } finally {
       _sourceRiskChanges.value++;
+      if (!_evidenceClosing) {
+        unawaited(
+          ensureSiteObservations().catchError((Object error, StackTrace _) {
+            if (error is! RequestCancelled) {
+              debugPrint('书源抽查版本初始化未完成: ${error.runtimeType}');
+            }
+          }),
+        );
+      }
     }
   }
 

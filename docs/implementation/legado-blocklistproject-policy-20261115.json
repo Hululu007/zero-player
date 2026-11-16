@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-16T02:12:06.473625Z",
+  "generated_at": "2026-11-16T02:58:40.440061Z",
   "archive_sha256": "012a0e0d6e6adc8d303c32b578510e14b562088b3e965cb01a1a647b5e7e034d",
   "grouped_evidence_sha256": "792aadfcd6072ed5be45e1ee31f77452560f8b4bb23126784f49f99c5443d47e",
   "policy_script_sha256": "afa5484e088849a1ce4d3661a6679b63fd03413e18b2d8da349763022656fa72",
@@ -37,7 +37,7 @@
     "lib/features/books/domain/yingyu_legacy_source_fix.dart": "a979ed63e5b91a6ff5d992a959e4fc5bcffdf23141ff5586e77da0017c82bb8a",
     "lib/features/supervision/domain/content_classification.dart": "0f22950b5a1e5696fa1e60bb353c53a24f9b4546314290abab0081ed08e6146a",
     "lib/features/supervision/domain/adult_source_evidence.dart": "7dd20620b923e14687f8a7c58aafa923ece02172cd38aa260ac9bfe107795206",
-    "tool/audit_legado_amsi_classification.dart": "0d27e8d81a34b877fa4d72a3e18ab4bdb66a37818f2feeaf30fd2bcbe5714391",
+    "tool/audit_legado_amsi_classification.dart": "b3423486b438725877bde70ac80072de07bec41283997b8e663039e08e06a7c1",
     "tool/audit_blocklistproject_policy.dart": "afa5484e088849a1ce4d3661a6679b63fd03413e18b2d8da349763022656fa72"
   },
   "scope": "Offline current importer and fixed source/domain/adult rules only; no source rule execution, site request, user settings, blacklist or dynamic risk database.",

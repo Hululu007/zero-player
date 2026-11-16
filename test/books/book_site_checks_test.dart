@@ -1385,6 +1385,9 @@ void _monitorRetryTests() {
             .toSet();
         await repo.setSourcesEnabled(kind, others, false);
       }
+      // Isolate the older script-review format after the new source-version
+      // observation has already been established by a real local check.
+      await fixture.primeSiteChecks([oldSample, oldTimeout]);
       final now = DateTime.now();
       for (final source in [oldSample, oldTimeout]) {
         final finding = source.id == oldSample.id
@@ -1450,6 +1453,7 @@ void _monitorRetryTests() {
             .toSet();
         await repo.setSourcesEnabled(kind, others, false);
       }
+      await fixture.primeSiteChecks(sources);
       final now = DateTime.now();
       for (final source in failing) {
         await repo.store.write(
@@ -1619,6 +1623,21 @@ final class _Fixture {
     return entries
         .where((entry) => sources.any((s) => s.id == entry.source.id))
         .toList();
+  }
+
+  Future<void> primeSiteChecks(List<BookSource> sources) async {
+    final ids = sources.map((source) => source.id).toSet();
+    final entries = (await services.books.sources(
+      BookKind.text,
+    )).where((entry) => ids.contains(entry.source.id)).toList();
+    expect(entries.length, sources.length);
+    final checks = BookSiteChecks(
+      services.books,
+      inspect: (_, _) async =>
+          const BookSiteInspection(BookSiteFinding.sampled),
+    );
+    final result = await checks.run(entries, CancellationToken());
+    expect(result.checked, sources.length);
   }
 
   Future<void> close() async {
