@@ -276,6 +276,33 @@ class EvidenceVerifier:
             self.check_digest(self.root / path, digest)
         self.check_digest(archive, later['archive_sha256'])
 
+        latest = json.loads(self.read(self.docs / 'legado-unresolved-943-recheck-20261116.json'))
+        refs = latest['input_references']
+        expected = {'archive': 'assets/catalogs/books/legado/catalog.json.bz2',
+                    'previous_head': 'docs/implementation/legado-unresolved-head-later-20261116.json',
+                    'import_inventory': 'docs/implementation/legado-import-inventory-20261115.json'}
+        if set(refs) != set(expected) | {'historical_ledger'}:
+            raise ValueError('unexpected latest host recheck references')
+        for key, path in expected.items():
+            if refs[key]['path'] != path:
+                raise ValueError('unexpected latest host recheck input path')
+            self.check_digest(self.root / path, refs[key]['sha256'])
+        history = refs['historical_ledger']
+        self.git_snapshot(history['git_commit'], history['path'], history['sha256'], ledger_path)
+
+        four = json.loads(self.read(self.docs / 'legado-recovered-four-amsi-20261116.json'))
+        refs = four['input_references']
+        expected = {'archive': 'assets/catalogs/books/legado/catalog.json.bz2',
+                    'head': 'docs/implementation/legado-unresolved-943-recheck-20261116.json',
+                    'import_inventory': 'docs/implementation/legado-import-inventory-20261115.json',
+                    'prior_amsi': 'docs/implementation/legado-recovered-amsi-20261116.json'}
+        if set(refs) != set(expected):
+            raise ValueError('unexpected four-host AMSI references')
+        for key, path in expected.items():
+            if refs[key]['path'] != path:
+                raise ValueError('unexpected four-host AMSI input path')
+            self.check_digest(self.root / path, refs[key]['sha256'])
+
         amsi = json.loads(self.read(self.docs / 'legado-recovered-amsi-20261116.json'))
         self.check_digest(archive, amsi['archive_sha256'])
         self.check_digest(self.docs / filename('legado-import-inventory'), amsi['import_inventory_sha256'])

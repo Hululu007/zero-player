@@ -1,0 +1,557 @@
+{
+  "schema_version": 1,
+  "input_references": {
+    "head": {
+      "path": "docs/implementation/legado-unresolved-943-recheck-20261116.json",
+      "sha256": "9925c34398debb413de438d0ac6a709c8b41f1abc7be26365bec1319ce0e23e0"
+    },
+    "archive": {
+      "path": "assets/catalogs/books/legado/catalog.json.bz2",
+      "sha256": "012a0e0d6e6adc8d303c32b578510e14b562088b3e965cb01a1a647b5e7e034d"
+    },
+    "import_inventory": {
+      "path": "docs/implementation/legado-import-inventory-20261115.json",
+      "sha256": "ad4e347888cad71812ee7da9477f027baf0bee5bceb1d4247fc69d6c4df8764c"
+    },
+    "prior_amsi": {
+      "path": "docs/implementation/legado-recovered-amsi-20261116.json",
+      "sha256": "050c6913ab5dacd607c68a369206e46ac30bdd226f6729ef6a5c1cb5c3bc6dcc"
+    }
+  },
+  "local_collector_sha256": {
+    "amsi_baseline": "9d7d6c776218cfba31aa8c2ba0cb68b7d1dc12d2296b2efb54b0c4118429e21e",
+    "amsi_results": "8fc2d9f982efa25e8dfaf0c26b7ab0803d5b0c3abb10f53c5bb6babaa46672d5",
+    "followup": "07e4b31f7b7cccf841551bac48729291f675daf14e81e6bdbb12a98776a89728"
+  },
+  "amsi": {
+    "method": "Anonymous HTTPS GET /, all DNS answers must be public and TCP uses a validated IP; TLS hostname checked; no redirects, credentials, scripts or subresources.",
+    "scope": "All previously inventoried bundled Legado hosts, with previously sampled HTML hosts first. A fresh bounded root-page prefix and bounded inline script text are scanned; linked scripts and downloaded files are not fetched. No whole-site malware conclusion.",
+    "privacy": "Page bodies are held in memory only and are not saved by this tool; the installed AMSI antimalware provider may use cloud protection or sample submission under its existing settings. The tool does not submit bookcase data or credentials.",
+    "archive_sha256": "012a0e0d6e6adc8d303c32b578510e14b562088b3e965cb01a1a647b5e7e034d",
+    "prior_audit_sha256": "9d7d6c776218cfba31aa8c2ba0cb68b7d1dc12d2296b2efb54b0c4118429e21e",
+    "import_inventory_sha256": "ad4e347888cad71812ee7da9477f027baf0bee5bceb1d4247fc69d6c4df8764c",
+    "total_hosts": 4,
+    "prior_html_hosts": 0,
+    "offset": 0,
+    "requested_hosts": 4,
+    "workers": 2,
+    "minimum_request_start_interval_seconds": 0.5,
+    "network_deadline_seconds": 6.0,
+    "amsi_worker_deadline_seconds": 15,
+    "max_html_bytes": 32768,
+    "max_inline_scripts_per_page": 6,
+    "max_inline_script_bytes": 8192,
+    "inline_script_limitations": "ASCII-compatible HTML parser over the bounded prefix; no external script fetch. Empty tags are counted but not scanned, later scripts and excess bytes are omitted; partial tags/scripts and encodings such as UTF-16 may not be recognized.",
+    "started_at": "2026-11-16T00:58:54.871935+00:00",
+    "defender_status": {
+      "AMRunningMode": "Normal",
+      "AntivirusEnabled": true,
+      "AntivirusSignatureVersion": "1.463.319.0",
+      "AntivirusSignatureLastUpdated": "2026-11-15T16:39:26.0000000Z",
+      "AMProductVersion": "4.18.26100.4"
+    },
+    "controls": {
+      "observed_at": "2026-11-16T00:58:58.609923+00:00",
+      "negative": {
+        "phase": "scan",
+        "hresult": "0x00000000",
+        "amsi_result": 1,
+        "classification": "not_detected"
+      },
+      "eicar": {
+        "phase": "scan",
+        "hresult": "0x00000000",
+        "amsi_result": 32768,
+        "classification": "detected"
+      },
+      "html_wrapped_eicar": {
+        "phase": "scan",
+        "hresult": "0x00000000",
+        "amsi_result": 1,
+        "classification": "not_detected"
+      },
+      "inline_script_with_eicar": {
+        "phase": "scan",
+        "hresult": "0x00000000",
+        "amsi_result": 1,
+        "classification": "not_detected"
+      },
+      "passed": true
+    },
+    "results": [
+      {
+        "host": "m.wcxsw.com",
+        "record_indices": [
+          1347
+        ],
+        "selected_source_ids": [
+          "842d8d69430d3ce91907eff2887f470e68d146284c59171fe349a5b30fd63cc4"
+        ],
+        "started_at": "2026-11-16T00:58:58.610109+00:00",
+        "http_status": 200,
+        "content_type": "text/html",
+        "truncated": false,
+        "sample_bytes": 13427,
+        "sample_sha256": "30740093acd1f32cc706e1eb2a21d25acb85911c819e922402bdc6c67c92466e",
+        "sample_observed_at": "2026-11-16T00:58:59.392015+00:00",
+        "amsi": {
+          "phase": "scan",
+          "hresult": "0x00000000",
+          "amsi_result": 1,
+          "classification": "not_detected"
+        },
+        "inline_scripts": {
+          "script_tags_observed": 4,
+          "nonempty_inline_scripts_observed": 2,
+          "inline_scripts_selected": 2,
+          "inline_scripts_omitted": 0,
+          "samples": [
+            {
+              "ordinal": 1,
+              "has_src_attribute": false,
+              "bytes_seen": 301,
+              "sample_bytes": 301,
+              "sample_sha256": "f1f0a271393042b989d1e54b01a0fb8c283cc1dd38ae53522afa5158e27d8a32",
+              "truncated": false,
+              "closing_tag_observed": true,
+              "amsi": {
+                "phase": "scan",
+                "hresult": "0x00000000",
+                "amsi_result": 1,
+                "classification": "not_detected"
+              }
+            },
+            {
+              "ordinal": 4,
+              "has_src_attribute": false,
+              "bytes_seen": 391,
+              "sample_bytes": 391,
+              "sample_sha256": "1821c147cdc0e96531f2ffe0cd29183c1282e6545bdde48f5605850a578f759a",
+              "truncated": false,
+              "closing_tag_observed": true,
+              "amsi": {
+                "phase": "scan",
+                "hresult": "0x00000000",
+                "amsi_result": 1,
+                "classification": "not_detected"
+              }
+            }
+          ]
+        }
+      },
+      {
+        "host": "p.jiugangbi.com",
+        "record_indices": [
+          4837
+        ],
+        "selected_source_ids": [
+          "4e92fa59a858e6a620045f20862de78e1dbf752e8d9d2b58221421326df8add2"
+        ],
+        "started_at": "2026-11-16T00:58:59.110601+00:00",
+        "failure": "connection_error",
+        "sample_observed_at": "2026-11-16T00:58:59.219203+00:00"
+      },
+      {
+        "host": "www.mumumh.com",
+        "record_indices": [
+          3466
+        ],
+        "selected_source_ids": [
+          "09e92e62859b1171da90310ed28f1985e224e4d9dbf371720d4a00e8bc63862a"
+        ],
+        "started_at": "2026-11-16T00:58:59.610720+00:00",
+        "http_status": 200,
+        "content_type": "text/html",
+        "truncated": false,
+        "sample_bytes": 4730,
+        "sample_sha256": "2a3a28951d5ad48ee8c6bf8ae5bf9667f11e452837ed6c6de3c9d889d05622d7",
+        "sample_observed_at": "2026-11-16T00:59:02.769213+00:00",
+        "amsi": {
+          "phase": "scan",
+          "hresult": "0x00000000",
+          "amsi_result": 1,
+          "classification": "not_detected"
+        },
+        "inline_scripts": {
+          "script_tags_observed": 3,
+          "nonempty_inline_scripts_observed": 1,
+          "inline_scripts_selected": 1,
+          "inline_scripts_omitted": 0,
+          "samples": [
+            {
+              "ordinal": 3,
+              "has_src_attribute": false,
+              "bytes_seen": 232,
+              "sample_bytes": 232,
+              "sample_sha256": "40657d58eefd7e13d7a820a93ecc2aaf2e6c4f024aacecf528d0c365096b98cf",
+              "truncated": false,
+              "closing_tag_observed": true,
+              "amsi": {
+                "phase": "scan",
+                "hresult": "0x00000000",
+                "amsi_result": 1,
+                "classification": "not_detected"
+              }
+            }
+          ]
+        }
+      },
+      {
+        "host": "www.nidedizhi1.com",
+        "record_indices": [
+          4560
+        ],
+        "selected_source_ids": [
+          "546ed179fed46c6cc05454b5fd6d827f12badb8bdce82eadc0b233f1bcbed62b"
+        ],
+        "started_at": "2026-11-16T00:59:00.110868+00:00",
+        "http_status": 200,
+        "content_type": "text/html",
+        "truncated": false,
+        "sample_bytes": 4730,
+        "sample_sha256": "2a3a28951d5ad48ee8c6bf8ae5bf9667f11e452837ed6c6de3c9d889d05622d7",
+        "sample_observed_at": "2026-11-16T00:59:03.947118+00:00",
+        "amsi": {
+          "phase": "scan",
+          "hresult": "0x00000000",
+          "amsi_result": 1,
+          "classification": "not_detected"
+        },
+        "inline_scripts": {
+          "script_tags_observed": 3,
+          "nonempty_inline_scripts_observed": 1,
+          "inline_scripts_selected": 1,
+          "inline_scripts_omitted": 0,
+          "samples": [
+            {
+              "ordinal": 3,
+              "has_src_attribute": false,
+              "bytes_seen": 232,
+              "sample_bytes": 232,
+              "sample_sha256": "40657d58eefd7e13d7a820a93ecc2aaf2e6c4f024aacecf528d0c365096b98cf",
+              "truncated": false,
+              "closing_tag_observed": true,
+              "amsi": {
+                "phase": "scan",
+                "hresult": "0x00000000",
+                "amsi_result": 1,
+                "classification": "not_detected"
+              }
+            }
+          ]
+        }
+      }
+    ],
+    "completed_at": "2026-11-16T00:59:04.093645+00:00",
+    "outcomes": {
+      "not_detected": 3,
+      "connection_error": 1
+    },
+    "inline_script_outcomes": {
+      "not_detected": 4
+    }
+  },
+  "shared_template": {
+    "sample_sha256": "2a3a28951d5ad48ee8c6bf8ae5bf9667f11e452837ed6c6de3c9d889d05622d7",
+    "sample_bytes": 4730,
+    "prior_different_host": {
+      "evidence": "legado-recovered-amsi-20261116.json",
+      "host": "roum26.xyz",
+      "observed_at": "2026-11-15T21:00:55.548141+00:00",
+      "sample_sha256": "2a3a28951d5ad48ee8c6bf8ae5bf9667f11e452837ed6c6de3c9d889d05622d7"
+    },
+    "fresh_root_gets": [
+      {
+        "host": "www.mumumh.com",
+        "observed_at": "2026-11-16T01:01:35.772673+00:00",
+        "http_status": 200,
+        "sample_sha256": "2a3a28951d5ad48ee8c6bf8ae5bf9667f11e452837ed6c6de3c9d889d05622d7"
+      },
+      {
+        "host": "www.nidedizhi1.com",
+        "observed_at": "2026-11-16T01:01:40.941939+00:00",
+        "http_status": 200,
+        "sample_sha256": "2a3a28951d5ad48ee8c6bf8ae5bf9667f11e452837ed6c6de3c9d889d05622d7"
+      },
+      {
+        "host": "www.mumumh.com",
+        "observed_at": "2026-11-16T01:02:16.078536+00:00",
+        "http_status": 200,
+        "sample_sha256": "2a3a28951d5ad48ee8c6bf8ae5bf9667f11e452837ed6c6de3c9d889d05622d7"
+      }
+    ],
+    "static_summary": {
+      "title_empty": true,
+      "heading_contains_domain_expiry_notice": true,
+      "heading_mentions_namecheap_auctions": true,
+      "script_tags": 3,
+      "external_scripts_not_fetched": 2,
+      "same_host_anchors": 0,
+      "external_anchors_not_followed": 8
+    },
+    "limitations": [
+      "Same bytes across three hosts in one network do not identify the source of the page or establish common ownership.",
+      "The expired-registration heading is page text and conflicts with the two matching registry objects; it is not a registry finding.",
+      "Page bodies and the transient root comparison collector were not retained; observations cannot be independently reconstructed offline."
+    ]
+  },
+  "registry_and_old_path_followup": {
+    "started_at_utc": "2026-11-16T01:05:14.396535+00:00",
+    "completed_at_utc": "2026-11-16T01:05:46.737401+00:00",
+    "method": {
+      "registry": "Verisign .com RDAP, anonymous HTTPS GET, verified TLS, public pinned address, no redirect",
+      "registry_deadline_seconds": 8,
+      "registry_hard_deadline_seconds": 11,
+      "registry_body_limit_bytes": 131072,
+      "old_path": "anonymous same-host HTTPS GET, verified TLS, public pinned address, no redirect",
+      "old_path_deadline_seconds": 10,
+      "old_path_hard_deadline_seconds": 15,
+      "old_path_body_limit_bytes": 524288,
+      "minimum_start_interval_seconds": 1,
+      "credentials_sent": false,
+      "source_scripts_executed": false,
+      "post_sent": false,
+      "subresources_fetched": false,
+      "body_saved": false,
+      "rdap_personal_data_saved": false,
+      "ip_saved": false,
+      "query_strings_saved": false
+    },
+    "negative_control_domain": "zp-rdap-aabad1478bd750ab8a5e.com",
+    "registry_rounds": [
+      {
+        "round": 1,
+        "started_at_utc": "2026-11-16T01:05:14.396545+00:00",
+        "controls": [
+          {
+            "service": "verisign_com",
+            "domain": "google.com",
+            "started_at": "2026-11-16T01:05:14.518900+00:00",
+            "http_status": 200,
+            "classification": "matching_domain_object",
+            "content_type": "application/rdap+json",
+            "content_encoding": "",
+            "body_bytes": 2822,
+            "rdap_object_matches": true,
+            "rdap_conformance_present": true,
+            "error_code": null,
+            "status_indicators": [],
+            "expiration_dates_utc": [
+              "2028-09-14T04:00:00+00:00"
+            ],
+            "observed_at": "2026-11-16T01:05:15.420746+00:00"
+          },
+          {
+            "service": "verisign_com",
+            "domain": "zp-rdap-aabad1478bd750ab8a5e.com",
+            "started_at": "2026-11-16T01:05:16.546781+00:00",
+            "http_status": 404,
+            "classification": "http_404_empty_body",
+            "content_type": "application/rdap+json",
+            "content_encoding": "",
+            "body_bytes": 0,
+            "rdap_object_matches": null,
+            "rdap_conformance_present": null,
+            "error_code": null,
+            "observed_at": "2026-11-16T01:05:17.507354+00:00"
+          }
+        ],
+        "controls_passed": true,
+        "candidates": [
+          {
+            "service": "verisign_com",
+            "domain": "mumumh.com",
+            "started_at": "2026-11-16T01:05:18.635231+00:00",
+            "http_status": 200,
+            "classification": "matching_domain_object",
+            "content_type": "application/rdap+json",
+            "content_encoding": "",
+            "body_bytes": 2567,
+            "rdap_object_matches": true,
+            "rdap_conformance_present": true,
+            "error_code": null,
+            "status_indicators": [],
+            "expiration_dates_utc": [
+              "2027-10-18T12:47:06+00:00"
+            ],
+            "observed_at": "2026-11-16T01:05:19.616400+00:00"
+          },
+          {
+            "service": "verisign_com",
+            "domain": "nidedizhi1.com",
+            "started_at": "2026-11-16T01:05:20.741903+00:00",
+            "http_status": 200,
+            "classification": "matching_domain_object",
+            "content_type": "application/rdap+json",
+            "content_encoding": "",
+            "body_bytes": 2573,
+            "rdap_object_matches": true,
+            "rdap_conformance_present": true,
+            "error_code": null,
+            "status_indicators": [
+              "active"
+            ],
+            "expiration_dates_utc": [
+              "2027-11-14T13:00:49+00:00"
+            ],
+            "observed_at": "2026-11-16T01:05:21.692192+00:00"
+          }
+        ],
+        "completed_at_utc": "2026-11-16T01:05:22.704601+00:00"
+      },
+      {
+        "round": 2,
+        "started_at_utc": "2026-11-16T01:05:22.705211+00:00",
+        "controls": [
+          {
+            "service": "verisign_com",
+            "domain": "google.com",
+            "started_at": "2026-11-16T01:05:22.819922+00:00",
+            "http_status": 200,
+            "classification": "matching_domain_object",
+            "content_type": "application/rdap+json",
+            "content_encoding": "",
+            "body_bytes": 2822,
+            "rdap_object_matches": true,
+            "rdap_conformance_present": true,
+            "error_code": null,
+            "status_indicators": [],
+            "expiration_dates_utc": [
+              "2028-09-14T04:00:00+00:00"
+            ],
+            "observed_at": "2026-11-16T01:05:23.702133+00:00"
+          },
+          {
+            "service": "verisign_com",
+            "domain": "zp-rdap-aabad1478bd750ab8a5e.com",
+            "started_at": "2026-11-16T01:05:24.826682+00:00",
+            "http_status": 404,
+            "classification": "http_404_empty_body",
+            "content_type": "application/rdap+json",
+            "content_encoding": "",
+            "body_bytes": 0,
+            "rdap_object_matches": null,
+            "rdap_conformance_present": null,
+            "error_code": null,
+            "observed_at": "2026-11-16T01:05:25.838630+00:00"
+          }
+        ],
+        "controls_passed": true,
+        "candidates": [
+          {
+            "service": "verisign_com",
+            "domain": "mumumh.com",
+            "started_at": "2026-11-16T01:05:26.965526+00:00",
+            "http_status": 200,
+            "classification": "matching_domain_object",
+            "content_type": "application/rdap+json",
+            "content_encoding": "",
+            "body_bytes": 2567,
+            "rdap_object_matches": true,
+            "rdap_conformance_present": true,
+            "error_code": null,
+            "status_indicators": [],
+            "expiration_dates_utc": [
+              "2027-10-18T12:47:06+00:00"
+            ],
+            "observed_at": "2026-11-16T01:05:27.895395+00:00"
+          },
+          {
+            "service": "verisign_com",
+            "domain": "nidedizhi1.com",
+            "started_at": "2026-11-16T01:05:29.023876+00:00",
+            "http_status": 200,
+            "classification": "matching_domain_object",
+            "content_type": "application/rdap+json",
+            "content_encoding": "",
+            "body_bytes": 2573,
+            "rdap_object_matches": true,
+            "rdap_conformance_present": true,
+            "error_code": null,
+            "status_indicators": [
+              "active"
+            ],
+            "expiration_dates_utc": [
+              "2027-11-14T13:00:49+00:00"
+            ],
+            "observed_at": "2026-11-16T01:05:29.963944+00:00"
+          }
+        ],
+        "completed_at_utc": "2026-11-16T01:05:30.976041+00:00"
+      }
+    ],
+    "old_paths": [
+      {
+        "round": 1,
+        "host": "www.mumumh.com",
+        "source_id": "09e92e62859b1171da90310ed28f1985e224e4d9dbf371720d4a00e8bc63862a",
+        "path": "/rank",
+        "started_at": "2026-11-16T01:05:31.095608+00:00",
+        "observed_at": "2026-11-16T01:05:33.952573+00:00",
+        "http_status": 404,
+        "failure": "http_status",
+        "sample_bytes": null,
+        "truncated": null,
+        "sample_sha256": null,
+        "redirect": null
+      },
+      {
+        "round": 1,
+        "host": "www.nidedizhi1.com",
+        "source_id": "546ed179fed46c6cc05454b5fd6d827f12badb8bdce82eadc0b233f1bcbed62b",
+        "path": "/sort/3/1/",
+        "started_at": "2026-11-16T01:05:35.077519+00:00",
+        "observed_at": "2026-11-16T01:05:37.711998+00:00",
+        "http_status": 404,
+        "failure": "http_status",
+        "sample_bytes": null,
+        "truncated": null,
+        "sample_sha256": null,
+        "redirect": null
+      },
+      {
+        "round": 2,
+        "host": "www.mumumh.com",
+        "source_id": "09e92e62859b1171da90310ed28f1985e224e4d9dbf371720d4a00e8bc63862a",
+        "path": "/rank",
+        "started_at": "2026-11-16T01:05:38.837397+00:00",
+        "observed_at": "2026-11-16T01:05:41.718665+00:00",
+        "http_status": 404,
+        "failure": "http_status",
+        "sample_bytes": null,
+        "truncated": null,
+        "sample_sha256": null,
+        "redirect": null
+      },
+      {
+        "round": 2,
+        "host": "www.nidedizhi1.com",
+        "source_id": "546ed179fed46c6cc05454b5fd6d827f12badb8bdce82eadc0b233f1bcbed62b",
+        "path": "/sort/3/1/",
+        "started_at": "2026-11-16T01:05:42.843056+00:00",
+        "observed_at": "2026-11-16T01:05:45.725171+00:00",
+        "http_status": 404,
+        "failure": "http_status",
+        "sample_bytes": null,
+        "truncated": null,
+        "sample_sha256": null,
+        "redirect": null
+      }
+    ],
+    "limitations": [
+      "Shared client and network path; short repeated rounds may share caches.",
+      "A 404 empty RDAP response does not by itself prove deletion, expiry, safety or permanent unavailability.",
+      "An existing registration does not imply that the old source works.",
+      "Only one static discovery path was requested per source; JS search and POST search were not attempted.",
+      "No raw HTTP bodies, work identities, registration contacts or IP addresses are retained."
+    ]
+  },
+  "limitations": [
+    "Three bounded HTML scans and one connection failure do not establish full-host or whole-site safety.",
+    "The raw EICAR control was detected, while HTML-wrapped and inline-script test controls were missed; scanner non-detection is not a security verdict.",
+    "Installed AMSI providers may use their existing cloud protection or sample submission; the tool did not submit credentials or bookcase data.",
+    "Registry responses and old discovery paths are time-limited; JS search and POST search were not attempted and other categories were not tested.",
+    "Registry status_indicators are a predefined subset; an empty list does not establish that the domain has no other registry statuses.",
+    "The HTML bodies, registry response bodies, registration contacts, network IPs and transient collectors are not retained; offline checks verify retained metadata and identities, not authenticity of the historical network observations."
+  ]
+}

@@ -94,6 +94,8 @@ migrate_working_dir/
 !/docs/implementation/legado-uaa-adult-id-review-20261116.json
 !/docs/implementation/legado-woo15-home-review-20261116.json
 !/docs/implementation/legado-unresolved-head-later-20261116.json
+!/docs/implementation/legado-unresolved-943-recheck-20261116.json
+!/docs/implementation/legado-recovered-four-amsi-20261116.json
 !/docs/implementation/legado-rdap-top-cc-20261116.json
 !/docs/implementation/legado-rdap-five-20261116.json
 !/docs/implementation/legado-redirected-sources-20261116.json

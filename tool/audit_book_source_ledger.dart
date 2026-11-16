@@ -19,6 +19,7 @@ import 'book_source_ledger_sfwx.dart';
 import 'book_source_ledger_lengmen.dart';
 import 'book_source_ledger_later_chain.dart';
 import 'book_source_ledger_jhsssd.dart';
+import 'book_source_ledger_recovered_four.dart';
 
 const _catalogFolder = 'assets/catalogs/books/legado';
 const _evidenceFolder = 'docs/implementation';
@@ -105,6 +106,8 @@ const _evidenceFiles = [
   sfwx3984EvidenceFile,
   biquge7EvidenceFile,
   jhsssdEvidenceFile,
+  later943EvidenceFile,
+  recoveredFourEvidenceFile,
   ..._amsiFiles,
 ];
 const _codePaths = [
@@ -170,6 +173,11 @@ const _codePaths = [
   'tool/verify_legado_jhsssd_category.py',
   'tool/test_verify_legado_jhsssd_category.py',
   'tool/test_audit_book_source_ledger_jhsssd.dart',
+  'tool/book_source_ledger_recovered_four.dart',
+  'tool/verify_legado_unresolved_943.py',
+  'tool/verify_legado_recovered_four.py',
+  'tool/test_verify_legado_recovered_four.py',
+  'tool/test_audit_book_source_ledger_recovered_four.dart',
   'tool/verify_legado_unresolved_head.py',
   'tool/compare_legado_head_get.py',
   'tool/recheck_legado_failures.py',
@@ -1289,6 +1297,7 @@ Map<String, Object?> _row(
   SfwxLedgerEvidence sfwx,
   LaterChainLedgerEvidence laterChain,
   JhsssdLedgerEvidence jhsssd,
+  RecoveredFourLedgerEvidence recoveredFour,
   LengmenLedgerEvidence lengmen,
   Map<String, Map> data,
 ) {
@@ -1329,7 +1338,20 @@ Map<String, Object?> _row(
     );
   }
   network.addAll(nov16Network);
+  final recoveredNetwork = selectRecoveredFourEvidence(
+    recoveredFour.network,
+    source,
+    index,
+  );
+  for (final observation in recoveredNetwork) {
+    observation['path_relation'] = _pathScope(
+      source.endpoint,
+      observation['path'] as String,
+    );
+  }
+  network.addAll(recoveredNetwork);
   final amsi = _matching(evidence.amsi, source, indices);
+  amsi.addAll(selectRecoveredFourEvidence(recoveredFour.amsi, source, index));
   final registry = _matching(evidence.registry, source, indices);
   for (final observation in registry) {
     if (observation['historical_selected_record_index'] is int) {
@@ -1350,6 +1372,9 @@ Map<String, Object?> _row(
   registry.addAll(selectComRdapEvidence(rdapNine, source, index));
   registry.addAll(selectComRdapEvidence(rdapFive, source, index));
   registry.addAll(selectComRdapEvidence(topCc, source, index));
+  registry.addAll(
+    selectRecoveredFourEvidence(recoveredFour.registry, source, index),
+  );
   final community = communityClues(data[_blocklist]!, source, index);
   final ruleReview = ruleReviewEvidence(data, source, index);
   final searchPilot = searchPilotObservations(
@@ -1422,6 +1447,10 @@ void _verifyArchiveAssociation(
   String digest,
   Map<String, String> inputHashes,
 ) {
+  if (file == later943EvidenceFile || file == recoveredFourEvidenceFile) {
+    verifyRecoveredFourInput(file, evidence, inputHashes);
+    return;
+  }
   if (file == jhsssdEvidenceFile) {
     verifyJhsssdInput(evidence, digest, inputHashes);
     return;
@@ -1845,6 +1874,15 @@ void main(List<String> args) {
     hashes,
     catalog.rows,
   );
+  final recoveredFour = readRecoveredFourEvidence(
+    data[later943EvidenceFile]!,
+    data[recoveredFourEvidenceFile]!,
+    data[_laterHead]!,
+    hashes,
+    catalog.rows,
+    networkObservation,
+    _amsiObservation,
+  );
   final lengmen = readLengmenEvidence(
     data[lengmenEvidenceFile]!,
     hashes,
@@ -1902,6 +1940,7 @@ void main(List<String> args) {
         sfwx,
         laterChain,
         jhsssd,
+        recoveredFour,
         lengmen,
         data,
       ),
@@ -1990,6 +2029,7 @@ Map<String, Object?> _ledgerDocument(
     'The three-source sfwx reading observations are bounded historical samples; the 404 is a single search path, the two sfwx works and three chapters do not establish complete readability or safety, and long-chapter pagination and one old link target remain unverified. The repaired current rule may differ from the sampled historical rule.',
     'The later-chain observations sample two works and limited chapters for two sources; the category test shares one received page across two source IDs, and the two 404 responses concern one search path only. Longer or paginated chapters remain unverified, and repaired current rules may differ from the historical samples.',
     'The jhsssd observation samples two works and their first content pages only; the exact repair adds detail category metadata but search results without category remain unclassified. Page bodies and collectors are not retained, and neither the sample nor a limited address/text prefilter establishes safety or complete readability.',
+    'The later 943-host recheck recorded four HEAD 200 responses and 939 without an HTTP status; three of four bounded HTML samples were not detected and one was not scanned. Shared page text and registered-domain objects are independent observations, not site attribution, safety or permanent-failure verdicts.',
     'The lengmen follow-up represents one shared root-page study for two sources, not independent threats; the 302 Location was not captured, the network environment was shared, and engine detections or non-detections do not establish malware, false positive, or safety. HTML and script-wrapped EICAR controls were missed.',
     'Static flags do not include personal settings, enabled state, mutable assessments, user blacklists, supervision, or every private repository policy.',
     'Same-ID historical cache can lack the rule fingerprint needed to attribute old content to a specific source version.',
@@ -2043,6 +2083,12 @@ Map<String, Object?> _ledgerDocument(
     'sha256':
         (data[jhsssdEvidenceFile]!['inputs']
             as Map)['historical_ledger_sha256'],
+    'verified_from_git_object': true,
+  },
+  'later943_historical_ledger_reference': {
+    ...(((data[later943EvidenceFile]!['input_references']
+            as Map)['historical_ledger'])
+        as Map),
     'verified_from_git_object': true,
   },
   'lengmen_historical_ledger_reference': {
