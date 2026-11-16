@@ -78,6 +78,8 @@
 
 2026-11-15 13:22 CST 将随包来源端点和所有字段中可静态提取的字面 HTTP(S) 主机与 [CERT Polska 公布的危险网站名单](https://cert.pl/en/warning-list/)离线比对；该名单主要覆盖针对波兰用户的钓鱼域名，不是通用木马数据库。共比较 2720 个不同主机，包括 2139 个已选 ID 对应的全部 1541 个主机；未发现精确域名或已列上级域名命中。该快照的时间、摘要、撤销口径和限制见[精简比对证据](certpl-legado-evidence-20261115.json)。没有访问名单中的地址或上传用户书架；未命中不能证明来源安全、无木马或当前可用。原始名单不提交，精确复算历史结果需保留同摘要的下载快照。
 
+2026-11-16 08:01 CST 对 [Phishing Army 域名快照](https://phishing.army/downloads/)做相同范围的离线比对：该快照含 144306 个域名、提供方清单记录 9 个上游采集状态均为 `ok`，与 2720 个静态主机没有精确域名或已列上级域名命中。多个上游聚合的情报包含 CERT.PL，不能视为与前述检查完全独立；列表面向钓鱼，并不专门检测木马或博彩。快照摘要与提供方清单摘要一致，记录在[脱敏证据](legado-phishing-army-20261116.json)中。未访问名单或书源地址，也未上传用户书架；未命中不表示安全或可读。原始名单和提供方清单保留在本机构建目录而不提交，历史复算需要相同字节。提供方指出开放获取不转授其上游数据的权利，应用未集成该名单。
+
 另以 [Block List Project](https://github.com/blocklistproject/Lists) 固定提交 `ee3bdbaddf49c756cf3340bb2e6a9dee5282d1c6` 的四类社区名单做离线粗筛：2720 个主机中 malware 类命中 16 个、porn 类命中 18 个，合并为 33 个不同主机；gambling 和 phishing 均无命中。对实际选中的 ID，malware 分别为 1 个精确端点、11 个由上级域关联的端点、3 个仅在其他规则字段引用；porn 分别为 4 个精确端点和 14 个由上级域关联的端点，两类合计涉及 31 个不同 ID。逐项及字段来源见[名单比对证据](legado-blocklistproject-evidence-20261115.json)，当前导入器和成人过滤策略的静态复核见[策略证据](legado-blocklistproject-policy-20261115.json)。五个精确命中的来源均有独立成人策略证据；成人过滤并不等于木马隔离。
 
 该社区仓库已归档，固定提交日期为 2026-07-20；名单可能过时。精确命中、上级域关联和规则中第三方资源引用的含义不同，例如不能把图片资源上级域命中直接归因于书源端点。名单命中只作为人工调查线索，不自动认定恶意或扩大隔离；未命中也不证明安全。原始名单未提交；仓库根许可声明与部分名单文件头的许可文字不一致，未推断全部名单的再分发权限。离线复算需要证据中对应摘要的原始快照。
@@ -231,7 +233,8 @@ python tool/triage_legado_eval_candidates.py docs/implementation/legado-rule-pat
 dart --packages=.dart_tool/package_config.json tool/inventory_legado_eval_normalized.dart build/legado-eval-triage.json build/legado-eval-normalized.json
 python tool/audit_legado_amsi.py --previous docs/implementation/legado-host-audit-20261115.json --import-inventory docs/implementation/legado-import-inventory-20261115.json --offset 0 --count 2010 --workers 6 --interval 0.25 --timeout 4 --output build/legado-amsi-new.json
 dart --packages=.dart_tool/package_config.json tool/audit_legado_amsi_classification.dart docs/implementation/legado-amsi-summary-20261115.json docs/implementation/legado-amsi-template-clusters-20261115.json build/legado-amsi-source-classification-new.json
-python -m unittest -v tool.test_audit_legado_amsi tool.test_audit_certpl_legado
+python tool/audit_phishing_army_legado.py --feed build/phishing-army-20261116/phishing-army-domains.txt --feed-metadata build/phishing-army-20261116/phishing-army-domains.txt.metadata.json --manifest build/phishing-army-20261116/phishing-army-manifest.json --manifest-metadata build/phishing-army-20261116/phishing-army-manifest.json.metadata.json --import-inventory docs/implementation/legado-import-inventory-20261115.json --output build/legado-phishing-army-recalculated.json
+python -m unittest -v tool.test_audit_legado_amsi tool.test_audit_certpl_legado tool.test_audit_phishing_army_legado
 python -m unittest -v tool.test_recheck_legado_failures tool.test_audit_legado_catalog
 ```
 

@@ -484,6 +484,29 @@ class EvidenceVerifier:
             for path, digest in group['sha256'].items():
                 self.check_digest(self.root / path, digest, normalize_lf=True)
 
+    def verify_phishing_army(self, archive):
+        report = json.loads(self.read(self.docs / 'legado-phishing-army-20261116.json'))
+        catalog = report['catalog']
+        self.check_digest(archive, catalog['archive_sha256'])
+        inventory = 'docs/implementation/' + filename('legado-import-inventory')
+        if catalog['import_inventory_path'] != inventory:
+            raise ValueError('unexpected Phishing Army import inventory path')
+        self.check_digest(self.root / inventory, catalog['import_inventory_sha256'])
+        tools = report['normalized_tool_sha256']
+        expected = {
+            'tool/audit_phishing_army_legado.py', 'tool/audit_certpl_legado.py',
+            'tool/audit_legado_catalog.py', 'tool/audit_legado_rule_patterns.py',
+            'tool/triage_legado_eval_candidates.py',
+        }
+        if set(tools) != expected:
+            raise ValueError('unexpected Phishing Army tool reference set')
+        for path, digest in tools.items():
+            self.check_digest(self.root / path, digest, normalize_lf=True)
+        matches = report['comparison']['matches']
+        if (len(matches) != report['comparison']['matching_host_indicator_pairs'] or
+                len({entry['catalog_host'] for entry in matches}) != report['comparison']['matching_hosts']):
+            raise ValueError('inconsistent Phishing Army match counts')
+
     def verify(self):
         for source, key, target in DIRECT_LINKS:
             self.check_digest(self.docs / filename(target), self.report(source)[key])
@@ -537,6 +560,7 @@ class EvidenceVerifier:
         self.check_digest(archive, recheck_560['catalog_archive_sha256'])
         self.verify_recent_evidence(archive)
         self.verify_later_sources(archive)
+        self.verify_phishing_army(archive)
         self.verify_ledger()
         return self.checked
 

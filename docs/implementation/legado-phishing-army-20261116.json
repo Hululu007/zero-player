@@ -1,0 +1,103 @@
+{
+  "method": "Offline local domain comparison; no catalog URLs requested and no source rules executed.",
+  "provider": {
+    "project_url": "https://phishing.army/downloads/",
+    "usage_and_licensing_url": "https://phishing.army/license/",
+    "feed_download": {
+      "endpoint": "https://phishing.army/download/phishing-army-domains.txt",
+      "observed_at": "2026-11-16T00:01:45.554945+00:00",
+      "status": 200,
+      "content_type": "text/plain",
+      "last_modified": "Sun, 15 Nov 2026 23:00:25 GMT",
+      "etag": null,
+      "bytes": 3119725,
+      "sha256": "e5c37a1aade65dd36d83d8c8c11ab1ffe31e3a51da3bc1809637179410ca84fd"
+    },
+    "manifest_download": {
+      "endpoint": "https://phishing.army/download/phishing-army-manifest.json",
+      "observed_at": "2026-11-16T00:01:43.973342+00:00",
+      "status": 200,
+      "content_type": "application/json",
+      "last_modified": "Sun, 15 Nov 2026 23:00:25 GMT",
+      "etag": null,
+      "bytes": 2656,
+      "sha256": "9137ca9abafbcc3a2c5774e3f2741f613ad0c1c0a889067ffac2f3a12cdbe2ef"
+    },
+    "manifest_generated_at": "2026-11-15T23:00:25Z",
+    "manifest_entries": 144306,
+    "upstream_sources": [
+      {
+        "name": "PhishTank",
+        "status": "ok"
+      },
+      {
+        "name": "OpenPhish",
+        "status": "ok"
+      },
+      {
+        "name": "CERT.PL",
+        "status": "ok"
+      },
+      {
+        "name": "Phishunt",
+        "status": "ok"
+      },
+      {
+        "name": "urlscan.io",
+        "status": "ok"
+      },
+      {
+        "name": "PhishStats",
+        "status": "ok"
+      },
+      {
+        "name": "StalkPhish",
+        "status": "ok"
+      },
+      {
+        "name": "URLAbuse",
+        "status": "ok"
+      },
+      {
+        "name": "AntiPhish.org",
+        "status": "ok"
+      }
+    ],
+    "scope": "Aggregated community phishing domains; not a malware or gambling feed. Some upstream providers overlap previously checked data."
+  },
+  "catalog": {
+    "archive_sha256": "012a0e0d6e6adc8d303c32b578510e14b562088b3e965cb01a1a647b5e7e034d",
+    "raw_records": 4845,
+    "endpoint_hosts": 2010,
+    "unresolved_endpoint_records": 81,
+    "import_inventory_path": "docs/implementation/legado-import-inventory-20261115.json",
+    "import_inventory_sha256": "ad4e347888cad71812ee7da9477f027baf0bee5bceb1d4247fc69d6c4df8764c",
+    "import_inventory_generated_at": "2026-11-15T02:32:19.183484Z",
+    "selected_source_ids": 2139,
+    "selected_source_hosts": 1541,
+    "selected_sources_without_valid_host": 0,
+    "literal_url_occurrences": 52806,
+    "unique_compared_hosts": 2720,
+    "scope": "Declared endpoint and selected imported hosts plus literal HTTP(S) hosts in all string fields. A mention is not proof of execution; dynamic and malformed URLs may be omitted."
+  },
+  "comparison": {
+    "rule": "DNS-label equality or a listed parent of the catalog host; no parent, sibling, substring, shared-IP or exact-URL inference.",
+    "matching_host_indicator_pairs": 0,
+    "matching_hosts": 0,
+    "matches": []
+  },
+  "normalized_tool_sha256": {
+    "tool/audit_phishing_army_legado.py": "c4a40b7778f551458401d0c461b4b05311de64233efa277254412d81f0090b7e",
+    "tool/audit_certpl_legado.py": "236250bc91496cce6d3af1bc04c3dfc0932f079f017f1b3eaa56705a766589f5",
+    "tool/audit_legado_catalog.py": "36f5359259ba259e84ae10875be6383884ad0cc71e829f029dd96b6dc9976563",
+    "tool/audit_legado_rule_patterns.py": "8f411753eaa514acb82d625fc3433f8be9ef0cc091811c1b555220b5dd0abb5a",
+    "tool/triage_legado_eval_candidates.py": "459ec7c8a6111d1f853bf21fe0a065dcf3e6aa48f2a8a45fa2383b14827d4a7b"
+  },
+  "reproduction": "Pass the separately retained feed, provider manifest and their download metadata along with the pinned import inventory. The provider files are not committed; a later snapshot may differ.",
+  "limitations": [
+    "No match does not establish safety, availability, or absence of malware, phishing or gambling.",
+    "A domain match does not establish an exact URL match, current maliciousness, or which tenant or path was involved.",
+    "This historical snapshot and importer inventory do not represent later changes.",
+    "Public feed access does not grant rights over its independent upstream data providers."
+  ]
+}
