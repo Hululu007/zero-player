@@ -1,0 +1,1200 @@
+{
+  "schema_version": 1,
+  "status": "formal_initial_git_bound_later_policy_digest_unbound",
+  "inputs": {
+    "archive_path": "assets/catalogs/books/legado/catalog.json.bz2",
+    "archive_sha256": "012a0e0d6e6adc8d303c32b578510e14b562088b3e965cb01a1a647b5e7e034d",
+    "inventory_path": "docs/implementation/legado-import-inventory-20261115.json",
+    "inventory_sha256": "ad4e347888cad71812ee7da9477f027baf0bee5bceb1d4247fc69d6c4df8764c",
+    "historical_git_commit": "dfb4c9cb71fd6de1607bcbf8ca427ef4361ca307",
+    "historical_ledger_path": "docs/implementation/legado-source-ledger-20261115.json",
+    "historical_ledger_sha256": "cca374595f6d9fb79477032d5268737051fd813bed996131b205dbccaaeb4f17",
+    "local_redacted_intermediate_sha256": {
+      "observations-redacted.json": "ee40a792323876481050f04b9f88dbfaebc16f88489bb0a85b3f88199c4da887",
+      "focused-gulong-redacted.json": "0fd75fbb6fd2a489ff9a831afb26c01aa3e0ab15f3c2355eee9bc5a4cf0ca604",
+      "focused-shubang-redacted.json": "936f2ebb5c57309dedc7be8c587c0190043e1ca85b9fb1fccb67b68ae38f4643",
+      "focused-sanyou-redacted.json": "91fd0ea652cb5bed56075898b9a447de53509eb27a0f8ebd6ac6099a910de4d6",
+      "discovery-407-redacted.json": "0e117d036c9233ab53e9fa00e699713467de9af923139597d1cd86eabc94a019"
+    }
+  },
+  "sampled_source_snapshots": {
+    "initial": {
+      "tracked_files": [
+        {
+          "path": "assets/catalogs/books/legado/catalog.json.bz2",
+          "sample_bytes_sha256": "012a0e0d6e6adc8d303c32b578510e14b562088b3e965cb01a1a647b5e7e034d",
+          "git_blob_sha256": "012a0e0d6e6adc8d303c32b578510e14b562088b3e965cb01a1a647b5e7e034d",
+          "checkout_bytes": "identical"
+        },
+        {
+          "path": "assets/catalogs/books/legado/manifest.json",
+          "sample_bytes_sha256": "59bb9e3551b5a01406c1d720d2b5d5d5f21518eccbb52cd93f8d752c19f7cf66",
+          "git_blob_sha256": "59bb9e3551b5a01406c1d720d2b5d5d5f21518eccbb52cd93f8d752c19f7cf66",
+          "checkout_bytes": "identical"
+        },
+        {
+          "path": "lib/core/network/document_encoding.dart",
+          "sample_bytes_sha256": "172e2da9ab62964439b147ba9d570e215e44c39ded113de40ba8ec68f022fa28",
+          "git_blob_sha256": "172e2da9ab62964439b147ba9d570e215e44c39ded113de40ba8ec68f022fa28",
+          "checkout_bytes": "identical"
+        },
+        {
+          "path": "lib/features/books/data/book_html.dart",
+          "sample_bytes_sha256": "3ef516a3dbac36b22da40c8f78b99a7fe56616bd6087a4aa5cc159b2c8ba7ecf",
+          "git_blob_sha256": "3ef516a3dbac36b22da40c8f78b99a7fe56616bd6087a4aa5cc159b2c8ba7ecf",
+          "checkout_bytes": "identical"
+        },
+        {
+          "path": "lib/features/books/data/book_import.dart",
+          "sample_bytes_sha256": "5c27a8cac7806ca8854672f89fcc90d0d98e5ab25b92ec4fc13f094bfe93a629",
+          "git_blob_sha256": "5c27a8cac7806ca8854672f89fcc90d0d98e5ab25b92ec4fc13f094bfe93a629",
+          "checkout_bytes": "identical"
+        },
+        {
+          "path": "lib/features/books/data/legado/kuwo_discovery.dart",
+          "sample_bytes_sha256": "a6ad484d2755bc7c6a594ee85c6ca61157676af79c72d46087a65ae2ade2740b",
+          "git_blob_sha256": "a6ad484d2755bc7c6a594ee85c6ca61157676af79c72d46087a65ae2ade2740b",
+          "checkout_bytes": "identical"
+        },
+        {
+          "path": "lib/features/books/data/legado/legado_client.dart",
+          "sample_bytes_sha256": "1e0489f523688ff1917aa52a2cfec46f8e95472c2740e5c7e380f62c5ec40f27",
+          "git_blob_sha256": "f5811411df3dd02f1c53031e403909cdd0bba44e940580562071e82fdc62a008",
+          "checkout_bytes": "git_lf_to_crlf"
+        },
+        {
+          "path": "lib/features/books/data/legado/legado_css.dart",
+          "sample_bytes_sha256": "4fb7cbadd4904cfe72949705d634beb1bfe7b3d0de955aa9523961c75b3b3b5d",
+          "git_blob_sha256": "4fb7cbadd4904cfe72949705d634beb1bfe7b3d0de955aa9523961c75b3b3b5d",
+          "checkout_bytes": "identical"
+        },
+        {
+          "path": "lib/features/books/data/legado/legado_discovery.dart",
+          "sample_bytes_sha256": "c4c8039a58e66522547a4d71991be415a8c5ad571bf105c891bace70f2c77c7e",
+          "git_blob_sha256": "c4c8039a58e66522547a4d71991be415a8c5ad571bf105c891bace70f2c77c7e",
+          "checkout_bytes": "identical"
+        },
+        {
+          "path": "lib/features/books/data/legado/legado_import.dart",
+          "sample_bytes_sha256": "3d4f0f1fb848c26bf65a0eec25373bc993403576634c60524dc17c5a6e217b69",
+          "git_blob_sha256": "3d4f0f1fb848c26bf65a0eec25373bc993403576634c60524dc17c5a6e217b69",
+          "checkout_bytes": "identical"
+        },
+        {
+          "path": "lib/features/books/data/legado/legado_request.dart",
+          "sample_bytes_sha256": "da65df24e85c72e12e9b6305407612084bd8ea2f6d9197ce66fc96e0bd717914",
+          "git_blob_sha256": "da65df24e85c72e12e9b6305407612084bd8ea2f6d9197ce66fc96e0bd717914",
+          "checkout_bytes": "identical"
+        },
+        {
+          "path": "lib/features/books/data/legado/legado_rule_tokens.dart",
+          "sample_bytes_sha256": "4833544f325c73292eebf09e9d82d0573a97cf9e5ba16971cc4b3d3576c30333",
+          "git_blob_sha256": "4833544f325c73292eebf09e9d82d0573a97cf9e5ba16971cc4b3d3576c30333",
+          "checkout_bytes": "identical"
+        },
+        {
+          "path": "lib/features/books/data/legado/legado_rules.dart",
+          "sample_bytes_sha256": "1d7eec2586901d68414fb5901e512a4cbd830b3d8284e08340ea37ae849cbd63",
+          "git_blob_sha256": "1d7eec2586901d68414fb5901e512a4cbd830b3d8284e08340ea37ae849cbd63",
+          "checkout_bytes": "identical"
+        },
+        {
+          "path": "lib/features/books/data/legado/legado_script.dart",
+          "sample_bytes_sha256": "c07e35031410d73fbdde6503789a2080807a480d6329ae24e9e026671fedc6dd",
+          "git_blob_sha256": "c07e35031410d73fbdde6503789a2080807a480d6329ae24e9e026671fedc6dd",
+          "checkout_bytes": "identical"
+        },
+        {
+          "path": "lib/features/books/data/legado/legado_script_flutter.dart",
+          "sample_bytes_sha256": "18af87c2f57bd680bfdfcf48968c82a65e6c47082b17d88c183cc4a60c7f9474",
+          "git_blob_sha256": "18af87c2f57bd680bfdfcf48968c82a65e6c47082b17d88c183cc4a60c7f9474",
+          "checkout_bytes": "identical"
+        },
+        {
+          "path": "lib/features/books/data/legado/legado_script_stub.dart",
+          "sample_bytes_sha256": "c94f290e6328a5d60289329e2a9cc80b9381a770b4758df2b2a6ac2b8feca5e4",
+          "git_blob_sha256": "c94f290e6328a5d60289329e2a9cc80b9381a770b4758df2b2a6ac2b8feca5e4",
+          "checkout_bytes": "identical"
+        },
+        {
+          "path": "lib/features/books/data/legado/legado_worker.dart",
+          "sample_bytes_sha256": "bdc2285367dec024d2d9ea58335ee464c9e3334d34ece85b06d37316afbabafd",
+          "git_blob_sha256": "bdc2285367dec024d2d9ea58335ee464c9e3334d34ece85b06d37316afbabafd",
+          "checkout_bytes": "identical"
+        },
+        {
+          "path": "lib/features/books/data/legado/yuque_book_list.dart",
+          "sample_bytes_sha256": "d76c7de35ef5e6dfff749fdd4332897faee70d8bcf9cdd1928d3d84fda21941e",
+          "git_blob_sha256": "d76c7de35ef5e6dfff749fdd4332897faee70d8bcf9cdd1928d3d84fda21941e",
+          "checkout_bytes": "identical"
+        },
+        {
+          "path": "lib/features/books/domain/biquge7_legacy_source_fix.dart",
+          "sample_bytes_sha256": "5dda76dfee900d2ebe8a44142656615b8226a118ee5a8979cade11e5e4c05bb7",
+          "git_blob_sha256": "5dda76dfee900d2ebe8a44142656615b8226a118ee5a8979cade11e5e4c05bb7",
+          "checkout_bytes": "identical"
+        },
+        {
+          "path": "lib/features/books/domain/book.dart",
+          "sample_bytes_sha256": "cc1c1fb8f72481132403f9825565fbc58170e686e0d2885b5238aaddc7cf824d",
+          "git_blob_sha256": "cc1c1fb8f72481132403f9825565fbc58170e686e0d2885b5238aaddc7cf824d",
+          "checkout_bytes": "identical"
+        },
+        {
+          "path": "lib/features/books/domain/book_search.dart",
+          "sample_bytes_sha256": "5df399376fea21f96f571af17139b0b90e1ea8880f7f373e73898dccac05e9ab",
+          "git_blob_sha256": "5df399376fea21f96f571af17139b0b90e1ea8880f7f373e73898dccac05e9ab",
+          "checkout_bytes": "identical"
+        },
+        {
+          "path": "lib/features/books/domain/book_source_risk.dart",
+          "sample_bytes_sha256": "798425ab2dfbd721b82ef9c046ff5474ca2d71671af3ed0b6e639768a5922b73",
+          "git_blob_sha256": "798425ab2dfbd721b82ef9c046ff5474ca2d71671af3ed0b6e639768a5922b73",
+          "checkout_bytes": "identical"
+        },
+        {
+          "path": "lib/features/books/domain/fanfanu_legacy_source_fix.dart",
+          "sample_bytes_sha256": "0c3801d4380b8d5c5bab58f0f548725d55699bdf599585156d5894be415c5827",
+          "git_blob_sha256": "0c3801d4380b8d5c5bab58f0f548725d55699bdf599585156d5894be415c5827",
+          "checkout_bytes": "identical"
+        },
+        {
+          "path": "lib/features/books/domain/jhsssd_legacy_source_fix.dart",
+          "sample_bytes_sha256": "0b2d0dd3bb14f62e0e03a8ed24d6fa18e8e0047d71c0fe856aee4d70db2a405d",
+          "git_blob_sha256": "0b2d0dd3bb14f62e0e03a8ed24d6fa18e8e0047d71c0fe856aee4d70db2a405d",
+          "checkout_bytes": "identical"
+        },
+        {
+          "path": "lib/features/books/domain/jingzhi_legacy_source_fix.dart",
+          "sample_bytes_sha256": "e6035921a1ac0c5c29835c0c70e8acc340af1363cb613b312fdc4227e71aa925",
+          "git_blob_sha256": "e6035921a1ac0c5c29835c0c70e8acc340af1363cb613b312fdc4227e71aa925",
+          "checkout_bytes": "identical"
+        },
+        {
+          "path": "lib/features/books/domain/known_untrusted_book_rules.dart",
+          "sample_bytes_sha256": "8caf6f3b50868d858a0bbb461c0f680c70dc60c8673c5a8c24639676f28a8c89",
+          "git_blob_sha256": "8caf6f3b50868d858a0bbb461c0f680c70dc60c8673c5a8c24639676f28a8c89",
+          "checkout_bytes": "identical"
+        },
+        {
+          "path": "lib/features/books/domain/kuwo_legacy_source_fix.dart",
+          "sample_bytes_sha256": "dfdcad7cced36e68c4f3ac8db7a3697a6b71c84f43787acb0e8ba54a1d55f7e2",
+          "git_blob_sha256": "dfdcad7cced36e68c4f3ac8db7a3697a6b71c84f43787acb0e8ba54a1d55f7e2",
+          "checkout_bytes": "identical"
+        },
+        {
+          "path": "lib/features/books/domain/legado_source.dart",
+          "sample_bytes_sha256": "5b907923968332090760ecc9f4d6f7e652aa06501ac7981b5f477ef7c0d954d1",
+          "git_blob_sha256": "5b907923968332090760ecc9f4d6f7e652aa06501ac7981b5f477ef7c0d954d1",
+          "checkout_bytes": "identical"
+        },
+        {
+          "path": "lib/features/books/domain/legado_source_fixes.dart",
+          "sample_bytes_sha256": "5861cc4c175989a116074165f9aa0500cf56e5e82ebe8399833dc84470330f25",
+          "git_blob_sha256": "5861cc4c175989a116074165f9aa0500cf56e5e82ebe8399833dc84470330f25",
+          "checkout_bytes": "identical"
+        },
+        {
+          "path": "lib/features/books/domain/qq_reading_legacy_source_fix.dart",
+          "sample_bytes_sha256": "8b536b19cb6d220ee745a02604a6205e8e072300c2a0a8fa8fcea3f0eb67ef00",
+          "git_blob_sha256": "8b536b19cb6d220ee745a02604a6205e8e072300c2a0a8fa8fcea3f0eb67ef00",
+          "checkout_bytes": "identical"
+        },
+        {
+          "path": "lib/features/books/domain/sfwx_legacy_source_fix.dart",
+          "sample_bytes_sha256": "dee711b0b3ec1a7e87491eebcc0a9daadbbcf7a865166d11430b76bffd72c4dc",
+          "git_blob_sha256": "dee711b0b3ec1a7e87491eebcc0a9daadbbcf7a865166d11430b76bffd72c4dc",
+          "checkout_bytes": "identical"
+        },
+        {
+          "path": "lib/features/books/domain/shubang_legacy_source_fix.dart",
+          "sample_bytes_sha256": "1e9e7f8a3db66c470cb00ceba46ebedb0c4b24e3a29a70fbe5174e73afe26f5b",
+          "git_blob_sha256": "1e9e7f8a3db66c470cb00ceba46ebedb0c4b24e3a29a70fbe5174e73afe26f5b",
+          "checkout_bytes": "identical"
+        },
+        {
+          "path": "lib/features/books/domain/yingyu_legacy_source_fix.dart",
+          "sample_bytes_sha256": "a979ed63e5b91a6ff5d992a959e4fc5bcffdf23141ff5586e77da0017c82bb8a",
+          "git_blob_sha256": "a979ed63e5b91a6ff5d992a959e4fc5bcffdf23141ff5586e77da0017c82bb8a",
+          "checkout_bytes": "identical"
+        },
+        {
+          "path": "lib/features/books/domain/yuque_legacy_source_fix.dart",
+          "sample_bytes_sha256": "bc1f1d63d64010d8b281740a168c9ccf7744ba51ed29d44dae97d44668111f88",
+          "git_blob_sha256": "bc1f1d63d64010d8b281740a168c9ccf7744ba51ed29d44dae97d44668111f88",
+          "checkout_bytes": "identical"
+        },
+        {
+          "path": "lib/features/books/domain/zhongyi_legacy_source_fix.dart",
+          "sample_bytes_sha256": "86922a9b696b173b00efd4831a9acfc126b10bfd918b94e81222c9055716e164",
+          "git_blob_sha256": "86922a9b696b173b00efd4831a9acfc126b10bfd918b94e81222c9055716e164",
+          "checkout_bytes": "identical"
+        },
+        {
+          "path": "lib/features/supervision/domain/adult_source_evidence.dart",
+          "sample_bytes_sha256": "7dd20620b923e14687f8a7c58aafa923ece02172cd38aa260ac9bfe107795206",
+          "git_blob_sha256": "7dd20620b923e14687f8a7c58aafa923ece02172cd38aa260ac9bfe107795206",
+          "checkout_bytes": "identical"
+        },
+        {
+          "path": "lib/features/supervision/domain/content_classification.dart",
+          "sample_bytes_sha256": "0f22950b5a1e5696fa1e60bb353c53a24f9b4546314290abab0081ed08e6146a",
+          "git_blob_sha256": "0f22950b5a1e5696fa1e60bb353c53a24f9b4546314290abab0081ed08e6146a",
+          "checkout_bytes": "identical"
+        },
+        {
+          "path": "tool/audit_legado_catalog.py",
+          "sample_bytes_sha256": "36f5359259ba259e84ae10875be6383884ad0cc71e829f029dd96b6dc9976563",
+          "git_blob_sha256": "36f5359259ba259e84ae10875be6383884ad0cc71e829f029dd96b6dc9976563",
+          "checkout_bytes": "identical"
+        }
+      ]
+    },
+    "later": {
+      "git_commit": null,
+      "recorded_tracked_files_sha256": {
+        "assets/catalogs/books/legado/catalog.json.bz2": "012a0e0d6e6adc8d303c32b578510e14b562088b3e965cb01a1a647b5e7e034d",
+        "assets/catalogs/books/legado/manifest.json": "59bb9e3551b5a01406c1d720d2b5d5d5f21518eccbb52cd93f8d752c19f7cf66",
+        "lib/features/books/data/book_import.dart": "5c27a8cac7806ca8854672f89fcc90d0d98e5ab25b92ec4fc13f094bfe93a629",
+        "lib/features/books/data/book_html.dart": "3ef516a3dbac36b22da40c8f78b99a7fe56616bd6087a4aa5cc159b2c8ba7ecf",
+        "lib/features/books/data/legado/legado_import.dart": "3d4f0f1fb848c26bf65a0eec25373bc993403576634c60524dc17c5a6e217b69",
+        "lib/features/books/data/legado/legado_request.dart": "da65df24e85c72e12e9b6305407612084bd8ea2f6d9197ce66fc96e0bd717914",
+        "lib/features/books/data/legado/legado_rules.dart": "1d7eec2586901d68414fb5901e512a4cbd830b3d8284e08340ea37ae849cbd63",
+        "lib/features/books/data/legado/legado_css.dart": "4fb7cbadd4904cfe72949705d634beb1bfe7b3d0de955aa9523961c75b3b3b5d",
+        "lib/features/books/data/legado/legado_rule_tokens.dart": "4833544f325c73292eebf09e9d82d0573a97cf9e5ba16971cc4b3d3576c30333",
+        "lib/features/books/data/legado/legado_script.dart": "c07e35031410d73fbdde6503789a2080807a480d6329ae24e9e026671fedc6dd",
+        "lib/features/books/data/legado/legado_script_stub.dart": "c94f290e6328a5d60289329e2a9cc80b9381a770b4758df2b2a6ac2b8feca5e4",
+        "lib/features/books/data/legado/legado_worker.dart": "bdc2285367dec024d2d9ea58335ee464c9e3334d34ece85b06d37316afbabafd",
+        "lib/features/books/domain/book.dart": "cc1c1fb8f72481132403f9825565fbc58170e686e0d2885b5238aaddc7cf824d",
+        "lib/features/books/domain/book_search.dart": "5df399376fea21f96f571af17139b0b90e1ea8880f7f373e73898dccac05e9ab",
+        "lib/features/books/domain/legado_source.dart": "5b907923968332090760ecc9f4d6f7e652aa06501ac7981b5f477ef7c0d954d1",
+        "lib/features/books/domain/legado_source_fixes.dart": "5861cc4c175989a116074165f9aa0500cf56e5e82ebe8399833dc84470330f25",
+        "lib/features/books/domain/book_source_risk.dart": "96d56f4a01b80073ea52269320b7a3a22461aff7fa9a60ca25495c6744c35efc",
+        "lib/features/books/domain/known_untrusted_book_rules.dart": "8caf6f3b50868d858a0bbb461c0f680c70dc60c8673c5a8c24639676f28a8c89",
+        "lib/features/supervision/domain/adult_source_evidence.dart": "7dd20620b923e14687f8a7c58aafa923ece02172cd38aa260ac9bfe107795206",
+        "lib/features/supervision/domain/content_classification.dart": "0f22950b5a1e5696fa1e60bb353c53a24f9b4546314290abab0081ed08e6146a",
+        "lib/core/network/document_encoding.dart": "172e2da9ab62964439b147ba9d570e215e44c39ded113de40ba8ec68f022fa28",
+        "tool/audit_legado_catalog.py": "36f5359259ba259e84ae10875be6383884ad0cc71e829f029dd96b6dc9976563",
+        "lib/features/books/domain/biquge7_legacy_source_fix.dart": "5dda76dfee900d2ebe8a44142656615b8226a118ee5a8979cade11e5e4c05bb7",
+        "lib/features/books/domain/fanfanu_legacy_source_fix.dart": "0c3801d4380b8d5c5bab58f0f548725d55699bdf599585156d5894be415c5827",
+        "lib/features/books/domain/jhsssd_legacy_source_fix.dart": "0b2d0dd3bb14f62e0e03a8ed24d6fa18e8e0047d71c0fe856aee4d70db2a405d",
+        "lib/features/books/domain/jingzhi_legacy_source_fix.dart": "e6035921a1ac0c5c29835c0c70e8acc340af1363cb613b312fdc4227e71aa925",
+        "lib/features/books/domain/kuwo_legacy_source_fix.dart": "dfdcad7cced36e68c4f3ac8db7a3697a6b71c84f43787acb0e8ba54a1d55f7e2",
+        "lib/features/books/domain/qq_reading_legacy_source_fix.dart": "8b536b19cb6d220ee745a02604a6205e8e072300c2a0a8fa8fcea3f0eb67ef00",
+        "lib/features/books/domain/sfwx_legacy_source_fix.dart": "dee711b0b3ec1a7e87491eebcc0a9daadbbcf7a865166d11430b76bffd72c4dc",
+        "lib/features/books/domain/shubang_legacy_source_fix.dart": "1e9e7f8a3db66c470cb00ceba46ebedb0c4b24e3a29a70fbe5174e73afe26f5b",
+        "lib/features/books/domain/yingyu_legacy_source_fix.dart": "a979ed63e5b91a6ff5d992a959e4fc5bcffdf23141ff5586e77da0017c82bb8a",
+        "lib/features/books/domain/yuque_legacy_source_fix.dart": "bc1f1d63d64010d8b281740a168c9ccf7744ba51ed29d44dae97d44668111f88",
+        "lib/features/books/domain/zhongyi_legacy_source_fix.dart": "86922a9b696b173b00efd4831a9acfc126b10bfd918b94e81222c9055716e164",
+        "lib/features/books/data/legado/kuwo_discovery.dart": "a6ad484d2755bc7c6a594ee85c6ca61157676af79c72d46087a65ae2ade2740b",
+        "lib/features/books/data/legado/legado_client.dart": "1e0489f523688ff1917aa52a2cfec46f8e95472c2740e5c7e380f62c5ec40f27",
+        "lib/features/books/data/legado/legado_discovery.dart": "c4c8039a58e66522547a4d71991be415a8c5ad571bf105c891bace70f2c77c7e",
+        "lib/features/books/data/legado/legado_script_flutter.dart": "18af87c2f57bd680bfdfcf48968c82a65e6c47082b17d88c183cc4a60c7f9474",
+        "lib/features/books/data/legado/yuque_book_list.dart": "d76c7de35ef5e6dfff749fdd4332897faee70d8bcf9cdd1928d3d84fda21941e"
+      },
+      "uncaptured_risk_direct_dependencies": [
+        "lib/features/books/domain/com_rdap_legacy_quarantine.dart",
+        "lib/features/books/domain/iqiyi_legacy_quarantine.dart",
+        "lib/features/books/domain/moe_rdap_legacy_quarantine.dart",
+        "lib/features/books/domain/net_rdap_legacy_quarantine.dart",
+        "lib/features/books/domain/novel_242_legacy_quarantine.dart",
+        "lib/features/books/domain/redirected_legacy_quarantine.dart",
+        "lib/features/books/domain/taotaoshu_legacy_quarantine.dart",
+        "lib/features/books/domain/top_rdap_legacy_quarantine.dart"
+      ],
+      "full_runtime_snapshot_reconstructable": false
+    }
+  },
+  "method": {
+    "keyword": "fixed synthetic",
+    "request": "anonymous same-host HTTPS GET",
+    "public_dns_validation_and_ip_pinning": true,
+    "tls_verification": true,
+    "follow_redirect": false,
+    "execute_scripts": false,
+    "send_credentials": false,
+    "submit_post": false,
+    "load_subresources": false,
+    "body_limit_bytes": 524288,
+    "per_request_deadline_seconds": 10,
+    "worker_hard_deadline_seconds": 15,
+    "inter_request_delay_seconds": 1,
+    "parser": "actual script-free Legado Dart VM operations"
+  },
+  "sources": [
+    {
+      "index": 407,
+      "id": "fa42526b9412d5c4431acbd60ab169b7e68e7b2fe008da412e8b8da8310bc877",
+      "host": "m.dmxso.com",
+      "kind": "text",
+      "format": "html",
+      "endpoint_sha256": "f289d889d1eb1b9b70f050b6944ff73a0aa8583875f59fce283d5826d42f556c",
+      "raw_record_canonical_sha256": "8055258386ca4e4d3138926c99afc6c86cd650c63389dc10e87a2436d2c86a0b",
+      "historical_legado_canonical_sha256": "bc163492a07a7cab73842ce8d030952223ff821310d4188686e80473c926e7ce",
+      "raw_field_sha256": {
+        "searchUrl": "152209d85524091b74d0aa4d2cbc46b4e8ad9bf8057ccaa333e3820bb2eaa9bd",
+        "ruleSearch": "c73af19506dff2f68eb8cdda31747f5558dabbc843b9f2c84766ab031ef800c0",
+        "ruleBookInfo": "3e79f03a86d830a46d749a70f1bccb00bf49cc6b666dc67b244518d6a67f8c7b",
+        "ruleToc": "da9f49fe4c937cd911e2ac2a4e98d06a2f89b45d4261f451ac7215cd66cce64e",
+        "ruleContent": "2b27770620500e33ff07a5e66803209004ca1fefc1027966f032aa1c76ca5d66"
+      },
+      "sampled_rules": {
+        "search_sha256": "152209d85524091b74d0aa4d2cbc46b4e8ad9bf8057ccaa333e3820bb2eaa9bd",
+        "rules_sha256": {
+          "searchList": "f58726ae09eb315da1f4e7cdcef9778c3ce19f89423aee2ca15c5e8f30104e65",
+          "searchTitle": "a76df59f6b030569c56a86c2a52c902c994ad531df27081c8ee2885c21f412fb",
+          "searchLink": "406953aa31952ed9b119f4eaba8b3e30a0942b2a96b97c279683b6fa55832d08",
+          "searchAuthor": "80c986566eab6c1a5a91e131eeb766900cd57fba7303fcf6ae9c0f3e3e0cabef",
+          "searchCover": "1f854790af135621965d55a8379e9c9dfa8ec795192035b4259b6cc82e09b7a0",
+          "searchCategory": "ebc077e36526b855a7dccc136d6edc4ecaac58b2637bd4da3261bd9dad687fb2",
+          "searchDescription": "a05b573a0fad05ec36c86c9cc6b3b6c50b8de3dbdda981461e4a10c0f746bddd",
+          "searchWordCount": "324b8bb05a0388d8dc18c62606476c93899d12d4dff3c6bfa1bcd823e20ba7d1",
+          "exploreList": "1613d4ec22298176874dc0055b434e92c510d1ad0c0e47ae13c282624dd6ed75",
+          "exploreTitle": "8c7688c1b47761914e470b19b6dfc3f8c9c0a876c4f9a409b37681dc556cdaf6",
+          "exploreLink": "406953aa31952ed9b119f4eaba8b3e30a0942b2a96b97c279683b6fa55832d08",
+          "exploreAuthor": "71131d8e98c1fb27253d123bc66aa13df371a9a577e1272692dfd7db99686f71",
+          "exploreCover": "1f854790af135621965d55a8379e9c9dfa8ec795192035b4259b6cc82e09b7a0",
+          "exploreCategory": "c8a73ceb522531dd77e6b1b30098c3c82e29093ad7fc3cb4962a691b217f97bd",
+          "exploreDescription": "e8bdf338b6a31e23c1b60fead1d6d7c8f495be16fde0ed76dfb30f57c21532a5",
+          "infoTitle": "ab3840f45ea25c6e1997c5df6b503776666029eba9829bbb0a228e751324999d",
+          "infoAuthor": "ff16849ef7fe587593b79342ef073e82883b2ad5138a7be5d46c36078293bfdc",
+          "infoDescription": "80e9deef1b9b77aa8efef148d02185dff059b847b881aad228a79f4cc2bd2d97",
+          "infoCover": "56cc999d6429fc1c200120b1a877708a11ee02251addcf2de6ca1b0a6382a21b",
+          "infoCategory": "967e284d018ea42405db06a936efa688cd8d3fc0703be738573ccdedbef36ebb",
+          "infoWordCount": "519f13e4564a20f1c630e8e1997b3513e5841a78e7a85ab29fe5532ebf7fcce4",
+          "infoLatest": "f36cb05e507df2097a58f621c58525c19a5dc16a9749b447c36e12fb9dcf98df",
+          "toc": "8caa2ec979c40c3f09f3a25643045a28011c80eaba7ef846e5aae69fe53341f4",
+          "chapters": "f3eff7ecf186783ee5afa73f0da5826e336f5f83179476dd18b1a0803085959e",
+          "chapterTitle": "982d9e3eb996f559e633f4d194def3761d909f5a3b647d1a851fead67c32c9d1",
+          "chapterUrl": "fea45fa70a7a8b4e5abc1b12b6de8a8a022b0bdaca0eff8f3d2f8d07cefcb500",
+          "content": "9583259698e4bf54c84df9c4ab38518ea559a830a951827e0ef6131ae8473e9c",
+          "nextContent": "09b46844a3d5545e4c34a6cf18020c4034e4e05a928f24d60625ebbcfbdbf87d",
+          "replaceContent": "dffb6a09da6c769d4b117984b97b59977c338dcddd9613ba760f957b20009e87"
+        }
+      }
+    },
+    {
+      "index": 1399,
+      "id": "c7f3f35a20b48cf4fb02cb92f6714b08c96d97adb6bfd50a24adc0d3d21d7b20",
+      "host": "www.wucuoxs.com",
+      "kind": "text",
+      "format": "html",
+      "endpoint_sha256": "9312b4898838d67a1a41242a6dfcdb87a10589972bc811dbc62baf336559d544",
+      "raw_record_canonical_sha256": "c11c5421ea54810735c25cb622a158c40973223638f3387ae6aa694aa9640b22",
+      "historical_legado_canonical_sha256": "c0147ec0b555c712e33559ddd311b42a06c187600d152dea7af473e3bbab340c",
+      "raw_field_sha256": {
+        "searchUrl": "9c451716a0c5980b5b809e17d5b15a4270ccdc13c89287c28a697761d5f522f8",
+        "ruleSearch": "cd15ed14ef9d0870f3a168852f2dd6f9cfa8504b09ca2ea034b5194fe3121d4c",
+        "ruleBookInfo": "53b455fb5bee82279b998577ea22991cdc5a34b896dada3ee3b693c02d538b0b",
+        "ruleToc": "f3ab4a2a231886033ea97494a9242d5f6ee9f1f8c518a7b0ac8ba4aaa0ab166a",
+        "ruleContent": "ec30d978ed07878f13999a26e721467102113d1b4ecc34187274fb4ce85035ca"
+      },
+      "sampled_rules": {
+        "search_sha256": "9c451716a0c5980b5b809e17d5b15a4270ccdc13c89287c28a697761d5f522f8",
+        "rules_sha256": {
+          "searchList": "be26c9c92e6f5cc6a85e133a2905555c6b219704b40b378c701d0f9f7f9d91af",
+          "searchTitle": "3d0820457832da3ef021585ddb18c1ec7a0d548691fd1cc2daf06aaa7ef79ccd",
+          "searchLink": "845dc0aaca223f6c921fcede2b86887fe9f0eb6f6ee1797ee5ba960e6131910e",
+          "searchAuthor": "26d4c727cce54f4b96e66c41f4fe0eb7deffe323720adb9aabed8f0625425513",
+          "searchCover": "64bf57440e363d00a7969f7ca33bf749a2ed74ade7b19fa26cb7d500b1982f72",
+          "searchCategory": "9f3110bf61a9a9319ea0b8a0687f6621c58b49e9143805b6001518561e6956eb",
+          "searchDescription": "98a020e25a91fd15cd8e49a92ff1d9c355e5d1b54058e0c06c310f873f4e95f3",
+          "searchLatest": "94a6d8d2c72a625926d4334fdc64318a57adebf4aac744003202295050468c05",
+          "infoTitle": "d06b6a73c3f13e62ffc04f0a81fcae03fd1a55300fbf5c31f5654c0e1eb23759",
+          "infoAuthor": "953b79902c567b2c6d1b10a59312f66435c5b636a0ad1e8e22de2de3ef250642",
+          "infoDescription": "96e6ab776761dc8dd69c5e26fa86c1d1d786f0fac2da11779c7b3043d239c48c",
+          "infoCover": "fbeef8d5704de83794f0e0f9a66dd65b04d6cbae998690a3e75e38ae21affb02",
+          "infoCategory": "be1dad71a0e71a56bdafadd21b95301749f95caa48b2b1a641bcd4da4d618563",
+          "infoLatest": "76a7cf780e8bf08c9ed3b5a725e91f30ca2bc326580bdb7c99b10f410cfa90c4",
+          "chapters": "08769ebf18588937c7ae69107d707a173e910900b87a994ff6534d4d64251e87",
+          "chapterTitle": "0195e408b3a03d6db742c3743129ece001b86790906c42df47170d149a8daeb7",
+          "chapterUrl": "fea45fa70a7a8b4e5abc1b12b6de8a8a022b0bdaca0eff8f3d2f8d07cefcb500",
+          "content": "be4a085d40fee49521a908e3c0071406337e13fba19f87e5721e401c50a3da8a"
+        }
+      }
+    },
+    {
+      "index": 3134,
+      "id": "bc379d9cf7ee312a6d9813e14830fdc689be5b2371fa025529586fc3a67aec1d",
+      "host": "www.3uxiaoshuo.com",
+      "kind": "text",
+      "format": "html",
+      "endpoint_sha256": "461bb4c162e0a7f0abd078b194ff10a4258333273760510ceda34710edeb8c4a",
+      "raw_record_canonical_sha256": "e21aeed9e48a5137e0a84fe97914f09a29303750a77ad2dcdb9446c51d1e1009",
+      "historical_legado_canonical_sha256": "719bcc073e57846c8fa64d94d46537f5fc764f7588af24e29c6fffdf8b210834",
+      "raw_field_sha256": {
+        "searchUrl": "f3fccc70e63b8c479d85a58d50a1e4dc3d171f9e8988424d62321f5f195baeb6",
+        "ruleSearch": "5d0eec3132af5544b48ff85cd3592aee3e61140ec83469d67d1190ec334a6232",
+        "ruleBookInfo": "cc24ad113291b5652d6bfb55ba99180e2348845bab1916fd486c1e1e81ec8c61",
+        "ruleToc": "0947f8a98e9705edd1dc8020fb0c48b4af0bb580da94c839e246d028be41d488",
+        "ruleContent": "7069268b7856d8bcf97a87a20fa71c9f727a06b3a21446d3f88ff4a9ae1b10f3"
+      },
+      "sampled_rules": {
+        "search_sha256": "f3fccc70e63b8c479d85a58d50a1e4dc3d171f9e8988424d62321f5f195baeb6",
+        "rules_sha256": {
+          "searchList": "921e9b5f0d5c91964b81a765d1804dcaf5ce98478494f553cbc11b58289f9b31",
+          "searchTitle": "29278563501be6ae23c1cd3feb2bae1639f8756ee09b913fdda214cf230a4773",
+          "searchLink": "5d4795ab8bd758d96bd9720de7a2b4bf0a13980ac5e4c0b12f6c02b93b9ece88",
+          "searchAuthor": "3115493852a26c9ccc0fcd586da2355875e274878886b5f35eeb779366bad9fd",
+          "searchCover": "0fb652d9a2fcac8ffc64b5e15ef1902dc0b204ade35ae7e4a0b9a0eda4b2eac7",
+          "searchCategory": "de400c5d8e809457f002a6f265edef576d0d1db770ebff630255e73857ead91c",
+          "searchLatest": "159741e3ae94caa10be0f2733e054b0825b12d9b4e53fc598182d1aa76290bca",
+          "exploreList": "921e9b5f0d5c91964b81a765d1804dcaf5ce98478494f553cbc11b58289f9b31",
+          "exploreTitle": "29278563501be6ae23c1cd3feb2bae1639f8756ee09b913fdda214cf230a4773",
+          "exploreLink": "5d4795ab8bd758d96bd9720de7a2b4bf0a13980ac5e4c0b12f6c02b93b9ece88",
+          "exploreAuthor": "3115493852a26c9ccc0fcd586da2355875e274878886b5f35eeb779366bad9fd",
+          "exploreCover": "0fb652d9a2fcac8ffc64b5e15ef1902dc0b204ade35ae7e4a0b9a0eda4b2eac7",
+          "exploreCategory": "de400c5d8e809457f002a6f265edef576d0d1db770ebff630255e73857ead91c",
+          "exploreLatest": "159741e3ae94caa10be0f2733e054b0825b12d9b4e53fc598182d1aa76290bca",
+          "infoTitle": "be71976cc0f6547c7290d79514d6cb887436b3536a59f6c9959bca65d7fc4c33",
+          "infoAuthor": "ec1e6bfd2e134a84069fdac499f43a614dd56d0b662e1b7bf339712a2a43bcee",
+          "infoDescription": "0394da49162f8d1fe9504514ecb3e7eec97b33c97c14c758e0a0f1207a10fa6d",
+          "infoCover": "bd3d789f3cac774e5bc19a791acc3e6af8763abe9f0cebc3eb049f5ea80b41e9",
+          "infoCategory": "c62cf7c67b7ca431d9f92fd3c175ab7b694192725389454faa52ee038134c6ae",
+          "infoWordCount": "8f9f71e94f69858e634c3dca20089cad4f4baa1b284be59629109fcdb62d0656",
+          "infoLatest": "4c221d86a876c1fea87727f08f9d5e70ea4a29e3f0ac2db3f3b23f0f9dae7746",
+          "chapters": "393c6b04b4a6d6d2da74159122185d8dbfb2a8ef719e00caf8c9a8a56cef0e92",
+          "chapterTitle": "aa27606953f41455eb846785ca88324c279055e1584b40f86db97772ae5f0dd2",
+          "chapterUrl": "1e28fa862e46bd0c7efc1c4c62e138f228f730d0c0b958cce9bec07f80dc7a5f",
+          "nextToc": "d30a2f2e4cb55c0483350d0cc7a490dd13e38c36c47712035439cdacdbac4d91",
+          "content": "2f98ebc55fd2bcb0f9f7141f03792d234fbad016c80f08443f3a5635a354bc51",
+          "nextContent": "09b46844a3d5545e4c34a6cf18020c4034e4e05a928f24d60625ebbcfbdbf87d",
+          "replaceContent": "f5520a28f0de0e5259908e4b1064b66b167415470464b3070c007bc854561307"
+        }
+      }
+    },
+    {
+      "index": 4371,
+      "id": "22fd5687b4cd8b42ce1d69d0701148e989f39833d7d94b1e1dae73795084e242",
+      "host": "www.bsxiaoshuo.com",
+      "kind": "text",
+      "format": "html",
+      "endpoint_sha256": "8e502f1b8e3c81cbd0ce27e302bdf745660e2fe347b5e4373e02ef30966d2f8a",
+      "raw_record_canonical_sha256": "5f5f1694a131bca90865399a6a3e9c1e57a44a7e37db649c3ad71da9080342b5",
+      "historical_legado_canonical_sha256": "5e0ce5b6c43db101d89212f26fab8528e17f91a7c1c2cd82085c62d84e45c43c",
+      "raw_field_sha256": {
+        "searchUrl": "b21d6813503eefe5a59ec5fb43213b2b4b43793c67e0cfd59c285517c74b086c",
+        "ruleSearch": "cdc17f70b5860bbe5766a33d4df3c77cbeaf7f8dd1c0bdbd1a074ec6305d7032",
+        "ruleBookInfo": "ceb076d073cc25e2cb9432be922b1195e722f84faf4db31b82137d72ff26a797",
+        "ruleToc": "2f42be70888570c8fe429613257fe44c00fe0a56a43c230622c8bdc8afd59485",
+        "ruleContent": "db16d97b7a09a290575c7e3289e6ea0e5753df0b9a7fac02d487da4ed034836c"
+      },
+      "sampled_rules": {
+        "search_sha256": "b21d6813503eefe5a59ec5fb43213b2b4b43793c67e0cfd59c285517c74b086c",
+        "rules_sha256": {
+          "searchList": "f7123575e763c0b363ea2a1537d65826c44234cec538644f03aef7b48845504b",
+          "searchTitle": "e8bf3b35be3dc6019b607afcf4795b66f11bedb902f4a3526dba4beea2f3119d",
+          "searchLink": "1e28fa862e46bd0c7efc1c4c62e138f228f730d0c0b958cce9bec07f80dc7a5f",
+          "searchAuthor": "32384d6a08dace337d23d57def4a83fbca3abb2486af88a39559d1fe1e560d11",
+          "searchCover": "0fb652d9a2fcac8ffc64b5e15ef1902dc0b204ade35ae7e4a0b9a0eda4b2eac7",
+          "searchCategory": "942e38cbecdd4eafe12faf7c02ddd0ebd7b54be9872239f6b80c4ce5a810cf84",
+          "searchDescription": "594bce6f901d2d1919feae7fa750d5da7521e52dc5b43205b788056af90567a9",
+          "exploreList": "cadb5f0e55b7ebc02bdcfca340a681f23e5c2cdcc6e618f49ce7150a2dee285b",
+          "exploreTitle": "a76df59f6b030569c56a86c2a52c902c994ad531df27081c8ee2885c21f412fb",
+          "exploreLink": "406953aa31952ed9b119f4eaba8b3e30a0942b2a96b97c279683b6fa55832d08",
+          "exploreAuthor": "2fb0fa6867b3b090595a8c56a6bce447d60e247d7b4ab2c72f9bee282da4dee8",
+          "exploreCover": "3948e28dfa02dc6ac7df6fd73f471d4da70a5785707c0b0bf19af0b77bd55524",
+          "exploreCategory": "56f3861e7c2baf8fc73e295e986cd17d9c3538de01efc25031cd4553e430602a",
+          "exploreWordCount": "1680405f0cabbe119b626427510fab20f6b4e6150d292745db5d639e29d08aa4",
+          "exploreLatest": "05a51141e59c5a55d06f631948668b227fc984498355125fbe959880a856cf2e",
+          "infoTitle": "09452ad18a757858bba2174e574090be5b409962171512c00ea25be63e9fb8e4",
+          "infoAuthor": "e2d5c51fba5d76a9f1f2f44ba8d10d2adf4d80140c5bdc39b09bfcfe67de4a9c",
+          "infoDescription": "5dc4127d736fd689e83bc5d1a104a0b4ea8c9b9199aba4d9cbc6e1e4da097b9f",
+          "infoCover": "4199010e35bae9376926adb851fb41236ba260786e0f281e4a4fefa51b324365",
+          "infoCategory": "d1022d5d93ddda6c03e55dc2162ff93bc4b67ecb5081ef0409187b8b7aedb01b",
+          "infoWordCount": "809141c13e20b410256f22abdfab45a7f1063cddcf6444f04ba6c1e3f57fd558",
+          "infoLatest": "5595eda5fac18aba814bb9037ccb8d55c3669652f555d009639b31a04e266855",
+          "toc": "499718b820fdfa55438a64bfcd8327eec07b6b2d2dce48130ce51f0d70a6f7a5",
+          "chapters": "694b292307818402373c77899396c9a0b5608e218f36755a1f0411dc96ad3b59",
+          "chapterTitle": "aa27606953f41455eb846785ca88324c279055e1584b40f86db97772ae5f0dd2",
+          "chapterUrl": "1e28fa862e46bd0c7efc1c4c62e138f228f730d0c0b958cce9bec07f80dc7a5f",
+          "content": "365b5994f9b3a8684f8698aca57f10437fa01c1b7e8cb8445f4f4ecf92c8a5d3"
+        }
+      }
+    },
+    {
+      "index": 3954,
+      "id": "0e51322b309496dd36b4388cc7dcbc156c06e32bff52d1d6a9878794877003d0",
+      "host": "m.gulongbbs.com",
+      "kind": "text",
+      "format": "html",
+      "endpoint_sha256": "ab158698b9721e608bb15ee7840164ab5239dd7cd93efaf19898baae17e68e47",
+      "raw_record_canonical_sha256": "02ed39479e5b60c27e3b1951729e9f61b83ff4f75920eb8a6514fe9fc988c86f",
+      "historical_legado_canonical_sha256": "790c822722e21213becd6dd594ed46e098f2b86c76c0463c0dff005d87e41893",
+      "raw_field_sha256": {
+        "searchUrl": "fb2d94218a1d1388ef7c4bc1393a803d883e41a2617b553a5cbe47cbf869692a",
+        "ruleSearch": "97ff57e4ce3b99ea7658e71be4faf81c95cda722c3eead1599de2306314d7c3f",
+        "ruleBookInfo": "4c6a365aa929e492e18d2e13594daf99204e02636af995a75b861b4c89c1efd8",
+        "ruleToc": "da08b1a3789fbca37e9b788048d2094913d6544d233a488a0a34bedb8d28d8d4",
+        "ruleContent": "fb18e95c5801a5fa9e88c699779922b38afb04b81861a36d294a343427982679"
+      },
+      "sampled_rules": {
+        "search_sha256": "fb2d94218a1d1388ef7c4bc1393a803d883e41a2617b553a5cbe47cbf869692a",
+        "rules_sha256": {
+          "searchList": "4f8a5fc6c510cb58795e73c81f15de208b2eed559c24a403801408d848d19df4",
+          "searchTitle": "96d55b17c12d5a5001ca67bef07ac9fc777f47f25b1b57da2425cafca9447326",
+          "searchLink": "99d59d642f328cfc8b7ccd775c8aa05d81b081f17897e241de0a89aa8f6f7c55",
+          "searchDescription": "876793e20a877391f0e1f845e848ef1908a18547007e0afb24031ed91b488531",
+          "searchLatest": "f0dbcb91e2c4f8898345d063f7e66a03e5d5027c463bc7ac26fc9e3bb69c86f7",
+          "exploreList": "f7c116359e60139e40e4f0c45545f46c9ffa1d3bf8a2ab7520e39a5f0733031e",
+          "exploreTitle": "982d9e3eb996f559e633f4d194def3761d909f5a3b647d1a851fead67c32c9d1",
+          "exploreLink": "99d59d642f328cfc8b7ccd775c8aa05d81b081f17897e241de0a89aa8f6f7c55",
+          "exploreAuthor": "7806a758f452c2cc9fcabcead97ad53a5d84c718ec60dcb7d309eddcdc310ecf",
+          "infoTitle": "bc633f8630980d5ead43cdb026bb911645cd462c346c2d591b0dcb5f51494f80",
+          "infoAuthor": "b54889afeb864b8a936733e6e0af98e6ceefd01e33c632e0a14c5e371d4ea0dc",
+          "toc": "891d49860bc51e110de3caa05aa644cc3d990484b545e39c33961d9f9dfc4cac",
+          "chapters": "766c8e2fa8c214da8c1abbbb19be80639aa1dd9054409785ecd70c4aa8cdf60f",
+          "chapterTitle": "bb08dcdcaf89ce2ffea28b92a991fa47019a837b2ee338fe8900ce17b23054bc",
+          "chapterUrl": "fea45fa70a7a8b4e5abc1b12b6de8a8a022b0bdaca0eff8f3d2f8d07cefcb500",
+          "content": "3d3a10b02b9b36d0060e22922990180ab8530a55cbbaa4d4de33b5d5b842402e",
+          "nextContent": "09b46844a3d5545e4c34a6cf18020c4034e4e05a928f24d60625ebbcfbdbf87d"
+        }
+      }
+    },
+    {
+      "index": 1056,
+      "id": "981adf7639a1c61e23ad4104e4e11b3553439b9ea22599c1b429881ace889402",
+      "host": "www.shubang.net",
+      "kind": "text",
+      "format": "html",
+      "endpoint_sha256": "039f610a1a071350145767cf0f4a48200eba046a0aba2ff17fc6a8056ea380e0",
+      "raw_record_canonical_sha256": "6f686778fd32645588760e0c62a033ce0be8f7ec7f022b0dac61328759efd4bb",
+      "historical_legado_canonical_sha256": "b26bc4405a031ca215d99155430e9bb99768f66e548caa6ccabc623611e201dc",
+      "raw_field_sha256": {
+        "searchUrl": "116c2a1eeb812bfeb6fc69abf1ad2ce4b3023c7bbe3a3778291f9ed6ed32bd48",
+        "ruleSearch": "ed1a1505241b94b4be5046fefa2d86ab85ca8d77e136c254486556011bac9e22",
+        "ruleBookInfo": "2a1008b0e94f1ff6592d73fdde146e58acac1345565676cd0b56f8c525710007",
+        "ruleToc": "cb5283e3ec7050ae02bb57e68a7d64eb012ecd8c4be858f66214d552473efe50",
+        "ruleContent": "5b3804d5776e3a81329bda3963fd4fbb669c88a11a9d80063138aed09a4e604a"
+      },
+      "sampled_rules": {
+        "search_sha256": "116c2a1eeb812bfeb6fc69abf1ad2ce4b3023c7bbe3a3778291f9ed6ed32bd48",
+        "rules_sha256": {
+          "searchList": "9b9e9c02fa5bebec1f5128d8b11bef3847961d5f1d50941245524bff7a58e2c4",
+          "searchTitle": "466cc62ef653ee385f3ddac3bcfef503b5c1776df7cb5b866f99a5e206483bcf",
+          "searchLink": "fea45fa70a7a8b4e5abc1b12b6de8a8a022b0bdaca0eff8f3d2f8d07cefcb500",
+          "searchAuthor": "0e7059db14e0fa633f11ae043b035f1e67a4ff0afcdb559d7e6525ded03431d2",
+          "searchCover": "546f1d51e2985c3415202e3f9f9b57bdc8187d466078f0ad92cf1ce5eb834ae4",
+          "searchDescription": "3709366588fa49c2f2fea88f892bfd6150838179af00ac8fb6286553e65e0e90",
+          "infoTitle": "2ca98cbd4e0868e8608068d7758a539b332053d324a2bae5dc76cd29abe93db3",
+          "infoAuthor": "5a6d6d33053d9ade3dfee35e1fd5e38d96f779ab8ef1490d6d6e576522d15a5e",
+          "infoDescription": "a66f433da31e9a866540a0dc87a95bd3a931f428a72ac772c754824f7ad79578",
+          "infoCover": "a7ec911676763f8b3bc993c8486127ffab6adcf75e6157eec5c3a41c9010a069",
+          "infoCategory": "93da145c59a6e5f59eaa2a88dc4590567fd541f5a54974be1af8da399660aaff",
+          "infoLatest": "9307e253ee0bb24fa1ac57ccf2036b5caeed5a0e0192a2d848584bbc13b0653e",
+          "chapters": "9cbd3c72c1b41179822b8a84987c205a0b27c389fa1ab7e9f2a3a54bc871e009",
+          "chapterTitle": "aa27606953f41455eb846785ca88324c279055e1584b40f86db97772ae5f0dd2",
+          "chapterUrl": "1e28fa862e46bd0c7efc1c4c62e138f228f730d0c0b958cce9bec07f80dc7a5f",
+          "content": "9db5f33d476eb545b6d996bb968878ec83436a54643b2bcd9454431ebeae48a7"
+        }
+      }
+    },
+    {
+      "index": 3817,
+      "id": "52a7d590143c8fd5168b42ff3681a8bd473d0cbd3b53810d527047294a9e8ba8",
+      "host": "wenxue.bkneng.com",
+      "kind": "text",
+      "format": "html",
+      "endpoint_sha256": "671cf78df04727471e3ab5b4aa8402fbcc4e12c1d927c0dbdc99083cd75eb47c",
+      "raw_record_canonical_sha256": "132dd89ede8e70903a0ddb0a5c1f120c9d4fe4bc02e0d0a573538ac424a4917c",
+      "historical_legado_canonical_sha256": "dda95675e785330330521c1f894ea8229d413fb6e8ab4993ea4aaddbad35207c",
+      "raw_field_sha256": {
+        "searchUrl": "c019c92cf59a06ce7a85b33bc8030eeffe39e8f9b577df170974dab6d22e08bc",
+        "ruleSearch": "5c099704dfb0f4e3a17a5d5695df11210d320f5e5a04ab13b96ebcfba34aba03",
+        "ruleBookInfo": "334ceef21023646ae3e32a83b2a2b0b9537e08e2915f3a1a158d38c8ba87e57a",
+        "ruleToc": "e29ba0422ace8f808c63845655c75f1b42adabf285aff84a09be8bf24cdcc18c",
+        "ruleContent": "b67dfb8eabe86f4b5b94b7b7d38f6ef56e9c67c1f0bce01610dd4142735d364e"
+      },
+      "sampled_rules": {
+        "search_sha256": "c019c92cf59a06ce7a85b33bc8030eeffe39e8f9b577df170974dab6d22e08bc",
+        "rules_sha256": {
+          "searchList": "2fbcd657938134dc68dce16be00cfe371434c2203a9158e84b422da8ed25dee0",
+          "searchTitle": "8c954b5cac18cf007f545766e62e254607e0824fdcc2ecb082171dfbfb625064",
+          "searchLink": "3a99d50fd3a73d3cc5420b7503c76552af12cbb7dba4a7ee00fee47c06b276c8",
+          "searchAuthor": "ecd0fda28a428b8a410876f62a1f658c41cf33b7306cf234067b136e302b38ab",
+          "searchCover": "0fb652d9a2fcac8ffc64b5e15ef1902dc0b204ade35ae7e4a0b9a0eda4b2eac7",
+          "searchCategory": "2fd3bbdde20bbc190f258c86014b647cdf7410f1112726839f313f8bd008da26",
+          "searchDescription": "bdf9544355c36b59f76adda8d3aee397bdb78b21d38cb3b292a577fdc91976c7",
+          "searchWordCount": "49dfeeeaf891ed53fe258a3a7f786f7fb1a33c911bffcaecb18927f5a42af60d",
+          "infoTitle": "93765a7c7c4c619b4a7927a470db1e359efd1f0be61140004c2bda4c7579a348",
+          "infoAuthor": "80d4c1ed0f160a37c2ba7b2fdf18c338d00a6d2a15df7738bb876befc4a6f52f",
+          "infoDescription": "e1aa0e70a30a32c163974ce136c6b43285d0b0128ac1c1e239d496dade958486",
+          "infoCover": "bb1340c53bc900dcf6989d6561641ccd1c847c59d14fdeb97528f85f6cdfc17b",
+          "infoCategory": "d70a25695996bf9629889f511685408b795723cef70ec6f9a544f0243e5ba72c",
+          "infoWordCount": "887496644579b156723a2b6e5dd886769b5a6580c4a14b2846faab44b3afa717",
+          "infoLatest": "364cf11a1c81fa34ff8902d3cad9e2caf23fd692f0649a32e411552ba2406df6",
+          "chapters": "02b8cb0a5c89b543a1ba52ff697cb9c702db4321059bda5575c9fddf1954dca5",
+          "chapterTitle": "982d9e3eb996f559e633f4d194def3761d909f5a3b647d1a851fead67c32c9d1",
+          "chapterUrl": "fea45fa70a7a8b4e5abc1b12b6de8a8a022b0bdaca0eff8f3d2f8d07cefcb500",
+          "content": "71d48bb779a6b35c4cc41a81d036263b3b7cec01e1eef59cf22dcd9fa719c8ac"
+        }
+      }
+    },
+    {
+      "index": 4491,
+      "id": "5ff498ddb51371e132e6b35fa505eaa7ddb0b989213814eda0a79cf3cd119747",
+      "host": "www.zzrx.net",
+      "kind": "text",
+      "format": "html",
+      "endpoint_sha256": "437a20617a182b179ca7d35dcb9ee264e5698aeba6be0db69ee3c77786bc10af",
+      "raw_record_canonical_sha256": "a1ba111fd4844ccc39b9f4f621791c3f8fdfe41a086e014be0f744b2187a8cc9",
+      "historical_legado_canonical_sha256": "2f6a43ac942e0317b63d6d026c730ad58d4af9b2745006bfc082df044c95f74b",
+      "raw_field_sha256": {
+        "searchUrl": "ab535d62d73a615bae83ed58d455c6f4f25c133624d7b3a60eaceafef5163590",
+        "ruleSearch": "12bdbc9a172fb681caeb29b6923e5cae6da966a46f591f2f5f22318a05a9a7a3",
+        "ruleBookInfo": "931b0238749328aa24723b23e343e9695427f66d195118586db5cb749544c891",
+        "ruleToc": "80631cd714df33229a5b69d3f011a26058b3918ce8729a4528a5c314a1063484",
+        "ruleContent": "5035a2755e685cbc98d29fad06589e86835e9be7ad8959b7e4386f9a7d3406ff"
+      },
+      "sampled_rules": {
+        "search_sha256": "ab535d62d73a615bae83ed58d455c6f4f25c133624d7b3a60eaceafef5163590",
+        "rules_sha256": {
+          "searchList": "a8a919c13dfe6d1145b40d510252b35be6656eefddc8a1cdeac57138b2b23271",
+          "searchTitle": "499491548f9ceb3423292627bff86ed30a9fb67b0b7979e71aba5e785a2e14d7",
+          "searchLink": "406953aa31952ed9b119f4eaba8b3e30a0942b2a96b97c279683b6fa55832d08",
+          "searchAuthor": "5d987ac85e6c0cddfb26fbeb8aa90e99365a0ee60522402078e7a0bdbb4b3a39",
+          "searchCategory": "ce9e9d699a31aab7934907a7c4b0dc593e4eee78ee03a217101fc47fa49b1f6c",
+          "searchDescription": "6503536ba2f54c4e15eb11c857f3c5079e613a9479d0cf041214d66b4262a4e7",
+          "searchLatest": "de0972435834a8e032db2fb72934b52fd38c941544e9296ea532c8da7e0b1b52",
+          "infoCategory": "029fb2fb73ae6c874077653d1994cec352d91e8e7cef448a71d8a4c816ad109c",
+          "chapters": "4f40fc923dfc10a0d70ab425c5571d3522455991d3741c75db1515bad5662cc4",
+          "chapterTitle": "982d9e3eb996f559e633f4d194def3761d909f5a3b647d1a851fead67c32c9d1",
+          "chapterUrl": "fea45fa70a7a8b4e5abc1b12b6de8a8a022b0bdaca0eff8f3d2f8d07cefcb500",
+          "content": "edb04d1b0fade551e504528461468b1c53a5e89117397da0b09e4560acd04ab4"
+        }
+      }
+    }
+  ],
+  "initial": {
+    "started_at_utc": "2026-11-16T01:33:16.258119+00:00",
+    "completed_at_utc": "2026-11-16T01:33:48.790269+00:00",
+    "observations": [
+      {
+        "index": 407,
+        "id": "fa42526b9412d5c4431acbd60ab169b7e68e7b2fe008da412e8b8da8310bc877",
+        "host": "m.dmxso.com",
+        "outcome": "network_or_http_inconclusive",
+        "steps": [
+          {
+            "observation": {
+              "phase": "search",
+              "started_at": "2026-11-16T01:33:16.393716+00:00",
+              "observed_at": "2026-11-16T01:33:17.409933+00:00",
+              "http_status": 404,
+              "failure": "http_status",
+              "content_type_family": null,
+              "sample_bytes": null,
+              "truncated": null,
+              "sample_sha256": null,
+              "url_path_sha256": "d0beddcba48b2cdda553b03c812e27bcfa6d2aaa0d6aa7cb59715b0abd7fae13"
+            },
+            "analysis": null
+          }
+        ]
+      },
+      {
+        "index": 1399,
+        "id": "c7f3f35a20b48cf4fb02cb92f6714b08c96d97adb6bfd50a24adc0d3d21d7b20",
+        "host": "www.wucuoxs.com",
+        "outcome": "no_safe_matching_result_inconclusive",
+        "steps": [
+          {
+            "observation": {
+              "phase": "search",
+              "started_at": "2026-11-16T01:33:18.539040+00:00",
+              "observed_at": "2026-11-16T01:33:19.340466+00:00",
+              "http_status": 200,
+              "failure": null,
+              "content_type_family": "html",
+              "sample_bytes": 53,
+              "truncated": false,
+              "sample_sha256": "c729b6ce2a2219febfb38e448eaaffbce712cf3775cfa5f9264e678d62fd9a76",
+              "url_path_sha256": "48f11ad2af671dcb99cc95dd1c1d8ff108ad1d4f61b19a6c392630bc54732feb"
+            },
+            "analysis": {
+              "stage": "search",
+              "access_gate_signal": false,
+              "adult_page_signal": false,
+              "gambling_page_signal": false,
+              "book_count": 0,
+              "query_matches": 0,
+              "safe_matching_books": 0,
+              "books_with_category": 0
+            }
+          }
+        ]
+      },
+      {
+        "index": 3134,
+        "id": "bc379d9cf7ee312a6d9813e14830fdc689be5b2371fa025529586fc3a67aec1d",
+        "host": "www.3uxiaoshuo.com",
+        "outcome": "no_safe_matching_result_inconclusive",
+        "steps": [
+          {
+            "observation": {
+              "phase": "search",
+              "started_at": "2026-11-16T01:33:24.213223+00:00",
+              "observed_at": "2026-11-16T01:33:25.156757+00:00",
+              "http_status": 200,
+              "failure": null,
+              "content_type_family": "html",
+              "sample_bytes": 6990,
+              "truncated": false,
+              "sample_sha256": "0b17983c1b73f8693a74aaf2dcc588a12891ba2d539441251183b6a4ac4cee2c",
+              "url_path_sha256": "edf6508577b882d2416cedd81e06a64bd74b85b2971e7a68ba10a9992d1acc06"
+            },
+            "analysis": {
+              "stage": "search",
+              "access_gate_signal": false,
+              "adult_page_signal": false,
+              "gambling_page_signal": false,
+              "book_count": 0,
+              "query_matches": 0,
+              "safe_matching_books": 0,
+              "books_with_category": 0
+            }
+          }
+        ]
+      },
+      {
+        "index": 4371,
+        "id": "22fd5687b4cd8b42ce1d69d0701148e989f39833d7d94b1e1dae73795084e242",
+        "host": "www.bsxiaoshuo.com",
+        "outcome": "no_safe_matching_result_inconclusive",
+        "steps": [
+          {
+            "observation": {
+              "phase": "search",
+              "started_at": "2026-11-16T01:33:30.014613+00:00",
+              "observed_at": "2026-11-16T01:33:30.447584+00:00",
+              "http_status": 200,
+              "failure": null,
+              "content_type_family": "html",
+              "sample_bytes": 2027,
+              "truncated": false,
+              "sample_sha256": "cb9f223465ca8ff9b97550469bd2e605564b6e8ee454b3dae06e3b5a77179e1c",
+              "url_path_sha256": "6291e76eb148534a10bfe26a414555642b478aef27488177847e534b70d75336"
+            },
+            "analysis": {
+              "stage": "search",
+              "access_gate_signal": false,
+              "adult_page_signal": false,
+              "gambling_page_signal": false,
+              "book_count": 0,
+              "query_matches": 0,
+              "safe_matching_books": 0,
+              "books_with_category": 0
+            }
+          }
+        ]
+      },
+      {
+        "index": 3954,
+        "id": "0e51322b309496dd36b4388cc7dcbc156c06e32bff52d1d6a9878794877003d0",
+        "host": "m.gulongbbs.com",
+        "outcome": "no_safe_matching_result_inconclusive",
+        "steps": [
+          {
+            "observation": {
+              "phase": "search",
+              "started_at": "2026-11-16T01:33:35.308175+00:00",
+              "observed_at": "2026-11-16T01:33:35.621994+00:00",
+              "http_status": 200,
+              "failure": null,
+              "content_type_family": "html",
+              "sample_bytes": 15000,
+              "truncated": false,
+              "sample_sha256": "adbe554e2f6ecd5311544a9fec7215fafd3df80deb1c8ec885d15855df6fada9",
+              "url_path_sha256": "201b6d8e6a3d9fbcc3cf8466de84b9b4f15a5acb3435ac6b58b38844ae34f290"
+            },
+            "analysis": {
+              "stage": "search",
+              "access_gate_signal": false,
+              "adult_page_signal": false,
+              "gambling_page_signal": false,
+              "book_count": 11,
+              "query_matches": 0,
+              "safe_matching_books": 0,
+              "books_with_category": 0
+            }
+          }
+        ]
+      },
+      {
+        "index": 1056,
+        "id": "981adf7639a1c61e23ad4104e4e11b3553439b9ea22599c1b429881ace889402",
+        "host": "www.shubang.net",
+        "outcome": "no_safe_matching_result_inconclusive",
+        "steps": [
+          {
+            "observation": {
+              "phase": "search",
+              "started_at": "2026-11-16T01:33:40.506197+00:00",
+              "observed_at": "2026-11-16T01:33:40.742290+00:00",
+              "http_status": 200,
+              "failure": null,
+              "content_type_family": "html",
+              "sample_bytes": 7279,
+              "truncated": false,
+              "sample_sha256": "e4d076c5644fc8e3b155dc22d740502b575d10d24e637b4f236f2140b5d796e2",
+              "url_path_sha256": "e63a2d04275b46f91e14bbad81e2a6103cac82dc035dd06eb36e66387a0f6060"
+            },
+            "analysis": {
+              "stage": "search",
+              "access_gate_signal": false,
+              "adult_page_signal": false,
+              "gambling_page_signal": false,
+              "book_count": 1,
+              "query_matches": 0,
+              "safe_matching_books": 0,
+              "books_with_category": 0
+            }
+          }
+        ]
+      },
+      {
+        "index": 3817,
+        "id": "52a7d590143c8fd5168b42ff3681a8bd473d0cbd3b53810d527047294a9e8ba8",
+        "host": "wenxue.bkneng.com",
+        "outcome": "network_or_http_inconclusive",
+        "steps": [
+          {
+            "observation": {
+              "phase": "search",
+              "started_at": "2026-11-16T01:33:45.638565+00:00",
+              "observed_at": "2026-11-16T01:33:45.807847+00:00",
+              "http_status": 404,
+              "failure": "http_status",
+              "content_type_family": null,
+              "sample_bytes": null,
+              "truncated": null,
+              "sample_sha256": null,
+              "url_path_sha256": "d7b2c0e557e880f10724140a216596836d33796f5c6ec14d7bd5fbae39908c2b"
+            },
+            "analysis": null
+          }
+        ]
+      },
+      {
+        "index": 4491,
+        "id": "5ff498ddb51371e132e6b35fa505eaa7ddb0b989213814eda0a79cf3cd119747",
+        "host": "www.zzrx.net",
+        "outcome": "network_or_http_inconclusive",
+        "steps": [
+          {
+            "observation": {
+              "phase": "search",
+              "started_at": "2026-11-16T01:33:46.936845+00:00",
+              "observed_at": "2026-11-16T01:33:47.771490+00:00",
+              "http_status": 404,
+              "failure": "http_status",
+              "content_type_family": null,
+              "sample_bytes": null,
+              "truncated": null,
+              "sample_sha256": null,
+              "url_path_sha256": "8f2a6d6bcbf773ed424a7bb37c59751058c86f3b4831c0479934b7a0c7c43147"
+            },
+            "analysis": null
+          }
+        ]
+      }
+    ]
+  },
+  "followups": [
+    {
+      "file": "focused-gulong-redacted.json",
+      "index": 3954,
+      "id": "0e51322b309496dd36b4388cc7dcbc156c06e32bff52d1d6a9878794877003d0",
+      "host": "m.gulongbbs.com",
+      "started_at_utc": "2026-11-16T01:37:06.799367+00:00",
+      "completed_at_utc": "2026-11-16T01:37:28.260558+00:00",
+      "outcome": "one_content_sample",
+      "steps": [
+        {
+          "observation": {
+            "phase": "search",
+            "started_at": "2026-11-16T01:37:06.917220+00:00",
+            "observed_at": "2026-11-16T01:37:07.812145+00:00",
+            "http_status": 200,
+            "failure": null,
+            "content_type_family": "html",
+            "sample_bytes": 14688,
+            "truncated": false,
+            "sample_sha256": "d637f8aa2cd220a17f8c5dc5df617e705e173692d55c8f2a11a30eb1083486ae",
+            "url_path_sha256": "201b6d8e6a3d9fbcc3cf8466de84b9b4f15a5acb3435ac6b58b38844ae34f290"
+          },
+          "analysis": {
+            "stage": "search",
+            "access_gate_signal": false,
+            "adult_page_signal": false,
+            "gambling_page_signal": false,
+            "book_count": 11,
+            "query_matches": 8,
+            "safe_matching_books": 8,
+            "books_with_category": 0
+          }
+        },
+        {
+          "observation": {
+            "phase": "detail",
+            "started_at": "2026-11-16T01:37:12.703274+00:00",
+            "observed_at": "2026-11-16T01:37:12.922500+00:00",
+            "http_status": 200,
+            "failure": null,
+            "content_type_family": "html",
+            "sample_bytes": 18304,
+            "truncated": false,
+            "sample_sha256": "f797d9f432d20dcbd36bca0373f304e9f4a0a984b486c31e7d77f5a2f3801404",
+            "url_path_sha256": "443d7128c372d67c88bba8d466f3e65ae22a3c838e580dac9da1be680bc6f5cf"
+          },
+          "analysis": {
+            "stage": "detail",
+            "access_gate_signal": false,
+            "adult_page_signal": false,
+            "gambling_page_signal": false,
+            "detail_present": true,
+            "detail_category_length": 0,
+            "detail_category_adult_signal": false,
+            "toc_chapter_count": 0,
+            "chapter_candidates": 0,
+            "same_host_safe_chapters": 0,
+            "same_host_toc_links": 1,
+            "category_diag": {
+              "og_category_nonempty": false,
+              "og_category_adult_signal": false,
+              "og_category_known_ordinary": false,
+              "engine_matches_og": false
+            }
+          }
+        },
+        {
+          "observation": {
+            "phase": "toc",
+            "started_at": "2026-11-16T01:37:17.842390+00:00",
+            "observed_at": "2026-11-16T01:37:18.049825+00:00",
+            "http_status": 200,
+            "failure": null,
+            "content_type_family": "html",
+            "sample_bytes": 10461,
+            "truncated": false,
+            "sample_sha256": "cc519fb400ce64fa3dc66de3bf77fd4ad355dd2b9508f9fdcbf96ecbdbe34124",
+            "url_path_sha256": "e38f281a35d2d06e755a019361cf42e0684244857a5480654fa3ce8a1467a62b"
+          },
+          "analysis": {
+            "stage": "toc",
+            "access_gate_signal": false,
+            "adult_page_signal": false,
+            "gambling_page_signal": false,
+            "toc_chapter_count": 32,
+            "chapter_candidates": 12,
+            "same_host_safe_chapters": 12,
+            "same_host_toc_links": 0
+          }
+        },
+        {
+          "observation": {
+            "phase": "content",
+            "started_at": "2026-11-16T01:37:22.942130+00:00",
+            "observed_at": "2026-11-16T01:37:23.206716+00:00",
+            "http_status": 200,
+            "failure": null,
+            "content_type_family": "html",
+            "sample_bytes": 22123,
+            "truncated": false,
+            "sample_sha256": "68f082d4f4059f0b5c6200f2489d8888af5e3e417b0bdc63a6f26e68b328dc4d",
+            "url_path_sha256": "ce58f576d1b25b7ba0ef6e2e914b8bbff6867221ebb55d852e8013ba9c27c6b2"
+          },
+          "analysis": {
+            "stage": "content",
+            "access_gate_signal": false,
+            "adult_page_signal": false,
+            "gambling_page_signal": false,
+            "content_characters": 3025,
+            "content_sha256_utf8": "7402a9122b42d9e2e60d5084f6e4eff726760f8dbd010141552fe1343f25a5d3",
+            "content_adult_signal": false,
+            "content_gate_signal": false,
+            "same_host_next_content_links": 0
+          }
+        }
+      ]
+    },
+    {
+      "file": "focused-shubang-redacted.json",
+      "index": 1056,
+      "id": "981adf7639a1c61e23ad4104e4e11b3553439b9ea22599c1b429881ace889402",
+      "host": "www.shubang.net",
+      "started_at_utc": "2026-11-16T01:38:17.749898+00:00",
+      "completed_at_utc": "2026-11-16T01:38:33.738491+00:00",
+      "outcome": "one_content_sample",
+      "steps": [
+        {
+          "observation": {
+            "phase": "search",
+            "started_at": "2026-11-16T01:38:17.887592+00:00",
+            "observed_at": "2026-11-16T01:38:18.359218+00:00",
+            "http_status": 200,
+            "failure": null,
+            "content_type_family": "html",
+            "sample_bytes": 17109,
+            "truncated": false,
+            "sample_sha256": "0319ed4c024d01ddf7c6bb98768a547631771dcc4a8dd1c1283306c8730dbb28",
+            "url_path_sha256": "e63a2d04275b46f91e14bbad81e2a6103cac82dc035dd06eb36e66387a0f6060"
+          },
+          "analysis": {
+            "stage": "search",
+            "access_gate_signal": false,
+            "adult_page_signal": false,
+            "gambling_page_signal": false,
+            "book_count": 8,
+            "query_matches": 8,
+            "safe_matching_books": 8,
+            "books_with_category": 0
+          }
+        },
+        {
+          "observation": {
+            "phase": "detail",
+            "started_at": "2026-11-16T01:38:23.255220+00:00",
+            "observed_at": "2026-11-16T01:38:23.534593+00:00",
+            "http_status": 200,
+            "failure": null,
+            "content_type_family": "html",
+            "sample_bytes": 19936,
+            "truncated": false,
+            "sample_sha256": "1aad7ca7d81982d48c29fa746d6d4cf3721f601dc23ace18d6fc0747c31e6308",
+            "url_path_sha256": "d5a55949bec6c93091ec7e5166e97c6e0885a6e01c5e375354249fc10dd960ca"
+          },
+          "analysis": {
+            "stage": "detail",
+            "access_gate_signal": false,
+            "adult_page_signal": false,
+            "gambling_page_signal": false,
+            "detail_present": true,
+            "detail_category_length": 8,
+            "detail_category_adult_signal": false,
+            "toc_chapter_count": 75,
+            "chapter_candidates": 12,
+            "same_host_safe_chapters": 12,
+            "same_host_toc_links": 0,
+            "category_diag": {
+              "og_category_nonempty": false,
+              "og_category_adult_signal": false,
+              "og_category_known_ordinary": false,
+              "engine_matches_og": false
+            }
+          }
+        },
+        {
+          "observation": {
+            "phase": "content",
+            "started_at": "2026-11-16T01:38:28.599715+00:00",
+            "observed_at": "2026-11-16T01:38:28.874271+00:00",
+            "http_status": 200,
+            "failure": null,
+            "content_type_family": "html",
+            "sample_bytes": 13479,
+            "truncated": false,
+            "sample_sha256": "935ffde1139ef9651f40a3916f277c412fc4721f2d0723bc1cc9de75b7cc10e3",
+            "url_path_sha256": "7bce15c2784bcc599c7bace1408f58ba585b5f5da9339aaed2a5a08ec23838d0"
+          },
+          "analysis": {
+            "stage": "content",
+            "access_gate_signal": false,
+            "adult_page_signal": false,
+            "gambling_page_signal": false,
+            "content_characters": 2001,
+            "content_sha256_utf8": "1873c482e06e35fa42720619bce313e6ff50f1040ed2b318341c1371d61ca229",
+            "content_adult_signal": false,
+            "content_gate_signal": false,
+            "same_host_next_content_links": 0
+          }
+        }
+      ]
+    },
+    {
+      "file": "focused-sanyou-redacted.json",
+      "index": 3134,
+      "id": "bc379d9cf7ee312a6d9813e14830fdc689be5b2371fa025529586fc3a67aec1d",
+      "host": "www.3uxiaoshuo.com",
+      "started_at_utc": "2026-11-16T01:39:35.706724+00:00",
+      "completed_at_utc": "2026-11-16T01:39:41.352234+00:00",
+      "outcome": "no_safe_matching_result_inconclusive",
+      "steps": [
+        {
+          "observation": {
+            "phase": "search",
+            "started_at": "2026-11-16T01:39:35.843544+00:00",
+            "observed_at": "2026-11-16T01:39:36.570474+00:00",
+            "http_status": 200,
+            "failure": null,
+            "content_type_family": "html",
+            "sample_bytes": 6990,
+            "truncated": false,
+            "sample_sha256": "16216eb5f70c6f5290edba1a1165d9d3d773b86b2104539795bd2197baa98191",
+            "url_path_sha256": "edf6508577b882d2416cedd81e06a64bd74b85b2971e7a68ba10a9992d1acc06"
+          },
+          "analysis": {
+            "stage": "search",
+            "access_gate_signal": false,
+            "adult_page_signal": false,
+            "gambling_page_signal": false,
+            "book_count": 0,
+            "query_matches": 0,
+            "safe_matching_books": 0,
+            "books_with_category": 0
+          }
+        }
+      ]
+    },
+    {
+      "file": "discovery-407-redacted.json",
+      "index": 407,
+      "id": "fa42526b9412d5c4431acbd60ab169b7e68e7b2fe008da412e8b8da8310bc877",
+      "host": "m.dmxso.com",
+      "started_at_utc": "2026-11-16T01:41:07.865262+00:00",
+      "completed_at_utc": "2026-11-16T01:41:12.174390+00:00",
+      "outcome": "no_safe_matching_result_inconclusive",
+      "steps": [
+        {
+          "observation": {
+            "phase": "discover",
+            "started_at": "2026-11-16T01:41:08.007429+00:00",
+            "observed_at": "2026-11-16T01:41:09.019192+00:00",
+            "http_status": 404,
+            "failure": "http_status",
+            "content_type_family": null,
+            "sample_bytes": null,
+            "truncated": null,
+            "sample_sha256": null,
+            "url_path_sha256": "5c8fecd9bcac7f0ef624b826c709e493fadc1a81520129c571d5976a44bab5f5"
+          },
+          "analysis": null
+        },
+        {
+          "observation": {
+            "phase": "discover",
+            "started_at": "2026-11-16T01:41:10.150601+00:00",
+            "observed_at": "2026-11-16T01:41:11.155630+00:00",
+            "http_status": 404,
+            "failure": "http_status",
+            "content_type_family": null,
+            "sample_bytes": null,
+            "truncated": null,
+            "sample_sha256": null,
+            "url_path_sha256": "cc3e36e55b5129c346698a090b69ebd4207fc5a6b5a500ab51ea081db7b82974"
+          },
+          "analysis": null
+        }
+      ]
+    }
+  ],
+  "limitations": [
+    "Only eight archived selected sources were sampled; no user settings, database or personal bookshelf was read.",
+    "safe_matching_books is a bounded keyword, same-host HTTPS GET and limited text prefilter, not a site safety or content verdict.",
+    "An HTTP error, 200 with empty parse, or a single chapter does not prove permanent source failure, security, or full-book readability.",
+    "The initial recorded files match the historical Git object after the explicitly recorded CRLF conversion; the collector did not cover every transitive dependency.",
+    "The later directly recorded risk-policy file differs from the initial Git object, and its eight direct quarantine dependencies were not included in the captured hashes; the later complete execution environment cannot be reconstructed or bound retroactively.",
+    "Temporary collectors and redacted intermediates are not version-controlled, and webpage bodies, work identities, query strings and IP addresses were not retained; historical network and parser output cannot be independently replayed offline.",
+    "Offline source-provenance verification requires the referenced historical Git object; shallow clones or source archives without it cannot verify the 38 recorded files or historical ledger."
+  ]
+}

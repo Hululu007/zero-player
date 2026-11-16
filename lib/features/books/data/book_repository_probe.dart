@@ -18,6 +18,7 @@ extension _BookRepositoryProbe on BooksRepository {
       allowDisabled: true,
     );
     final token = lease.token;
+    Book? observedBook;
     try {
       lease.check();
       final watch = Stopwatch()..start();
@@ -33,6 +34,13 @@ extension _BookRepositoryProbe on BooksRepository {
         );
         final book = books.where(bookAllowed).firstOrNull;
         if (book == null) throw const FormatException('没有匹配作品，试试该源中已知的书名');
+        final observation = _startBookObservation(book);
+        observedBook = book;
+        void authorizeObservation() {
+          lease.check();
+          _requireBookObservation(book, observation);
+        }
+
         stage = '详情';
         final details = await _withBookRequestGuard(
           source,
@@ -42,9 +50,9 @@ extension _BookRepositoryProbe on BooksRepository {
               client.details(source, book, active, requestGuard: guard),
           allowDisabled: true,
         );
-        lease.check();
-        await _rememberBookMetadata(book, details, lease.check);
-        lease.check();
+        authorizeObservation();
+        await _rememberBookMetadata(book, details, authorizeObservation);
+        authorizeObservation();
         if (!bookAllowed(details)) throw const ContentBlocked();
         stage = '目录';
         final chapters = await _withBookRequestGuard(
@@ -55,6 +63,7 @@ extension _BookRepositoryProbe on BooksRepository {
               client.chapters(source, details, active, requestGuard: guard),
           allowDisabled: true,
         );
+        authorizeObservation();
         final chapter = chapters
             .where(
               (c) =>
@@ -69,6 +78,7 @@ extension _BookRepositoryProbe on BooksRepository {
             ? '图片'
             : '音频';
         await _probeChapter(source, book, details, chapter, token);
+        authorizeObservation();
         status = '可用 · ${watch.elapsedMilliseconds} ms';
       } on RequestCancelled {
         rethrow;
@@ -86,6 +96,7 @@ extension _BookRepositoryProbe on BooksRepository {
       }, validate: lease.check);
       lease.check();
     } finally {
+      if (observedBook != null) _finishBookObservation(observedBook);
       lease.dispose();
     }
   }

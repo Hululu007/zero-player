@@ -8,6 +8,7 @@ import 'net_rdap_legacy_quarantine.dart';
 import 'novel_242_legacy_quarantine.dart';
 import 'redirected_legacy_quarantine.dart';
 import 'taotaoshu_legacy_quarantine.dart';
+import 'top_rdap_legacy_quarantine.dart';
 
 // These hosts have specifically adult-labelled entries in the bundled Legado
 // snapshot. This is source metadata evidence, not a claim about today's site.
@@ -195,6 +196,7 @@ bool knownUnavailableBookRule(BookSource source) =>
     unavailableTaotaoshuLegacySource(source) ||
     unavailableMoeRdapLegacySource(source) ||
     unavailableNetRdapLegacySource(source) ||
+    unavailableTopRdapLegacySource(source) ||
     unavailableComRdapLegacySource(source) ||
     unavailable242NovelLegacySource(source) ||
     unavailableRedirectedLegacySource(source);

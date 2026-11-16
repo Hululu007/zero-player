@@ -29,6 +29,7 @@ const codePaths = [
   'lib/features/books/domain/fanfanu_legacy_source_fix.dart',
   'lib/features/books/domain/net_rdap_legacy_quarantine.dart',
   'lib/features/books/domain/moe_rdap_legacy_quarantine.dart',
+  'lib/features/books/domain/top_rdap_legacy_quarantine.dart',
   'lib/features/books/domain/iqiyi_legacy_quarantine.dart',
   'lib/features/books/domain/taotaoshu_legacy_quarantine.dart',
   'lib/features/books/domain/legado_source_fingerprint.dart',

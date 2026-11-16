@@ -49,6 +49,7 @@ part 'book_comic_download.dart';
 part 'book_repository_discovery.dart';
 part 'book_repository_mutations.dart';
 part 'book_repository_media_access.dart';
+part 'book_repository_policy_review.dart';
 part 'book_repository_request_policy.dart';
 part 'book_repository_probe.dart';
 part 'book_repository_site_checks.dart';
@@ -119,6 +120,7 @@ final class BooksRepository {
     policy.addListener(_coverPolicyChanged);
     _discoveryPolicySnapshot = bookSitePolicySnapshot(policy);
     policy.addListener(_discoveryPolicyChanged);
+    policy.addListener(_bookReviewPolicyChanged);
     _sourceRiskChanges.addListener(_discoveryRiskChanged);
   }
 
@@ -140,6 +142,7 @@ final class BooksRepository {
   Listenable get sourceRiskChanges => _allRiskChanges;
   Listenable get sourceConfigurationChanges => _sourceRiskChanges;
   Listenable get bookPolicyChanges => _bookPolicyChanges;
+  Listenable get bookObservationChanges => _bookObservationChanges;
   bool get sourceRisksReady => _riskLoaded && !_riskSuspended;
   bool get sourceRisksSuspended => _riskSuspended;
   bool get sourceRiskMutationPending =>
@@ -192,6 +195,13 @@ final class BooksRepository {
       <String, Map<Object, BookPolicyEvidence>>{};
   late final _bookPolicyEvidenceStore = BookPolicyEvidenceStore(store.db);
   final _bookPolicyEvidence = <String, BookPolicyEvidence>{};
+  final _bookPolicyReviewing = <String>{};
+  final _bookObservationGenerations = <String, int>{};
+  final _bookObservationSequences = <String, int>{};
+  final _activeBookObservations = <String, int>{};
+  final _bookObservationChanges = ValueNotifier<int>(0);
+  int _bookReviewPolicyRevision = 0;
+  void _bookReviewPolicyChanged() => _bookReviewPolicyRevision++;
   int _bookPolicyGeneration = 0;
   Future<void>? _riskLoading;
   bool _riskLoaded = false;
@@ -214,6 +224,16 @@ final class BooksRepository {
   Future<void> Function()? afterSiteRiskCommitForTesting;
   @visibleForTesting
   Future<void> Function()? afterBookPolicyCommitForTesting;
+  @visibleForTesting
+  Future<void> Function()? beforeBookPolicyReviewWriteForTesting;
+  @visibleForTesting
+  Future<void> Function()? afterBookPolicyReviewWriteForTesting;
+  @visibleForTesting
+  Future<void> Function()? afterBookPolicyReviewCommitForTesting;
+  @visibleForTesting
+  Future<void> Function()? beforeBookPolicyReviewRegistrationForTesting;
+  @visibleForTesting
+  void Function()? afterBookPolicyReviewRegistrationForTesting;
   @visibleForTesting
   int pendingBookPolicyObservationsForTesting(String id) =>
       _pendingBookPolicyEvidence[id]?.length ?? 0;
@@ -321,7 +341,7 @@ final class BooksRepository {
     for (final entry in bookEvidence.entries) {
       _bookPolicyEvidence.update(
         entry.key,
-        (current) => current.merge(entry.value),
+        (current) => current.mergeLoadedSnapshot(entry.value),
         ifAbsent: () => entry.value,
       );
     }
@@ -653,6 +673,42 @@ final class BooksRepository {
       bookCategoryTextAllowed(policy, metadata.category) &&
       policy.textAllowed(metadata.text);
 
+  int _startBookObservation(Book book) {
+    if (_evidenceClosing || _bookPolicyReviewing.contains(book.id)) {
+      throw const RequestCancelled();
+    }
+    _bookObservationSequences.update(
+      book.id,
+      (value) => value + 1,
+      ifAbsent: () => 1,
+    );
+    _activeBookObservations.update(
+      book.id,
+      (value) => value + 1,
+      ifAbsent: () => 1,
+    );
+    _bookObservationChanges.value++;
+    return _bookObservationGenerations[book.id] ?? 0;
+  }
+
+  void _finishBookObservation(Book book) {
+    final active = _activeBookObservations[book.id];
+    if (active == null) throw StateError('作品观察未登记');
+    if (active == 1) {
+      _activeBookObservations.remove(book.id);
+    } else {
+      _activeBookObservations[book.id] = active - 1;
+    }
+    if (!_evidenceClosing) _bookObservationChanges.value++;
+  }
+
+  void _requireBookObservation(Book book, int generation) {
+    if (_bookPolicyReviewing.contains(book.id) ||
+        (_bookObservationGenerations[book.id] ?? 0) != generation) {
+      throw const RequestCancelled();
+    }
+  }
+
   Future<void> _rememberBookMetadata(
     Book original,
     Book details,
@@ -660,6 +716,9 @@ final class BooksRepository {
   ) async {
     if (original.id != details.id || original.sourceId != details.sourceId) {
       return;
+    }
+    if (_bookPolicyReviewing.contains(original.id)) {
+      throw const RequestCancelled();
     }
     final wasAllowed = bookAllowed(original);
     final metadata = _bookMetadata(details);
@@ -1609,11 +1668,19 @@ final class BooksRepository {
 
   Future<Book> details(Book book, CancellationToken token) async {
     token.check();
-    if (book.sourceId != 'local') await ensureSourceRiskLoaded();
-    if (!bookAllowed(book)) throw const ContentBlocked();
-    if (book.sourceId == 'local') return book;
-    final source = await _active(book);
-    return _guardedBookDetails(source, book, token);
+    final observation = book.sourceId == 'local'
+        ? null
+        : _startBookObservation(book);
+    try {
+      if (book.sourceId != 'local') await ensureSourceRiskLoaded();
+      if (!bookAllowed(book)) throw const ContentBlocked();
+      if (book.sourceId == 'local') return book;
+      final source = await _active(book);
+      _requireBookObservation(book, observation!);
+      return await _guardedBookDetails(source, book, token, observation);
+    } finally {
+      if (observation != null) _finishBookObservation(book);
+    }
   }
 
   Future<void> checkFollowing(BookKind kind, CancellationToken token) async {
@@ -2386,8 +2453,10 @@ final class BooksRepository {
     );
     policy.removeListener(_coverPolicyChanged);
     policy.removeListener(_discoveryPolicyChanged);
+    policy.removeListener(_bookReviewPolicyChanged);
     _sourceRiskChanges.removeListener(_discoveryRiskChanged);
     _downloadGuard?.dispose();
+    _bookObservationChanges.dispose();
     _bookPolicyChanges.dispose();
     _sourceRiskChanges.dispose();
     _http.close();

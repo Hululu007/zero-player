@@ -48,12 +48,14 @@ extension _BookRepositoryRequestPolicy on BooksRepository {
     BookSource source,
     Book book,
     CancellationToken token,
+    int observation,
   ) {
     final revision = _discoveryRevision;
     final fingerprint = bookSourceCheckFingerprint(source);
     return _withBookRequestGuard(source, book, token, (active, guard) async {
       void authorizeObservation() {
         active.check();
+        _requireBookObservation(book, observation);
         final current = _riskSourceEntries[source.id];
         if (_evidenceClosing ||
             _evidenceMutations != 0 ||

@@ -84,7 +84,9 @@ void _detailsTargetTests() {
         final stored = await f.repo.store.read(
           BookPolicyEvidenceStore.key(book.id),
         );
-        expect((stored as Map)['version'], 1);
+        // The versioned record now includes a revision for manual-review CAS.
+        expect((stored as Map)['version'], 2);
+        expect(stored['revision'], greaterThan(0));
         expect(stored['adult'], isTrue);
         expect(stored['keywords'], isEmpty);
         expect(stored['texts'], isNotEmpty);

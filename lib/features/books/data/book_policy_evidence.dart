@@ -7,8 +7,25 @@ import '../../supervision/application/content_policy.dart';
 import '../../supervision/domain/content_classification.dart';
 import '../../supervision/domain/supervision_rules.dart';
 import '../application/book_category_policy.dart';
+import '../domain/book.dart';
 
-/// Bounded, monotonic policy observations for one source/request identity.
+/// A review is bound to the saved book and the exact observed revision.
+final class BookPolicyReviewEntry {
+  const BookPolicyReviewEntry({
+    required this.book,
+    required this.revision,
+    required this.digest,
+    required this.sourceRevision,
+    required this.policyRevision,
+    required this.observationSequence,
+  });
+  final Book book;
+  final int revision, sourceRevision, policyRevision, observationSequence;
+  final String digest;
+}
+
+/// Bounded policy observations for one source/request identity. Observations
+/// merge monotonically; only an authorized manual review clears the adult bit.
 /// Stored normalized metadata permits later keyword changes to be applied; no
 /// request address, query parameters or chapter text is intentionally stored.
 final class BookPolicyEvidence {
@@ -19,10 +36,12 @@ final class BookPolicyEvidence {
     this.latestText = '',
     this.textCoverageIncomplete = false,
     this.uncertain = false,
+    this.revision = 0,
   }) : keywordHashes = Set.unmodifiable(keywordHashes),
        normalizedTexts = Set.unmodifiable(normalizedTexts);
 
   final bool adult, textCoverageIncomplete, uncertain;
+  final int revision;
   final Set<String> keywordHashes, normalizedTexts;
   final String latestText;
   SupervisionRules? _cachedRules;
@@ -95,9 +114,12 @@ final class BookPolicyEvidence {
   }
 
   BookPolicyEvidence merge(BookPolicyEvidence other) {
+    final latestRevision = revision > other.revision
+        ? revision
+        : other.revision;
     final hashes = {...keywordHashes, ...other.keywordHashes};
     if (uncertain || other.uncertain || hashes.length > maxKeywordHashes) {
-      return BookPolicyEvidence(uncertain: true);
+      return BookPolicyEvidence(uncertain: true, revision: latestRevision);
     }
     final texts = {...normalizedTexts, ...other.normalizedTexts};
     final incomplete =
@@ -112,13 +134,38 @@ final class BookPolicyEvidence {
       normalizedTexts: incomplete ? normalizedTexts : texts,
       latestText: other.latestText.isEmpty ? latestText : other.latestText,
       textCoverageIncomplete: incomplete,
+      revision: latestRevision,
     );
   }
 
+  /// Do not reapply an observation loaded before an explicit review.
+  /// Equal or newer snapshots are still merged conservatively with any
+  /// in-memory evidence retained after an unsuccessful write. Damage has no
+  /// trusted revision and must always remain fail-closed.
+  BookPolicyEvidence mergeLoadedSnapshot(BookPolicyEvidence snapshot) =>
+      !snapshot.uncertain && snapshot.revision < revision
+      ? this
+      : merge(snapshot);
+
+  BookPolicyEvidence withRevision(int value, {bool? adult}) =>
+      BookPolicyEvidence(
+        adult: adult ?? this.adult,
+        keywordHashes: keywordHashes,
+        normalizedTexts: normalizedTexts,
+        latestText: latestText,
+        textCoverageIncomplete: textCoverageIncomplete,
+        uncertain: uncertain,
+        revision: value,
+      );
+
+  String get snapshotDigest =>
+      sha256.convert(utf8.encode(jsonEncode(toJson()))).toString();
+
   Map<String, Object> toJson() => uncertain
-      ? {'version': 1, 'uncertain': true}
+      ? {'version': 2, 'revision': revision, 'uncertain': true}
       : {
-          'version': 1,
+          'version': 2,
+          'revision': revision,
           'adult': adult,
           'keywords': keywordHashes.toList()..sort(),
           'texts': normalizedTexts.toList()..sort(),
@@ -130,15 +177,21 @@ final class BookPolicyEvidence {
     try {
       if (raw is! String) return BookPolicyEvidence(uncertain: true);
       final value = jsonDecode(raw);
-      if (value is! Map || value['version'] != 1) {
+      if (value is! Map || !const {1, 2}.contains(value['version'])) {
+        return BookPolicyEvidence(uncertain: true);
+      }
+      final version = value['version'];
+      final revision = version == 1 ? 0 : value['revision'];
+      if (revision is! int || revision < 0) {
         return BookPolicyEvidence(uncertain: true);
       }
       if (value.containsKey('uncertain')) {
-        return BookPolicyEvidence(uncertain: true);
+        return BookPolicyEvidence(uncertain: true, revision: revision);
       }
-      if (value.length != 6 ||
+      if (value.length != (version == 1 ? 6 : 7) ||
           !value.keys.toSet().containsAll({
             'version',
+            if (version == 2) 'revision',
             'adult',
             'keywords',
             'texts',
@@ -191,6 +244,7 @@ final class BookPolicyEvidence {
         normalizedTexts: normalizedTexts,
         latestText: latest,
         textCoverageIncomplete: incomplete,
+        revision: revision,
       );
     } on FormatException {
       return BookPolicyEvidence(uncertain: true);
@@ -238,13 +292,19 @@ final class BookPolicyEvidenceStore {
       final existing = rows.isEmpty
           ? BookPolicyEvidence()
           : BookPolicyEvidence.decode(rows.single['value']);
-      final next = existing.merge(evidence);
-      final encoded = jsonEncode(next.toJson());
-      if (rows.isEmpty || encoded != rows.single['value']) {
+      final combined = existing.merge(evidence).withRevision(existing.revision);
+      final changedEvidence =
+          rows.isEmpty ||
+          evidence.adult ||
+          combined.snapshotDigest != existing.snapshotDigest;
+      final next = changedEvidence
+          ? combined.withRevision(_nextRevision(existing.revision))
+          : existing;
+      if (changedEvidence) {
         authorize();
         await db.customStatement(
           'INSERT OR REPLACE INTO app_meta(key,value) VALUES(?,?)',
-          [key(id), encoded],
+          [key(id), jsonEncode(next.toJson())],
         );
         authorize();
         changed = true;
@@ -255,5 +315,54 @@ final class BookPolicyEvidenceStore {
     if (changed) db.changed(tables: {'app_meta'});
     if (afterCommit != null) await afterCommit();
     return merged;
+  }
+
+  Future<BookPolicyEvidence> clearAdult({
+    required String id,
+    required int revision,
+    required String digest,
+    required void Function() authorize,
+    required Future<void> Function() validate,
+    Future<void> Function()? afterWrite,
+  }) async {
+    final cleared = await db.transaction(() async {
+      authorize();
+      await validate();
+      authorize();
+      final rows = await db.rows('SELECT value FROM app_meta WHERE key=?', [
+        key(id),
+      ]);
+      if (rows.length != 1) throw const FormatException('作品记录已变化，请重新复核');
+      final current = BookPolicyEvidence.decode(rows.single['value']);
+      if (current.uncertain ||
+          !current.adult ||
+          current.revision != revision ||
+          current.snapshotDigest != digest) {
+        throw const FormatException('作品记录已变化或损坏，请重新复核');
+      }
+      final next = current.withRevision(
+        _nextRevision(current.revision),
+        adult: false,
+      );
+      authorize();
+      await db.customStatement('UPDATE app_meta SET value=? WHERE key=?', [
+        jsonEncode(next.toJson()),
+        key(id),
+      ]);
+      if (afterWrite != null) await afterWrite();
+      authorize();
+      await validate();
+      authorize();
+      return next;
+    });
+    db.changed(tables: {'app_meta'});
+    return cleared;
+  }
+
+  static int _nextRevision(int value) {
+    if (value >= 0x7ffffffffffffffe) {
+      throw const FormatException('作品记录修订号超限，无法继续修改');
+    }
+    return value + 1;
   }
 }

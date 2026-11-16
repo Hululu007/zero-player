@@ -27,7 +27,8 @@ void main() {
               ])).single['value']
               as String;
       expect(jsonDecode(raw), {
-        'version': 1,
+        'version': 2,
+        'revision': 2,
         'adult': true,
         'keywords': [keyword],
         'texts': <String>[],
@@ -56,6 +57,104 @@ void main() {
     expect(restored.uncertain, isFalse);
     expect(restored.latestText, evidence.latestText);
   });
+
+  test('older snapshots cannot restore a reviewed flag', () {
+    final old = BookPolicyEvidence(adult: true, revision: 1);
+    final reviewed = old.withRevision(2, adult: false);
+    expect(reviewed.mergeLoadedSnapshot(old).adult, isFalse);
+    expect(reviewed.mergeLoadedSnapshot(old.withRevision(3)).adult, isTrue);
+    expect(
+      reviewed
+          .mergeLoadedSnapshot(BookPolicyEvidence(uncertain: true))
+          .uncertain,
+      isTrue,
+    );
+  });
+
+  test(
+    'each adult observation advances revision even if contents match',
+    () async {
+      final db = AppDatabase.memory();
+      try {
+        final store = BookPolicyEvidenceStore(db);
+        final id = List.filled(64, '4').join();
+        final evidence = BookPolicyEvidence(adult: true);
+        final first = await store.merge(id, evidence, () {});
+        final second = await store.merge(id, evidence, () {});
+        expect(second.revision, first.revision + 1);
+        expect(
+          second.withRevision(first.revision).snapshotDigest,
+          first.snapshotDigest,
+        );
+        await expectLater(
+          store.clearAdult(
+            id: id,
+            revision: first.revision,
+            digest: first.snapshotDigest,
+            authorize: () {},
+            validate: () async {},
+          ),
+          throwsFormatException,
+        );
+        expect((await store.load())[id]!.adult, isTrue);
+      } finally {
+        await db.close();
+      }
+    },
+  );
+
+  test(
+    'v1 evidence upgrades and review uses the exact stored revision',
+    () async {
+      final db = AppDatabase.memory();
+      try {
+        final store = BookPolicyEvidenceStore(db);
+        final id = List.filled(64, '3').join();
+        await db.write('INSERT INTO app_meta(key,value) VALUES(?,?)', [
+          BookPolicyEvidenceStore.key(id),
+          jsonEncode({
+            'version': 1,
+            'adult': true,
+            'keywords': <String>[],
+            'texts': <String>[],
+            'latest': '',
+            'incomplete': false,
+          }),
+        ]);
+        final old = (await store.load())[id]!;
+        expect(old.revision, 0);
+        expect(old.adult, isTrue);
+        final cleared = await store.clearAdult(
+          id: id,
+          revision: old.revision,
+          digest: old.snapshotDigest,
+          authorize: () {},
+          validate: () async {},
+        );
+        expect(cleared.revision, 1);
+        expect(cleared.adult, isFalse);
+        final newer = await store.merge(
+          id,
+          BookPolicyEvidence(adult: true),
+          () {},
+        );
+        expect(newer.revision, 2);
+        await expectLater(
+          store.clearAdult(
+            id: id,
+            revision: old.revision,
+            digest: old.snapshotDigest,
+            authorize: () {},
+            validate: () async {},
+          ),
+          throwsFormatException,
+        );
+        expect((await store.load())[id]!.adult, isTrue);
+      } finally {
+        await db.close();
+      }
+    },
+  );
 
   test(
     'cancellation during write rolls back and damaged records stay closed',

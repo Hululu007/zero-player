@@ -1,0 +1,894 @@
+{
+  "schema_version": 1,
+  "prior_evidence": {
+    "path": "docs/implementation/legado-rdap-top-cc-20261116.json",
+    "sha256": "bff7d7109129d16471b9c9e6ade4e372703420d782bbb374665d353e48beb9cb"
+  },
+  "later_capture_sha256": "bf7c7a739799968fa8330c137a5c00a801be546593936a9c281d257d8111ad17",
+  "later_capture": {
+    "method": "One later bounded registry and public DNS round using prior collector; control failures remain skipped; no book-source requests.",
+    "prior_formal_evidence": "docs/implementation/legado-rdap-top-cc-20261116.json",
+    "bootstrap": {
+      "url": "https://data.iana.org/rdap/dns.json",
+      "publication": "2026-10-28T22:00:04Z",
+      "sha256": "2789f2f92f7ba785e0d3cd4cdcc70709e0ded1d331619e6784317c8bf2bc72b6",
+      "services": {
+        "top": [
+          "https://rdap.zdnsgtld.com/top/"
+        ],
+        "cc": [
+          "https://tld-rdap.verisign.com/cc/v1/"
+        ]
+      },
+      "started_at": "2026-11-16T01:30:51.152703+00:00",
+      "observed_at": "2026-11-16T01:30:56.309168+00:00"
+    },
+    "round": {
+      "round": 1,
+      "started_at": "2026-11-16T01:30:56.309222+00:00",
+      "negative_controls": {
+        "top": "zp-rdap-0a5b9c98f14ddd3bf7f7.top",
+        "cc": "zp-rdap-0a5b9c98f14ddd3bf7f7.cc"
+      },
+      "controls": [
+        {
+          "mode": "rdap",
+          "domain": "google.top",
+          "started_at": "2026-11-16T01:30:56.309229+00:00",
+          "http_status": 200,
+          "content_type": "application/rdap+json",
+          "content_encoding": "",
+          "body_bytes": 11483,
+          "rdap_object_matches": true,
+          "rdap_conformance_present": true,
+          "rdap_error_code_is_404": null,
+          "classification": "matching_domain_object",
+          "observed_at": "2026-11-16T01:30:58.706323+00:00"
+        },
+        {
+          "mode": "rdap",
+          "domain": "zp-rdap-0a5b9c98f14ddd3bf7f7.top",
+          "started_at": "2026-11-16T01:30:58.706336+00:00",
+          "http_status": 404,
+          "content_type": "application/rdap+json",
+          "content_encoding": "",
+          "body_bytes": 3173,
+          "rdap_object_matches": null,
+          "rdap_conformance_present": null,
+          "rdap_error_code_is_404": true,
+          "classification": "http_404_json",
+          "observed_at": "2026-11-16T01:30:59.642561+00:00"
+        },
+        {
+          "mode": "rdap",
+          "domain": "google.cc",
+          "started_at": "2026-11-16T01:30:59.642573+00:00",
+          "http_status": 200,
+          "content_type": "application/rdap+json",
+          "content_encoding": "",
+          "body_bytes": 2832,
+          "rdap_object_matches": true,
+          "rdap_conformance_present": true,
+          "rdap_error_code_is_404": null,
+          "classification": "matching_domain_object",
+          "observed_at": "2026-11-16T01:31:00.560186+00:00"
+        },
+        {
+          "mode": "rdap",
+          "domain": "zp-rdap-0a5b9c98f14ddd3bf7f7.cc",
+          "started_at": "2026-11-16T01:31:00.560200+00:00",
+          "http_status": 404,
+          "content_type": "application/rdap+json",
+          "content_encoding": "",
+          "body_bytes": 0,
+          "rdap_object_matches": null,
+          "rdap_conformance_present": null,
+          "rdap_error_code_is_404": null,
+          "classification": "http_404_empty_body",
+          "observed_at": "2026-11-16T01:31:01.560961+00:00"
+        },
+        {
+          "mode": "doh",
+          "host": "example.com",
+          "provider": "aliyun",
+          "query_type": "A",
+          "started_at": "2026-11-16T01:31:01.560979+00:00",
+          "observed_at": "2026-11-16T01:31:01.608701+00:00",
+          "http_status": 200,
+          "classification": "noerror_addresses",
+          "dns_rcode": 0,
+          "dns_truncated": false,
+          "dnssec_authenticated": false,
+          "address_categories": {
+            "public": 2
+          },
+          "address_ttls_seconds": [
+            212,
+            212
+          ],
+          "negative_ttls_seconds": []
+        },
+        {
+          "mode": "doh",
+          "host": "example.com",
+          "provider": "aliyun",
+          "query_type": "AAAA",
+          "started_at": "2026-11-16T01:31:02.011290+00:00",
+          "observed_at": "2026-11-16T01:31:02.161746+00:00",
+          "http_status": 200,
+          "classification": "noerror_addresses",
+          "dns_rcode": 0,
+          "dns_truncated": false,
+          "dnssec_authenticated": false,
+          "address_categories": {
+            "public": 2
+          },
+          "address_ttls_seconds": [
+            1,
+            1
+          ],
+          "negative_ttls_seconds": []
+        },
+        {
+          "mode": "doh",
+          "host": "zp-rdap-0a5b9c98f14ddd3bf7f7.top",
+          "provider": "aliyun",
+          "query_type": "A",
+          "started_at": "2026-11-16T01:31:02.461774+00:00",
+          "observed_at": "2026-11-16T01:31:02.570706+00:00",
+          "http_status": 200,
+          "classification": "nxdomain",
+          "dns_rcode": 3,
+          "dns_truncated": false,
+          "dnssec_authenticated": false,
+          "address_categories": {},
+          "address_ttls_seconds": [],
+          "negative_ttls_seconds": [
+            600
+          ]
+        },
+        {
+          "mode": "doh",
+          "host": "zp-rdap-0a5b9c98f14ddd3bf7f7.top",
+          "provider": "aliyun",
+          "query_type": "AAAA",
+          "started_at": "2026-11-16T01:31:02.912254+00:00",
+          "observed_at": "2026-11-16T01:31:03.015384+00:00",
+          "http_status": 200,
+          "classification": "nxdomain",
+          "dns_rcode": 3,
+          "dns_truncated": false,
+          "dnssec_authenticated": false,
+          "address_categories": {},
+          "address_ttls_seconds": [],
+          "negative_ttls_seconds": [
+            600
+          ]
+        },
+        {
+          "mode": "doh",
+          "host": "zp-rdap-0a5b9c98f14ddd3bf7f7.cc",
+          "provider": "aliyun",
+          "query_type": "A",
+          "started_at": "2026-11-16T01:31:03.362735+00:00",
+          "observed_at": "2026-11-16T01:31:03.669402+00:00",
+          "http_status": 200,
+          "classification": "nxdomain",
+          "dns_rcode": 3,
+          "dns_truncated": false,
+          "dnssec_authenticated": false,
+          "address_categories": {},
+          "address_ttls_seconds": [],
+          "negative_ttls_seconds": [
+            600
+          ]
+        },
+        {
+          "mode": "doh",
+          "host": "zp-rdap-0a5b9c98f14ddd3bf7f7.cc",
+          "provider": "aliyun",
+          "query_type": "AAAA",
+          "started_at": "2026-11-16T01:31:03.812759+00:00",
+          "observed_at": "2026-11-16T01:31:03.869597+00:00",
+          "http_status": 200,
+          "classification": "nxdomain",
+          "dns_rcode": 3,
+          "dns_truncated": false,
+          "dnssec_authenticated": false,
+          "address_categories": {},
+          "address_ttls_seconds": [],
+          "negative_ttls_seconds": [
+            600
+          ]
+        },
+        {
+          "mode": "doh",
+          "host": "example.com",
+          "provider": "tencent",
+          "query_type": "A",
+          "started_at": "2026-11-16T01:31:04.263132+00:00",
+          "observed_at": "2026-11-16T01:31:04.487191+00:00",
+          "http_status": 200,
+          "classification": "noerror_addresses",
+          "dns_rcode": 0,
+          "dns_truncated": false,
+          "dnssec_authenticated": false,
+          "address_categories": {
+            "public": 2
+          },
+          "address_ttls_seconds": [
+            74,
+            74
+          ],
+          "negative_ttls_seconds": []
+        },
+        {
+          "mode": "doh",
+          "host": "example.com",
+          "provider": "tencent",
+          "query_type": "AAAA",
+          "started_at": "2026-11-16T01:31:04.713180+00:00",
+          "observed_at": "2026-11-16T01:31:04.916404+00:00",
+          "http_status": 200,
+          "classification": "noerror_addresses",
+          "dns_rcode": 0,
+          "dns_truncated": false,
+          "dnssec_authenticated": false,
+          "address_categories": {
+            "public": 2
+          },
+          "address_ttls_seconds": [
+            238,
+            238
+          ],
+          "negative_ttls_seconds": []
+        },
+        {
+          "mode": "doh",
+          "host": "zp-rdap-0a5b9c98f14ddd3bf7f7.top",
+          "provider": "tencent",
+          "query_type": "A",
+          "started_at": "2026-11-16T01:31:05.163622+00:00",
+          "observed_at": "2026-11-16T01:31:05.398275+00:00",
+          "http_status": 200,
+          "classification": "nxdomain",
+          "dns_rcode": 3,
+          "dns_truncated": false,
+          "dnssec_authenticated": false,
+          "address_categories": {},
+          "address_ttls_seconds": [],
+          "negative_ttls_seconds": [
+            600
+          ]
+        },
+        {
+          "mode": "doh",
+          "host": "zp-rdap-0a5b9c98f14ddd3bf7f7.top",
+          "provider": "tencent",
+          "query_type": "AAAA",
+          "started_at": "2026-11-16T01:31:05.614104+00:00",
+          "observed_at": "2026-11-16T01:31:05.871353+00:00",
+          "http_status": 200,
+          "classification": "nxdomain",
+          "dns_rcode": 3,
+          "dns_truncated": false,
+          "dnssec_authenticated": false,
+          "address_categories": {},
+          "address_ttls_seconds": [],
+          "negative_ttls_seconds": [
+            600
+          ]
+        },
+        {
+          "mode": "doh",
+          "host": "zp-rdap-0a5b9c98f14ddd3bf7f7.cc",
+          "provider": "tencent",
+          "query_type": "A",
+          "started_at": "2026-11-16T01:31:06.064383+00:00",
+          "observed_at": "2026-11-16T01:31:06.498805+00:00",
+          "http_status": 200,
+          "classification": "nxdomain",
+          "dns_rcode": 3,
+          "dns_truncated": false,
+          "dnssec_authenticated": false,
+          "address_categories": {},
+          "address_ttls_seconds": [],
+          "negative_ttls_seconds": [
+            600
+          ]
+        },
+        {
+          "mode": "doh",
+          "host": "zp-rdap-0a5b9c98f14ddd3bf7f7.cc",
+          "provider": "tencent",
+          "query_type": "AAAA",
+          "started_at": "2026-11-16T01:31:06.514759+00:00",
+          "observed_at": "2026-11-16T01:31:07.110951+00:00",
+          "http_status": 200,
+          "classification": "nxdomain",
+          "dns_rcode": 3,
+          "dns_truncated": false,
+          "dnssec_authenticated": false,
+          "address_categories": {},
+          "address_ttls_seconds": [],
+          "negative_ttls_seconds": [
+            600
+          ]
+        }
+      ],
+      "control_status": {
+        "top": {
+          "rdap": true,
+          "aliyun": true,
+          "tencent": true
+        },
+        "cc": {
+          "rdap": true,
+          "aliyun": true,
+          "tencent": true
+        }
+      },
+      "observations": [
+        {
+          "mode": "rdap",
+          "domain": "99hanman.top",
+          "started_at": "2026-11-16T01:31:07.111056+00:00",
+          "http_status": 200,
+          "content_type": "application/rdap+json",
+          "content_encoding": "",
+          "body_bytes": 8524,
+          "rdap_object_matches": true,
+          "rdap_conformance_present": true,
+          "rdap_error_code_is_404": null,
+          "classification": "matching_domain_object",
+          "observed_at": "2026-11-16T01:31:08.257650+00:00"
+        },
+        {
+          "mode": "doh",
+          "host": "99hanman.top",
+          "provider": "aliyun",
+          "query_type": "A",
+          "started_at": "2026-11-16T01:31:08.257669+00:00",
+          "observed_at": "2026-11-16T01:31:08.349624+00:00",
+          "http_status": 200,
+          "classification": "nxdomain",
+          "dns_rcode": 3,
+          "dns_truncated": false,
+          "dnssec_authenticated": false,
+          "address_categories": {},
+          "address_ttls_seconds": [],
+          "negative_ttls_seconds": [
+            600
+          ]
+        },
+        {
+          "mode": "doh",
+          "host": "99hanman.top",
+          "provider": "aliyun",
+          "query_type": "AAAA",
+          "started_at": "2026-11-16T01:31:08.708186+00:00",
+          "observed_at": "2026-11-16T01:31:08.811924+00:00",
+          "http_status": 200,
+          "classification": "nxdomain",
+          "dns_rcode": 3,
+          "dns_truncated": false,
+          "dnssec_authenticated": false,
+          "address_categories": {},
+          "address_ttls_seconds": [],
+          "negative_ttls_seconds": [
+            600
+          ]
+        },
+        {
+          "mode": "doh",
+          "host": "99hanman.top",
+          "provider": "tencent",
+          "query_type": "A",
+          "started_at": "2026-11-16T01:31:09.158477+00:00",
+          "observed_at": "2026-11-16T01:31:09.392142+00:00",
+          "http_status": 200,
+          "classification": "nxdomain",
+          "dns_rcode": 3,
+          "dns_truncated": false,
+          "dnssec_authenticated": false,
+          "address_categories": {},
+          "address_ttls_seconds": [],
+          "negative_ttls_seconds": [
+            600
+          ]
+        },
+        {
+          "mode": "doh",
+          "host": "99hanman.top",
+          "provider": "tencent",
+          "query_type": "AAAA",
+          "started_at": "2026-11-16T01:31:09.608836+00:00",
+          "observed_at": "2026-11-16T01:31:09.850996+00:00",
+          "http_status": 200,
+          "classification": "nxdomain",
+          "dns_rcode": 3,
+          "dns_truncated": false,
+          "dnssec_authenticated": false,
+          "address_categories": {},
+          "address_ttls_seconds": [],
+          "negative_ttls_seconds": [
+            600
+          ]
+        },
+        {
+          "mode": "rdap",
+          "domain": "duduxiaoshuo.top",
+          "started_at": "2026-11-16T01:31:10.058952+00:00",
+          "http_status": 404,
+          "content_type": "application/rdap+json",
+          "content_encoding": "",
+          "body_bytes": 3125,
+          "rdap_object_matches": null,
+          "rdap_conformance_present": null,
+          "rdap_error_code_is_404": true,
+          "classification": "http_404_json",
+          "observed_at": "2026-11-16T01:31:10.961355+00:00"
+        },
+        {
+          "mode": "doh",
+          "host": "duduxiaoshuo.top",
+          "provider": "aliyun",
+          "query_type": "A",
+          "started_at": "2026-11-16T01:31:10.961374+00:00",
+          "observed_at": "2026-11-16T01:31:11.065114+00:00",
+          "http_status": 200,
+          "classification": "nxdomain",
+          "dns_rcode": 3,
+          "dns_truncated": false,
+          "dnssec_authenticated": false,
+          "address_categories": {},
+          "address_ttls_seconds": [],
+          "negative_ttls_seconds": [
+            600
+          ]
+        },
+        {
+          "mode": "doh",
+          "host": "duduxiaoshuo.top",
+          "provider": "aliyun",
+          "query_type": "AAAA",
+          "started_at": "2026-11-16T01:31:11.411532+00:00",
+          "observed_at": "2026-11-16T01:31:11.507270+00:00",
+          "http_status": 200,
+          "classification": "nxdomain",
+          "dns_rcode": 3,
+          "dns_truncated": false,
+          "dnssec_authenticated": false,
+          "address_categories": {},
+          "address_ttls_seconds": [],
+          "negative_ttls_seconds": [
+            600
+          ]
+        },
+        {
+          "mode": "doh",
+          "host": "duduxiaoshuo.top",
+          "provider": "tencent",
+          "query_type": "A",
+          "started_at": "2026-11-16T01:31:11.861728+00:00",
+          "observed_at": "2026-11-16T01:31:17.868026+00:00",
+          "classification": "provider_timeout"
+        },
+        {
+          "mode": "doh",
+          "host": "duduxiaoshuo.top",
+          "provider": "tencent",
+          "query_type": "AAAA",
+          "started_at": "2026-11-16T01:31:17.868048+00:00",
+          "observed_at": "2026-11-16T01:31:23.866960+00:00",
+          "classification": "provider_timeout"
+        },
+        {
+          "mode": "doh",
+          "host": "h5.duduxiaoshuo.top",
+          "provider": "aliyun",
+          "query_type": "A",
+          "started_at": "2026-11-16T01:31:23.866981+00:00",
+          "observed_at": "2026-11-16T01:31:23.978385+00:00",
+          "http_status": 200,
+          "classification": "nxdomain",
+          "dns_rcode": 3,
+          "dns_truncated": false,
+          "dnssec_authenticated": false,
+          "address_categories": {},
+          "address_ttls_seconds": [],
+          "negative_ttls_seconds": [
+            600
+          ]
+        },
+        {
+          "mode": "doh",
+          "host": "h5.duduxiaoshuo.top",
+          "provider": "aliyun",
+          "query_type": "AAAA",
+          "started_at": "2026-11-16T01:31:24.317262+00:00",
+          "observed_at": "2026-11-16T01:31:24.419688+00:00",
+          "http_status": 200,
+          "classification": "nxdomain",
+          "dns_rcode": 3,
+          "dns_truncated": false,
+          "dnssec_authenticated": false,
+          "address_categories": {},
+          "address_ttls_seconds": [],
+          "negative_ttls_seconds": [
+            600
+          ]
+        },
+        {
+          "mode": "doh",
+          "host": "h5.duduxiaoshuo.top",
+          "provider": "tencent",
+          "query_type": "A",
+          "started_at": "2026-11-16T01:31:24.767611+00:00",
+          "observed_at": "2026-11-16T01:31:30.777933+00:00",
+          "classification": "provider_timeout"
+        },
+        {
+          "mode": "doh",
+          "host": "h5.duduxiaoshuo.top",
+          "provider": "tencent",
+          "query_type": "AAAA",
+          "started_at": "2026-11-16T01:31:30.777958+00:00",
+          "observed_at": "2026-11-16T01:31:31.101892+00:00",
+          "http_status": 200,
+          "classification": "nxdomain",
+          "dns_rcode": 3,
+          "dns_truncated": false,
+          "dnssec_authenticated": false,
+          "address_categories": {},
+          "address_ttls_seconds": [],
+          "negative_ttls_seconds": [
+            600
+          ]
+        },
+        {
+          "mode": "rdap",
+          "domain": "shenxianfaka.top",
+          "started_at": "2026-11-16T01:31:31.228069+00:00",
+          "http_status": 404,
+          "content_type": "application/rdap+json",
+          "content_encoding": "",
+          "body_bytes": 3125,
+          "rdap_object_matches": null,
+          "rdap_conformance_present": null,
+          "rdap_error_code_is_404": true,
+          "classification": "http_404_json",
+          "observed_at": "2026-11-16T01:31:32.117815+00:00"
+        },
+        {
+          "mode": "doh",
+          "host": "shenxianfaka.top",
+          "provider": "aliyun",
+          "query_type": "A",
+          "started_at": "2026-11-16T01:31:32.117831+00:00",
+          "observed_at": "2026-11-16T01:31:32.214828+00:00",
+          "http_status": 200,
+          "classification": "nxdomain",
+          "dns_rcode": 3,
+          "dns_truncated": false,
+          "dnssec_authenticated": false,
+          "address_categories": {},
+          "address_ttls_seconds": [],
+          "negative_ttls_seconds": [
+            600
+          ]
+        },
+        {
+          "mode": "doh",
+          "host": "shenxianfaka.top",
+          "provider": "aliyun",
+          "query_type": "AAAA",
+          "started_at": "2026-11-16T01:31:32.568131+00:00",
+          "observed_at": "2026-11-16T01:31:32.677627+00:00",
+          "http_status": 200,
+          "classification": "nxdomain",
+          "dns_rcode": 3,
+          "dns_truncated": false,
+          "dnssec_authenticated": false,
+          "address_categories": {},
+          "address_ttls_seconds": [],
+          "negative_ttls_seconds": [
+            600
+          ]
+        },
+        {
+          "mode": "doh",
+          "host": "shenxianfaka.top",
+          "provider": "tencent",
+          "query_type": "A",
+          "started_at": "2026-11-16T01:31:33.018270+00:00",
+          "observed_at": "2026-11-16T01:31:33.321740+00:00",
+          "http_status": 200,
+          "classification": "nxdomain",
+          "dns_rcode": 3,
+          "dns_truncated": false,
+          "dnssec_authenticated": false,
+          "address_categories": {},
+          "address_ttls_seconds": [],
+          "negative_ttls_seconds": [
+            600
+          ]
+        },
+        {
+          "mode": "doh",
+          "host": "shenxianfaka.top",
+          "provider": "tencent",
+          "query_type": "AAAA",
+          "started_at": "2026-11-16T01:31:33.468453+00:00",
+          "observed_at": "2026-11-16T01:31:33.744483+00:00",
+          "http_status": 200,
+          "classification": "nxdomain",
+          "dns_rcode": 3,
+          "dns_truncated": false,
+          "dnssec_authenticated": false,
+          "address_categories": {},
+          "address_ttls_seconds": [],
+          "negative_ttls_seconds": [
+            600
+          ]
+        },
+        {
+          "mode": "doh",
+          "host": "www.shenxianfaka.top",
+          "provider": "aliyun",
+          "query_type": "A",
+          "started_at": "2026-11-16T01:31:33.918852+00:00",
+          "observed_at": "2026-11-16T01:31:34.011332+00:00",
+          "http_status": 200,
+          "classification": "nxdomain",
+          "dns_rcode": 3,
+          "dns_truncated": false,
+          "dnssec_authenticated": false,
+          "address_categories": {},
+          "address_ttls_seconds": [],
+          "negative_ttls_seconds": [
+            600
+          ]
+        },
+        {
+          "mode": "doh",
+          "host": "www.shenxianfaka.top",
+          "provider": "aliyun",
+          "query_type": "AAAA",
+          "started_at": "2026-11-16T01:31:34.369333+00:00",
+          "observed_at": "2026-11-16T01:31:34.458034+00:00",
+          "http_status": 200,
+          "classification": "nxdomain",
+          "dns_rcode": 3,
+          "dns_truncated": false,
+          "dnssec_authenticated": false,
+          "address_categories": {},
+          "address_ttls_seconds": [],
+          "negative_ttls_seconds": [
+            600
+          ]
+        },
+        {
+          "mode": "doh",
+          "host": "www.shenxianfaka.top",
+          "provider": "tencent",
+          "query_type": "A",
+          "started_at": "2026-11-16T01:31:34.819640+00:00",
+          "observed_at": "2026-11-16T01:31:35.139686+00:00",
+          "http_status": 200,
+          "classification": "nxdomain",
+          "dns_rcode": 3,
+          "dns_truncated": false,
+          "dnssec_authenticated": false,
+          "address_categories": {},
+          "address_ttls_seconds": [],
+          "negative_ttls_seconds": [
+            600
+          ]
+        },
+        {
+          "mode": "doh",
+          "host": "www.shenxianfaka.top",
+          "provider": "tencent",
+          "query_type": "AAAA",
+          "started_at": "2026-11-16T01:31:35.269839+00:00",
+          "observed_at": "2026-11-16T01:31:35.533010+00:00",
+          "http_status": 200,
+          "classification": "nxdomain",
+          "dns_rcode": 3,
+          "dns_truncated": false,
+          "dnssec_authenticated": false,
+          "address_categories": {},
+          "address_ttls_seconds": [],
+          "negative_ttls_seconds": [
+            600
+          ]
+        },
+        {
+          "mode": "rdap",
+          "domain": "stxt.top",
+          "started_at": "2026-11-16T01:31:35.719901+00:00",
+          "http_status": 404,
+          "content_type": "application/rdap+json",
+          "content_encoding": "",
+          "body_bytes": 3101,
+          "rdap_object_matches": null,
+          "rdap_conformance_present": null,
+          "rdap_error_code_is_404": true,
+          "classification": "http_404_json",
+          "observed_at": "2026-11-16T01:31:36.647614+00:00"
+        },
+        {
+          "mode": "doh",
+          "host": "stxt.top",
+          "provider": "aliyun",
+          "query_type": "A",
+          "started_at": "2026-11-16T01:31:36.647634+00:00",
+          "observed_at": "2026-11-16T01:31:36.742257+00:00",
+          "http_status": 200,
+          "classification": "nxdomain",
+          "dns_rcode": 3,
+          "dns_truncated": false,
+          "dnssec_authenticated": false,
+          "address_categories": {},
+          "address_ttls_seconds": [],
+          "negative_ttls_seconds": [
+            600
+          ]
+        },
+        {
+          "mode": "doh",
+          "host": "stxt.top",
+          "provider": "aliyun",
+          "query_type": "AAAA",
+          "started_at": "2026-11-16T01:31:37.097862+00:00",
+          "observed_at": "2026-11-16T01:31:37.201413+00:00",
+          "http_status": 200,
+          "classification": "nxdomain",
+          "dns_rcode": 3,
+          "dns_truncated": false,
+          "dnssec_authenticated": false,
+          "address_categories": {},
+          "address_ttls_seconds": [],
+          "negative_ttls_seconds": [
+            600
+          ]
+        },
+        {
+          "mode": "doh",
+          "host": "stxt.top",
+          "provider": "tencent",
+          "query_type": "A",
+          "started_at": "2026-11-16T01:31:37.548403+00:00",
+          "observed_at": "2026-11-16T01:31:37.802471+00:00",
+          "http_status": 200,
+          "classification": "nxdomain",
+          "dns_rcode": 3,
+          "dns_truncated": false,
+          "dnssec_authenticated": false,
+          "address_categories": {},
+          "address_ttls_seconds": [],
+          "negative_ttls_seconds": [
+            600
+          ]
+        },
+        {
+          "mode": "doh",
+          "host": "stxt.top",
+          "provider": "tencent",
+          "query_type": "AAAA",
+          "started_at": "2026-11-16T01:31:37.998510+00:00",
+          "observed_at": "2026-11-16T01:31:38.320910+00:00",
+          "http_status": 200,
+          "classification": "nxdomain",
+          "dns_rcode": 3,
+          "dns_truncated": false,
+          "dnssec_authenticated": false,
+          "address_categories": {},
+          "address_ttls_seconds": [],
+          "negative_ttls_seconds": [
+            600
+          ]
+        }
+      ],
+      "skipped": [],
+      "completed_at": "2026-11-16T01:31:38.320927+00:00",
+      "classification_counts": {
+        "matching_domain_object": 1,
+        "nxdomain": 21,
+        "http_404_json": 3,
+        "provider_timeout": 3
+      }
+    }
+  },
+  "historical_candidates": [
+    {
+      "registry_domain": "99hanman.top",
+      "old_source_host": "99hanman.top",
+      "selected_sources": [
+        {
+          "source_id": "6a3ec699b1bd26d6a73afc8a7e41693cb3d3bf6dc5da47a9a4bcfc38f4f7fa56",
+          "name": "🗂🙈久久漫画",
+          "kind": "comic",
+          "selected_record_index": 3551,
+          "normalized_legado_sha256": "24df0a495c54b9b824dd8607d3638de0528924d37e89310163091b8b9b34808b",
+          "endpoint_sha256": "64c09d8081ee6ae9b5521c30d6c705a100e8ae798528e19ffe8628b0828ae822",
+          "selected_raw_record_canonical_sha256": "d24e2332a5055a461a276afdff183416c2dc0d37df203df33644dadf4e3d4b46",
+          "format": "html",
+          "raw_book_source_url": "http://99hanman.top/",
+          "normalized_endpoint": "https://99hanman.top/"
+        }
+      ]
+    },
+    {
+      "registry_domain": "duduxiaoshuo.top",
+      "old_source_host": "h5.duduxiaoshuo.top",
+      "selected_sources": [
+        {
+          "source_id": "c0cef4c7811afb1da938df500c893459d9e78075e25ce471bfb17b6c52cc9f12",
+          "name": "🌸 笔趣阁㉓",
+          "kind": "text",
+          "selected_record_index": 1646,
+          "normalized_legado_sha256": "df65779a1df15e3392b075e25f4871b04b89d7ca4ee6aaac9ab5ccc07bde0c62",
+          "endpoint_sha256": "a94d756cfc30a1d8e5a25db735c94fbd9232fcec87245fc0f897ef3e52fd7f9d",
+          "selected_raw_record_canonical_sha256": "e791f8e76d34657475c6e8662aa45b0ab27ba4b8c20c704194976a6c31d64e52",
+          "format": "html",
+          "raw_book_source_url": "http://h5.duduxiaoshuo.top",
+          "normalized_endpoint": "https://h5.duduxiaoshuo.top"
+        }
+      ]
+    },
+    {
+      "registry_domain": "shenxianfaka.top",
+      "old_source_host": "www.shenxianfaka.top",
+      "selected_sources": [
+        {
+          "source_id": "2c42e8be93e8d9a0cba17e082bb31665d2dc717c98054dcc596a318b81775211",
+          "name": "神仙书阁",
+          "kind": "text",
+          "selected_record_index": 950,
+          "normalized_legado_sha256": "70961df18d8d9eacd34a07a5d9944a0bebfe87196ab98fc25fbfe25aa39be010",
+          "endpoint_sha256": "a6ce8a408e88989cc86e3c733cec0101dab828be68f8910afd3664a6032eceae",
+          "selected_raw_record_canonical_sha256": "877c8429522f118a2dd17ea3cc199a9a22867d8973d890f6cf6719c26de38500",
+          "format": "html",
+          "raw_book_source_url": "http://www.shenxianfaka.top/",
+          "normalized_endpoint": "https://www.shenxianfaka.top/"
+        }
+      ]
+    },
+    {
+      "registry_domain": "stxt.top",
+      "old_source_host": "stxt.top",
+      "selected_sources": [
+        {
+          "source_id": "2fa11264c96f40e2d97174ab5dc0393039f3235dad0d0c71b49fdbcee5d788c9",
+          "name": "读书阁②",
+          "kind": "text",
+          "selected_record_index": 3062,
+          "normalized_legado_sha256": "b8efdaed3bfc90cfdbd4b69a28b7b7d00685883b0a079b794ee121e3f8e46312",
+          "endpoint_sha256": "767295854fd15b18a52697456d6f71bf80757328d44f91814142848c28fa95df",
+          "selected_raw_record_canonical_sha256": "7a343f5e42331d75268601f45c81438fdacd8d662a3aa1e186c4f84dbcf83ecd",
+          "format": "html",
+          "raw_book_source_url": "https://stxt.top",
+          "normalized_endpoint": "https://stxt.top"
+        }
+      ]
+    }
+  ],
+  "reviewed_unavailable_source_ids": [
+    "2c42e8be93e8d9a0cba17e082bb31665d2dc717c98054dcc596a318b81775211",
+    "2fa11264c96f40e2d97174ab5dc0393039f3235dad0d0c71b49fdbcee5d788c9"
+  ],
+  "limitations": [
+    "Only the two listed exact historical source versions are treated as presently unavailable; this is not host-wide or permanent and does not establish maliciousness.",
+    "The earlier second registry round was skipped after a failed control, not a second 404; the later round is separated by several hours and has separate controls.",
+    "The duduxiaoshuo.top observations include provider timeouts, which remain unknown; 99hanman.top returned a matching registry object.",
+    "The public resolvers may share caches or a network path; no independence or future state is established.",
+    "No source site, source rule, account or user database was accessed by the later collector; omitted response bodies and DNS addresses cannot be authenticated offline.",
+    "Historical rules use source-relative search and page links; dynamically returned links and future revisions were not verified."
+  ],
+  "latest_head_evidence": {
+    "path": "docs/implementation/legado-unresolved-943-recheck-20261116.json",
+    "sha256": "9925c34398debb413de438d0ac6a709c8b41f1abc7be26365bec1319ce0e23e0"
+  }
+}

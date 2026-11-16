@@ -12,6 +12,7 @@ import '../../supervision/presentation/sensitive_action.dart';
 import '../application/book_site_checks.dart';
 import '../data/aoaostar_book_catalog.dart';
 import '../data/book_import.dart';
+import '../data/book_policy_evidence.dart';
 import '../data/book_site_inspection.dart';
 import '../data/book_site_script_clues.dart';
 import '../data/book_source_risk_store.dart';
@@ -611,6 +612,87 @@ final class _BookSourcesPageState extends State<BookSourcesPage> {
     }
   }, protected: true);
 
+  Future<void> _bookPolicyReviews() => _run(() async {
+    final entries = await _services.books.bookPolicyReviewEntries();
+    if (!mounted) return;
+    final selected = await showDialog<BookPolicyReviewEntry>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('作品成人标记复核'),
+        content: SizedBox(
+          width: 520,
+          height: 300,
+          child: ListenableBuilder(
+            listenable: Listenable.merge([
+              _services.contentPolicy,
+              _services.books.sourceRiskChanges,
+              _services.books.bookObservationChanges,
+            ]),
+            builder: (context, _) {
+              final shown = entries
+                  .where(_services.books.bookPolicyReviewEntryAllowed)
+                  .toList();
+              if (shown.isEmpty) {
+                return const Center(child: Text('没有可复核的书架作品'));
+              }
+              return ListView.builder(
+                itemCount: shown.length,
+                itemBuilder: (context, index) {
+                  final entry = shown[index];
+                  return ListTile(
+                    title: Text(entry.book.title),
+                    subtitle: entry.book.author.isEmpty
+                        ? null
+                        : Text(entry.book.author),
+                    trailing: TextButton(
+                      onPressed: () => Navigator.pop(context, entry),
+                      child: const Text('人工复核'),
+                    ),
+                  );
+                },
+              );
+            },
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('关闭'),
+          ),
+        ],
+      ),
+    );
+    if (!mounted ||
+        selected == null ||
+        !_services.books.bookPolicyReviewEntryAllowed(selected)) {
+      return;
+    }
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('解除作品成人标记'),
+        content: const Text(
+          '请先人工确认这本书的历史标记属于误判，历史标记可能合并了多次观察。'
+          '此操作只解除该作品的自动成人标记；'
+          '其他内容或来源限制仍会生效。若来源再次提供相同成人线索，标记会重新出现。',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('取消'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('确认解除'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+    await _services.books.clearBookAdultEvidence(selected);
+    _notice('已解除该作品的自动成人标记；其他限制仍可能生效，请重新打开书籍');
+  }, protected: true);
+
   void setStateIfMounted(VoidCallback update) {
     if (mounted) setState(update);
   }
@@ -729,6 +811,13 @@ final class _BookSourcesPageState extends State<BookSourcesPage> {
                 : _sourceRisks,
             icon: const Icon(Icons.gpp_maybe_outlined),
             label: const Text('风险记录'),
+          ),
+          TextButton.icon(
+            onPressed: _busy || _services.contentPolicy.filterAdult
+                ? null
+                : _bookPolicyReviews,
+            icon: const Icon(Icons.fact_check_outlined),
+            label: const Text('作品标记复核'),
           ),
         ],
       ),

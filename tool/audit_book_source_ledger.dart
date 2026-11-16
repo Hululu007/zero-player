@@ -83,6 +83,7 @@ const _evidenceFiles = [
   rdapNineEvidenceFile,
   rdapFiveEvidenceFile,
   topCcEvidenceFile,
+  topLaterEvidenceFile,
   _recentRedirect,
   _categoryReview,
   _reading560,
@@ -139,6 +140,7 @@ const _codePaths = [
   'lib/features/books/domain/fanfanu_legacy_source_fix.dart',
   'lib/features/books/domain/net_rdap_legacy_quarantine.dart',
   'lib/features/books/domain/moe_rdap_legacy_quarantine.dart',
+  'lib/features/books/domain/top_rdap_legacy_quarantine.dart',
   'lib/features/books/domain/novel_242_legacy_quarantine.dart',
   'lib/features/books/domain/iqiyi_legacy_quarantine.dart',
   'lib/features/books/domain/taotaoshu_legacy_quarantine.dart',
@@ -165,6 +167,10 @@ const _codePaths = [
   'tool/book_source_ledger_rdap_nine.dart',
   'tool/book_source_ledger_rdap_five.dart',
   'tool/book_source_ledger_top_cc.dart',
+  'tool/book_source_ledger_top_later.dart',
+  'tool/verify_legado_rdap_top_later.py',
+  'tool/test_verify_legado_rdap_top_later.py',
+  'tool/test_audit_book_source_ledger_top_later.dart',
   'tool/book_source_ledger_sfwx.dart',
   'tool/book_source_ledger_lengmen.dart',
   'tool/book_source_ledger_later_chain.dart',
@@ -216,6 +222,7 @@ const _runtimePolicyReferencePaths = [
   'lib/features/books/data/book_repository_discovery.dart',
   'lib/features/books/data/book_repository_media_access.dart',
   'lib/features/books/data/book_repository_mutations.dart',
+  'lib/features/books/data/book_repository_policy_review.dart',
   'lib/features/books/data/book_repository_probe.dart',
   'lib/features/books/data/book_repository_request_policy.dart',
   'lib/features/books/data/book_repository_site_checks.dart',
@@ -229,6 +236,7 @@ const _runtimePolicyReferencePaths = [
   'lib/features/books/data/book_store.dart',
   'lib/features/books/data/books_repository.dart',
   'lib/features/books/presentation/book_detail_page.dart',
+  'lib/features/books/presentation/book_sources_page.dart',
   'lib/features/books/data/legado/legado_client.dart',
   'lib/features/books/data/lit2go_audio_client.dart',
   'lib/features/books/data/shuyin_audio_client.dart',
@@ -1467,6 +1475,10 @@ void _verifyArchiveAssociation(
     verifyRdapFiveInput(evidence, digest, inputHashes);
     return;
   }
+  if (file == topLaterEvidenceFile) {
+    verifyTopLaterInput(evidence, digest, inputHashes);
+    return;
+  }
   if (file == sfwxEvidenceFile) {
     verifySfwxInput(evidence, digest, inputHashes);
     return;
@@ -1924,6 +1936,15 @@ void main(List<String> args) {
     data[_dohReviewed]!,
     catalog.rows,
   );
+  final topLater = readTopLaterEvidence(
+    data[topLaterEvidenceFile]!,
+    data[topCcEvidenceFile]!,
+    hashes,
+    catalog.rows,
+  );
+  for (final entry in topLater.registry.entries) {
+    topCc.registry.putIfAbsent(entry.key, () => []).addAll(entry.value);
+  }
   final rows = [
     for (final source in catalog.imported.sources)
       _row(
