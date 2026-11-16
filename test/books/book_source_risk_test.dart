@@ -128,6 +128,10 @@ void _sourceClassificationTests() {
     expect(quarantinedBookHost('m.60ks.com'), isTrue);
     expect(quarantinedBookHost('www.60ks.com'), isFalse);
     expect(quarantinedBookHost('www.shubang.net'), isFalse);
+    expect(quarantinedBookHost('www.qishuzw.com'), isTrue);
+    expect(quarantinedBookHost('qishuzw.com'), isFalse);
+    expect(quarantinedBookHost('hao8.net'), isTrue);
+    expect(quarantinedBookHost('www.hao8.net'), isFalse);
   });
 
   test(

@@ -9,6 +9,7 @@ import '../book_html.dart';
 import 'legado_css.dart';
 import 'legado_rule_tokens.dart';
 import 'legado_script.dart';
+import 'legado_script_budget.dart';
 
 final class LegadoRules {
   LegadoRules(
@@ -67,37 +68,46 @@ final class LegadoRules {
     return buffer.toString();
   }
 
-  Object? script(String code, Object? value) => runLegadoScript(
-    code,
-    library: source.legado!.library,
-    context: {
-      'result': _jsonValue(value),
-      'src': input,
-      'baseUrl': uri.toString(),
-      'key': key,
-      'page': page,
-      'source': {
-        'bookSourceUrl': source.endpoint.toString(),
-        'sourceUrl': source.endpoint.toString(),
-        'bookSourceName': source.name,
-        'bookSourceGroup': source.group,
-        'bookSourceComment': source.legado!.comment,
+  Object? script(String code, Object? value) {
+    final budget = LegadoScriptBudget();
+    return runLegadoScript(
+      code,
+      library: source.legado!.library,
+      context: {
+        'result': budget.convert(value),
+        'src': input,
+        'baseUrl': uri.toString(),
+        'key': key,
+        'page': page,
+        'source': {
+          'bookSourceUrl': source.endpoint.toString(),
+          'sourceUrl': source.endpoint.toString(),
+          'bookSourceName': source.name,
+          'bookSourceGroup': source.group,
+          'bookSourceComment': source.legado!.comment,
+        },
+        'book': {
+          'name': book?.title ?? '',
+          'author': book?.author ?? '',
+          'bookUrl': book?.uri.toString() ?? '',
+        },
+        'chapter': {
+          'title': chapter?.title ?? '',
+          'url': chapter?.uri.toString() ?? '',
+        },
       },
-      'book': {
-        'name': book?.title ?? '',
-        'author': book?.author ?? '',
-        'bookUrl': book?.uri.toString() ?? '',
-      },
-      'chapter': {
-        'title': chapter?.title ?? '',
-        'url': chapter?.uri.toString() ?? '',
-      },
-    },
-    documents: documents,
-    select: _scriptSelect,
-  );
+      documents: documents,
+      select: (method, rule, input) =>
+          _scriptSelect(method, rule, input, budget),
+    );
+  }
 
-  Object? _scriptSelect(String method, String rule, Object? value) {
+  Object? _scriptSelect(
+    String method,
+    String rule,
+    Object? value,
+    LegadoScriptBudget budget,
+  ) {
     if (rule.length > 1024 ||
         legadoScriptMarker.hasMatch(rule) ||
         rule.contains('{{') ||
@@ -106,13 +116,15 @@ final class LegadoRules {
     }
     final target = value is String ? _parse(value) : value;
     return switch (method) {
-      'string' => field(rule, target),
-      'list' => _evaluate(
-        rule,
-        target,
-        list: false,
-      ).map((item) => _asText(item)).take(200).toList(),
-      _ => elements(rule, target).map(_jsonValue).take(200).toList(),
+      'string' => budget.convert(field(rule, target)),
+      'list' => [
+        for (final item in _evaluate(rule, target, list: false).take(200))
+          _scriptText(item, budget),
+      ],
+      _ => [
+        for (final item in elements(rule, target).take(200))
+          budget.convert(item),
+      ],
     };
   }
 
@@ -154,9 +166,22 @@ final class LegadoRules {
     Object? selected = value;
     if (selector.isNotEmpty) {
       final results = _evaluate(selector, value, list: list, depth: depth + 1);
-      selected = list
-          ? results.take(5000).toList()
-          : results.map((item) => _asText(item)).join('\n');
+      if (list) {
+        selected = results.take(5000).toList();
+      } else {
+        final budget = LegadoScriptBudget();
+        final output = StringBuffer();
+        var first = true;
+        for (final item in results.take(5000)) {
+          if (!first) {
+            budget.chargeJson('\n');
+            output.write('\n');
+          }
+          output.write(_scriptText(item, budget));
+          first = false;
+        }
+        selected = output.toString();
+      }
     }
     final end = marker[0]!.startsWith('<')
         ? RegExp(
@@ -320,13 +345,16 @@ Iterable<Object?> _xpath(String rule, Object? value) {
 
 Iterable<Object?> _values(Object? value) => value is List ? value : [value];
 
-Object? _jsonValue(Object? value) => switch (value) {
-  dom.Document node => node.outerHtml,
-  dom.Element node => node.outerHtml,
-  dom.Node node => node.text,
-  List values => values.map(_jsonValue).toList(),
-  _ => value,
-};
+String _scriptText(Object? value, LegadoScriptBudget budget) {
+  if (value is dom.Node) {
+    budget.checkNode(value);
+  } else if (value is Map || value is List) {
+    budget.chargeJson(value);
+  }
+  final text = _asText(value);
+  budget.chargeJson(text);
+  return text;
+}
 
 String _asText(Object? value, {bool long = false}) {
   if (value == null) return '';

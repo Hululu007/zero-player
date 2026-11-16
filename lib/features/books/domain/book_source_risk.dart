@@ -84,6 +84,8 @@ const _quarantinedExactBookHosts = {
   'www.qingmo.net', // Homepage changed; previous catalog path is 404
   'www.iqb8.cc', // Homepage changed; previous catalog path is 404
   'www.hjgzf.com', // Homepage changed; previous catalog path is 404
+  'www.qishuzw.com', // GET / and POST /search/ both serve a sports live page (2026-11-16)
+  'hao8.net', // Repeated GET /: domain-for-sale page; search returns the same page (2026-11-16)
 };
 
 // These source IDs have a known old rule that fetched and evaluated remote

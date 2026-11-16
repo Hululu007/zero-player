@@ -118,6 +118,11 @@ migrate_working_dir/
 !/docs/implementation/legado-lengmen-amsi-recheck-20261116.json
 !/docs/implementation/legado-equivalent-adult-ids-20261116.json
 !/docs/implementation/legado-two-chain-pilot-20261116.json
+!/docs/implementation/legado-qishuzw-post-probe-20261116.json
+!/docs/implementation/legado-third-round-responders-20261116.json
+!/docs/implementation/legado-hao8-parking-20261116.json
+!/docs/implementation/legado-unresolved-third-round-20261116.json
+!/docs/implementation/legado-unresolved-get-round-20261116.json
 !/docs/implementation/legado-import-inventory-20261115.json
 !/docs/implementation/legado-adult-label-evidence-20261115.json
 !/docs/implementation/legado-targeted-rechecks-20261115.json

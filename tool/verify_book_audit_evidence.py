@@ -519,6 +519,86 @@ class EvidenceVerifier:
             for path, digest in group['sha256'].items():
                 self.check_digest(self.root / path, digest, normalize_lf=True)
 
+    def verify_qishuzw_post_probe(self, archive):
+        probe = json.loads(self.read(self.docs / 'legado-qishuzw-post-probe-20261116.json'))
+        self.check_digest(archive, probe['catalog_archive_sha256'])
+        if probe['host'] != 'https://www.qishuzw.com':
+            raise ValueError('unexpected qishuzw probe host')
+        rows = probe['rows']
+        if [row.get('method') for row in rows] != ['GET', 'POST', 'POST']:
+            raise ValueError('unexpected qishuzw probe methods')
+        for row in rows:
+            if row.get('status') != 200 or '西甲直播' not in row.get('title', ''):
+                raise ValueError('unexpected qishuzw probe response')
+            if row.get('sitebox_marker') or row.get('book_link_count') != 0:
+                raise ValueError('qishuzw probe unexpectedly contained a book list')
+            if len(row.get('sha256') or '') != 64:
+                raise ValueError('qishuzw probe sample digest missing')
+
+    def _canonical_digest(self, payload):
+        return hashlib.sha256(json.dumps(
+            payload, ensure_ascii=False, sort_keys=True, separators=(',', ':')
+        ).encode('utf8')).hexdigest()
+
+    def verify_unresolved_rounds(self, archive):
+        third = json.loads(self.read(self.docs / 'legado-unresolved-third-round-20261116.json'))
+        if (self._canonical_digest(third) != 'c87962a4ba28fb01b0146b0b5dafc21b9b3461dd05f225384175d4b5ec0aebde' or
+                third['input_references']['archive']['sha256'] !=
+                hashlib.sha256(self.read(archive)).hexdigest() or
+                third['input_references']['previous_round']['sha256'] !=
+                '9925c34398debb413de438d0ac6a709c8b41f1abc7be26365bec1319ce0e23e0'):
+            raise ValueError('third unresolved round provenance changed')
+        rows = third['results']
+        if len(rows) != 939 or third['summary']['hosts'] != 939:
+            raise ValueError('third unresolved round population changed')
+        recorded = sum(row['latest_head']['http_status'] is not None for row in rows)
+        if recorded != 4 or third['summary']['http_status_recorded'] != 4:
+            raise ValueError('third unresolved round status count changed')
+        unresolved = {row['host'] for row in rows if row['latest_head']['http_status'] is None}
+        if len(unresolved) != 935:
+            raise ValueError('third unresolved round no-status count changed')
+
+        get_round = json.loads(self.read(self.docs / 'legado-unresolved-get-round-20261116.json'))
+        if (self._canonical_digest(get_round) != '5cf86bf7f24536815cf7fc4e9c63cc3c62dba26d8106e439ac0d273c8aa5fa7d' or
+                get_round['input_references']['round_three']['sha256'] !=
+                hashlib.sha256(self.read(self.docs / 'legado-unresolved-third-round-20261116.json')).hexdigest()):
+            raise ValueError('GET unresolved round provenance changed')
+        if len(get_round['results']) != 935 or get_round['summary']['hosts'] != 935:
+            raise ValueError('GET unresolved round population changed')
+        if get_round['summary']['http_status_recorded'] != 1 or get_round['summary']['http_200'] != 0:
+            raise ValueError('GET unresolved round status count changed')
+        if {row['host'] for row in get_round['results']} != unresolved:
+            raise ValueError('GET unresolved round host set changed')
+
+        responders = json.loads(self.read(self.docs / 'legado-third-round-responders-20261116.json'))
+        if (self._canonical_digest(responders) !=
+                '988e10ee3964f39bbbbbc173b86f4dd36050b97ca4fe9f21133e57d85ca5ce49' or
+                responders['input_references']['round_three']['sha256'] !=
+                hashlib.sha256(self.read(self.docs / 'legado-unresolved-third-round-20261116.json')).hexdigest()):
+            raise ValueError('responder evidence provenance changed')
+        if sorted(row['host'] for row in responders['results']) != [
+                'hao8.net', 'm.aixdzs.com', 'm.xyyuedu.com', 'www.00xs.net']:
+            raise ValueError('responder host set changed')
+        if responders['summary']['requests'] != 8 or responders['summary']['statuses'] != [200, 301]:
+            raise ValueError('responder sample summary changed')
+        self.checked += 3
+
+    def verify_hao8_parking(self):
+        parking = json.loads(self.read(self.docs / 'legado-hao8-parking-20261116.json'))
+        if self._canonical_digest(parking) != 'a7ce77fb96cb94752f9dea33b7318a91a31a7d6423b9b04f96f8de456bb3e14b':
+            raise ValueError('hao8 parking evidence changed')
+        if parking['host'] != 'hao8.net' or len(parking['results']) != 2:
+            raise ValueError('hao8 parking population changed')
+        for row in parking['results']:
+            if row.get('status') != 200 or row.get('book_link_count') != 0:
+                raise ValueError('hao8 parking response changed')
+            if not all(row['markers'].get(name) for name in (
+                    'domain_can_transfer', 'domain_for_sale_en', 'fixed_price_sale', 'price_cny')):
+                raise ValueError('hao8 parking markers changed')
+            if row['markers'].get('book_search_form') or '域名可以转让' not in row.get('quote', ''):
+                raise ValueError('hao8 parking quote changed')
+        self.checked += 1
+
     def verify_phishing_army(self, archive):
         report = json.loads(self.read(self.docs / 'legado-phishing-army-20261116.json'))
         catalog = report['catalog']
@@ -595,6 +675,9 @@ class EvidenceVerifier:
         self.check_digest(archive, recheck_560['catalog_archive_sha256'])
         self.verify_recent_evidence(archive)
         self.verify_later_sources(archive)
+        self.verify_qishuzw_post_probe(archive)
+        self.verify_unresolved_rounds(archive)
+        self.verify_hao8_parking()
         self.verify_phishing_army(archive)
         self.verify_ledger()
         return self.checked

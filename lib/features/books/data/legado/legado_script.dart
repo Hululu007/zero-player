@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:crypto/crypto.dart';
 
+import 'legado_script_budget.dart';
 import 'legado_script_stub.dart'
     if (dart.library.ui) 'legado_script_flutter.dart'
     as engine;
@@ -53,11 +54,15 @@ Object? runLegadoScript(
   required Object? Function(String method, String rule, Object? input) select,
 }) {
   final known = <String, Object?>{};
-  var size = 0;
+  final budget = LegadoScriptBudget();
+  // Check before building the JavaScript setup string, including initial DOM
+  // values and source metadata supplied as context.
+  LegadoScriptBudget().chargeJson(context);
   final variables = context.entries
       .map((item) => 'var ${item.key} = ${jsonEncode(item.value)};')
       .join('\n');
   for (var round = 0; round < 12; round++) {
+    LegadoScriptBudget().chargeJson(known);
     final setup =
         'const __zpLegadoKnown = ${jsonEncode(known)};\n$variables\n$_bridge';
     final evaluation = engine.evaluateLegadoScript(setup, '$library\n$script');
@@ -74,15 +79,15 @@ Object? runLegadoScript(
           request[1] is! String) {
         continue;
       }
+      // Bound nested request values before materializing their JSON key.
+      LegadoScriptBudget(3 * 1024 * 1024).chargeJson(request);
       final id = jsonEncode(request);
-      if (known.containsKey(id) || id.length > 3 * 1024 * 1024) continue;
+      if (known.containsKey(id)) continue;
       final method = request[0] as String;
       final value = request[1] as String;
       final result = _result(method, value, request, documents, select);
-      size += id.length + jsonEncode(result).length;
-      if (size > 8 * 1024 * 1024) {
-        throw const FormatException('Legado 脚本辅助数据超过限制');
-      }
+      budget.chargeJson(id);
+      budget.chargeJson(result);
       known[id] = result;
       progressed = true;
     }
