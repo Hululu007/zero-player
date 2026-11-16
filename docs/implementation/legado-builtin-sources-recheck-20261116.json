@@ -1,0 +1,535 @@
+{
+  "schema": "legado-builtin-sources-recheck/1",
+  "generated_at": "2026-11-16T12:28:43.020472+00:00",
+  "started_at_utc": "2026-11-16T12:26:52.107324+00:00",
+  "completed_at_utc": "2026-11-16T12:28:43.020472+00:00",
+  "archive_sha256": "012a0e0d6e6adc8d303c32b578510e14b562088b3e965cb01a1a647b5e7e034d",
+  "verified_sha256": "68fc082db9c73e9a4183bcf7912404bf3cb4b96bf721a5e3a0d707e9fe864ced",
+  "keyword": "剑来",
+  "method": {
+    "request": "anonymous same-host HTTPS GET",
+    "follow_redirect": false,
+    "send_credentials": false,
+    "submit_post": false,
+    "body_limit_bytes": 262144,
+    "timeout_seconds": 12.0,
+    "network_error_attempts": 2
+  },
+  "summary": {
+    "sources": 21,
+    "text": 14,
+    "audio": 7,
+    "home_200": 14,
+    "search_200": 12,
+    "text_without_search": 0
+  },
+  "results": [
+    {
+      "name": "UU看书",
+      "url": "https://www.uukan.org",
+      "kind": "text",
+      "defaultEnabled": false,
+      "home_observation": {
+        "status": null,
+        "error": "TimeoutError",
+        "bytes": 0,
+        "elapsed_ms": 13534,
+        "attempts": 2,
+        "first_error": "TimeoutError"
+      },
+      "search_observation": {
+        "status": null,
+        "error": "TimeoutError",
+        "bytes": 0,
+        "elapsed_ms": 12471,
+        "attempts": 2,
+        "first_error": "TimeoutError"
+      }
+    },
+    {
+      "name": "速读谷",
+      "url": "https://www.suduguu.com",
+      "kind": "text",
+      "defaultEnabled": true,
+      "home_observation": {
+        "status": null,
+        "error": "URLError",
+        "bytes": 0,
+        "elapsed_ms": 12008,
+        "attempts": 2,
+        "first_error": "TimeoutError"
+      },
+      "search_observation": {
+        "status": 200,
+        "bytes": 2991,
+        "truncated": false,
+        "content_type": "text/html",
+        "title": "搜索：剑来-速读谷",
+        "sha256": "a5ce826e1a6d4d65568e68eb63a7beed41fceb8a7b5419c3086adc61cedb2b3a",
+        "path_sha256": "8b87566998a982fb66e01972c3f850ac8f2dada0ebece9c46a97a2687dea410b",
+        "elapsed_ms": 1421,
+        "attempts": 1
+      }
+    },
+    {
+      "name": "Project Gutenberg 公版有声书",
+      "url": "https://www.gutenberg.org",
+      "kind": "audio",
+      "defaultEnabled": true,
+      "home_observation": {
+        "status": 200,
+        "bytes": 30438,
+        "truncated": false,
+        "content_type": "text/html",
+        "title": "Free eBooks | Project Gutenberg",
+        "sha256": "31a82641a0a6b0d8f33700660a45af5212d00e2b11ce221ebd417d60f7fcd54a",
+        "path_sha256": "8a5edab282632443219e051e4ade2d1d5bbc671c781051bf1437897cbdfea0f1",
+        "elapsed_ms": 1164,
+        "attempts": 1
+      },
+      "search_observation": null
+    },
+    {
+      "name": "机核 · 核市奇谭",
+      "url": "https://alioss.gcores.com/feeds/heshi.xml",
+      "kind": "audio",
+      "defaultEnabled": true,
+      "home_observation": {
+        "status": 200,
+        "bytes": 262144,
+        "truncated": true,
+        "content_type": "application/xml",
+        "title": "",
+        "sha256": "c5b3dfe39a3c939729854dda8436d65e0ab51f82b491157aca1ea54b3017e3d9",
+        "path_sha256": "914d5a9d3ecbf4aa067b22469d02ee37f133d628d3e8b02e62224af5a039700f",
+        "elapsed_ms": 128,
+        "attempts": 1
+      },
+      "search_observation": null
+    },
+    {
+      "name": "机核 · 科幻的黄金时代",
+      "url": "https://feed.xyzfm.space/tqrhwlptvah3",
+      "kind": "audio",
+      "defaultEnabled": true,
+      "home_observation": {
+        "status": 200,
+        "bytes": 11045,
+        "truncated": false,
+        "content_type": "application/xml",
+        "title": "",
+        "sha256": "0d6715ac110a2b2c941eab0bb6cc03563caabfcee73f104202e0ed4b2b29d639",
+        "path_sha256": "496815fd2307c8ec39afc6382c553c5d964ab7e90a61556d888b4754e3cc81d9",
+        "elapsed_ms": 118,
+        "attempts": 1
+      },
+      "search_observation": null
+    },
+    {
+      "name": "台灣小說網",
+      "url": "https://www.twkan.cc",
+      "kind": "text",
+      "defaultEnabled": false,
+      "home_observation": {
+        "status": null,
+        "error": "TimeoutError",
+        "bytes": 0,
+        "elapsed_ms": 21287,
+        "attempts": 2,
+        "first_error": "TimeoutError"
+      },
+      "search_observation": {
+        "status": null,
+        "error": "TimeoutError",
+        "bytes": 0,
+        "elapsed_ms": 13723,
+        "attempts": 2,
+        "first_error": "TimeoutError"
+      }
+    },
+    {
+      "name": "得奇小说网",
+      "url": "https://www.deqitxt.com",
+      "kind": "text",
+      "defaultEnabled": true,
+      "home_observation": {
+        "status": 200,
+        "bytes": 13513,
+        "truncated": false,
+        "content_type": "text/html",
+        "title": "得奇小说网-最新热门小说免费阅读网",
+        "sha256": "f6aaf1528cad54b57425dcd62b7f73f126dcc4de42c3d01f4a7b49c0d64907d5",
+        "path_sha256": "8a5edab282632443219e051e4ade2d1d5bbc671c781051bf1437897cbdfea0f1",
+        "elapsed_ms": 1481,
+        "attempts": 1
+      },
+      "search_observation": {
+        "status": 200,
+        "bytes": 2048,
+        "truncated": false,
+        "content_type": "text/html",
+        "title": "搜索：剑来-得奇小说网",
+        "sha256": "fc6e55ff1b97b8d962e6f5efcfe24583af243bccfd4016e18a65b1439a87ba7f",
+        "path_sha256": "54a900601dd654e944bea1c67f360fe360842ea46611b51fc7b468925fb0328d",
+        "elapsed_ms": 1530,
+        "attempts": 1
+      }
+    },
+    {
+      "name": "精华书阁",
+      "url": "https://m.jhsssd.com",
+      "kind": "text",
+      "defaultEnabled": true,
+      "home_observation": {
+        "status": 200,
+        "bytes": 10835,
+        "truncated": false,
+        "content_type": "text/html",
+        "title": "精华书阁手机版",
+        "sha256": "dfe2965214198d4d2b169650b675ac717b2c6413d7c32c700bf3b6257ba507ee",
+        "path_sha256": "8a5edab282632443219e051e4ade2d1d5bbc671c781051bf1437897cbdfea0f1",
+        "elapsed_ms": 2103,
+        "attempts": 2,
+        "first_error": "TimeoutError"
+      },
+      "search_observation": {
+        "status": 200,
+        "bytes": 8862,
+        "truncated": false,
+        "content_type": "text/html",
+        "title": "剑来相关小说,热门小说搜索-精华书阁",
+        "sha256": "26e3cc7a7a93dad08566d37875f6808ba707e03c91563087ea28aa2c7abd8e2e",
+        "path_sha256": "d9a0dff3ff8b26e86c4174a7f0ed59f0a778da3322fd4565735a18eeaad9ac84",
+        "elapsed_ms": 11787,
+        "attempts": 1
+      }
+    },
+    {
+      "name": "读书网 · 国学古籍",
+      "url": "https://www.dushu.com",
+      "kind": "text",
+      "defaultEnabled": true,
+      "home_observation": {
+        "status": 200,
+        "bytes": 43045,
+        "truncated": false,
+        "content_type": "text/html",
+        "title": "读书网 - dushu.com",
+        "sha256": "4581b17a0691a11fd916bfe643d53e0ab6669496c22f9967720ac048a668c418",
+        "path_sha256": "8a5edab282632443219e051e4ade2d1d5bbc671c781051bf1437897cbdfea0f1",
+        "elapsed_ms": 192,
+        "attempts": 1
+      },
+      "search_observation": {
+        "status": 200,
+        "bytes": 14379,
+        "truncated": false,
+        "content_type": "text/html",
+        "title": "剑来 - 读书网|dushu.com",
+        "sha256": "ba9fb64a2d3ac7ab5092cc284de74d460b14309e81c12c71d27a383f0553780d",
+        "path_sha256": "1114149c24712573614d55c31830f236ba9b4a654623bf630e5d622e7dbe6466",
+        "elapsed_ms": 142,
+        "attempts": 1
+      }
+    },
+    {
+      "name": "梧桐中文",
+      "url": "https://www.wtzw.com",
+      "kind": "text",
+      "defaultEnabled": true,
+      "home_observation": {
+        "status": 200,
+        "bytes": 68570,
+        "truncated": false,
+        "content_type": "text/html",
+        "title": "梧桐中文网-七猫中文网-已有海量签约作者",
+        "sha256": "deb63dd151c4abf2da6a93995756f4e951d4b2c329fa00af6349b0ef4ce5c363",
+        "path_sha256": "8a5edab282632443219e051e4ade2d1d5bbc671c781051bf1437897cbdfea0f1",
+        "elapsed_ms": 378,
+        "attempts": 1
+      },
+      "search_observation": {
+        "status": 200,
+        "bytes": 49787,
+        "truncated": false,
+        "content_type": "text/html",
+        "title": "剑来-海量免费小说-七猫中文网",
+        "sha256": "7451c81ae6737bccb916c3434d899e41625dd1806d8f9d6ad188e6a37cbeeeae",
+        "path_sha256": "61213254683f833472cb3a6b22366f767c8ebb7601b29e6346a34de74cda5022",
+        "elapsed_ms": 356,
+        "attempts": 1
+      }
+    },
+    {
+      "name": "影书小说",
+      "url": "https://wap.yingsx.com",
+      "kind": "text",
+      "defaultEnabled": true,
+      "home_observation": {
+        "status": 200,
+        "bytes": 18544,
+        "truncated": false,
+        "content_type": "text/html",
+        "title": "",
+        "sha256": "b4317681145dcd3b35956baaa12c4c1789a66ee7a7d8d56544c91a621612c635",
+        "path_sha256": "8a5edab282632443219e051e4ade2d1d5bbc671c781051bf1437897cbdfea0f1",
+        "elapsed_ms": 2244,
+        "attempts": 2,
+        "first_error": "TimeoutError"
+      },
+      "search_observation": {
+        "status": 200,
+        "bytes": 11203,
+        "truncated": false,
+        "content_type": "text/html",
+        "title": "搜索\"\"结果-影书手机阅读",
+        "sha256": "b392f485d52ae51f7d36f005192a374c8c14934c3945815fcecfc71b34e15aa9",
+        "path_sha256": "6291e76eb148534a10bfe26a414555642b478aef27488177847e534b70d75336",
+        "elapsed_ms": 1283,
+        "attempts": 1
+      }
+    },
+    {
+      "name": "飞卢小说（正版试读）",
+      "url": "https://b.faloo.com",
+      "kind": "text",
+      "defaultEnabled": true,
+      "home_observation": {
+        "status": 200,
+        "bytes": 262144,
+        "truncated": true,
+        "content_type": "text/html",
+        "title": "小说,小说网-飞卢小说网|同人小说【好看的免费小说网】",
+        "sha256": "c5b36665dcb49bde00f4e57cacb309ec7bc1676d60588b0a007b4631daba1993",
+        "path_sha256": "8a5edab282632443219e051e4ade2d1d5bbc671c781051bf1437897cbdfea0f1",
+        "elapsed_ms": 174,
+        "attempts": 1
+      },
+      "search_observation": {
+        "status": 200,
+        "bytes": 24432,
+        "truncated": false,
+        "content_type": "text/html",
+        "title": "�����バ∷蹬判邪�_专题_小说阅读_txt下载_飞卢小说网",
+        "sha256": "0af5ff3cad5f5c0e1ace0e4841acb1c9efe5c7010facceeb2906cc3d97c5ad92",
+        "path_sha256": "24b29bf120d53d5ef195fb5520e677ba28a5156ab1d252cbb53cc1e078f88d7f",
+        "elapsed_ms": 112,
+        "attempts": 1
+      }
+    },
+    {
+      "name": "笔趣阁（biquge.xin）",
+      "url": "https://www.biquge.xin",
+      "kind": "text",
+      "defaultEnabled": true,
+      "home_observation": {
+        "status": null,
+        "error": "TimeoutError",
+        "bytes": 0,
+        "elapsed_ms": 23513,
+        "attempts": 2,
+        "first_error": "TimeoutError"
+      },
+      "search_observation": {
+        "status": 200,
+        "bytes": 17660,
+        "truncated": false,
+        "content_type": "text/html",
+        "title": "笔趣阁剑来搜索结果 - 笔趣阁小说搜索 - 笔趣阁小说搜索引擎",
+        "sha256": "13332ebc7dbe0c3bd8aa0c5468caca5ab56ac228e0989486526f0bdd6df7c840",
+        "path_sha256": "0a6add7c90a05b098a6565c43fe36c77e088e2fa622a3f53c914217d34ece174",
+        "elapsed_ms": 12480,
+        "attempts": 1
+      }
+    },
+    {
+      "name": "三叠书阁",
+      "url": "https://www.noveltri.com/zh-cn",
+      "kind": "text",
+      "defaultEnabled": false,
+      "home_observation": {
+        "status": 200,
+        "bytes": 91200,
+        "truncated": false,
+        "content_type": "text/html",
+        "title": "三叠书阁唯一官方网站，免费小说在线阅读。小阅提供古言、现言、原创、玄幻、都市、言情、娱乐、种田、科幻、悬疑、穿越、重生、宠文等小说,最新全本免费手机小说阅读推荐,精彩尽在笔八库文学网。 - 三叠书阁",
+        "sha256": "af4fba51a140d2707defdd0f1516d2c44d120e06a766822f783b754e06df3442",
+        "path_sha256": "43d5bf6c5c1240310492776d5da27f7d904aa744bacbc660313441be23587c34",
+        "elapsed_ms": 1917,
+        "attempts": 1
+      },
+      "search_observation": {
+        "status": 200,
+        "bytes": 47277,
+        "truncated": false,
+        "content_type": "text/html",
+        "title": "搜索: 剑来 - 书库 - 三叠书阁",
+        "sha256": "3d40be0f420771c6d18c50bd0d91d634bb2f69ef9b845d6250298608c9f8c8e6",
+        "path_sha256": "d059d347739730797ff7809ab04ad2a99725716c78327ad4302646287c534c25",
+        "elapsed_ms": 4504,
+        "attempts": 1
+      }
+    },
+    {
+      "name": "书音FM",
+      "url": "https://m.mekui.com/ecmsapi/index.php",
+      "kind": "audio",
+      "defaultEnabled": true,
+      "home_observation": {
+        "status": 404,
+        "bytes": 573,
+        "truncated": false,
+        "content_type": "text/html",
+        "title": "",
+        "sha256": "5c5ceea1e9aa3bac7bf54cdb6a73500f62092cde89770215998611821f0124b5",
+        "path_sha256": "9f57247ce15696dc186e1dd1a6266c8d565cad0867a974d936885fcf11332e70",
+        "elapsed_ms": 1815,
+        "attempts": 1
+      },
+      "search_observation": null
+    },
+    {
+      "name": "博看有声",
+      "url": "https://api.bookan.com.cn/voice/book/list",
+      "kind": "audio",
+      "defaultEnabled": true,
+      "home_observation": {
+        "status": 200,
+        "bytes": 67,
+        "truncated": false,
+        "content_type": "application/json",
+        "title": "",
+        "sha256": "4e5857a7042039d7432024e784eeeb29ca4ac72f86f4570de485dfd9babfb1d1",
+        "path_sha256": "d7f9d811aafcb5d7e358b07c0c969c94bd67c92dc8bc8cba4f302a49c322fa45",
+        "elapsed_ms": 223,
+        "attempts": 1
+      },
+      "search_observation": null
+    },
+    {
+      "name": "喜马拉雅 · 免费有声",
+      "url": "https://mobile.ximalaya.com/mobile/v1/album/track",
+      "kind": "audio",
+      "defaultEnabled": true,
+      "home_observation": {
+        "status": 400,
+        "bytes": 115,
+        "truncated": false,
+        "content_type": "application/json",
+        "title": "",
+        "sha256": "b11b9809a7bb1d0faef9b7cfdd06112a468b21868f3cc106b3a345cfeceec257",
+        "path_sha256": "59a93871a762c12c1961880aea67695687acbc5af282d3c9148bbf6cb0407827",
+        "elapsed_ms": 213,
+        "attempts": 1
+      },
+      "search_observation": null
+    },
+    {
+      "name": "Lit2Go 公版有声书",
+      "url": "https://etc.usf.edu/lit2go/books",
+      "kind": "audio",
+      "defaultEnabled": true,
+      "home_observation": {
+        "status": 500,
+        "bytes": 1266,
+        "truncated": false,
+        "content_type": "text/html",
+        "title": "",
+        "sha256": "b58919deaca53ffdda5753d455929aafafe0d7c56b8772e999aaf6939b71bddd",
+        "path_sha256": "ed0dd6b6092a0546d301053d5945556515900561a8cc0b4eae8682b799807461",
+        "elapsed_ms": 1498,
+        "attempts": 1
+      },
+      "search_observation": null
+    },
+    {
+      "name": "古龙全集",
+      "url": "https://www.gulongwang.com",
+      "kind": "text",
+      "defaultEnabled": true,
+      "home_observation": {
+        "status": 200,
+        "bytes": 21540,
+        "truncated": false,
+        "content_type": "text/html",
+        "title": "古龙小说全集_古龙武侠小说全集无弹窗在线阅读_古龙网",
+        "sha256": "74f88a78038c13fad4ea9688664518c732e6688dbb2995f7317e5b76756fc1b2",
+        "path_sha256": "8a5edab282632443219e051e4ade2d1d5bbc671c781051bf1437897cbdfea0f1",
+        "elapsed_ms": 1066,
+        "attempts": 1
+      },
+      "search_observation": {
+        "status": 200,
+        "bytes": 21540,
+        "truncated": false,
+        "content_type": "text/html",
+        "title": "古龙小说全集_古龙武侠小说全集无弹窗在线阅读_古龙网",
+        "sha256": "74f88a78038c13fad4ea9688664518c732e6688dbb2995f7317e5b76756fc1b2",
+        "path_sha256": "8a5edab282632443219e051e4ade2d1d5bbc671c781051bf1437897cbdfea0f1",
+        "elapsed_ms": 984,
+        "attempts": 1
+      }
+    },
+    {
+      "name": "书邦 · 双语小说",
+      "url": "https://www.shubang.net",
+      "kind": "text",
+      "defaultEnabled": true,
+      "home_observation": {
+        "status": 200,
+        "bytes": 88392,
+        "truncated": false,
+        "content_type": "text/html",
+        "title": "手机游戏/手机软件/手机app免费下载安装 - 工具书",
+        "sha256": "165159765a9046881672acc86a790bbd28b81473ed1a3813e00911bd37df6bb5",
+        "path_sha256": "8a5edab282632443219e051e4ade2d1d5bbc671c781051bf1437897cbdfea0f1",
+        "elapsed_ms": 1035,
+        "attempts": 1
+      },
+      "search_observation": {
+        "status": 200,
+        "bytes": 7279,
+        "truncated": false,
+        "content_type": "text/html",
+        "title": "关于剑来的双语小说|中英双语小说对照阅读",
+        "sha256": "67802c9c109217aa423eeadf1ab5e848f7f730a7ef2467fb54d0a5315535c9ce",
+        "path_sha256": "e63a2d04275b46f91e14bbad81e2a6103cac82dc035dd06eb36e66387a0f6060",
+        "elapsed_ms": 595,
+        "attempts": 1
+      }
+    },
+    {
+      "name": "古龙武侠（BBS）",
+      "url": "https://m.gulongbbs.com",
+      "kind": "text",
+      "defaultEnabled": true,
+      "home_observation": {
+        "status": 200,
+        "bytes": 34908,
+        "truncated": false,
+        "content_type": "text/html",
+        "title": "古龙武侠网手机版 - 古龙小说门户网站",
+        "sha256": "cb5a45872e7309982e03b9d031cee13ab7a6884021d84e4606b527792b960ccc",
+        "path_sha256": "8a5edab282632443219e051e4ade2d1d5bbc671c781051bf1437897cbdfea0f1",
+        "elapsed_ms": 259,
+        "attempts": 1
+      },
+      "search_observation": {
+        "status": 200,
+        "bytes": 6477,
+        "truncated": false,
+        "content_type": "text/html",
+        "title": "古龙武侠网 - 古龙小说门户网站剑来 - Powered by gulongbbs",
+        "sha256": "a475ba30b94f724360b5e18764ff1c2d9f45454d9964c77d04dad0fe8eb4553b",
+        "path_sha256": "201b6d8e6a3d9fbcc3cf8466de84b9b4f15a5acb3435ac6b58b38844ae34f290",
+        "elapsed_ms": 307,
+        "attempts": 1
+      }
+    }
+  ],
+  "limitations": [
+    "HTTP status and page title only; a search page returning 200 does not prove results parse.",
+    "No POST, credentials, redirects or subresources were used; bot gates may answer 403 to this probe.",
+    "A failure today does not prove permanent death; a 200 does not prove safety or readability."
+  ]
+}

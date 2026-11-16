@@ -259,6 +259,12 @@ Legado HTML 来源的详情、目录、正文、漫画图片及应用控制的�
 
 对同一批 2010 个主机另做一轮独立的有界防护引擎扫描，结果见[防护引擎全量证据](legado-amsi-full-20261116.json)：457 个 HTML 前缀送检，20 个检出、437 个未检出；其余 654 个超时、224 个 DNS 失败、163 个跳转未跟随、147 个 TLS 错误、130 个连接错误、124 个 HTTP 状态、39 个非 HTML、39 个非公网、31 个传输错误、2 个空页。1075 段内联脚本均未检出；工具不获取外链脚本，也不保存页面正文。20 个检出中 15 个与 2026-11-15 轮共享主机、5 个为本轮新增，2 个旧检出本轮未再检出；检出样本均为 470–636 字节前缀，检出发生在根前缀而非内联脚本，涉及 13 个选中 ID。小型模板页、云防护和引擎版本都可能影响结果，这些检出不能单独证明页面为木马，本轮未据此新增隔离或封禁。
 
+## 内置源列表复核（2026-11-16）
+
+对 `assets/catalogs/books/verified.json` 的 19 个内置条目做同主机、匿名、不跟随跳转的 GET 复核：[证据](legado-builtin-sources-recheck-20261116.json)（canonical 摘要 `a243acb96d488dc536571013cab2abd77dd4c3b02ccc80c7f325778a54410050`）。文字源检查首页及原搜索／发现入口的首屏，音频源只检查其固定端点。`台灣小說網` 首页和搜索均超时，且原为默认启用，改为默认停用；`UU看书` 原本停用，本轮同样未取得响应。`书音FM` 返回 404、`喜马拉雅` 返回 400，两者都是需要参数的 API 端点，不能据此判定来源失效。
+
+新增两个在[八源试点](legado-eight-source-pilot-20261116.json)中取得搜索、目录和正文样本的文字源：`书邦 · 双语小说`（`www.shubang.net`）和 `古龙武侠（BBS）`（`m.gulongbbs.com`），均默认启用，规则来自原始 Legado 记录并保留其字段映射。复核后列表为 21 个条目（14 文字、7 音频），本轮首页 200 为 14 个、搜索 200 为 12 个；`书邦` 与 `古龙BBS` 均为 200/200。单次首屏样本不证明全站可读、长期可用或安全；`速读谷` 与 `笔趣阁（biquge.xin）` 本轮首页瞬时超时但搜索 200，`Lit2Go` 返回 500、`书音FM` 返回 404、`喜马拉雅` 返回 400，均只记为单轮观测，未据此改动或禁用。`test/books/verified_builtin_sources_test.dart` 校验 21 个条目可解析、入口唯一及启停状态。
+
 ## 可重复执行与边界
 
 ```powershell
@@ -275,6 +281,7 @@ python tool/recheck_legado_dns_answers.py build/legado-host-recheck.json build/l
 python tool/triage_legado_eval_candidates.py docs/implementation/legado-rule-patterns-20261115.json docs/implementation/legado-import-inventory-20261115.json build/legado-eval-triage.json
 dart --packages=.dart_tool/package_config.json tool/inventory_legado_eval_normalized.dart build/legado-eval-triage.json build/legado-eval-normalized.json
 python tool/audit_legado_amsi.py --previous docs/implementation/legado-host-audit-20261115.json --import-inventory docs/implementation/legado-import-inventory-20261115.json --offset 0 --count 2010 --workers 6 --interval 0.25 --timeout 4 --output build/legado-amsi-new.json
+python tool/probe_verified_sources.py --build
 dart --packages=.dart_tool/package_config.json tool/audit_legado_amsi_classification.dart docs/implementation/legado-amsi-summary-20261115.json docs/implementation/legado-amsi-template-clusters-20261115.json build/legado-amsi-source-classification-new.json
 python tool/audit_phishing_army_legado.py --feed build/phishing-army-20261116/phishing-army-domains.txt --feed-metadata build/phishing-army-20261116/phishing-army-domains.txt.metadata.json --manifest build/phishing-army-20261116/phishing-army-manifest.json --manifest-metadata build/phishing-army-20261116/phishing-army-manifest.json.metadata.json --import-inventory docs/implementation/legado-import-inventory-20261115.json --output build/legado-phishing-army-recalculated.json
 python -m unittest -v tool.test_audit_legado_amsi tool.test_audit_certpl_legado tool.test_audit_phishing_army_legado

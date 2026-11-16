@@ -125,6 +125,7 @@ migrate_working_dir/
 !/docs/implementation/legado-unresolved-get-round-20261116.json
 !/docs/implementation/legado-full-audit-20261116.json
 !/docs/implementation/legado-amsi-full-20261116.json
+!/docs/implementation/legado-builtin-sources-recheck-20261116.json
 !/docs/implementation/legado-import-inventory-20261115.json
 !/docs/implementation/legado-adult-label-evidence-20261115.json
 !/docs/implementation/legado-targeted-rechecks-20261115.json

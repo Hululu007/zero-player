@@ -652,6 +652,48 @@ class EvidenceVerifier:
             raise ValueError('full audit parking title changed')
         self.checked += 1
 
+    def verify_builtin_recheck(self, archive):
+        path = self.docs / 'legado-builtin-sources-recheck-20261116.json'
+        self.check_digest(path, '28d2a907f264a3ddeb275527a43dc999d9a580257d345206d20c4f99b5595ad8')
+        report = json.loads(self.read(path))
+        if self._canonical_digest(report) != 'a243acb96d488dc536571013cab2abd77dd4c3b02ccc80c7f325778a54410050':
+            raise ValueError('built-in recheck evidence changed')
+        if report['archive_sha256'] != hashlib.sha256(self.read(archive)).hexdigest():
+            raise ValueError('built-in recheck archive changed')
+        verified = self.root / 'assets/catalogs/books/verified.json'
+        if report['verified_sha256'] != hashlib.sha256(self.read(verified)).hexdigest():
+            raise ValueError('built-in list changed after its recheck')
+        if report['summary'] != {
+            'sources': 21,
+            'text': 14,
+            'audio': 7,
+            'home_200': 14,
+            'search_200': 12,
+            'text_without_search': 0,
+        }:
+            raise ValueError('built-in recheck summary changed')
+        rows = {row['name']: row for row in report['results']}
+        if len(rows) != 21 or len(report['results']) != 21:
+            raise ValueError('built-in recheck population changed')
+        if rows['台灣小說網']['home_observation'].get('status') is not None or \
+                (rows['台灣小說網'].get('search_observation') or {}).get('status') is not None:
+            raise ValueError('twkan recheck unexpectedly responded')
+        if rows['UU看书']['home_observation'].get('status') is not None or \
+                (rows['UU看书'].get('search_observation') or {}).get('status') is not None:
+            raise ValueError('uukan recheck unexpectedly responded')
+        for name in ('台灣小說網', 'UU看书', '三叠书阁'):
+            if rows[name].get('defaultEnabled') is not False:
+                raise ValueError(f'{name} must stay default-disabled')
+        for name in ('书邦 · 双语小说', '古龙武侠（BBS）'):
+            row = rows[name]
+            if row.get('defaultEnabled') is not True:
+                raise ValueError(f'{name} must stay default-enabled')
+            if (row['home_observation'].get('status'), (row.get('search_observation') or {}).get('status')) != (200, 200):
+                raise ValueError(f'{name} recheck is not 200/200')
+            if (row.get('search_observation') or {}).get('title') is None:
+                raise ValueError(f'{name} search title missing')
+        self.checked += 1
+
     def verify_amsi_full_audit(self, archive):
         path = self.docs / 'legado-amsi-full-20261116.json'
         self.check_digest(path, 'c770ed9f5c1ca78cbd68931564c2df87b85eb5446aee7e33f63798791a8e5338')
@@ -779,6 +821,7 @@ class EvidenceVerifier:
         self.verify_unresolved_rounds(archive)
         self.verify_hao8_parking()
         self.verify_full_audit(archive)
+        self.verify_builtin_recheck(archive)
         self.verify_amsi_full_audit(archive)
         self.verify_phishing_army(archive)
         self.verify_ledger()

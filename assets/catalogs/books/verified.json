@@ -249,6 +249,7 @@
   },
   {
     "name": "台灣小說網",
+    "defaultEnabled": false,
     "group": "繁體小說",
     "kind": "text",
     "format": "html",
@@ -571,5 +572,63 @@
       }
     },
     "originNote": "https://www.yckceo.com/yuedu/shuyuan/content/id/5830.html"
+  },
+  {
+    "name": "书邦 · 双语小说",
+    "group": "双语文学",
+    "kind": "text",
+    "format": "html",
+    "url": "https://www.shubang.net",
+    "sample": "傲慢与偏见",
+    "legado": {
+      "search": "https://www.shubang.net/book/?q={{key}}",
+      "rules": {
+        "searchList": "class.mcon@a",
+        "searchTitle": "h3@text",
+        "searchLink": "a@href",
+        "searchAuthor": "class.cont@p@text",
+        "searchCover": "class.cover@img@src",
+        "searchDescription": "class.cont@ownText",
+        "infoTitle": "h3.0@text",
+        "infoAuthor": "p.0@text##作者：",
+        "infoDescription": ".cont@textNodes",
+        "infoCover": ".cover@img@src",
+        "infoCategory": "class.tags@a@text",
+        "infoLatest": "tr.-1@td@a@text",
+        "chapters": "tr@td",
+        "chapterTitle": "a@text",
+        "chapterUrl": "a@href",
+        "content": ".line_en@text%%.line_cn@title",
+        "nextContent": "class.pagebar@a.-1@href"
+      }
+    },
+    "originNote": "2026-11-16 原生搜索、详情与正文复核（docs/implementation/legado-eight-source-pilot-20261116.json）"
+  },
+  {
+    "name": "古龙武侠（BBS）",
+    "group": "武侠经典",
+    "kind": "text",
+    "format": "html",
+    "url": "https://m.gulongbbs.com",
+    "sample": "多情剑客无情剑",
+    "legado": {
+      "search": "https://m.gulongbbs.com/index.php?m=search&c=index&a=init&typeid=1&siteid=1&q={{key}}",
+      "rules": {
+        "searchList": "class.c wrap@li",
+        "searchTitle": "h5@text",
+        "searchLink": "tag.a.0@href",
+        "searchDescription": "tag.p@text",
+        "searchLatest": "class.adds@text##发布时间：",
+        "infoTitle": "class.crumbs@tag.a.-1@text",
+        "infoAuthor": "##作者：(.*?)&##$1###",
+        "toc": "class.crumbs@tag.a.-1@href",
+        "chapters": "table@tr@td@a||class.list@li@a||tag.html",
+        "chapterTitle": "class.title@text||text",
+        "chapterUrl": "href",
+        "content": "id.div_content@html||class.content@html##<!--内容关联投票-->|[\\s\\S]+?敬请关注 \"古龙武侠网\" 微信公众号|.*全面支持https访问",
+        "nextContent": "text.下一页@href"
+      }
+    },
+    "originNote": "2026-11-16 原生搜索、目录与正文复核（docs/implementation/legado-eight-source-pilot-20261116.json）"
   }
 ]
