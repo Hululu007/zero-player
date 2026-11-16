@@ -128,7 +128,7 @@
     "lib/features/books/domain/book.dart": "cc1c1fb8f72481132403f9825565fbc58170e686e0d2885b5238aaddc7cf824d",
     "lib/features/books/domain/biquge7_legacy_source_fix.dart": "5dda76dfee900d2ebe8a44142656615b8226a118ee5a8979cade11e5e4c05bb7",
     "lib/features/books/domain/jhsssd_legacy_source_fix.dart": "0b2d0dd3bb14f62e0e03a8ed24d6fa18e8e0047d71c0fe856aee4d70db2a405d",
-    "lib/features/books/domain/book_source_risk.dart": "553908308be2c86c37e6b2f4196c7e0edb5854e23f481f7e7fdf6965bfd22733",
+    "lib/features/books/domain/book_source_risk.dart": "b12dc79c22861530726afc1440bf7d96998f516402506255162aa7f49153681e",
     "lib/features/books/domain/com_rdap_legacy_quarantine.dart": "9060d2b95fb5027bb9fd43babcc3bb0125cb226f1f0557ac88d2a842a0c3b2c5",
     "lib/features/books/domain/fanfanu_legacy_source_fix.dart": "0c3801d4380b8d5c5bab58f0f548725d55699bdf599585156d5894be415c5827",
     "lib/features/books/domain/net_rdap_legacy_quarantine.dart": "a04eaaad9fe536c20552c8349d6ade7675b5826fa4cfb069df8233665d932913",
@@ -401,7 +401,7 @@
   },
   "overlapping_summary": {
     "selected_sources": 2139,
-    "adult_source_classified": 99,
+    "adult_source_classified": 112,
     "fixed_untrusted_rule": 61,
     "fixed_unavailable_rule": 39,
     "fixed_endpoint_host_quarantine": 14,
@@ -33492,15 +33492,17 @@
         4195
       ],
       "selected_raw_record_canonical_sha256": "6c5fb52e3a2716d0cc2eda3fb44a0f0b2dc24a0388e4c8274697096dccb2da89",
-      "normalized_source_canonical_sha256": "f28aab05b0cec1d1a847a743ca7e0daa927d549cf0a2d260561c1472eb59dea8",
+      "normalized_source_canonical_sha256": "3e39a73c55e1277e31e71b5bbb93344fbeed73449f4433d058b9cf787849b477",
       "normalized_legado_canonical_sha256": "4ddd02ae1ffaa1e0a2ee6547af0d00bafbd776cf08cdeb8320db4b8e19ca9c5b",
       "static_policy": {
-        "adult_source_classified": false,
+        "adult_source_classified": true,
         "adult_by_label": false,
         "adult_by_bundled_id": false,
-        "adult_evidence_merged": false,
+        "adult_evidence_merged": true,
         "adult_by_text_policy": false,
-        "known_adult_hosts": [],
+        "known_adult_hosts": [
+          "m.ibbxs.com"
+        ],
         "fixed_endpoint_host_quarantine": false,
         "fixed_media_host_quarantines": [],
         "fixed_untrusted_rule": false,
@@ -148239,15 +148241,17 @@
         1164
       ],
       "selected_raw_record_canonical_sha256": "e140201efc844a3474e9477b5d83453afd1cb28ac58f706238e143695005a635",
-      "normalized_source_canonical_sha256": "9a5ba368bf15bf2c78efea823b7e160d80fc4a025895242dd6546264196ff852",
+      "normalized_source_canonical_sha256": "150c390a6852d09ae6a8435f9049a0112bef9a61b321eb80adeb5118d2eb2304",
       "normalized_legado_canonical_sha256": "e5b0708aed93f407391dff9e1b911aead8392270edd14813637075ae7de35eeb",
       "static_policy": {
-        "adult_source_classified": false,
+        "adult_source_classified": true,
         "adult_by_label": false,
         "adult_by_bundled_id": false,
-        "adult_evidence_merged": false,
+        "adult_evidence_merged": true,
         "adult_by_text_policy": false,
-        "known_adult_hosts": [],
+        "known_adult_hosts": [
+          "m.po18xs.com"
+        ],
         "fixed_endpoint_host_quarantine": false,
         "fixed_media_host_quarantines": [],
         "fixed_untrusted_rule": false,
@@ -158513,15 +158517,17 @@
         2271
       ],
       "selected_raw_record_canonical_sha256": "60ad484f741b7d4be533aa095beb7d15024b26952ec0bb3c1049920d164f35ac",
-      "normalized_source_canonical_sha256": "6e384f50b1a890888bfc498ddadcf2af85452667705d6bad61d0ff21cfa8020f",
+      "normalized_source_canonical_sha256": "282459dcf53d589784f628bb07b0a479f5081236cb88c1fa122d8af30c6f8db7",
       "normalized_legado_canonical_sha256": "788663bee7d5bb877ca0312190edb46652e12acfb2942999d947ed2c332cbeb6",
       "static_policy": {
-        "adult_source_classified": false,
+        "adult_source_classified": true,
         "adult_by_label": false,
         "adult_by_bundled_id": false,
-        "adult_evidence_merged": false,
+        "adult_evidence_merged": true,
         "adult_by_text_policy": false,
-        "known_adult_hosts": [],
+        "known_adult_hosts": [
+          "www.aabook.cyou"
+        ],
         "fixed_endpoint_host_quarantine": false,
         "fixed_media_host_quarantines": [],
         "fixed_untrusted_rule": false,
@@ -171624,15 +171630,17 @@
         4550
       ],
       "selected_raw_record_canonical_sha256": "7819b914c95d1cb56296917b80c6488d5c59afec880810e870b272ac25c861e2",
-      "normalized_source_canonical_sha256": "62e5ab1d10172f8302c447d7770a2a2b17c74c686a82846b2c4ed9a76a4f77b8",
+      "normalized_source_canonical_sha256": "50746165dd79e7b9b0ed2cbf11e0780fc1a98b423a327f9359494b8e4c2ba5bd",
       "normalized_legado_canonical_sha256": "7f3c3169c5bca8e3527da97e8a99a930f0421d3bb6cf618c279c43dc99390499",
       "static_policy": {
-        "adult_source_classified": false,
+        "adult_source_classified": true,
         "adult_by_label": false,
         "adult_by_bundled_id": false,
-        "adult_evidence_merged": false,
+        "adult_evidence_merged": true,
         "adult_by_text_policy": false,
-        "known_adult_hosts": [],
+        "known_adult_hosts": [
+          "m.qingrenyouxi.com"
+        ],
         "fixed_endpoint_host_quarantine": false,
         "fixed_media_host_quarantines": [],
         "fixed_untrusted_rule": false,
@@ -180629,15 +180637,17 @@
         4569
       ],
       "selected_raw_record_canonical_sha256": "b4f07f13b567d4ae6b20db8445b206c77067133462f04c7ac060433d10dfb84b",
-      "normalized_source_canonical_sha256": "fc719a01fddbe37b51baed0895932f63e273d49abed83ab6f0322644dbaf5d99",
+      "normalized_source_canonical_sha256": "534d9a9bbff7b19330ee62619b1e9cb2be6b4931c88a26d348be3f88aee47ab2",
       "normalized_legado_canonical_sha256": "7f3c3169c5bca8e3527da97e8a99a930f0421d3bb6cf618c279c43dc99390499",
       "static_policy": {
-        "adult_source_classified": false,
+        "adult_source_classified": true,
         "adult_by_label": false,
         "adult_by_bundled_id": false,
-        "adult_evidence_merged": false,
+        "adult_evidence_merged": true,
         "adult_by_text_policy": false,
-        "known_adult_hosts": [],
+        "known_adult_hosts": [
+          "m.qingrenyouxi.com"
+        ],
         "fixed_endpoint_host_quarantine": false,
         "fixed_media_host_quarantines": [],
         "fixed_untrusted_rule": false,
@@ -215139,15 +215149,17 @@
         4238
       ],
       "selected_raw_record_canonical_sha256": "6e23c24d13d9e47a6ae5bbd32c8f9a48bdb7cc39d9527a8c462de6a85435880c",
-      "normalized_source_canonical_sha256": "dffa84180bb68febb3b5739bf0ec1d03da5cbcfdbbec081b06c20900aba4cfea",
+      "normalized_source_canonical_sha256": "79c0d06bbef131a37620079aa30d5da816b3198fdeffd4105018f612fb6c4d2e",
       "normalized_legado_canonical_sha256": "d912bd15722d2f9430c5eaef8d89b473c18637dfaa86c929737587e3827fde66",
       "static_policy": {
-        "adult_source_classified": false,
+        "adult_source_classified": true,
         "adult_by_label": false,
         "adult_by_bundled_id": false,
-        "adult_evidence_merged": false,
+        "adult_evidence_merged": true,
         "adult_by_text_policy": false,
-        "known_adult_hosts": [],
+        "known_adult_hosts": [
+          "m.xyuzhaiwu3.com"
+        ],
         "fixed_endpoint_host_quarantine": false,
         "fixed_media_host_quarantines": [],
         "fixed_untrusted_rule": false,
@@ -216526,15 +216538,17 @@
         4254
       ],
       "selected_raw_record_canonical_sha256": "995f9aa4d21b210e304b88133a39f3a21aac9f6f4651ab20615060e91c702d83",
-      "normalized_source_canonical_sha256": "105f80d5a4ccc48c9a43ce0733828616d2fefce1d3d919a945826e7222da7e4f",
+      "normalized_source_canonical_sha256": "9beeb492aec1e6119d081c8c6a0829ffe63a10358d4bfa81290decc99eaf655f",
       "normalized_legado_canonical_sha256": "1ad38a7557a5a0b98f2a82ebbf1870d7647ff16f8da14fe8d8f53c1fcc56c8e7",
       "static_policy": {
-        "adult_source_classified": false,
+        "adult_source_classified": true,
         "adult_by_label": false,
         "adult_by_bundled_id": false,
-        "adult_evidence_merged": false,
+        "adult_evidence_merged": true,
         "adult_by_text_policy": false,
-        "known_adult_hosts": [],
+        "known_adult_hosts": [
+          "www.roushuwu.com"
+        ],
         "fixed_endpoint_host_quarantine": false,
         "fixed_media_host_quarantines": [],
         "fixed_untrusted_rule": false,
@@ -247502,15 +247516,17 @@
         4260
       ],
       "selected_raw_record_canonical_sha256": "abcb8b20df17d36d01ae55524db3cfabbcf2b6c9c6c98455fb87fcaea38d4da7",
-      "normalized_source_canonical_sha256": "2dab0e1812886e88a2162d650289ee6b3b3b628a699b4546aa6eb7a0e4816833",
+      "normalized_source_canonical_sha256": "fc16ea8cb02924b414bd4848732417250a5fb4e80ee1601c83aad9d429377e6a",
       "normalized_legado_canonical_sha256": "e5ff0ce04b4e3c5ab1e12b6ab77048aec20fac61e86bd27348b319d11a4b4221",
       "static_policy": {
-        "adult_source_classified": false,
+        "adult_source_classified": true,
         "adult_by_label": false,
         "adult_by_bundled_id": false,
-        "adult_evidence_merged": false,
+        "adult_evidence_merged": true,
         "adult_by_text_policy": false,
-        "known_adult_hosts": [],
+        "known_adult_hosts": [
+          "www.roushuwu.com"
+        ],
         "fixed_endpoint_host_quarantine": false,
         "fixed_media_host_quarantines": [],
         "fixed_untrusted_rule": false,
@@ -260028,7 +260044,9 @@
         "adult_by_bundled_id": false,
         "adult_evidence_merged": true,
         "adult_by_text_policy": false,
-        "known_adult_hosts": [],
+        "known_adult_hosts": [
+          "www.rouwenwu12.com"
+        ],
         "fixed_endpoint_host_quarantine": false,
         "fixed_media_host_quarantines": [],
         "fixed_untrusted_rule": false,
@@ -266257,15 +266275,17 @@
         4242
       ],
       "selected_raw_record_canonical_sha256": "0d40dece7d91d9787dca4396aecc402c08b6caa7d845a2c7c06362d915678d6a",
-      "normalized_source_canonical_sha256": "dbf43cb550ee569448fe81dd66d3cad3552db15d68e8563ca6bfe59a82de3494",
+      "normalized_source_canonical_sha256": "de5c917e3d0fc70bf571566af34fead2d5c724ea1052548e2f53634fa7c631bf",
       "normalized_legado_canonical_sha256": "4ddd02ae1ffaa1e0a2ee6547af0d00bafbd776cf08cdeb8320db4b8e19ca9c5b",
       "static_policy": {
-        "adult_source_classified": false,
+        "adult_source_classified": true,
         "adult_by_label": false,
         "adult_by_bundled_id": false,
-        "adult_evidence_merged": false,
+        "adult_evidence_merged": true,
         "adult_by_text_policy": false,
-        "known_adult_hosts": [],
+        "known_adult_hosts": [
+          "m.ibbxs.com"
+        ],
         "fixed_endpoint_host_quarantine": false,
         "fixed_media_host_quarantines": [],
         "fixed_untrusted_rule": false,
@@ -278783,15 +278803,17 @@
         1376
       ],
       "selected_raw_record_canonical_sha256": "94ff011e85398c79bdb27aef70eed7c65bdcb5e279c7b5f07b4e7320160e7d23",
-      "normalized_source_canonical_sha256": "43991fe404b56a1d8eef916f23818ef26a6405b03ed3be3b320e0f1109e72f10",
+      "normalized_source_canonical_sha256": "d9342fa2865a3b441a69aa756de8d54adc3545bed39cc825eb9e4d0c64407887",
       "normalized_legado_canonical_sha256": "647caf3f4446565acf846b39ea75e78ba3a147bbd565ec5df2ea4809785dc99d",
       "static_policy": {
-        "adult_source_classified": false,
+        "adult_source_classified": true,
         "adult_by_label": false,
         "adult_by_bundled_id": false,
-        "adult_evidence_merged": false,
+        "adult_evidence_merged": true,
         "adult_by_text_policy": false,
-        "known_adult_hosts": [],
+        "known_adult_hosts": [
+          "m.wmp8.com"
+        ],
         "fixed_endpoint_host_quarantine": false,
         "fixed_media_host_quarantines": [],
         "fixed_untrusted_rule": false,
@@ -292958,15 +292980,17 @@
         4196
       ],
       "selected_raw_record_canonical_sha256": "4cd5ab71f053013571c6ee4666cd525deb57c068d575a9dc4ee93e71358441f3",
-      "normalized_source_canonical_sha256": "34c8976223b58873f047a2a6c3b0a1caa279408b70b248cea73a1d1847e6ccbd",
+      "normalized_source_canonical_sha256": "02081199d552d7a9e417683a45ff9525143ca04a90d6d439c6299ace7d6a5b24",
       "normalized_legado_canonical_sha256": "94a256b8dc771f7e24a72da4bdcb4832e2eff58c94c148a844cdadd48f2c6699",
       "static_policy": {
-        "adult_source_classified": false,
+        "adult_source_classified": true,
         "adult_by_label": false,
         "adult_by_bundled_id": false,
-        "adult_evidence_merged": false,
+        "adult_evidence_merged": true,
         "adult_by_text_policy": false,
-        "known_adult_hosts": [],
+        "known_adult_hosts": [
+          "m.popofree.com"
+        ],
         "fixed_endpoint_host_quarantine": false,
         "fixed_media_host_quarantines": [],
         "fixed_untrusted_rule": false,
@@ -318498,15 +318522,17 @@
         782
       ],
       "selected_raw_record_canonical_sha256": "2ed9ef2b7a38ec1f4cec3737e8fdb9c890b7cfa0523b84777bfe8d84e9670747",
-      "normalized_source_canonical_sha256": "1839bc67e599273845a9d61c430ad54d29d91f7b69898934721ede3dc36f15cb",
+      "normalized_source_canonical_sha256": "a97f1c909f9a4ef62de66d653f2c0bf55e14a14ad22b32a7243d7298ca3f18da",
       "normalized_legado_canonical_sha256": "28f2f02fe227259f158a56e2b978a0604d3ecc3a07cd6595fbe4910be293d9c5",
       "static_policy": {
-        "adult_source_classified": false,
+        "adult_source_classified": true,
         "adult_by_label": false,
         "adult_by_bundled_id": false,
-        "adult_evidence_merged": false,
+        "adult_evidence_merged": true,
         "adult_by_text_policy": false,
-        "known_adult_hosts": [],
+        "known_adult_hosts": [
+          "www.po18xs.com"
+        ],
         "fixed_endpoint_host_quarantine": false,
         "fixed_media_host_quarantines": [],
         "fixed_untrusted_rule": false,
@@ -347822,15 +347848,17 @@
         4745
       ],
       "selected_raw_record_canonical_sha256": "d4dd6d31517c5613c21c8d5cbdf23356ebeaf45ee9ccd2cbde2952bf6957e107",
-      "normalized_source_canonical_sha256": "873e1bbe118bcabdf81a714e36fb876e60396dfe6a97350b5432a3677b174af2",
+      "normalized_source_canonical_sha256": "d2739ae78e3ee3af136969b0d435267d632414efb36dc722ace4e715bc5ceec2",
       "normalized_legado_canonical_sha256": "b6c45eaeaffbca05e4ff1ef57dfbb943fe41442ff98efc289d062bdbd7427635",
       "static_policy": {
-        "adult_source_classified": false,
+        "adult_source_classified": true,
         "adult_by_label": false,
         "adult_by_bundled_id": false,
-        "adult_evidence_merged": false,
+        "adult_evidence_merged": true,
         "adult_by_text_policy": false,
-        "known_adult_hosts": [],
+        "known_adult_hosts": [
+          "m.biquge.one"
+        ],
         "fixed_endpoint_host_quarantine": false,
         "fixed_media_host_quarantines": [],
         "fixed_untrusted_rule": false,
@@ -368796,7 +368824,9 @@
         "adult_by_bundled_id": false,
         "adult_evidence_merged": true,
         "adult_by_text_policy": false,
-        "known_adult_hosts": [],
+        "known_adult_hosts": [
+          "m.popofree.com"
+        ],
         "fixed_endpoint_host_quarantine": false,
         "fixed_media_host_quarantines": [],
         "fixed_untrusted_rule": false,

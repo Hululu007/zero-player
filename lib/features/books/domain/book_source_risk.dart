@@ -36,6 +36,19 @@ const _adultExactBookHosts = {
   'm.xyuzhaiwu5.com', // Homepage explicitly promotes adult novels
   'm.aaread.club', // Homepage explicitly labels itself an adult-novel site
   'm.woo15.com', // Exact homepage independently identified as adult-focused
+  // Homepage titles from the 2026-11-16 full-catalog GET round name these
+  // sites as adult (御宅屋/PO文/肉书屋/高辣文/成人黄色小说).
+  'm.biquge.one',
+  'm.ibbxs.com',
+  'm.po18xs.com',
+  'm.popofree.com',
+  'm.qingrenyouxi.com',
+  'm.wmp8.com',
+  'm.xyuzhaiwu3.com',
+  'www.aabook.cyou',
+  'www.po18xs.com',
+  'www.roushuwu.com',
+  'www.rouwenwu12.com',
 };
 
 // Preserve explicit adult evidence hidden by deduplication or corroborated by

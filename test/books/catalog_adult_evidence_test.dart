@@ -64,6 +64,24 @@ void main() {
       expect(adultBookHost('www.rousewu.cc'), isFalse);
       expect(adultBookHost('m.aaread.club'), isTrue);
       expect(adultBookHost('www.aaread.club'), isFalse);
+      for (final host in [
+        'm.biquge.one',
+        'm.ibbxs.com',
+        'm.po18xs.com',
+        'm.popofree.com',
+        'm.qingrenyouxi.com',
+        'm.wmp8.com',
+        'm.xyuzhaiwu3.com',
+        'www.aabook.cyou',
+        'www.po18xs.com',
+        'www.roushuwu.com',
+        'www.rouwenwu12.com',
+      ]) {
+        expect(adultBookHost(host), isTrue, reason: host);
+      }
+      expect(adultBookHost('aabook.cyou'), isFalse);
+      expect(adultBookHost('ibbxs.com'), isFalse);
+      expect(adultBookHost('biquge.one'), isFalse);
     },
   );
 }

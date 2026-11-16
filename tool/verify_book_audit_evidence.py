@@ -599,6 +599,106 @@ class EvidenceVerifier:
                 raise ValueError('hao8 parking quote changed')
         self.checked += 1
 
+    def verify_full_audit(self, archive):
+        audit = json.loads(self.read(self.docs / 'legado-full-audit-20261116.json'))
+        if self._canonical_digest(audit) != '5864fd40f019357d0bfc5371b9d3c9d854e5cd768d70ccab16bfd96ebca0513e':
+            raise ValueError('full audit evidence changed')
+        if (audit['archive_sha256'] != hashlib.sha256(self.read(archive)).hexdigest() or
+                len(audit['results']) != 2010):
+            raise ValueError('full audit population or archive changed')
+        rows = audit['results']
+        if (sum(row.get('status') == 200 for row in rows) != 498 or
+                sum(row.get('status') is None for row in rows) != 1137):
+            raise ValueError('full audit status counts changed')
+        for row in rows:
+            sample = row.get('sample') or {}
+            if sample.get('betting_signals'):
+                raise ValueError('full audit gained a betting signal')
+        adult = {}
+        for row in rows:
+            title = (row.get('sample') or {}).get('title') or ''
+            if any(key.lower() in title.lower() for key in (
+                    '成人', '色情', '18禁', '十八禁', '辣文', '小黄文', '高h',
+                    '肉文', '肉书', '御宅', 'po文', '情色', '黄文', '禁书', '里番')):
+                adult[row['host']] = title
+        expected = {
+            'm.3322t.com': '御宅屋',
+            'm.biquge.one': '御宅屋',
+            'm.ibbxs.com': '御宅屋',
+            'm.po18xs.com': '御宅屋',
+            'm.popofree.com': 'PO文屋',
+            'm.qingrenyouxi.com': 'PO文阁',
+            'm.roushuwu.com': '肉书屋',
+            'm.wmp8.com': 'PO文学',
+            'm.xyuzhaiwu.xyz': '御宅屋',
+            'm.xyuzhaiwu3.com': '御宅屋',
+            'm.yushuwu.uk': 'PO文学',
+            'mm.xyuzhaiwu.xyz': '御宅屋',
+            'sesebooks.com': '涩涩小说',
+            'www.aabook.cyou': '辣文小黄文高h',
+            'www.po18xs.com': 'PO18',
+            'www.roushuwu.com': '肉书屋',
+            'www.rouwenwu12.com': '肉文屋',
+        }
+        if set(adult) != set(expected):
+            raise ValueError('full audit adult-title host set changed')
+        if not all(text in adult[host] for host, text in expected.items()):
+            raise ValueError('full audit adult title changed')
+        titles = {(row.get('sample') or {}).get('title') or '' for row in rows}
+        if not any('西甲直播' in title for title in titles) or not any(
+                '178直播吧' in title for title in titles):
+            raise ValueError('full audit sports repurpose titles changed')
+        if not any('Parking Landing' in title for title in titles):
+            raise ValueError('full audit parking title changed')
+        self.checked += 1
+
+    def verify_amsi_full_audit(self, archive):
+        path = self.docs / 'legado-amsi-full-20261116.json'
+        self.check_digest(path, 'c770ed9f5c1ca78cbd68931564c2df87b85eb5446aee7e33f63798791a8e5338')
+        report = json.loads(self.read(path))
+        if report['archive_sha256'] != hashlib.sha256(self.read(archive)).hexdigest():
+            raise ValueError('AMSI full audit archive changed')
+        if report['prior_audit_sha256'] != '6152da48bc694a7f8295eb83105b41bdc8a0805d0443df304c12d57c8491af71':
+            raise ValueError('AMSI full audit prior audit changed')
+        outcomes = {
+            'timeout': 654,
+            'non_html_or_encoded': 39,
+            'not_detected': 437,
+            'dns_error': 224,
+            'redirect_not_followed': 163,
+            'http_status': 124,
+            'invalid_host_or_non_public_address': 39,
+            'http_transport_error': 31,
+            'tls_error': 147,
+            'detected': 20,
+            'connection_error': 130,
+            'empty_html': 2,
+        }
+        if report['outcomes'] != outcomes or report['total_hosts'] != 2010:
+            raise ValueError('AMSI full audit outcomes or population changed')
+        if len(report['results']) != 2010:
+            raise ValueError('AMSI full audit result count changed')
+        if report['inline_script_outcomes'] != {'not_detected': 1075}:
+            raise ValueError('AMSI inline script outcomes changed')
+        controls = report['controls']
+        if not controls['passed'] or controls['eicar']['classification'] != 'detected':
+            raise ValueError('AMSI controls failed')
+        if report['defender_status']['AntivirusEnabled'] is not True:
+            raise ValueError('AMSI defender status changed')
+        detected = [
+            row for row in report['results']
+            if row.get('amsi', {}).get('classification') == 'detected'
+        ]
+        if len(detected) != 20 or len({row['sample_sha256'] for row in detected}) != 20:
+            raise ValueError('AMSI detections changed')
+        if any(not 470 <= row['sample_bytes'] <= 636 for row in detected):
+            raise ValueError('AMSI detection sample size changed')
+        for row in report['results']:
+            for sample in (row.get('inline_scripts') or {}).get('samples') or ():
+                if sample['amsi']['classification'] != 'not_detected':
+                    raise ValueError('AMSI inline script unexpectedly detected')
+        self.checked += 1
+
     def verify_phishing_army(self, archive):
         report = json.loads(self.read(self.docs / 'legado-phishing-army-20261116.json'))
         catalog = report['catalog']
@@ -678,6 +778,8 @@ class EvidenceVerifier:
         self.verify_qishuzw_post_probe(archive)
         self.verify_unresolved_rounds(archive)
         self.verify_hao8_parking()
+        self.verify_full_audit(archive)
+        self.verify_amsi_full_audit(archive)
         self.verify_phishing_army(archive)
         self.verify_ledger()
         return self.checked
