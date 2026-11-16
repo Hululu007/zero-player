@@ -102,6 +102,8 @@ migrate_working_dir/
 !/docs/implementation/legado-242xs-recheck-20261116.json
 !/docs/implementation/legado-three-redirect-recheck-20261116.json
 !/docs/implementation/legado-sfwx-repair-20261116.json
+!/docs/implementation/legado-sfwx-3984-recheck-20261116.json
+!/docs/implementation/legado-biquge7-category-recheck-20261116.json
 !/docs/implementation/legado-lengmen-amsi-recheck-20261116.json
 !/docs/implementation/legado-equivalent-adult-ids-20261116.json
 !/docs/implementation/legado-two-chain-pilot-20261116.json

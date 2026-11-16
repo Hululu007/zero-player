@@ -1,8 +1,8 @@
 {
-  "generated_at": "2026-11-15T22:44:44.967287Z",
+  "generated_at": "2026-11-15T23:47:03.781291Z",
   "archive_sha256": "012a0e0d6e6adc8d303c32b578510e14b562088b3e965cb01a1a647b5e7e034d",
   "grouped_evidence_sha256": "792aadfcd6072ed5be45e1ee31f77452560f8b4bb23126784f49f99c5443d47e",
-  "policy_script_sha256": "0691052ae3e39d9b9843803e370f27ba2cd9e01120751a12fee7795c69c3482d",
+  "policy_script_sha256": "1013bb3546505b320557519019aede185a5d3fe9ee8cf140503e13df8783e8a9",
   "source_digest_convention": "SHA-256 of UTF-8 source bytes with CRLF normalized to LF, matching tracked source line endings.",
   "current_policy_code_sha256": {
     "lib/features/books/data/book_import.dart": "5c27a8cac7806ca8854672f89fcc90d0d98e5ab25b92ec4fc13f094bfe93a629",
@@ -10,8 +10,9 @@
     "lib/features/books/data/legado/legado_request.dart": "da65df24e85c72e12e9b6305407612084bd8ea2f6d9197ce66fc96e0bd717914",
     "lib/features/books/data/legado/legado_discovery.dart": "c4c8039a58e66522547a4d71991be415a8c5ad571bf105c891bace70f2c77c7e",
     "lib/features/books/data/book_source_links.dart": "4ba0b45a4138bfb7ea6e66c11986bbfd8ef2e9ed2797bb8531789b8e83408a88",
-    "lib/features/books/domain/book.dart": "018f84b1bc4db95046499645bdc956af1d6cc03a3bdf64b21a1bf01265ccff3f",
+    "lib/features/books/domain/book.dart": "ec6bb2d1aab58ae4e83b0d345389454bc96659015a7bb5e570e51d61aad530d6",
     "lib/features/books/domain/book_source_risk.dart": "798425ab2dfbd721b82ef9c046ff5474ca2d71671af3ed0b6e639768a5922b73",
+    "lib/features/books/domain/biquge7_legacy_source_fix.dart": "5dda76dfee900d2ebe8a44142656615b8226a118ee5a8979cade11e5e4c05bb7",
     "lib/features/books/domain/com_rdap_legacy_quarantine.dart": "9060d2b95fb5027bb9fd43babcc3bb0125cb226f1f0557ac88d2a842a0c3b2c5",
     "lib/features/books/domain/novel_242_legacy_quarantine.dart": "c84724c46f535857124386f6c4b843331c4d2f88c583647509becf37abaed69d",
     "lib/features/books/domain/redirected_legacy_quarantine.dart": "af26fb252ef33f88a16bb158eafb2b321e8ddaafa7b64d3915b046f133ff7b79",
@@ -30,12 +31,12 @@
     "lib/features/books/domain/zhongyi_legacy_source_fix.dart": "86922a9b696b173b00efd4831a9acfc126b10bfd918b94e81222c9055716e164",
     "lib/features/books/domain/jingzhi_legacy_source_fix.dart": "e6035921a1ac0c5c29835c0c70e8acc340af1363cb613b312fdc4227e71aa925",
     "lib/features/books/domain/shubang_legacy_source_fix.dart": "1e9e7f8a3db66c470cb00ceba46ebedb0c4b24e3a29a70fbe5174e73afe26f5b",
-    "lib/features/books/domain/sfwx_legacy_source_fix.dart": "9f2f01ffd60387b0edabdd463071266dbe6f5f3b499d525c33890784b077fb64",
+    "lib/features/books/domain/sfwx_legacy_source_fix.dart": "dee711b0b3ec1a7e87491eebcc0a9daadbbcf7a865166d11430b76bffd72c4dc",
     "lib/features/books/domain/yingyu_legacy_source_fix.dart": "a979ed63e5b91a6ff5d992a959e4fc5bcffdf23141ff5586e77da0017c82bb8a",
     "lib/features/supervision/domain/content_classification.dart": "0f22950b5a1e5696fa1e60bb353c53a24f9b4546314290abab0081ed08e6146a",
     "lib/features/supervision/domain/adult_source_evidence.dart": "7dd20620b923e14687f8a7c58aafa923ece02172cd38aa260ac9bfe107795206",
-    "tool/audit_legado_amsi_classification.dart": "469f441254421a7be350a7d4bfb9294d1e6b76ea4f975fbca01bc7c9095584bf",
-    "tool/audit_blocklistproject_policy.dart": "0691052ae3e39d9b9843803e370f27ba2cd9e01120751a12fee7795c69c3482d"
+    "tool/audit_legado_amsi_classification.dart": "cb5621b9887a63617e3b2dfb527ccafa2c5bd45a3ea4be8d95a02f4c9ca15ca6",
+    "tool/audit_blocklistproject_policy.dart": "1013bb3546505b320557519019aede185a5d3fe9ee8cf140503e13df8783e8a9"
   },
   "scope": "Offline current importer and fixed source/domain/adult rules only; no source rule execution, site request, user settings, blacklist or dynamic risk database.",
   "limitations": "Static normal-mode result assumes loaded, uncorrupted policy, adult filtering on, and no user-specific restrictions. Imported sources start disabled; supervision independently blocks non-builtin sources and all comics/audio. This is not a claim about current content or installation.",

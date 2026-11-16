@@ -100,26 +100,35 @@ final class _SupervisedSiteRun {
     if (!_allowed) token.cancel();
   }
 
-  Future<List<BookSourceEntry>> _selectDue() async {
+  Future<List<({BookSourceEntry entry, String revision})>> _selectDue() async {
     final available = await books.sources(BookKind.text, enabledOnly: true);
     _requireCurrent();
+    final eligible = available
+        .where(
+          (entry) =>
+              entry.source.builtin &&
+              books._verifiedSources[entry.source.id] != null,
+        )
+        .toList();
+    final revisions = await books.store.siteRevisions.ensure(
+      eligible.map((entry) => entry.source.id).toSet(),
+    );
+    _requireCurrent();
+    final saved = await _loadSiteChecks(
+      books.store,
+      eligible,
+      _supervisedCheckPrefix,
+    );
+    _requireCurrent();
     final now = DateTime.now();
-    final due = <({BookSourceEntry entry, int dueAt})>[];
-    for (final entry in available) {
+    final due = <({BookSourceEntry entry, String revision, int dueAt})>[];
+    for (final entry in eligible) {
       _requireCurrent();
-      if (!entry.source.builtin ||
-          books._verifiedSources[entry.source.id] == null) {
-        continue;
-      }
-      final previous = await _readSiteCheck(
-        books.store,
-        '$_supervisedCheckPrefix${entry.source.id}',
-        entry.source,
-      );
-      _requireCurrent();
+      final previous = saved[entry.source.id];
       if (previous == null || previous.isDue(now)) {
         due.add((
           entry: entry,
+          revision: revisions[entry.source.id]!,
           dueAt: previous?.nextDue.millisecondsSinceEpoch ?? 0,
         ));
       }
@@ -129,19 +138,21 @@ final class _SupervisedSiteRun {
     return due
         .where((item) => hosts.add(item.entry.source.endpoint.host))
         .take(20)
-        .map((item) => item.entry)
+        .map((item) => (entry: item.entry, revision: item.revision))
         .toList();
   }
 
-  Future<void> _runWorkers(List<BookSourceEntry> selected) async {
+  Future<void> _runWorkers(
+    List<({BookSourceEntry entry, String revision})> selected,
+  ) async {
     var next = 0;
     Future<void> worker() async {
       try {
         while (next < selected.length) {
           _requireCurrent();
-          final entry = selected[next++];
+          final selectedSource = selected[next++];
           try {
-            await _inspectOne(entry);
+            await _inspectOne(selectedSource.entry, selectedSource.revision);
           } on RequestCancelled {
             rethrow;
           } on Exception {
@@ -160,10 +171,11 @@ final class _SupervisedSiteRun {
     );
   }
 
-  Future<void> _inspectOne(BookSourceEntry entry) async {
+  Future<void> _inspectOne(BookSourceEntry entry, String siteRevision) async {
     final current = await books._supervisedCurrentSource(entry);
+    final revision = await books.store.siteRevisions.get(entry.source.id);
     _requireCurrent();
-    if (current == null) return;
+    if (current == null || revision != siteRevision) return;
     // No injectable parser or caller-provided finding can reach the privileged
     // write: the repository uses its own HTTP client.
     final inspection = await _runSiteInspection(
@@ -177,8 +189,11 @@ final class _SupervisedSiteRun {
       final committed = await books.store.db.atomic(() async {
         _requireCurrent();
         final latest = await books._supervisedCurrentSource(entry);
+        final currentRevision = await books.store.siteRevisions.get(
+          entry.source.id,
+        );
         _requireCurrent();
-        if (latest == null) return false;
+        if (latest == null || currentRevision != siteRevision) return false;
         if (inspection.gamblingRisk || inspection.adultRisk) {
           assessment = await books._addSourceAssessment(
             latest.source,
@@ -192,12 +207,23 @@ final class _SupervisedSiteRun {
           books.store,
           '$_supervisedCheckPrefix${latest.source.id}',
           latest.source,
+          revision: siteRevision,
         );
+        // A manual full sample may have cleared an older supervised clue.
+        final shared = await _readSiteCheck(
+          books.store,
+          '$_siteCheckPrefix${latest.source.id}',
+          latest.source,
+          revision: siteRevision,
+        );
+        _requireCurrent();
         final check = BookSiteCheck.after(
           inspection,
           DateTime.now(),
           latest.source,
           previous,
+          scriptHistoryPrevious: shared,
+          siteRevision: siteRevision,
         );
         _requireCurrent();
         await books.store.write(
@@ -209,6 +235,10 @@ final class _SupervisedSiteRun {
           check.toJson(),
         );
         _requireCurrent();
+        if (await books.store.siteRevisions.get(entry.source.id) !=
+            siteRevision) {
+          throw const _StaleSiteCheck();
+        }
         return true;
       }, tables: {'app_meta'});
       if (committed && assessment != null) {

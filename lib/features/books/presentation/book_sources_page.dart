@@ -12,6 +12,8 @@ import '../../supervision/presentation/sensitive_action.dart';
 import '../application/book_site_checks.dart';
 import '../data/aoaostar_book_catalog.dart';
 import '../data/book_import.dart';
+import '../data/book_site_inspection.dart';
+import '../data/book_site_script_clues.dart';
 import '../data/book_source_risk_store.dart';
 import '../data/book_store.dart';
 import '../data/books_repository.dart';
@@ -753,9 +755,8 @@ final class _BookSourcesPageState extends State<BookSourcesPage> {
                   (!_dynamicRules || bookSourceHasDynamicCode(entry.source)) &&
                   (!_pageScriptClues ||
                       _siteResults[entry.source.id]
-                              ?.inspection
-                              .scriptReview
-                              .hasClues ==
+                              ?.pendingScriptClues
+                              .isNotEmpty ==
                           true) &&
                   (!_historicalAmsi ||
                       bookSourceHasHistoricalAmsiClue(entry.source)) &&
@@ -965,6 +966,7 @@ final class _BookSourcesPageState extends State<BookSourcesPage> {
 
   Widget _tile(BookSourceEntry entry) {
     final source = entry.source;
+    final siteCheck = _siteResults[source.id];
     if (_selecting) {
       return CheckboxListTile(
         value: _selected.contains(source.id),
@@ -1007,8 +1009,11 @@ final class _BookSourcesPageState extends State<BookSourcesPage> {
           if (entry.group.isNotEmpty) entry.group,
           source.endpoint.host,
           if (entry.health.isNotEmpty) '解析：${entry.health}',
-          if (_siteResults[source.id] case final check?)
-            '网页：${check.inspection.label} · ${_siteTime(check.checkedAt)}${check.isDue(DateTime.now()) ? '（已过期）' : ''}',
+          if (siteCheck != null)
+            '网页：${siteCheck.inspection.label} · ${siteCheck.inspection.finding == BookSiteFinding.sourceChanged ? '上次检查于 ' : ''}${_siteTime(siteCheck.checkedAt)}${siteCheck.isDue(DateTime.now()) ? '（已过期）' : ''}',
+          if (siteCheck != null)
+            for (final clue in siteCheck.historicalScriptClues.entries)
+              '历史网页脚本待复核：${_scriptClueLabel(clue.key)}（上次发现 ${_siteTime(clue.value)}）',
         ].join(' · '),
       ),
       trailing: Row(
@@ -1036,4 +1041,9 @@ final class _BookSourcesPageState extends State<BookSourcesPage> {
     return '${local.year}-${two(local.month)}-${two(local.day)} '
         '${two(local.hour)}:${two(local.minute)}';
   }
+
+  String _scriptClueLabel(BookPageScriptClue clue) => switch (clue) {
+    BookPageScriptClue.crossOriginRedirect => '跨源跳转写法',
+    BookPageScriptClue.decodedDynamicEvaluation => '解码后动态求值写法',
+  };
 }

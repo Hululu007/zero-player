@@ -22,15 +22,65 @@ Future<BookSiteInspection> _runSiteInspection(
 Future<BookSiteCheck?> _readSiteCheck(
   BookStore store,
   String key,
-  BookSource source,
-) async {
+  BookSource source, {
+  required String? revision,
+}) async {
   try {
-    return BookSiteCheck.fromJson(await store.read(key), source);
+    return BookSiteCheck.fromJson(
+      await store.read(key),
+      source,
+      currentRevision: revision,
+      requireRevision: true,
+    );
   } on FormatException {
     return null;
   } on TypeError {
     return null;
   }
+}
+
+/// Read check metadata and all generation tokens in one database snapshot.
+Future<Map<String, BookSiteCheck>> _loadSiteChecks(
+  BookStore store,
+  List<BookSourceEntry> entries,
+  String prefix,
+) async {
+  final sources = {for (final entry in entries) entry.source.id: entry.source};
+  final rows = await store.db.rows(
+    'SELECT key,value FROM app_meta WHERE key GLOB ? OR key GLOB ?',
+    ['$prefix*', '${BookSiteRevisions.prefix}*'],
+  );
+  final revisions = <String, String>{};
+  for (final row in rows) {
+    final key = row['key'];
+    if (key is! String || !key.startsWith(BookSiteRevisions.prefix)) continue;
+    final token = BookSiteRevisions.decode(row['value']);
+    if (token != null) {
+      revisions[key.substring(BookSiteRevisions.prefix.length)] = token;
+    }
+  }
+  final result = <String, BookSiteCheck>{};
+  for (final row in rows) {
+    final key = row['key'];
+    if (key is! String || !key.startsWith(prefix)) continue;
+    final id = key.substring(prefix.length);
+    final source = sources[id];
+    if (source == null) continue;
+    try {
+      final check = BookSiteCheck.fromJson(
+        jsonDecode(row['value'] as String),
+        source,
+        currentRevision: revisions[id],
+        requireRevision: true,
+      );
+      if (check != null) result[id] = check;
+    } on FormatException {
+      // Keep damaged metadata untouched; it is not evidence of a site check.
+    } on TypeError {
+      // A restored or older entry may have an unexpected value.
+    }
+  }
+  return result;
 }
 
 final class BookSiteCheckSummary {
@@ -57,34 +107,8 @@ final class BookSiteChecks {
   _inspect;
   bool _running = false;
 
-  Future<Map<String, BookSiteCheck>> load(List<BookSourceEntry> entries) async {
-    final sources = {
-      for (final entry in entries) entry.source.id: entry.source,
-    };
-    final rows = await books.store.db.rows(
-      "SELECT key,value FROM app_meta WHERE key GLOB 'books_site_check:*'",
-    );
-    final result = <String, BookSiteCheck>{};
-    for (final row in rows) {
-      final key = row['key'];
-      if (key is! String || !key.startsWith(_prefix)) continue;
-      final id = key.substring(_prefix.length);
-      final source = sources[id];
-      if (source == null) continue;
-      try {
-        final check = BookSiteCheck.fromJson(
-          jsonDecode(row['value'] as String),
-          source,
-        );
-        if (check != null) result[id] = check;
-      } on FormatException {
-        // Keep damaged metadata untouched; it is not evidence of a site check.
-      } on TypeError {
-        // A restored or older entry may have an unexpected value.
-      }
-    }
-    return result;
-  }
+  Future<Map<String, BookSiteCheck>> load(List<BookSourceEntry> entries) =>
+      _loadSiteChecks(books.store, entries, _prefix);
 
   Future<BookSiteCheckSummary> run(
     List<BookSourceEntry> entries,
@@ -100,6 +124,7 @@ final class BookSiteChecks {
     final configurationSnapshot = books.sourceConfigurationRevision;
     final hostResults = <String, Future<BookSiteInspection>>{};
     final hostMarks = <String, Future<bool>>{};
+    var revisions = <String, String>{};
     Future<void> worker() async {
       try {
         while (next < entries.length) {
@@ -114,6 +139,7 @@ final class BookSiteChecks {
               enabledOnly,
               policySnapshot,
               configurationSnapshot,
+              revisions[entry.source.id]!,
             );
             if (check == null) {
               skipped++;
@@ -153,6 +179,11 @@ final class BookSiteChecks {
 
     books.policy.addListener(policyChanged);
     try {
+      _checkPolicy(token, policySnapshot);
+      revisions = await books.store.siteRevisions.ensure(
+        entries.map((entry) => entry.source.id).toSet(),
+      );
+      _checkPolicy(token, policySnapshot);
       await Future.wait(
         List.generate(entries.length.clamp(0, 3), (_) => worker()),
       );
@@ -178,6 +209,7 @@ final class BookSiteChecks {
     bool enabledOnly,
     String policySnapshot,
     int configurationSnapshot,
+    String siteRevision,
   ) async {
     _checkPolicy(token, policySnapshot);
     if (!_configurationCurrent(configurationSnapshot)) return null;
@@ -187,6 +219,10 @@ final class BookSiteChecks {
         !_sameSource(current, entry, enabledOnly)) {
       return null;
     }
+    if (await books.store.siteRevisions.get(entry.source.id) != siteRevision) {
+      return null;
+    }
+    _checkPolicy(token, policySnapshot);
     final inspection = await hostResults.putIfAbsent(
       entry.source.endpoint.host,
       () => _runSiteInspection(() => _inspect(entry.source, token), token),
@@ -207,6 +243,7 @@ final class BookSiteChecks {
         enabledOnly,
         policySnapshot,
         configurationSnapshot,
+        siteRevision,
       );
       if (!marked) return null;
     }
@@ -226,21 +263,29 @@ final class BookSiteChecks {
           return null;
         }
         _checkPolicy(token, policySnapshot);
+        if (await books.store.siteRevisions.get(entry.source.id) !=
+            siteRevision) {
+          throw const _StaleSiteCheck();
+        }
         final previous = await _readSiteCheck(
           books.store,
           '$_prefix${entry.source.id}',
           entry.source,
+          revision: siteRevision,
         );
         final check = BookSiteCheck.after(
           inspection,
           DateTime.now(),
           entry.source,
           previous,
+          siteRevision: siteRevision,
         );
         _checkPolicy(token, policySnapshot);
         await books.store.write('$_prefix${entry.source.id}', check.toJson());
         _checkPolicy(token, policySnapshot);
-        if (!_configurationCurrent(configurationSnapshot)) {
+        if (!_configurationCurrent(configurationSnapshot) ||
+            await books.store.siteRevisions.get(entry.source.id) !=
+                siteRevision) {
           throw const _StaleSiteCheck();
         }
         return check;
@@ -259,6 +304,7 @@ final class BookSiteChecks {
     bool enabledOnly,
     String policySnapshot,
     int configurationSnapshot,
+    String siteRevision,
   ) async {
     final host = entry.source.endpoint.host;
     while (true) {
@@ -278,6 +324,7 @@ final class BookSiteChecks {
         enabledOnly,
         policySnapshot,
         configurationSnapshot,
+        siteRevision,
       );
       hostMarks[host] = pending;
       try {
@@ -300,6 +347,7 @@ final class BookSiteChecks {
     bool enabledOnly,
     String policySnapshot,
     int configurationSnapshot,
+    String siteRevision,
   ) => books._withEvidenceMutation(() async {
     _checkPolicy(token, policySnapshot);
     books._requireSubscriptionAccess();
@@ -317,10 +365,12 @@ final class BookSiteChecks {
             entry.source.id,
           );
           final blocked = await books.store.blockedSources();
+          final revision = await books.store.siteRevisions.get(entry.source.id);
           _checkPolicy(token, policySnapshot);
           books._requireSubscriptionAccess();
           if (!_configurationCurrent(configurationSnapshot) ||
               !_sameSource(current, entry, enabledOnly) ||
+              revision != siteRevision ||
               !books._sourceEntryAllowed(current!) ||
               blocked.containsKey(entry.source.id)) {
             throw const _StaleSiteCheck();

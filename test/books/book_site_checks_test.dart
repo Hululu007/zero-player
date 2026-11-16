@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:zero_player/app/app_services.dart';
@@ -9,10 +8,13 @@ import 'package:zero_player/core/persistence/installation_metadata.dart';
 import 'package:zero_player/features/books/application/book_site_checks.dart';
 import 'package:zero_player/features/books/application/book_site_monitor.dart';
 import 'package:zero_player/features/books/data/book_site_inspection.dart';
+import 'package:zero_player/features/books/data/book_site_revision.dart';
 import 'package:zero_player/features/books/data/book_source_risk_store.dart';
 import 'package:zero_player/features/books/data/book_store.dart';
 import 'package:zero_player/features/books/domain/book.dart';
 import 'package:zero_player/features/supervision/domain/supervision_rules.dart';
+
+import '../../test_support/verified_temp_directory.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -613,6 +615,44 @@ void _storedCheckTests() {
 
 void _batchRiskTests() {
   test(
+    'a partial strong-risk result retains earlier advisory script evidence',
+    () async {
+      final fixture = await _Fixture.create();
+      addTearDown(fixture.close);
+      final source = _source('history-risk', 'history-risk.example');
+      final entry = (await fixture.add([source])).single;
+      final repo = fixture.services.books;
+      var strong = false;
+      final checks = BookSiteChecks(
+        repo,
+        inspect: (source, _) async => inspectBookSiteHtml(
+          source.endpoint,
+          strong
+              ? '<p>在线赌场 立即下注</p><script src="/external.js"></script>'
+              : "<script>location.href='https://other.example/';</script>",
+        ),
+      );
+      await checks.run([entry], CancellationToken());
+      final before = BookSiteCheck.fromJson(
+        await repo.store.read('books_site_check:${source.id}'),
+        source,
+      )!;
+      expect(before.pendingScriptClues, hasLength(1));
+      strong = true;
+      final summary = await checks.run([entry], CancellationToken());
+      expect(summary.quarantined, 1);
+      expect((await repo.riskStore.get(source.id))!.quarantinedHost, isTrue);
+      final after = BookSiteCheck.fromJson(
+        await repo.store.read('books_site_check:${source.id}'),
+        source,
+      )!;
+      expect(after.inspection.gamblingRisk, isTrue);
+      expect(after.inspection.scriptReview.hasClues, isFalse);
+      expect(after.historicalScriptClues, before.pendingScriptClues);
+    },
+  );
+
+  test(
     'script clues are persisted without quarantining or changing choices',
     () async {
       final fixture = await _Fixture.create();
@@ -719,6 +759,46 @@ void _batchRiskTests() {
 
 void _batchFailureTests() {
   test(
+    'damaged source revision is unconfirmed and rebuilt without losing bound clues',
+    () async {
+      final fixture = await _Fixture.create();
+      addTearDown(fixture.close);
+      final source = _source('damage', 'revision-damage.example');
+      final entry = (await fixture.add([source])).single;
+      final repo = fixture.services.books;
+      var fail = false;
+      final checks = BookSiteChecks(
+        repo,
+        inspect: (source, _) async => fail
+            ? const BookSiteInspection(BookSiteFinding.timeout)
+            : inspectBookSiteHtml(
+                source.endpoint,
+                "<script>location.href='https://other.example/';</script>",
+              ),
+      );
+      await checks.run([entry], CancellationToken());
+      final first = (await checks.load([entry]))[source.id]!;
+      final oldRevision = first.siteRevision;
+      expect(first.pendingScriptClues, hasLength(1));
+      await repo.store.db.write(BookSiteRevisions.upsertSql, [
+        BookSiteRevisions.key(source.id),
+        '{bad',
+      ]);
+      final damaged = (await checks.load([entry]))[source.id]!;
+      expect(damaged.inspection.finding, BookSiteFinding.sourceChanged);
+      expect(damaged.isDue(DateTime.now()), isTrue);
+      expect(damaged.historicalScriptClues, first.pendingScriptClues);
+      fail = true;
+      await checks.run([entry], CancellationToken());
+      final after = (await checks.load([entry]))[source.id]!;
+      expect(after.siteRevision, isNot(oldRevision));
+      expect(after.inspection.finding, BookSiteFinding.timeout);
+      expect(after.consecutiveFailures, 1);
+      expect(after.historicalScriptClues, first.pendingScriptClues);
+    },
+  );
+
+  test(
     'one failed site does not stop unrelated checks or change user choices',
     () async {
       final fixture = await _Fixture.create();
@@ -758,6 +838,108 @@ void _batchFailureTests() {
 }
 
 void _inFlightInvalidationTests() {
+  for (final strong in [false, true]) {
+    test(
+      'in-flight source ABA rejects ${strong ? 'strong risk and' : ''} the old result',
+      () async {
+        final fixture = await _Fixture.create();
+        addTearDown(fixture.close);
+        final source = _source('aba-flight', 'aba-flight.example');
+        final entry = (await fixture.add([source])).single;
+        final started = Completer<void>();
+        final response = Completer<BookSiteInspection>();
+        final checks = BookSiteChecks(
+          fixture.services.books,
+          inspect: (_, _) {
+            started.complete();
+            return response.future;
+          },
+        );
+        final run = checks.run([entry], CancellationToken());
+        await started.future.timeout(const Duration(seconds: 5));
+        final revised = BookSource.fromJson({
+          ...source.toJson(),
+          'name': '临时版本',
+        });
+        // Exercise the durable generation independently of repository listeners.
+        await fixture.services.books.store.saveSource(source, {
+          'source': revised.toJson(),
+        });
+        await fixture.services.books.store.saveSource(revised, {
+          'source': source.toJson(),
+        });
+        response.complete(
+          strong
+              ? const BookSiteInspection(
+                  BookSiteFinding.gamblingClue,
+                  gamblingRisk: true,
+                )
+              : const BookSiteInspection(BookSiteFinding.sampled),
+        );
+        final result = await run.timeout(const Duration(seconds: 5));
+        expect(result.skipped, 1);
+        expect(await fixture.services.books.riskStore.get(source.id), isNull);
+        expect(
+          await fixture.services.books.store.read(
+            'books_site_check:${source.id}',
+          ),
+          isNull,
+        );
+      },
+    );
+  }
+
+  test(
+    'shared host response does not publish for an ABA-changed source',
+    () async {
+      final fixture = await _Fixture.create();
+      addTearDown(fixture.close);
+      final first = _source('host-first', 'same-host-aba.example');
+      final second = _source('host-second', 'same-host-aba.example');
+      final entries = await fixture.add([first, second]);
+      final started = Completer<void>();
+      final response = Completer<BookSiteInspection>();
+      var calls = 0;
+      final checks = BookSiteChecks(
+        fixture.services.books,
+        inspect: (_, _) {
+          calls++;
+          if (!started.isCompleted) started.complete();
+          return response.future;
+        },
+      );
+      final run = checks.run(entries, CancellationToken());
+      await started.future.timeout(const Duration(seconds: 5));
+      final revised = BookSource.fromJson({...second.toJson(), 'name': '暂存版本'});
+      await fixture.services.books.store.saveSource(second, {
+        'source': revised.toJson(),
+      });
+      await fixture.services.books.store.saveSource(revised, {
+        'source': second.toJson(),
+      });
+      response.complete(
+        inspectBookSiteHtml(
+          first.endpoint,
+          "<script>location.href='https://other.example/';</script>",
+        ),
+      );
+      final result = await run.timeout(const Duration(seconds: 5));
+      expect(calls, 1);
+      expect(result.checked, 1);
+      expect(result.skipped, 1);
+      expect(
+        await fixture.services.books.store.read('books_site_check:${first.id}'),
+        isNotNull,
+      );
+      expect(
+        await fixture.services.books.store.read(
+          'books_site_check:${second.id}',
+        ),
+        isNull,
+      );
+    },
+  );
+
   test('an adult-filter round trip still cancels a direct check', () async {
     final fixture = await _Fixture.create(adultVerified: true);
     addTearDown(fixture.close);
@@ -1095,6 +1277,98 @@ void _monitorPolicyTests() {
 
 void _monitorRetryTests() {
   test(
+    'subscription A to B to A rechecks the host and retains older clues',
+    () async {
+      final fixture = await _Fixture.create();
+      addTearDown(fixture.close);
+      final repo = fixture.services.books;
+      final original = BookSource.fromJson({
+        'name': '订阅规则',
+        'kind': 'text',
+        'format': 'html',
+        'url': 'https://subscription-history.example/',
+        'sourceKey': 'fixture:subscription-history',
+        'legado': {
+          'search': '/search?q={{key}}',
+          'rules': {'content': '.original@text'},
+        },
+      });
+      final subscription = Uri.parse('https://subscription.example/list');
+      final added = await repo.importSources([
+        original,
+      ], subscription: subscription);
+      expect(added.added, 1);
+      await repo.saveSource(original, {'enabled': true});
+      for (final kind in BookKind.values) {
+        final others = (await repo.sources(kind, enabledOnly: true))
+            .where((entry) => entry.source.id != original.id)
+            .map((entry) => entry.source.id)
+            .toSet();
+        await repo.setSourcesEnabled(kind, others, false);
+      }
+      var calls = 0;
+      final checks = BookSiteChecks(
+        repo,
+        inspect: (source, _) async {
+          calls++;
+          return calls == 1
+              ? inspectBookSiteHtml(
+                  source.endpoint,
+                  "<script>location.href='https://other.example/';</script>",
+                )
+              : const BookSiteInspection(BookSiteFinding.timeout);
+        },
+      );
+      final monitor = BookSiteMonitor(
+        checks,
+        fixture.services.settings,
+        startDelay: const Duration(hours: 1),
+        interval: const Duration(hours: 1),
+      );
+      addTearDown(monitor.close);
+      monitor.start();
+      await monitor.check().timeout(const Duration(seconds: 10));
+      final key = 'books_site_check:${original.id}';
+      final first = BookSiteCheck.fromJson(
+        await repo.store.read(key),
+        original,
+      )!;
+      expect(first.pendingScriptClues, hasLength(1));
+
+      final revised = BookSource.fromJson({
+        ...original.toJson(),
+        'legado': {
+          ...original.legado!.toJson(),
+          'rules': {...original.legado!.rules, 'content': '.revised@text'},
+        },
+      });
+      expect(revised.id, original.id);
+      final update = await repo.importSources([
+        revised,
+      ], subscription: subscription);
+      expect(update.updated, 1);
+      final restored = await repo.importSources([
+        original,
+      ], subscription: subscription);
+      expect(restored.updated, 1);
+      final entries = await repo.sources(BookKind.text, enabledOnly: true);
+      final stale = (await checks.load(entries))[original.id]!;
+      expect(stale.inspection.finding, BookSiteFinding.sourceChanged);
+      expect(stale.isDue(DateTime.now()), isTrue);
+      expect(stale.historicalScriptClues, first.pendingScriptClues);
+      await monitor.check().timeout(const Duration(seconds: 10));
+      final failed = BookSiteCheck.fromJson(
+        await repo.store.read(key),
+        original,
+      )!;
+      expect(calls, 2);
+      expect(failed.inspection.finding, BookSiteFinding.timeout);
+      expect(failed.consecutiveFailures, 1);
+      expect(failed.historicalScriptClues, first.pendingScriptClues);
+    },
+  );
+
+  test(
     'legacy successful samples are revisited without bypassing retry backoff',
     () async {
       final fixture = await _Fixture.create();
@@ -1120,6 +1394,7 @@ void _monitorRetryTests() {
           BookSiteInspection(finding),
           now,
           bookSourceCheckFingerprint(source),
+          siteRevision: await repo.store.siteRevisions.get(source.id),
         ).toJson()..remove('scriptReview');
         await repo.store.write('books_site_check:${source.id}', record);
       }
@@ -1184,6 +1459,7 @@ void _monitorRetryTests() {
             now.subtract(const Duration(minutes: 31)),
             bookSourceCheckFingerprint(source),
             consecutiveFailures: 1,
+            siteRevision: await repo.store.siteRevisions.get(source.id),
           ).toJson(),
         );
       }
@@ -1193,6 +1469,7 @@ void _monitorRetryTests() {
           const BookSiteInspection(BookSiteFinding.sampled),
           now.subtract(const Duration(days: 8)),
           bookSourceCheckFingerprint(normal),
+          siteRevision: await repo.store.siteRevisions.get(normal.id),
         ).toJson(),
       );
       final requested = <String>[];
@@ -1311,13 +1588,13 @@ BookSource _source(String key, String host) => BookSource.fromJson({
 });
 
 final class _Fixture {
-  _Fixture(this.root, this.services);
-  final Directory root;
+  _Fixture(this.temp, this.services);
+  final VerifiedTempDirectory temp;
   final AppServices services;
 
   static Future<_Fixture> create({bool adultVerified = false}) async {
-    final root = await Directory.systemTemp.createTemp('book-site-check-');
-    final services = AppServices.scoped(root, AppDatabase.memory());
+    final temp = await VerifiedTempDirectory.create('book-site-check-');
+    final services = AppServices.scoped(temp.directory, AppDatabase.memory());
     if (adultVerified) {
       await services.db.write(
         'INSERT OR REPLACE INTO app_meta(key,value) VALUES(?,?)',
@@ -1326,7 +1603,7 @@ final class _Fixture {
     }
     await services.supervision.load();
     await services.settings.load();
-    return _Fixture(root, services);
+    return _Fixture(temp, services);
   }
 
   Future<List<BookSourceEntry>> add(List<BookSource> sources) async {
@@ -1346,6 +1623,6 @@ final class _Fixture {
 
   Future<void> close() async {
     await services.close();
-    await root.delete(recursive: true);
+    await temp.delete();
   }
 }

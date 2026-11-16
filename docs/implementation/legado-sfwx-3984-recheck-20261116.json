@@ -1,0 +1,433 @@
+{
+  "schema_version": 1,
+  "purpose": "Two sampled works and a bounded later-chapter check for bundled record 3984.",
+  "inputs": {
+    "historical_commit": "42aa119be000a20f0220f8c35a17530c449e0ee7",
+    "archive_path": "assets/catalogs/books/legado/catalog.json.bz2",
+    "archive_sha256": "012a0e0d6e6adc8d303c32b578510e14b562088b3e965cb01a1a647b5e7e034d",
+    "historical_files": {
+      "ledger": {
+        "path": "docs/implementation/legado-source-ledger-20261115.json",
+        "sha256": "6877424859528319f67848af741f07ccff66bde782905fd2d1e0712c53e5f0dc"
+      },
+      "head": {
+        "path": "docs/implementation/legado-unresolved-head-later-20261116.json",
+        "sha256": "3024ff03581b0de4b286601188974e05cd8f7cf602b8af49e234ce054d2a6ebd"
+      },
+      "prior_pilot": {
+        "path": "docs/implementation/legado-sfwx-repair-20261116.json",
+        "sha256": "2b9679fbb2f5b823af0cd10ff771862e04a618fb839c7931842ad921f211b6c0"
+      }
+    }
+  },
+  "source": {
+    "index": 3984,
+    "id": "9f004a19d12200c68d88fd5bafd4d34615b347d27e26322dbfa26142983cd295",
+    "host": "www.sfwx.com",
+    "source_key": "",
+    "kind": "text",
+    "format": "html",
+    "endpoint_sha256": "3340e7f8c73d59b7f43b30a2839d3778d3cda2db02ec6391654aa1927d5af863",
+    "raw_record_canonical_sha256": "7a863da65877b06fad8c5f97e8c148aba395092d5ec42e9c9eed447a5fd2d764",
+    "old_legado_canonical_sha256": "338b1507f045152f1795bbfb75b95f68bca074ea40f39ccb42cb08cbed5e238a",
+    "raw_field_sha256": {
+      "searchUrl": "633a2f0ec48ba162e14d43c596236fa9263f9d37530b796e59a41e76994e2b31",
+      "ruleSearch": "5716540fa3498d0f209eff4c8750df7976044fae745fc63ecf3a19d6d18550bf",
+      "ruleBookInfo": "52b72dd9b28b8bf5c229718c929129681cb5c0717f5456999816776aafa78e39",
+      "ruleToc": "b545ecfc03e181894ef3c0824d621bdfab13c87e1e09f4b078dea72185bc8858",
+      "ruleContent": "b299d8a9f5f2616a9790dab65b7094895a5a2234bbe4c0082b06203d98df2138"
+    },
+    "prior_head_status": 200,
+    "prior_head_observed_at_utc": "2026-11-15T20:37:49.892398+00:00"
+  },
+  "method": {
+    "transport": "Anonymous same-host HTTPS GET; public DNS answers validated and numeric address pinned, hostname TLS checked.",
+    "redirects_followed": false,
+    "request_deadline_seconds": 10,
+    "body_limit_bytes": 262144,
+    "source_js_executed": false,
+    "page_js_executed": false,
+    "credentials_sent": false,
+    "posts_sent": false,
+    "subresources_requested": false,
+    "declarative_legado_engine_evaluated": true,
+    "bodies_saved": false,
+    "work_identities_saved": false,
+    "url_queries_or_tokens_saved": false,
+    "ip_addresses_saved": false,
+    "temporary_probe_and_redacted_intermediates_retained": false,
+    "collector_note": "Distinct synthetic public-domain work searches; work names, authors, URLs and query values omitted."
+  },
+  "observations": {
+    "work_a": {
+      "requests": [
+        {
+          "id": "9f004a19d12200c68d88fd5bafd4d34615b347d27e26322dbfa26142983cd295",
+          "host": "www.sfwx.com",
+          "stage": "books",
+          "observed_at_utc": "2026-11-15T22:53:37.088907+00:00",
+          "timeout_seconds": 10,
+          "sample_limit_bytes": 262144,
+          "has_query": true,
+          "status": 200,
+          "content_type": "text/html; charset=utf-8",
+          "content_encoding": "",
+          "sample_bytes": 8268,
+          "sample_sha256": "ae17efe0b3a028238947c113a1726295d92e6e340aa2c9177bb0822b6f438472",
+          "truncated": false
+        },
+        {
+          "id": "9f004a19d12200c68d88fd5bafd4d34615b347d27e26322dbfa26142983cd295",
+          "host": "www.sfwx.com",
+          "stage": "details",
+          "observed_at_utc": "2026-11-15T22:53:45.706856+00:00",
+          "timeout_seconds": 10,
+          "sample_limit_bytes": 262144,
+          "has_query": false,
+          "status": 200,
+          "content_type": "text/html; charset=utf-8",
+          "content_encoding": "",
+          "sample_bytes": 35789,
+          "sample_sha256": "23ce05bc97ce16828139625cc40647978143777b96e25da5b24e2ca8c84f6d17",
+          "truncated": false
+        },
+        {
+          "id": "9f004a19d12200c68d88fd5bafd4d34615b347d27e26322dbfa26142983cd295",
+          "host": "www.sfwx.com",
+          "stage": "content",
+          "observed_at_utc": "2026-11-15T22:53:56.477419+00:00",
+          "timeout_seconds": 10,
+          "sample_limit_bytes": 262144,
+          "has_query": false,
+          "status": 200,
+          "content_type": "text/html; charset=utf-8",
+          "content_encoding": "",
+          "sample_bytes": 21758,
+          "sample_sha256": "cc36d7bbbcc39a342b9a1b967237314d6b0393ce2e3e4b56823cd2fdbf68bdc0",
+          "truncated": false
+        }
+      ],
+      "engine_results": [
+        {
+          "id": "9f004a19d12200c68d88fd5bafd4d34615b347d27e26322dbfa26142983cd295",
+          "stage": "books",
+          "book_count": 6,
+          "same_host": 6,
+          "matching_title_and_author_count": 1,
+          "book_request_empty": true
+        },
+        {
+          "id": "9f004a19d12200c68d88fd5bafd4d34615b347d27e26322dbfa26142983cd295",
+          "stage": "details",
+          "candidate": false,
+          "error_type": "FormatException",
+          "known_error": "selector_depth_limit"
+        },
+        {
+          "id": "9f004a19d12200c68d88fd5bafd4d34615b347d27e26322dbfa26142983cd295",
+          "stage": "details",
+          "candidate": true,
+          "books": 1,
+          "actual_title_rule_matches": true,
+          "author_matches": true,
+          "category_present": true
+        },
+        {
+          "id": "9f004a19d12200c68d88fd5bafd4d34615b347d27e26322dbfa26142983cd295",
+          "stage": "toc",
+          "candidate": true,
+          "chapter_count": 100,
+          "chapter_request_empty": true,
+          "next_toc_count": 2
+        },
+        {
+          "id": "9f004a19d12200c68d88fd5bafd4d34615b347d27e26322dbfa26142983cd295",
+          "stage": "content",
+          "candidate": false,
+          "content_utf16_code_units": 4739,
+          "content_sha256": "a5d11167db92013a1ba01f4455ef0d7821c864b7cf5655db20a20b43bbc53230",
+          "next_content_count": 2,
+          "next_matches_second_chapter": true
+        },
+        {
+          "id": "9f004a19d12200c68d88fd5bafd4d34615b347d27e26322dbfa26142983cd295",
+          "stage": "content",
+          "candidate": true,
+          "content_utf16_code_units": 4739,
+          "content_sha256": "a5d11167db92013a1ba01f4455ef0d7821c864b7cf5655db20a20b43bbc53230",
+          "next_content_count": 0,
+          "next_matches_second_chapter": false
+        }
+      ]
+    },
+    "work_b": {
+      "requests": [
+        {
+          "id": "9f004a19d12200c68d88fd5bafd4d34615b347d27e26322dbfa26142983cd295",
+          "host": "www.sfwx.com",
+          "stage": "books",
+          "observed_at_utc": "2026-11-15T22:55:16.972738+00:00",
+          "timeout_seconds": 10,
+          "sample_limit_bytes": 262144,
+          "has_query": true,
+          "status": 200,
+          "content_type": "text/html; charset=utf-8",
+          "content_encoding": "",
+          "sample_bytes": 18531,
+          "sample_sha256": "91aafe229a040cb1a3b3d4054465d420e8f8534745257133e2e4a23651c6cb3b",
+          "truncated": false
+        },
+        {
+          "id": "9f004a19d12200c68d88fd5bafd4d34615b347d27e26322dbfa26142983cd295",
+          "host": "www.sfwx.com",
+          "stage": "details",
+          "observed_at_utc": "2026-11-15T22:55:24.477972+00:00",
+          "timeout_seconds": 10,
+          "sample_limit_bytes": 262144,
+          "has_query": false,
+          "status": 200,
+          "content_type": "text/html; charset=utf-8",
+          "content_encoding": "",
+          "sample_bytes": 35750,
+          "sample_sha256": "e1ccbbcaa496f18c8a0bd2f0859063dc9a9aba6655cfda963d79a5c4f5b74376",
+          "truncated": false
+        },
+        {
+          "id": "9f004a19d12200c68d88fd5bafd4d34615b347d27e26322dbfa26142983cd295",
+          "host": "www.sfwx.com",
+          "stage": "content",
+          "observed_at_utc": "2026-11-15T22:55:35.100170+00:00",
+          "timeout_seconds": 10,
+          "sample_limit_bytes": 262144,
+          "has_query": false,
+          "status": 200,
+          "content_type": "text/html; charset=utf-8",
+          "content_encoding": "",
+          "sample_bytes": 20188,
+          "sample_sha256": "9ded7b9de7e09ad777bd20183540dde6422d66c33fa8572fdefac3bc358f875f",
+          "truncated": false
+        }
+      ],
+      "engine_results": [
+        {
+          "id": "9f004a19d12200c68d88fd5bafd4d34615b347d27e26322dbfa26142983cd295",
+          "stage": "books",
+          "book_count": 20,
+          "same_host": 20,
+          "matching_title_and_author_count": 1,
+          "book_request_empty": true
+        },
+        {
+          "id": "9f004a19d12200c68d88fd5bafd4d34615b347d27e26322dbfa26142983cd295",
+          "stage": "details",
+          "candidate": false,
+          "error_type": "FormatException",
+          "known_error": "selector_depth_limit"
+        },
+        {
+          "id": "9f004a19d12200c68d88fd5bafd4d34615b347d27e26322dbfa26142983cd295",
+          "stage": "details",
+          "candidate": true,
+          "books": 1,
+          "actual_title_rule_matches": true,
+          "author_matches": true,
+          "category_present": true
+        },
+        {
+          "id": "9f004a19d12200c68d88fd5bafd4d34615b347d27e26322dbfa26142983cd295",
+          "stage": "toc",
+          "candidate": true,
+          "chapter_count": 100,
+          "chapter_request_empty": true,
+          "next_toc_count": 2
+        },
+        {
+          "id": "9f004a19d12200c68d88fd5bafd4d34615b347d27e26322dbfa26142983cd295",
+          "stage": "content",
+          "candidate": false,
+          "content_utf16_code_units": 4109,
+          "content_sha256": "517e47f51225baff06cb94a05641f615a70f7309db8ef463ef9f1fe1899e21d3",
+          "next_content_count": 2,
+          "next_matches_second_chapter": false
+        },
+        {
+          "id": "9f004a19d12200c68d88fd5bafd4d34615b347d27e26322dbfa26142983cd295",
+          "stage": "content",
+          "candidate": true,
+          "content_utf16_code_units": 4109,
+          "content_sha256": "517e47f51225baff06cb94a05641f615a70f7309db8ef463ef9f1fe1899e21d3",
+          "next_content_count": 0,
+          "next_matches_second_chapter": false
+        }
+      ]
+    },
+    "additional_chapter_samples": {
+      "requests": [
+        {
+          "id": "9f004a19d12200c68d88fd5bafd4d34615b347d27e26322dbfa26142983cd295",
+          "host": "www.sfwx.com",
+          "stage": "books",
+          "observed_at_utc": "2026-11-15T22:59:10.461274+00:00",
+          "timeout_seconds": 10,
+          "sample_limit_bytes": 262144,
+          "has_query": true,
+          "status": 200,
+          "content_type": "text/html; charset=utf-8",
+          "content_encoding": "",
+          "sample_bytes": 8268,
+          "sample_sha256": "ae17efe0b3a028238947c113a1726295d92e6e340aa2c9177bb0822b6f438472",
+          "truncated": false
+        },
+        {
+          "id": "9f004a19d12200c68d88fd5bafd4d34615b347d27e26322dbfa26142983cd295",
+          "host": "www.sfwx.com",
+          "stage": "details",
+          "observed_at_utc": "2026-11-15T22:59:16.650936+00:00",
+          "timeout_seconds": 10,
+          "sample_limit_bytes": 262144,
+          "has_query": false,
+          "status": 200,
+          "content_type": "text/html; charset=utf-8",
+          "content_encoding": "",
+          "sample_bytes": 35789,
+          "sample_sha256": "23ce05bc97ce16828139625cc40647978143777b96e25da5b24e2ca8c84f6d17",
+          "truncated": false
+        },
+        {
+          "id": "9f004a19d12200c68d88fd5bafd4d34615b347d27e26322dbfa26142983cd295",
+          "host": "www.sfwx.com",
+          "stage": "content",
+          "observed_at_utc": "2026-11-15T22:59:22.652203+00:00",
+          "timeout_seconds": 10,
+          "sample_limit_bytes": 262144,
+          "has_query": false,
+          "status": 200,
+          "content_type": "text/html; charset=utf-8",
+          "content_encoding": "",
+          "sample_bytes": 19827,
+          "sample_sha256": "1d278cc3ba25c98fb35e517ded9c16247f212a77d37d7fa5caa903284bde1c3e",
+          "truncated": false
+        },
+        {
+          "id": "9f004a19d12200c68d88fd5bafd4d34615b347d27e26322dbfa26142983cd295",
+          "host": "www.sfwx.com",
+          "stage": "content",
+          "observed_at_utc": "2026-11-15T22:59:28.670473+00:00",
+          "timeout_seconds": 10,
+          "sample_limit_bytes": 262144,
+          "has_query": false,
+          "status": 200,
+          "content_type": "text/html; charset=utf-8",
+          "content_encoding": "",
+          "sample_bytes": 19157,
+          "sample_sha256": "9cb7e3e1bb5cfe7e824f27d7d74f16890ce02e37aab2c351c1c94d817eff9e23",
+          "truncated": false
+        },
+        {
+          "id": "9f004a19d12200c68d88fd5bafd4d34615b347d27e26322dbfa26142983cd295",
+          "host": "www.sfwx.com",
+          "stage": "content",
+          "observed_at_utc": "2026-11-15T22:59:35.779297+00:00",
+          "timeout_seconds": 10,
+          "sample_limit_bytes": 262144,
+          "has_query": false,
+          "status": 200,
+          "content_type": "text/html; charset=utf-8",
+          "content_encoding": "",
+          "sample_bytes": 28328,
+          "sample_sha256": "0c5d80c4fc386d027bd94224d09933432038b79c698fddb20f1a635249de08db",
+          "truncated": false
+        }
+      ],
+      "engine_results": [
+        {
+          "id": "9f004a19d12200c68d88fd5bafd4d34615b347d27e26322dbfa26142983cd295",
+          "stage": "content",
+          "candidate": false,
+          "content_utf16_code_units": 4191,
+          "content_sha256": "a58497c2882b8988c80b3e27849f9ac92c6837b1d1a94f6269215a205db45132",
+          "next_content_count": 2,
+          "content_continuation_marker": false,
+          "next_page_anchor_count": 0,
+          "next_chapter_anchor_count": 2,
+          "next_matches_next_toc_chapter": true,
+          "sampled_ordinal": 10
+        },
+        {
+          "id": "9f004a19d12200c68d88fd5bafd4d34615b347d27e26322dbfa26142983cd295",
+          "stage": "content",
+          "candidate": true,
+          "content_utf16_code_units": 4191,
+          "content_sha256": "a58497c2882b8988c80b3e27849f9ac92c6837b1d1a94f6269215a205db45132",
+          "next_content_count": 0,
+          "content_continuation_marker": false,
+          "next_page_anchor_count": 0,
+          "next_chapter_anchor_count": 2,
+          "next_matches_next_toc_chapter": false,
+          "sampled_ordinal": 10
+        },
+        {
+          "id": "9f004a19d12200c68d88fd5bafd4d34615b347d27e26322dbfa26142983cd295",
+          "stage": "content",
+          "candidate": false,
+          "content_utf16_code_units": 3903,
+          "content_sha256": "7b9bf279a664ef4e8e7e8483a0307bf7bdec1849528995500075b6edba8bbfbf",
+          "next_content_count": 2,
+          "content_continuation_marker": false,
+          "next_page_anchor_count": 0,
+          "next_chapter_anchor_count": 2,
+          "next_matches_next_toc_chapter": true,
+          "sampled_ordinal": 50
+        },
+        {
+          "id": "9f004a19d12200c68d88fd5bafd4d34615b347d27e26322dbfa26142983cd295",
+          "stage": "content",
+          "candidate": true,
+          "content_utf16_code_units": 3903,
+          "content_sha256": "7b9bf279a664ef4e8e7e8483a0307bf7bdec1849528995500075b6edba8bbfbf",
+          "next_content_count": 0,
+          "content_continuation_marker": false,
+          "next_page_anchor_count": 0,
+          "next_chapter_anchor_count": 2,
+          "next_matches_next_toc_chapter": false,
+          "sampled_ordinal": 50
+        },
+        {
+          "id": "9f004a19d12200c68d88fd5bafd4d34615b347d27e26322dbfa26142983cd295",
+          "stage": "content",
+          "candidate": false,
+          "content_utf16_code_units": 6802,
+          "content_sha256": "72ea6853e8e03480b09614375a132d9ff9defa22beb5e673eb76db29c3eabb91",
+          "next_content_count": 2,
+          "content_continuation_marker": false,
+          "next_page_anchor_count": 0,
+          "next_chapter_anchor_count": 2,
+          "next_matches_next_toc_chapter": true,
+          "sampled_ordinal": 90
+        },
+        {
+          "id": "9f004a19d12200c68d88fd5bafd4d34615b347d27e26322dbfa26142983cd295",
+          "stage": "content",
+          "candidate": true,
+          "content_utf16_code_units": 6802,
+          "content_sha256": "72ea6853e8e03480b09614375a132d9ff9defa22beb5e673eb76db29c3eabb91",
+          "next_content_count": 0,
+          "content_continuation_marker": false,
+          "next_page_anchor_count": 0,
+          "next_chapter_anchor_count": 2,
+          "next_matches_next_toc_chapter": false,
+          "sampled_ordinal": 90
+        }
+      ]
+    }
+  },
+  "limitations": [
+    "Only bounded public samples at these times; HTTP 200 or successful extraction does not establish safety or future availability.",
+    "Page bodies, work identities, URLs, queries, IP addresses and temporary probes/intermediates were not retained; observed HTML and parsing cannot be independently replayed offline.",
+    "All network observations share one environment; transient errors and short-lived changes remain unknown.",
+    "Actual user settings, installed source state, dynamic blacklists and risk database were not examined.",
+    "The largest additional chapter was 6802 UTF-16 code units; longer or genuinely paginated chapters remain unverified.",
+    "For the second work the old next link did not match the second TOC entry; its exact target was not established.",
+    "No page contents or work identities were saved; length and hashes are not a completeness proof."
+  ]
+}

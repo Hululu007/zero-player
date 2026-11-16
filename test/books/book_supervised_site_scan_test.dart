@@ -8,11 +8,14 @@ import 'package:zero_player/core/persistence/app_database.dart';
 import 'package:zero_player/features/books/application/book_site_checks.dart';
 import 'package:zero_player/features/books/application/book_site_monitor.dart';
 import 'package:zero_player/features/books/data/book_site_inspection.dart';
+import 'package:zero_player/features/books/data/book_site_script_clues.dart';
 import 'package:zero_player/features/books/data/book_store.dart';
 import 'package:zero_player/features/books/data/books_repository.dart';
 import 'package:zero_player/features/books/domain/book.dart';
 import 'package:zero_player/features/supervision/application/supervision_controller.dart';
 import 'package:zero_player/features/supervision/domain/supervision_rules.dart';
+
+import '../../test_support/verified_temp_directory.dart';
 
 const _password = 'test-password-123';
 const _timeout = Duration(seconds: 8);
@@ -169,6 +172,202 @@ void main() {
       expect(migrated.inspection.scriptReview.hasClues, isTrue);
       expect(migrated.legacyScriptReviewMissing, isFalse);
       expect(await f.services.books.riskStore.get(source.id), isNull);
+    },
+  );
+
+  test(
+    'manual and supervised checks share clue history without reviving cleared clues',
+    () async {
+      final f = await _Fixture.create();
+      addTearDown(f.close);
+      final source = f.first.source;
+      final sharedKey = 'books_site_check:${source.id}';
+      final trustedKey = 'books_supervised_site_check:${source.id}';
+      var manualBody =
+          "<script>location.href='https://other.example/';</script>";
+      final manual = BookSiteChecks(
+        f.services.books,
+        inspect: (source, _) async =>
+            inspectBookSiteHtml(source.endpoint, manualBody),
+      );
+      await manual.run([f.first], CancellationToken());
+      final initial = BookSiteCheck.fromJson(
+        await f.services.books.store.read(sharedKey),
+        source,
+      )!;
+      expect(
+        initial.pendingScriptClues.keys,
+        contains(BookPageScriptClue.crossOriginRedirect),
+      );
+      await f.supervise();
+      f.server.pages[source.endpoint.host] =
+          "<script src='/external.js'></script><script>eval(atob('YWxlcnQoMSk='));</script>";
+      await f.monitor.check().timeout(_timeout);
+      final partial = BookSiteCheck.fromJson(
+        await f.services.books.store.read(sharedKey),
+        source,
+      )!;
+      expect(
+        partial.historicalScriptClues[BookPageScriptClue.crossOriginRedirect],
+        initial.pendingScriptClues[BookPageScriptClue.crossOriginRedirect],
+      );
+      expect(
+        partial.inspection.scriptReview.clues,
+        contains(BookPageScriptClue.decodedDynamicEvaluation),
+      );
+      expect(partial.pendingScriptClues, hasLength(2));
+      final trusted = BookSiteCheck.fromJson(
+        await f.services.books.store.read(trustedKey),
+        source,
+      )!;
+      expect(trusted.pendingScriptClues, partial.pendingScriptClues);
+
+      manualBody = '<p>完整普通页面</p>';
+      await f.channels(() async {
+        await manual.run([f.first], CancellationToken());
+      });
+      final cleared = BookSiteCheck.fromJson(
+        await f.services.books.store.read(sharedKey),
+        source,
+      )!;
+      expect(cleared.pendingScriptClues, isEmpty);
+      await f.services.books.store.write(trustedKey, {
+        ...trusted.toJson(),
+        'checkedAt': DateTime.now()
+            .subtract(const Duration(days: 8))
+            .millisecondsSinceEpoch,
+      });
+      f.server.pages[source.endpoint.host] =
+          "<script src='/external.js'></script>";
+      await f.monitor.check().timeout(_timeout);
+      final after = BookSiteCheck.fromJson(
+        await f.services.books.store.read(sharedKey),
+        source,
+      )!;
+      expect(
+        after.inspection.scriptReview.coverage,
+        BookPageScriptCoverage.partial,
+      );
+      expect(after.pendingScriptClues, isEmpty);
+      expect(await f.services.books.riskStore.get(source.id), isNull);
+    },
+  );
+
+  test(
+    'only a trusted supervised sample can satisfy both revision records',
+    () async {
+      final f = await _Fixture.create();
+      addTearDown(f.close);
+      for (final kind in [BookKind.audio, BookKind.comic]) {
+        final ids = (await f.services.books.sources(
+          kind,
+          enabledOnly: true,
+        )).map((entry) => entry.source.id).toSet();
+        await f.services.books.setSourcesEnabled(kind, ids, false);
+      }
+      await f.supervise();
+      final source = f.first.source;
+      final sharedKey = 'books_site_check:${source.id}';
+      final trustedKey = 'books_supervised_site_check:${source.id}';
+      await f.monitor.check().timeout(_timeout);
+      final oldRevision = (await f.services.books.store.siteRevisions.get(
+        source.id,
+      ))!;
+      await f.channels(() async {
+        await f.services.books.saveSource(source, {'enabled': false});
+        await f.services.books.saveSource(source, {'enabled': true});
+      });
+      final revision = (await f.services.books.store.siteRevisions.get(
+        source.id,
+      ))!;
+      expect(revision, isNot(oldRevision));
+      BookSiteCheck? parse(Object? raw) => BookSiteCheck.fromJson(
+        raw,
+        source,
+        currentRevision: revision,
+        requireRevision: true,
+      );
+      expect(
+        parse(await f.services.books.store.read(sharedKey))!.inspection.finding,
+        BookSiteFinding.sourceChanged,
+      );
+      expect(
+        parse(
+          await f.services.books.store.read(trustedKey),
+        )!.inspection.finding,
+        BookSiteFinding.sourceChanged,
+      );
+
+      final manual = BookSiteChecks(
+        f.services.books,
+        inspect: (_, _) async =>
+            inspectBookSiteHtml(source.endpoint, '<p>普通页面</p>'),
+      );
+      await f.channels(() async {
+        await manual.run([f.first], CancellationToken());
+      });
+      expect(
+        parse(await f.services.books.store.read(sharedKey))!.inspection.finding,
+        BookSiteFinding.sampled,
+      );
+      expect(
+        parse(
+          await f.services.books.store.read(trustedKey),
+        )!.inspection.finding,
+        BookSiteFinding.sourceChanged,
+      );
+      await f.monitor.check().timeout(_timeout);
+      expect(
+        parse(await f.services.books.store.read(sharedKey))!.inspection.finding,
+        BookSiteFinding.sampled,
+      );
+      expect(
+        parse(
+          await f.services.books.store.read(trustedKey),
+        )!.inspection.finding,
+        BookSiteFinding.sampled,
+      );
+
+      await f.channels(() async {
+        await f.services.books.saveSource(source, {'enabled': false});
+        await f.services.books.saveSource(source, {'enabled': true});
+      });
+      final nextRevision = (await f.services.books.store.siteRevisions.get(
+        source.id,
+      ))!;
+      expect(nextRevision, isNot(revision));
+      await f.monitor.check().timeout(_timeout);
+      final shared = BookSiteCheck.fromJson(
+        await f.services.books.store.read(sharedKey),
+        source,
+        currentRevision: nextRevision,
+        requireRevision: true,
+      )!;
+      final trusted = BookSiteCheck.fromJson(
+        await f.services.books.store.read(trustedKey),
+        source,
+        currentRevision: nextRevision,
+        requireRevision: true,
+      )!;
+      expect(shared.inspection.finding, BookSiteFinding.sampled);
+      expect(trusted.inspection.finding, BookSiteFinding.sampled);
+      expect(shared.isDue(DateTime.now()), isFalse);
+      await f.setSupervision(false);
+      expect(
+        (await f.services.books.sources(
+          BookKind.text,
+          enabledOnly: true,
+        )).any((entry) => entry.source.id == source.id),
+        isTrue,
+      );
+      final targetBefore = f.injectedSourceIds
+          .where((id) => id == source.id)
+          .length;
+      await f.monitor.check().timeout(_timeout);
+      expect(
+        f.injectedSourceIds.where((id) => id == source.id),
+        hasLength(targetBefore),
+      );
     },
   );
 
@@ -643,14 +842,16 @@ BookSource _external(String host, String key) => BookSource.fromJson({
 });
 
 final class _Fixture {
-  _Fixture(this.root, this.services, this.server, this.requested, this.entries);
+  _Fixture(this.temp, this.services, this.server, this.requested, this.entries);
 
-  final Directory root;
+  final VerifiedTempDirectory temp;
+  Directory get root => temp.directory;
   AppServices services;
   final _Server server;
   final List<Uri> requested;
   final List<BookSourceEntry> entries;
   int injectedCalls = 0;
+  final injectedSourceIds = <String>[];
   late BookSiteMonitor monitor = _newMonitor();
   BookSourceEntry get first => entries[0];
   BookSourceEntry get second => entries[1];
@@ -660,8 +861,9 @@ final class _Fixture {
     final result = BookSiteMonitor(
       BookSiteChecks(
         services.books,
-        inspect: (_, _) async {
+        inspect: (source, _) async {
           injectedCalls++;
+          injectedSourceIds.add(source.id);
           return const BookSiteInspection(
             BookSiteFinding.gamblingClue,
             gamblingRisk: true,
@@ -677,7 +879,8 @@ final class _Fixture {
   }
 
   static Future<_Fixture> create() async {
-    final root = await Directory.systemTemp.createTemp('supervised-site-scan-');
+    final temp = await VerifiedTempDirectory.create('supervised-site-scan-');
+    final root = temp.directory;
     final server = await _Server.start();
     final requested = <Uri>[];
     final services = await _open(root, server, requested);
@@ -698,7 +901,7 @@ final class _Fixture {
       entries[0].source.id,
       entries[1].source.id,
     }, true);
-    final result = _Fixture(root, services, server, requested, entries);
+    final result = _Fixture(temp, services, server, requested, entries);
     // Construct before supervision so the same monitor handles the transition.
     result.monitor;
     return result;
@@ -753,7 +956,7 @@ final class _Fixture {
     await monitor.close();
     await services.close();
     await server.close();
-    await root.delete(recursive: true);
+    await temp.delete();
   }
 }
 

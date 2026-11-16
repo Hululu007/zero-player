@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
@@ -9,13 +7,16 @@ import 'package:zero_player/core/persistence/app_database.dart';
 import 'package:zero_player/features/books/data/aoaostar_book_catalog.dart';
 import 'package:zero_player/features/books/domain/book.dart';
 
+import '../test_support/verified_temp_directory.dart';
+
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
   testWidgets(
     'bundled QQ Reading source searches and reads an available chapter',
     (tester) async {
-      final root = await Directory.systemTemp.createTemp('zero-qq-reading-');
+      final temporary = await VerifiedTempDirectory.create('zero-qq-reading-');
+      final root = temporary.directory;
       final services = AppServices.scoped(root, AppDatabase.memory());
       try {
         await services.settings.load();
@@ -61,8 +62,11 @@ void main() {
           '${chapters.length} chapters, ${text.length} characters',
         );
       } finally {
-        await services.close();
-        await root.delete(recursive: true);
+        try {
+          await services.close();
+        } finally {
+          await temporary.delete();
+        }
       }
     },
     timeout: const Timeout(Duration(minutes: 3)),

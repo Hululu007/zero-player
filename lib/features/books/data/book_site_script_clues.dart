@@ -290,6 +290,7 @@ _Lexed _lex(String text) {
     // Computed access could refer to location or evaluation APIs, but this
     // deliberately small lexer does not interpret properties or expressions.
     if ((_at(tokens, i, 'window') ||
+            _at(tokens, i, 'self') ||
             _at(tokens, i, 'document') ||
             _at(tokens, i, 'globalThis')) &&
         _at(tokens, i + 1, '[')) {
@@ -321,6 +322,7 @@ _Lexed _lex(String text) {
 bool _hasAmbiguousBinding(List<_Token> tokens) {
   const sensitive = {
     'window',
+    'self',
     'document',
     'location',
     'globalThis',
@@ -345,8 +347,10 @@ bool _hasAmbiguousBinding(List<_Token> tokens) {
         ? tokens[i + 1].value
         : null;
     if (declarations.contains(previous) ||
+        next == '=>' ||
         ((previous == '(' || previous == ',') &&
-            (next == ')' || next == ','))) {
+            (next == ')' || next == ',' || next == '=')) ||
+        (previous == '{' && (next == '}' || next == ',' || next == ':'))) {
       return true;
     }
   }
@@ -379,7 +383,10 @@ final class _RedirectCandidate {
 _RedirectCandidate? _redirectCandidate(List<_Token> tokens, int i) {
   if (!_independent(tokens, i)) return null;
   var j = i;
-  if (_at(tokens, j, 'window') || _at(tokens, j, 'document')) {
+  if (_at(tokens, j, 'window') ||
+      _at(tokens, j, 'document') ||
+      _at(tokens, j, 'globalThis') ||
+      _at(tokens, j, 'self')) {
     if (!_at(tokens, j + 1, '.') || !_at(tokens, j + 2, 'location')) {
       return null;
     }

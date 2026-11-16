@@ -17,6 +17,7 @@ import 'book_source_ledger_nov16_evidence.dart';
 import 'book_source_ledger_com_rdap.dart';
 import 'book_source_ledger_sfwx.dart';
 import 'book_source_ledger_lengmen.dart';
+import 'book_source_ledger_later_chain.dart';
 
 const _catalogFolder = 'assets/catalogs/books/legado';
 const _evidenceFolder = 'docs/implementation';
@@ -100,6 +101,8 @@ const _evidenceFiles = [
   threeRedirectEvidenceFile,
   sfwxEvidenceFile,
   lengmenEvidenceFile,
+  sfwx3984EvidenceFile,
+  biquge7EvidenceFile,
   ..._amsiFiles,
 ];
 const _codePaths = [
@@ -124,6 +127,7 @@ const _codePaths = [
   'lib/features/books/data/legado/legado_request.dart',
   'lib/features/books/data/legado/legado_rule_tokens.dart',
   'lib/features/books/domain/book.dart',
+  'lib/features/books/domain/biquge7_legacy_source_fix.dart',
   'lib/features/books/domain/book_source_risk.dart',
   'lib/features/books/domain/com_rdap_legacy_quarantine.dart',
   'lib/features/books/domain/fanfanu_legacy_source_fix.dart',
@@ -157,6 +161,7 @@ const _codePaths = [
   'tool/book_source_ledger_top_cc.dart',
   'tool/book_source_ledger_sfwx.dart',
   'tool/book_source_ledger_lengmen.dart',
+  'tool/book_source_ledger_later_chain.dart',
   'tool/verify_legado_unresolved_head.py',
   'tool/compare_legado_head_get.py',
   'tool/recheck_legado_failures.py',
@@ -171,6 +176,11 @@ const _codePaths = [
   'tool/verify_legado_three_redirect_recheck.py',
   'tool/verify_legado_sfwx_repair.py',
   'tool/verify_legado_lengmen_recheck.py',
+  'tool/verify_legado_sfwx_3984.py',
+  'tool/verify_legado_biquge7_category.py',
+  'tool/verify_legado_later_chain_common.py',
+  'tool/test_verify_legado_later_chain.py',
+  'tool/test_audit_book_source_ledger_later_chain.dart',
   'tool/verify_legado_rdap_five.py',
 ];
 const _runtimePolicyReferencePaths = [
@@ -193,6 +203,7 @@ const _runtimePolicyReferencePaths = [
   'lib/features/books/data/book_repository_site_checks.dart',
   'lib/features/books/data/book_site_check.dart',
   'lib/features/books/data/book_site_inspection.dart',
+  'lib/features/books/data/book_site_revision.dart',
   'lib/features/books/data/book_site_script_clues.dart',
   'lib/features/books/data/book_source_risk_store.dart',
   'lib/features/books/data/book_supervised_site_scan.dart',
@@ -1265,6 +1276,7 @@ Map<String, Object?> _row(
   ComRdapLedgerEvidence rdapFive,
   ComRdapLedgerEvidence topCc,
   SfwxLedgerEvidence sfwx,
+  LaterChainLedgerEvidence laterChain,
   LengmenLedgerEvidence lengmen,
   Map<String, Map> data,
 ) {
@@ -1347,6 +1359,7 @@ Map<String, Object?> _row(
   );
   reading.addAll(selectNov16Evidence(nov16.reading, source, index));
   reading.addAll(selectSfwxEvidence(sfwx, source, index));
+  reading.addAll(selectLaterChainEvidence(laterChain, source, index));
   final adultReview = selectNov16Evidence(nov16.adultReview, source, index);
   return {
     'source_id': source.id,
@@ -1396,6 +1409,10 @@ void _verifyArchiveAssociation(
   String digest,
   Map<String, String> inputHashes,
 ) {
+  if (file == sfwx3984EvidenceFile || file == biquge7EvidenceFile) {
+    verifyLaterChainInput(file, evidence, digest, inputHashes);
+    return;
+  }
   if (file == lengmenEvidenceFile) {
     verifyLengmenInput(evidence, digest, inputHashes);
     return;
@@ -1800,6 +1817,12 @@ void main(List<String> args) {
     networkObservation,
   );
   final sfwx = readSfwxEvidence(data[sfwxEvidenceFile]!, hashes, catalog.rows);
+  final laterChain = readLaterChainEvidence(
+    data[sfwx3984EvidenceFile]!,
+    data[biquge7EvidenceFile]!,
+    hashes,
+    catalog.rows,
+  );
   final lengmen = readLengmenEvidence(
     data[lengmenEvidenceFile]!,
     hashes,
@@ -1855,6 +1878,7 @@ void main(List<String> args) {
         rdapFive,
         topCc,
         sfwx,
+        laterChain,
         lengmen,
         data,
       ),
@@ -1941,6 +1965,7 @@ Map<String, Object?> _ledgerDocument(
     'The 242 review concerns one exact historical rule and endpoint; its sampled 404 responses do not imply maliciousness, permanent closure, or a host-wide restriction.',
     'The three-source redirect recheck uses GET and a possibly different user agent than the earlier HEAD. One old POST search was not submitted, discovery sampled only two entries per source, and fields missing from truncated collector output remain unknown.',
     'The three-source sfwx reading observations are bounded historical samples; the 404 is a single search path, the two sfwx works and three chapters do not establish complete readability or safety, and long-chapter pagination and one old link target remain unverified. The repaired current rule may differ from the sampled historical rule.',
+    'The later-chain observations sample two works and limited chapters for two sources; the category test shares one received page across two source IDs, and the two 404 responses concern one search path only. Longer or paginated chapters remain unverified, and repaired current rules may differ from the historical samples.',
     'The lengmen follow-up represents one shared root-page study for two sources, not independent threats; the 302 Location was not captured, the network environment was shared, and engine detections or non-detections do not establish malware, false positive, or safety. HTML and script-wrapped EICAR controls were missed.',
     'Static flags do not include personal settings, enabled state, mutable assessments, user blacklists, supervision, or every private repository policy.',
     'Same-ID historical cache can lack the rule fingerprint needed to attribute old content to a specific source version.',
@@ -1976,6 +2001,14 @@ Map<String, Object?> _ledgerDocument(
         (data[sfwxEvidenceFile]!['inputs'] as Map)['historical_ledger_path'],
     'sha256':
         (data[sfwxEvidenceFile]!['inputs'] as Map)['historical_ledger_sha256'],
+    'verified_from_git_object': true,
+  },
+  'later_chain_historical_ledger_reference': {
+    'git_commit':
+        (data[sfwx3984EvidenceFile]!['inputs'] as Map)['historical_commit'],
+    ...(((data[sfwx3984EvidenceFile]!['inputs'] as Map)['historical_files']
+            as Map)['ledger']
+        as Map),
     'verified_from_git_object': true,
   },
   'lengmen_historical_ledger_reference': {

@@ -2,6 +2,7 @@ import 'dart:io';
 
 import '../../../core/network/network_target_policy.dart';
 import '../../sources/domain/video_source.dart';
+import 'biquge7_legacy_source_fix.dart';
 import 'fanfanu_legacy_source_fix.dart';
 import 'jingzhi_legacy_source_fix.dart';
 import 'legado_source.dart';
@@ -383,7 +384,8 @@ Map _repairedLegadoRules(Map data) {
   legado = repairYingyuLegadoSource(data, legado);
   legado = repairQqReadingLegadoSource(data, legado);
   legado = repairFanfanuLegadoSource(data, legado);
-  return repairSfwxLegadoSource(data, legado);
+  legado = repairSfwxLegadoSource(data, legado);
+  return repairBiquge7LegadoSource(data, legado);
 }
 
 Map _comicLegadoRules(Map data) {

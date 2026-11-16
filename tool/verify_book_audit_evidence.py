@@ -398,6 +398,23 @@ class EvidenceVerifier:
         self.check_digest(self.root / inputs['probe_helper_path'],
                           inputs['probe_helper_sha256'], normalize_lf=True)
 
+        later_history = {
+            'ledger': ledger_path,
+            'head': 'docs/implementation/legado-unresolved-head-later-20261116.json',
+            'prior_pilot': 'docs/implementation/legado-sfwx-repair-20261116.json',
+        }
+        for name in ('legado-sfwx-3984-recheck-20261116.json',
+                     'legado-biquge7-category-recheck-20261116.json'):
+            report = json.loads(self.read(self.docs / name))
+            inputs = report['inputs']
+            if (inputs['archive_path'] != 'assets/catalogs/books/legado/catalog.json.bz2' or
+                    set(inputs['historical_files']) != set(later_history)):
+                raise ValueError('unexpected later reading review references')
+            self.check_digest(archive, inputs['archive_sha256'])
+            for key, path in later_history.items():
+                ref = inputs['historical_files'][key]
+                self.git_snapshot(inputs['historical_commit'], ref['path'], ref['sha256'], path)
+
         lengmen = json.loads(self.read(self.docs / 'legado-lengmen-amsi-recheck-20261116.json'))
         inputs = lengmen['inputs']
         if inputs['archive_path'] != 'assets/catalogs/books/legado/catalog.json.bz2':

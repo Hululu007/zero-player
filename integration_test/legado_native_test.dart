@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
@@ -12,6 +10,8 @@ import 'package:zero_player/features/books/data/book_client.dart';
 import 'package:zero_player/features/books/data/book_import.dart';
 import 'package:zero_player/features/books/data/legado/legado_worker.dart';
 import 'package:zero_player/features/books/domain/book.dart';
+
+import '../test_support/verified_temp_directory.dart';
 
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
@@ -82,7 +82,8 @@ void _testPublishedSource() {
   testWidgets(
     'published Legado link imports, persists and reads with original rules',
     (tester) async {
-      final root = await Directory.systemTemp.createTemp('zero-legado-');
+      final temporary = await VerifiedTempDirectory.create('zero-legado-');
+      final root = temporary.directory;
       final services = AppServices.scoped(root, AppDatabase.memory());
       try {
         await services.settings.load();
@@ -115,8 +116,11 @@ void _testPublishedSource() {
         );
         expect(text.length, greaterThan(100));
       } finally {
-        await services.close();
-        await root.delete(recursive: true);
+        try {
+          await services.close();
+        } finally {
+          await temporary.delete();
+        }
       }
     },
     timeout: const Timeout(Duration(minutes: 3)),
@@ -127,7 +131,8 @@ void _testPublishedCollection() {
   testWidgets(
     'published Legado collection imports thousands of sources in one pass',
     (tester) async {
-      final root = await Directory.systemTemp.createTemp('zero-legado-bulk-');
+      final temporary = await VerifiedTempDirectory.create('zero-legado-bulk-');
+      final root = temporary.directory;
       final services = AppServices.scoped(root, AppDatabase.memory());
       try {
         await services.settings.load();
@@ -156,8 +161,11 @@ void _testPublishedCollection() {
           'rejected ${result.parsed.rejected}, skipped ${result.changes.skipped}',
         );
       } finally {
-        await services.close();
-        await root.delete(recursive: true);
+        try {
+          await services.close();
+        } finally {
+          await temporary.delete();
+        }
       }
     },
     timeout: const Timeout(Duration(minutes: 4)),

@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:archive/archive.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:path/path.dart' as path;
 import 'package:zero_player/app/app_services.dart';
 import 'package:zero_player/core/network/cancellation_token.dart';
 import 'package:zero_player/core/persistence/app_database.dart';
@@ -146,11 +147,26 @@ void main() {
         for (final index in _sources.keys)
           parseBookSourceRecord(records[index]),
       ];
+      final tempBase = await Directory.systemTemp.resolveSymbolicLinks();
       final root = await Directory.systemTemp.createTemp('moe-rdap-old-rules-');
+      final originalRoot = await root.resolveSymbolicLinks();
       final services = AppServices.scoped(root, AppDatabase.memory());
       addTearDown(() async {
-        await services.close();
-        await root.delete(recursive: true);
+        try {
+          await services.close();
+        } finally {
+          final actualRoot = await root.resolveSymbolicLinks();
+          if (path.normalize(actualRoot).toLowerCase() !=
+                  path.normalize(originalRoot).toLowerCase() ||
+              path.normalize(path.dirname(actualRoot)).toLowerCase() !=
+                  path.normalize(tempBase).toLowerCase() ||
+              !path.basename(actualRoot).startsWith('moe-rdap-old-rules-')) {
+            throw StateError(
+              'Temporary test directory escaped its expected parent',
+            );
+          }
+          await root.delete(recursive: true);
+        }
       });
       await services.db.write('INSERT OR REPLACE INTO app_meta VALUES(?,?)', [
         installationAccessKey,

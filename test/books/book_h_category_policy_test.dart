@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:archive/archive.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:path/path.dart' as path;
 import 'package:zero_player/app/app_services.dart';
 import 'package:zero_player/core/network/cancellation_token.dart';
 import 'package:zero_player/core/persistence/app_database.dart';
@@ -191,6 +192,194 @@ void main() {
   });
 
   test(
+    'composite categories of an imported source keep the existing guard',
+    () async {
+      await _withServices((services, requests) async {
+        final source = parseBookSourceRecord((await _catalogRecords())[203]);
+        expect(
+          source.id,
+          '870b827acc3fd539dfef41d0a83dacf6699922b14f7ee3145abdc51de54d3f1c',
+        );
+        expect(adultBookSource(source), isFalse);
+        final categories = source.legado!.categories;
+        const adultTitles = {'不限·高H', '連載·高H', '完結·高H'};
+        const ordinaryTitles = {'不限·BL', '不限·校園'};
+        final restricted = categories
+            .where((item) => adultTitles.contains(item.title))
+            .toList();
+        final ordinary = categories
+            .where((item) => ordinaryTitles.contains(item.title))
+            .toList();
+        expect(restricted, hasLength(3));
+        expect(ordinary, hasLength(2));
+        expect(
+          restricted.every(
+            (item) => !bookCategoryAllowed(services.contentPolicy, item),
+          ),
+          isTrue,
+        );
+        expect(
+          ordinary.every(
+            (item) => bookCategoryAllowed(services.contentPolicy, item),
+          ),
+          isTrue,
+        );
+
+        expect((await services.books.importSources([source])).added, 1);
+        await services.books.saveSource(source, {'enabled': true});
+        expect(services.books.sourceAllowed(source), isTrue);
+        Book book(String category) => Book(
+          source.id,
+          source.kind,
+          '普通标题',
+          '作者',
+          source.endpoint.resolve('/book/1'),
+          category: category,
+        );
+        for (final item in restricted) {
+          expect(services.books.bookAllowed(book(item.title)), isFalse);
+        }
+        for (final item in ordinary) {
+          expect(services.books.bookAllowed(book(item.title)), isTrue);
+        }
+
+        // Its POST templates cannot be safely compared without executing a
+        // network-dependent expression. Keep the existing fail-closed guard.
+        final visible = await services.books.categories(
+          source.kind,
+          source.id,
+          CancellationToken(),
+        );
+        expect(visible, isEmpty);
+        for (final item in [restricted.first, ordinary.first]) {
+          await expectLater(
+            services.books.discover(
+              source.kind,
+              source.id,
+              CancellationToken(),
+              category: item,
+            ),
+            throwsA(isA<ContentBlocked>()),
+          );
+        }
+
+        final ordinaryBook = book(ordinary.last.title);
+        final chapter = BookChapter(
+          '第一章',
+          source.endpoint.resolve('/chapter/1'),
+        );
+        const body = '这一章讨论 H文 标签的编辑规范。';
+        await services.books.store.saveText(ordinaryBook, chapter, body);
+        expect(
+          await services.books.readText(
+            ordinaryBook,
+            chapter,
+            CancellationToken(),
+          ),
+          body,
+        );
+        expect(requests, isEmpty);
+
+        await services.settings.update({'filterAdult': false});
+        for (final item in restricted) {
+          expect(bookCategoryAllowed(services.contentPolicy, item), isTrue);
+          expect(services.books.bookAllowed(book(item.title)), isTrue);
+        }
+        final unfiltered = await services.books.categories(
+          source.kind,
+          source.id,
+          CancellationToken(),
+        );
+        expect(
+          unfiltered.map((item) => item.title).toSet(),
+          containsAll(adultTitles),
+        );
+        expect(requests, isEmpty);
+      });
+    },
+  );
+
+  test('composite labels retain boundaries and adjacent warnings', () async {
+    await _withServices((services, requests) async {
+      for (final value in [
+        '不限·高H',
+        '連載·高H',
+        '完結·高H',
+        '校园.高H',
+        '校园．高H',
+        '类型：高H',
+        '言情 H文',
+        'H文 言情',
+        '校园 · 高H',
+        '玄幻 H小说',
+        'BL 高H',
+        '都市|激情H文',
+        '校园·情欲',
+        '标签 强奸',
+        '反对 强奸 · 高H',
+        '禁止 高H 情欲',
+        '反对,高H',
+        '反对,强奸',
+      ]) {
+        expect(
+          bookCategoryTextAllowed(services.contentPolicy, value),
+          isFalse,
+          reason: value,
+        );
+      }
+      for (final value in [
+        'H.G.威尔斯',
+        'H·G·威尔斯',
+        'HTML5',
+        'HJ文库',
+        'H5',
+        'PHP文化',
+        'https://example.com/docs/HTML5',
+        '普通文本：校园',
+        '未满十八岁禁止访问',
+        'BL',
+        '耽美',
+        '都市言情',
+        '反对 H文',
+        '禁止 高H',
+        '禁止 高 H',
+        '反对 强奸',
+        '反对强奸',
+        '反对 情欲',
+        '强奸法律研究',
+      ]) {
+        expect(
+          bookCategoryTextAllowed(services.contentPolicy, value),
+          isTrue,
+          reason: value,
+        );
+      }
+      expect(
+        bookCategoryTextAllowed(services.contentPolicy, '普通', '类型：高H'),
+        isFalse,
+      );
+      expect(
+        bookCategoryTextAllowed(services.contentPolicy, '普通', '反对 H文'),
+        isTrue,
+      );
+      expect(
+        bookCategoryTextAllowed(services.contentPolicy, '高H', '反对'),
+        isFalse,
+      );
+      expect(services.contentPolicy.textAllowed('这一章讨论 H文 标签的编辑规范。'), isTrue);
+      await services.settings.update({'filterAdult': false});
+      for (final value in ['校园.高H', '类型：高H', '言情 H文', '校园·情欲']) {
+        expect(
+          bookCategoryTextAllowed(services.contentPolicy, value),
+          isTrue,
+          reason: value,
+        );
+      }
+      expect(requests, isEmpty);
+    });
+  });
+
+  test(
     'explicit erotic and sexual-violence categories are locally restricted',
     () async {
       await _withServices((services, requests) async {
@@ -347,7 +536,9 @@ Future<List> _catalogRecords() async {
 Future<void> _withServices(
   Future<void> Function(AppServices, List<Uri>) body,
 ) async {
+  final tempBase = await Directory.systemTemp.resolveSymbolicLinks();
   final root = await Directory.systemTemp.createTemp('book-h-category-');
+  final originalRoot = await root.resolveSymbolicLinks();
   final requests = <Uri>[];
   try {
     await HttpOverrides.runZoned(() async {
@@ -365,6 +556,16 @@ Future<void> _withServices(
       }
     }, createHttpClient: (_) => _NoNetwork(requests));
   } finally {
+    final actualRoot = await root.resolveSymbolicLinks();
+    if (path.normalize(actualRoot).toLowerCase() !=
+            path.normalize(originalRoot).toLowerCase() ||
+        path.normalize(path.dirname(actualRoot)).toLowerCase() !=
+            path.normalize(tempBase).toLowerCase() ||
+        !path.basename(actualRoot).startsWith('book-h-category-')) {
+      throw StateError(
+        'Temporary category directory escaped its expected parent',
+      );
+    }
     await root.delete(recursive: true);
   }
 }

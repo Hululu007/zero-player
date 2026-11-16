@@ -26,6 +26,7 @@ enum BookSiteFinding {
   timeout,
   networkError,
   unsupported,
+  sourceChanged,
 }
 
 enum BookSiteRedirect { none, sameSite, external }
@@ -68,6 +69,7 @@ final class BookSiteInspection {
             BookSiteFinding.timeout => '连接超时，未确认',
             BookSiteFinding.networkError => '连接失败，未确认',
             BookSiteFinding.unsupported => '非可检查网页或编码不支持，未确认',
+            BookSiteFinding.sourceChanged => '来源或检查记录需重新确认，待重新抽查',
           };
     final parts = [signal];
     if (finding != BookSiteFinding.sameSiteRedirect &&
@@ -82,12 +84,12 @@ final class BookSiteInspection {
       }
     }
     if (scriptReview.clues.contains(BookPageScriptClue.crossOriginRedirect)) {
-      parts.add('内联脚本含跨源跳转写法，待复核');
+      parts.add('本次内联脚本含跨源跳转写法，待复核');
     }
     if (scriptReview.clues.contains(
       BookPageScriptClue.decodedDynamicEvaluation,
     )) {
-      parts.add('内联脚本含解码后动态求值写法，待复核');
+      parts.add('本次内联脚本含解码后动态求值写法，待复核');
     }
     parts.add(switch (scriptReview.coverage) {
       BookPageScriptCoverage.notChecked => '页面脚本未检查',

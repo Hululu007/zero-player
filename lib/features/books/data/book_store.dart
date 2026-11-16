@@ -8,6 +8,7 @@ import '../domain/book_download_plan.dart';
 import 'book_source_links.dart';
 import 'book_mixed_content.dart';
 import 'book_download_evidence.dart';
+import 'book_site_revision.dart';
 
 final class ProvenBookText {
   const ProvenBookText(this.body, this.evidence, this.segments);
@@ -120,6 +121,7 @@ final class BookShelfEntry {
 final class BookStore {
   const BookStore(this.db);
   final AppDatabase db;
+  BookSiteRevisions get siteRevisions => BookSiteRevisions(db);
 
   Future<Object?> read(String key) async {
     final row = (await db.rows('SELECT value FROM app_meta WHERE key=?', [
@@ -315,12 +317,28 @@ final class BookStore {
       if (changes.containsKey('source')) {
         await db.write(_bumpEpochSql, [_contentEpochKey(source.id)]);
       }
+      final state = old is Map ? old : const {};
+      final oldEnabled = state['enabled'] is bool
+          ? state['enabled']
+          : source.builtin && source.defaultEnabled;
+      final changed =
+          (changes.containsKey('source') &&
+              jsonEncode(changes['source']) !=
+                  jsonEncode(state['source'] ?? source.toJson())) ||
+          (changes.containsKey('enabled') &&
+              changes['enabled'] != oldEnabled) ||
+          (changes.containsKey('removed') &&
+              changes['removed'] != (state['removed'] == true)) ||
+          (changes.containsKey('group') &&
+              changes['group'] != (state['group'] ?? source.group));
+      if (changed) await siteRevisions.change(source.id);
       await write(key, {if (old is Map) ...old, ...changes});
     }, tables: {'app_meta'});
   }
 
   Future<void> deleteSource(BookSource source) => db.atomic(() async {
     await db.write(_bumpEpochSql, [_contentEpochKey(source.id)]);
+    await siteRevisions.change(source.id);
     if (source.builtin) {
       await write('books_source:${source.id}', {'removed': true});
     } else {
@@ -340,28 +358,52 @@ final class BookStore {
     return value is Map ? value.keys.whereType<String>().toSet() : {};
   }
 
-  Future<void> setSourcesEnabled(Set<String> ids, bool enabled) async {
-    final rows = await db.rows(
-      "SELECT key,value FROM app_meta WHERE key GLOB 'books_source:*'",
-    );
-    final states = {for (final row in rows) row['key']: row['value'] as String};
-    await db.batch((batch) {
-      for (final id in ids) {
-        final key = 'books_source:$id';
-        final old = states[key];
-        final state = old == null
-            ? <String, Object?>{}
-            : jsonDecode(old) as Map;
-        batch.customStatement(
-          'INSERT OR REPLACE INTO app_meta(key,value) VALUES(?,?)',
-          [
-            key,
-            jsonEncode({...state, 'enabled': enabled}),
-          ],
+  Future<void> setSourcesEnabled(Set<String> ids, bool enabled) =>
+      db.atomic(() async {
+        final rows = await db.rows(
+          "SELECT key,value FROM app_meta WHERE key GLOB 'books_source:*'",
         );
-      }
-    });
-  }
+        final states = {
+          for (final row in rows) row['key']: row['value'] as String,
+        };
+        await db.batch((batch) {
+          for (final id in ids) {
+            final key = 'books_source:$id';
+            final old = states[key];
+            final state = old == null
+                ? <String, Object?>{}
+                : jsonDecode(old) as Map;
+            if (state['enabled'] != enabled) {
+              batch.customStatement(BookSiteRevisions.upsertSql, [
+                BookSiteRevisions.key(id),
+                jsonEncode(BookSiteRevisions.newToken()),
+              ]);
+            }
+            batch.customStatement(
+              'INSERT OR REPLACE INTO app_meta(key,value) VALUES(?,?)',
+              [
+                key,
+                jsonEncode({...state, 'enabled': enabled}),
+              ],
+            );
+          }
+        });
+      }, tables: {'app_meta'});
+
+  /// Restoring a removed built-in is a source configuration change, even
+  /// though the rule itself is supplied by the application bundle.
+  Future<void> restoreBuiltinSource(BookSource source) => db.atomic(() async {
+    final key = 'books_source:${source.id}';
+    final old = await read(key);
+    final state = old is Map ? old : const {};
+    final oldEnabled = state['enabled'] is bool
+        ? state['enabled']
+        : source.defaultEnabled;
+    if (state['removed'] == true || oldEnabled != true) {
+      await siteRevisions.change(source.id);
+    }
+    await write(key, {...state, 'enabled': true, 'removed': false});
+  }, tables: {'app_meta'});
 
   Future<void> writeImported(
     List<({BookSource source, BookSourceEntry? previous})> entries, {
@@ -370,6 +412,10 @@ final class BookStore {
   }) => db.batch((batch) {
     for (final (:source, :previous) in entries) {
       batch.customStatement(_bumpEpochSql, [_contentEpochKey(source.id)]);
+      batch.customStatement(BookSiteRevisions.upsertSql, [
+        BookSiteRevisions.key(source.id),
+        jsonEncode(BookSiteRevisions.newToken()),
+      ]);
       batch.customStatement(
         'INSERT OR REPLACE INTO app_meta(key,value) VALUES(?,?)',
         [

@@ -36,6 +36,7 @@ import 'book_mixed_content.dart';
 import 'book_request_guard.dart';
 import 'book_site_check.dart';
 import 'book_site_inspection.dart';
+import 'book_site_revision.dart';
 import 'book_source_risk_store.dart';
 import 'book_source_links.dart';
 import 'book_store.dart';
@@ -747,14 +748,8 @@ final class BooksRepository {
             !sourceAllowed(source)) {
           continue;
         }
-        final key = 'books_source:${source.id}';
-        final old = await store.read(key);
         policy.supervision.require(SensitiveOperation.channels);
-        await store.write(key, {
-          if (old is Map) ...old,
-          'enabled': true,
-          'removed': false,
-        });
+        await store.restoreBuiltinSource(source);
       }
       policy.supervision.require(SensitiveOperation.channels);
     }, tables: {'app_meta'});

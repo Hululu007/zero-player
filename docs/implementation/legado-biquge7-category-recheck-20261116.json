@@ -1,0 +1,536 @@
+{
+  "schema_version": 1,
+  "purpose": "Category-metadata comparison for two selected bundled IDs plus a separate failed search-path control.",
+  "inputs": {
+    "historical_commit": "42aa119be000a20f0220f8c35a17530c449e0ee7",
+    "archive_path": "assets/catalogs/books/legado/catalog.json.bz2",
+    "archive_sha256": "012a0e0d6e6adc8d303c32b578510e14b562088b3e965cb01a1a647b5e7e034d",
+    "historical_files": {
+      "ledger": {
+        "path": "docs/implementation/legado-source-ledger-20261115.json",
+        "sha256": "6877424859528319f67848af741f07ccff66bde782905fd2d1e0712c53e5f0dc"
+      },
+      "head": {
+        "path": "docs/implementation/legado-unresolved-head-later-20261116.json",
+        "sha256": "3024ff03581b0de4b286601188974e05cd8f7cf602b8af49e234ce054d2a6ebd"
+      },
+      "prior_pilot": {
+        "path": "docs/implementation/legado-sfwx-repair-20261116.json",
+        "sha256": "2b9679fbb2f5b823af0cd10ff771862e04a618fb839c7931842ad921f211b6c0"
+      }
+    }
+  },
+  "sources": [
+    {
+      "index": 828,
+      "id": "03ce53f0b6632695058a7553e513b103e5aae06c34979992769d32e06af05fa8",
+      "host": "www.biquge7.xyz",
+      "source_key": "biquge7.xyz#%23@%E9%81%87%E7%9F%A5",
+      "kind": "text",
+      "format": "html",
+      "endpoint_sha256": "4612e32e3343d43fbc6f53f7c2b4703261351f848517b0379e055b5c8de0c8db",
+      "raw_record_canonical_sha256": "46338029adcb5c777844e87045e6f22e34fb209e97557464724df2a0ab8a87f5",
+      "old_legado_canonical_sha256": "0a48023c241f6f1f78c6864403ae3fa68db2f8b877be0fa3981b3fd5cd1f8914",
+      "raw_field_sha256": {
+        "searchUrl": "4ac247a22b67e9ff2943e3779859b27fa4f7bc5c7e61d0adde6029fea40b30fa",
+        "ruleSearch": "b2e140220987fdb8398dacbc6491868a5c096b1be9747457605592e0cf46302e",
+        "ruleBookInfo": "a5c1159b7f72f43f8586c07a900e01d8ca41e697d43863891554d15eae9f8a87",
+        "ruleToc": "2675e3dad8d95238cdf3e74c44d0f1f3a7cfdef01f087f9d053b8f35441063d7",
+        "ruleContent": "5cff36151229332a20c7365323cc6acd0a4a6c3f06afee75c3d3e1c2070030f3"
+      },
+      "prior_head_status": 200,
+      "prior_head_observed_at_utc": "2026-11-15T20:37:07.950571+00:00"
+    },
+    {
+      "index": 3002,
+      "id": "ad35798f5b42bac39ba862133be63224081484921a86a8e8e6b5570e65ca63a3",
+      "host": "www.biquge7.xyz",
+      "source_key": "",
+      "kind": "text",
+      "format": "html",
+      "endpoint_sha256": "4612e32e3343d43fbc6f53f7c2b4703261351f848517b0379e055b5c8de0c8db",
+      "raw_record_canonical_sha256": "9a8290e740b7356b4a0d90fd2bd1af1ec580033f7656581db3a21985ed2ce2a6",
+      "old_legado_canonical_sha256": "e0768b6f273fc63bb1f09fc7bfb2514b749a3d15f0eb934bf797c1f6cdfac7cf",
+      "raw_field_sha256": {
+        "searchUrl": "4ac247a22b67e9ff2943e3779859b27fa4f7bc5c7e61d0adde6029fea40b30fa",
+        "ruleSearch": "b2e140220987fdb8398dacbc6491868a5c096b1be9747457605592e0cf46302e",
+        "ruleBookInfo": "50f5d51a4d22b880929f00f73bc0558478a6b580e0676eb6d97045660823969a",
+        "ruleToc": "2675e3dad8d95238cdf3e74c44d0f1f3a7cfdef01f087f9d053b8f35441063d7",
+        "ruleContent": "5cff36151229332a20c7365323cc6acd0a4a6c3f06afee75c3d3e1c2070030f3"
+      },
+      "prior_head_status": 200,
+      "prior_head_observed_at_utc": "2026-11-15T20:37:07.950571+00:00"
+    },
+    {
+      "index": 2578,
+      "id": "926a302f72881a7c6488555dfd0779da9db89c7f1ae35fbb14fbaaa9846caa43",
+      "host": "www.b520.cc",
+      "source_key": "",
+      "kind": "text",
+      "format": "html",
+      "endpoint_sha256": "4d246c49c27293c0f462bf2bfdeac89adbfdb494de7013a80f8412b7653f108b",
+      "raw_record_canonical_sha256": "c913ab7769be5af5e210ba681cc47eb8c71dc7fa1269dd444fa665efbd24d0a3",
+      "old_legado_canonical_sha256": "fc3ddc6cb8e9c568200327d1d360ba7fad42e88a698abb18b57147f8c536b2f8",
+      "raw_field_sha256": {
+        "searchUrl": "5285357d2748055044d43a100d5c985761f24eb706ec8b0caa839648fecdf588",
+        "ruleSearch": "bc9eabfba1bf03a897cbba7887bb0c421c4cde4bae1cdbd6bfab78579d73298b",
+        "ruleBookInfo": "6007fc39896a56754ffa5d45ffff56aa8f2b587c0165f75a304f7df18fd61b3e",
+        "ruleToc": "b8f3a8ee52e899323da78a700f50ac7215a5521729f429d6bebf4232ab03e07b",
+        "ruleContent": "99a7872a7427a8eb66bf15e5c705676fc8d959e73fc01facbb46b120fd342869"
+      },
+      "prior_head_status": 200,
+      "prior_head_observed_at_utc": "2026-11-15T20:37:03.618686+00:00"
+    }
+  ],
+  "method": {
+    "transport": "Anonymous same-host HTTPS GET; public DNS answers validated and numeric address pinned, hostname TLS checked.",
+    "redirects_followed": false,
+    "request_deadline_seconds": 10,
+    "body_limit_bytes": 262144,
+    "source_js_executed": false,
+    "page_js_executed": false,
+    "credentials_sent": false,
+    "posts_sent": false,
+    "subresources_requested": false,
+    "declarative_legado_engine_evaluated": true,
+    "bodies_saved": false,
+    "work_identities_saved": false,
+    "url_queries_or_tokens_saved": false,
+    "ip_addresses_saved": false,
+    "temporary_probe_and_redacted_intermediates_retained": false,
+    "collector_note": "Distinct synthetic public-domain work searches; work names, authors, URLs and query values omitted."
+  },
+  "observations": {
+    "record_828_work_a": {
+      "requests": [
+        {
+          "id": "03ce53f0b6632695058a7553e513b103e5aae06c34979992769d32e06af05fa8",
+          "host": "www.biquge7.xyz",
+          "stage": "books",
+          "observed_at_utc": "2026-11-15T22:53:38.588973+00:00",
+          "timeout_seconds": 10,
+          "sample_limit_bytes": 262144,
+          "has_query": true,
+          "status": 200,
+          "content_type": "text/html; charset=utf-8",
+          "content_encoding": "",
+          "sample_bytes": 23057,
+          "sample_sha256": "fd8414d1ee5421ba9582bbcb0c230fd280b37e55cce77a4f21fcfe43dcca018a",
+          "truncated": false
+        },
+        {
+          "id": "03ce53f0b6632695058a7553e513b103e5aae06c34979992769d32e06af05fa8",
+          "host": "www.biquge7.xyz",
+          "stage": "details",
+          "observed_at_utc": "2026-11-15T22:54:02.349131+00:00",
+          "timeout_seconds": 10,
+          "sample_limit_bytes": 262144,
+          "has_query": false,
+          "status": 200,
+          "content_type": "text/html; charset=utf-8",
+          "content_encoding": "",
+          "sample_bytes": 30739,
+          "sample_sha256": "ffb13260f76c5c75704a96ec4c27fa39da8c63fd144962006fca1a3dee5bc1cf",
+          "truncated": false
+        },
+        {
+          "id": "03ce53f0b6632695058a7553e513b103e5aae06c34979992769d32e06af05fa8",
+          "host": "www.biquge7.xyz",
+          "stage": "content",
+          "observed_at_utc": "2026-11-15T22:54:12.546551+00:00",
+          "timeout_seconds": 10,
+          "sample_limit_bytes": 262144,
+          "has_query": false,
+          "status": 200,
+          "content_type": "text/html; charset=utf-8",
+          "content_encoding": "",
+          "sample_bytes": 23232,
+          "sample_sha256": "eb4730e80b28a4164449c7b9d076c813ec243bedc31b3a509892d1079c058b9c",
+          "truncated": false
+        }
+      ],
+      "engine_results": [
+        {
+          "id": "03ce53f0b6632695058a7553e513b103e5aae06c34979992769d32e06af05fa8",
+          "stage": "books",
+          "book_count": 14,
+          "same_host": 14,
+          "matching_title_and_author_count": 1,
+          "book_request_empty": true
+        },
+        {
+          "id": "03ce53f0b6632695058a7553e513b103e5aae06c34979992769d32e06af05fa8",
+          "stage": "details",
+          "candidate": false,
+          "books": 1,
+          "actual_title_rule_matches": true,
+          "author_matches": true,
+          "category_present": false
+        },
+        {
+          "id": "03ce53f0b6632695058a7553e513b103e5aae06c34979992769d32e06af05fa8",
+          "stage": "toc",
+          "candidate": false,
+          "chapter_count": 120,
+          "chapter_request_empty": true,
+          "next_toc_count": 0
+        },
+        {
+          "id": "03ce53f0b6632695058a7553e513b103e5aae06c34979992769d32e06af05fa8",
+          "stage": "content",
+          "candidate": false,
+          "content_utf16_code_units": 4656,
+          "content_sha256": "49cbd374cb5eed296e5c1f95d046f1309845466d5a586dde09869113bb28a470",
+          "next_content_count": 0,
+          "next_matches_second_chapter": false
+        }
+      ]
+    },
+    "record_828_work_b": {
+      "requests": [
+        {
+          "id": "03ce53f0b6632695058a7553e513b103e5aae06c34979992769d32e06af05fa8",
+          "host": "www.biquge7.xyz",
+          "stage": "books",
+          "observed_at_utc": "2026-11-15T22:55:18.472848+00:00",
+          "timeout_seconds": 10,
+          "sample_limit_bytes": 262144,
+          "has_query": true,
+          "status": 200,
+          "content_type": "text/html; charset=utf-8",
+          "content_encoding": "",
+          "sample_bytes": 14279,
+          "sample_sha256": "eb83a163013f4353c2f64994630751e96a84187a654cfbd6d435c92459da9d52",
+          "truncated": false
+        },
+        {
+          "id": "03ce53f0b6632695058a7553e513b103e5aae06c34979992769d32e06af05fa8",
+          "host": "www.biquge7.xyz",
+          "stage": "details",
+          "observed_at_utc": "2026-11-15T22:55:41.336335+00:00",
+          "timeout_seconds": 10,
+          "sample_limit_bytes": 262144,
+          "has_query": false,
+          "status": 200,
+          "content_type": "text/html; charset=utf-8",
+          "content_encoding": "",
+          "sample_bytes": 32155,
+          "sample_sha256": "716f5b7c4186322db4cc55ab0a8148572c25a3c9b88ff0b0f03f7d9bfeb4bffe",
+          "truncated": false
+        },
+        {
+          "id": "03ce53f0b6632695058a7553e513b103e5aae06c34979992769d32e06af05fa8",
+          "host": "www.biquge7.xyz",
+          "stage": "content",
+          "observed_at_utc": "2026-11-15T22:55:51.787832+00:00",
+          "timeout_seconds": 10,
+          "sample_limit_bytes": 262144,
+          "has_query": false,
+          "status": 200,
+          "content_type": "text/html; charset=utf-8",
+          "content_encoding": "",
+          "sample_bytes": 29987,
+          "sample_sha256": "b72105cab5321ddfd8f84963c108fe59732fa41718790e561ed4e46818d42c1f",
+          "truncated": false
+        }
+      ],
+      "engine_results": [
+        {
+          "id": "03ce53f0b6632695058a7553e513b103e5aae06c34979992769d32e06af05fa8",
+          "stage": "books",
+          "book_count": 7,
+          "same_host": 7,
+          "matching_title_and_author_count": 1,
+          "book_request_empty": true
+        },
+        {
+          "id": "03ce53f0b6632695058a7553e513b103e5aae06c34979992769d32e06af05fa8",
+          "stage": "details",
+          "candidate": false,
+          "books": 1,
+          "actual_title_rule_matches": true,
+          "author_matches": true,
+          "category_present": false
+        },
+        {
+          "id": "03ce53f0b6632695058a7553e513b103e5aae06c34979992769d32e06af05fa8",
+          "stage": "toc",
+          "candidate": false,
+          "chapter_count": 120,
+          "chapter_request_empty": true,
+          "next_toc_count": 0
+        },
+        {
+          "id": "03ce53f0b6632695058a7553e513b103e5aae06c34979992769d32e06af05fa8",
+          "stage": "content",
+          "candidate": false,
+          "content_utf16_code_units": 6863,
+          "content_sha256": "44974867ee67574b24cd36c2a806a4cc5b6f70b053b35f0ce26c20f70204b374",
+          "next_content_count": 0,
+          "next_matches_second_chapter": false
+        }
+      ]
+    },
+    "shared_category_check": {
+      "requests": [
+        {
+          "id": "03ce53f0b6632695058a7553e513b103e5aae06c34979992769d32e06af05fa8",
+          "host": "www.biquge7.xyz",
+          "stage": "books",
+          "observed_at_utc": "2026-11-15T22:57:10.007522+00:00",
+          "timeout_seconds": 10,
+          "sample_limit_bytes": 262144,
+          "has_query": true,
+          "status": 200,
+          "content_type": "text/html; charset=utf-8",
+          "content_encoding": "",
+          "sample_bytes": 23057,
+          "sample_sha256": "e257962c62c3b6b38ef883a59e95d623bcde68711e655d37051e9cd29c321875",
+          "truncated": false
+        },
+        {
+          "id": "03ce53f0b6632695058a7553e513b103e5aae06c34979992769d32e06af05fa8",
+          "host": "www.biquge7.xyz",
+          "stage": "details",
+          "observed_at_utc": "2026-11-15T22:57:16.000898+00:00",
+          "timeout_seconds": 10,
+          "sample_limit_bytes": 262144,
+          "has_query": false,
+          "status": 200,
+          "content_type": "text/html; charset=utf-8",
+          "content_encoding": "",
+          "sample_bytes": 30739,
+          "sample_sha256": "e9063bfdc8c134f8174d15302ea3213fa17bac21ed66f4f91ccf42e4906b4559",
+          "truncated": false
+        }
+      ],
+      "engine_results": [
+        {
+          "id": "03ce53f0b6632695058a7553e513b103e5aae06c34979992769d32e06af05fa8",
+          "stage": "details",
+          "candidate": false,
+          "books": 1,
+          "actual_title_rule_matches": true,
+          "author_matches": true,
+          "category_present": false,
+          "category_meta_count": 1,
+          "category_matches_meta": false
+        },
+        {
+          "id": "03ce53f0b6632695058a7553e513b103e5aae06c34979992769d32e06af05fa8",
+          "stage": "details",
+          "candidate": true,
+          "books": 1,
+          "actual_title_rule_matches": true,
+          "author_matches": true,
+          "category_present": true,
+          "category_meta_count": 1,
+          "category_matches_meta": true
+        },
+        {
+          "id": "ad35798f5b42bac39ba862133be63224081484921a86a8e8e6b5570e65ca63a3",
+          "stage": "details",
+          "candidate": false,
+          "books": 1,
+          "actual_title_rule_matches": true,
+          "author_matches": true,
+          "category_present": false,
+          "category_meta_count": 1,
+          "category_matches_meta": false
+        },
+        {
+          "id": "ad35798f5b42bac39ba862133be63224081484921a86a8e8e6b5570e65ca63a3",
+          "stage": "details",
+          "candidate": true,
+          "books": 1,
+          "actual_title_rule_matches": true,
+          "author_matches": true,
+          "category_present": true,
+          "category_meta_count": 1,
+          "category_matches_meta": true
+        },
+        {
+          "id": "03ce53f0b6632695058a7553e513b103e5aae06c34979992769d32e06af05fa8",
+          "stage": "details",
+          "candidate": false,
+          "books": 1,
+          "actual_title_rule_matches": true,
+          "author_matches": true,
+          "category_present": false,
+          "category_meta_count": 1,
+          "category_matches_meta": false,
+          "synthetic_label": "restricted_label_a"
+        },
+        {
+          "id": "03ce53f0b6632695058a7553e513b103e5aae06c34979992769d32e06af05fa8",
+          "stage": "details",
+          "candidate": true,
+          "books": 1,
+          "actual_title_rule_matches": true,
+          "author_matches": true,
+          "category_present": true,
+          "category_meta_count": 1,
+          "category_matches_meta": true,
+          "synthetic_label": "restricted_label_a"
+        },
+        {
+          "id": "ad35798f5b42bac39ba862133be63224081484921a86a8e8e6b5570e65ca63a3",
+          "stage": "details",
+          "candidate": false,
+          "books": 1,
+          "actual_title_rule_matches": true,
+          "author_matches": true,
+          "category_present": false,
+          "category_meta_count": 1,
+          "category_matches_meta": false,
+          "synthetic_label": "restricted_label_a"
+        },
+        {
+          "id": "ad35798f5b42bac39ba862133be63224081484921a86a8e8e6b5570e65ca63a3",
+          "stage": "details",
+          "candidate": true,
+          "books": 1,
+          "actual_title_rule_matches": true,
+          "author_matches": true,
+          "category_present": true,
+          "category_meta_count": 1,
+          "category_matches_meta": true,
+          "synthetic_label": "restricted_label_a"
+        },
+        {
+          "id": "03ce53f0b6632695058a7553e513b103e5aae06c34979992769d32e06af05fa8",
+          "stage": "details",
+          "candidate": false,
+          "books": 1,
+          "actual_title_rule_matches": true,
+          "author_matches": true,
+          "category_present": false,
+          "category_meta_count": 1,
+          "category_matches_meta": false,
+          "synthetic_label": "restricted_label_b"
+        },
+        {
+          "id": "03ce53f0b6632695058a7553e513b103e5aae06c34979992769d32e06af05fa8",
+          "stage": "details",
+          "candidate": true,
+          "books": 1,
+          "actual_title_rule_matches": true,
+          "author_matches": true,
+          "category_present": true,
+          "category_meta_count": 1,
+          "category_matches_meta": true,
+          "synthetic_label": "restricted_label_b"
+        },
+        {
+          "id": "ad35798f5b42bac39ba862133be63224081484921a86a8e8e6b5570e65ca63a3",
+          "stage": "details",
+          "candidate": false,
+          "books": 1,
+          "actual_title_rule_matches": true,
+          "author_matches": true,
+          "category_present": false,
+          "category_meta_count": 1,
+          "category_matches_meta": false,
+          "synthetic_label": "restricted_label_b"
+        },
+        {
+          "id": "ad35798f5b42bac39ba862133be63224081484921a86a8e8e6b5570e65ca63a3",
+          "stage": "details",
+          "candidate": true,
+          "books": 1,
+          "actual_title_rule_matches": true,
+          "author_matches": true,
+          "category_present": true,
+          "category_meta_count": 1,
+          "category_matches_meta": true,
+          "synthetic_label": "restricted_label_b"
+        },
+        {
+          "id": "03ce53f0b6632695058a7553e513b103e5aae06c34979992769d32e06af05fa8",
+          "stage": "details",
+          "candidate": false,
+          "books": 1,
+          "actual_title_rule_matches": true,
+          "author_matches": true,
+          "category_present": false,
+          "category_meta_count": 1,
+          "category_matches_meta": false,
+          "synthetic_label": "ordinary_label"
+        },
+        {
+          "id": "03ce53f0b6632695058a7553e513b103e5aae06c34979992769d32e06af05fa8",
+          "stage": "details",
+          "candidate": true,
+          "books": 1,
+          "actual_title_rule_matches": true,
+          "author_matches": true,
+          "category_present": true,
+          "category_meta_count": 1,
+          "category_matches_meta": true,
+          "synthetic_label": "ordinary_label"
+        },
+        {
+          "id": "ad35798f5b42bac39ba862133be63224081484921a86a8e8e6b5570e65ca63a3",
+          "stage": "details",
+          "candidate": false,
+          "books": 1,
+          "actual_title_rule_matches": true,
+          "author_matches": true,
+          "category_present": false,
+          "category_meta_count": 1,
+          "category_matches_meta": false,
+          "synthetic_label": "ordinary_label"
+        },
+        {
+          "id": "ad35798f5b42bac39ba862133be63224081484921a86a8e8e6b5570e65ca63a3",
+          "stage": "details",
+          "candidate": true,
+          "books": 1,
+          "actual_title_rule_matches": true,
+          "author_matches": true,
+          "category_present": true,
+          "category_meta_count": 1,
+          "category_matches_meta": true,
+          "synthetic_label": "ordinary_label"
+        }
+      ],
+      "synthetic_label_mapping": {
+        "restricted_label_a": "高H",
+        "restricted_label_b": "成人小说",
+        "ordinary_label": "普通分类"
+      }
+    },
+    "record_2578_search": {
+      "requests": [
+        {
+          "id": "926a302f72881a7c6488555dfd0779da9db89c7f1ae35fbb14fbaaa9846caa43",
+          "host": "www.b520.cc",
+          "stage": "books",
+          "observed_at_utc": "2026-11-15T22:53:40.089022+00:00",
+          "timeout_seconds": 10,
+          "sample_limit_bytes": 262144,
+          "has_query": true,
+          "status": 404,
+          "content_type": "text/html; charset=iso-8859-1",
+          "content_encoding": ""
+        }
+      ],
+      "engine_results": []
+    },
+    "record_2578_previous_search": {
+      "observed_at_utc": "2026-11-15T21:57:10.249564+00:00",
+      "status": 404,
+      "body_sampled": false
+    }
+  },
+  "limitations": [
+    "Only bounded public samples at these times; HTTP 200 or successful extraction does not establish safety or future availability.",
+    "Page bodies, work identities, URLs, queries, IP addresses and temporary probes/intermediates were not retained; observed HTML and parsing cannot be independently replayed offline.",
+    "All network observations share one environment; transient errors and short-lived changes remain unknown.",
+    "Actual user settings, installed source state, dynamic blacklists and risk database were not examined.",
+    "The two real work samples belong to one source host; synthetic restricted labels are test inputs, not an adult-content determination for the host or samples.",
+    "The two categories were evaluated on the same received detail page; the synthetics were evaluated in the actual Dart Legado engine.",
+    "The earlier and latest 404 concern one search path only, not the whole site, permanent availability or malware.",
+    "Supervision integration regressions are supplied separately and had not been run in Flutter at collection time."
+  ]
+}
