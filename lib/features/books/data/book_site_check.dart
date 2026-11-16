@@ -77,6 +77,9 @@ final class BookSiteCheck {
 
   /// The redirect target was not followed, even when its referring page had clues.
   bool get needsRetry =>
+      inspection.truncated ||
+      inspection.textIncomplete ||
+      inspection.visibilityIncomplete ||
       inspection.redirect != BookSiteRedirect.none ||
       switch (inspection.finding) {
         BookSiteFinding.sameSiteRedirect ||
@@ -187,6 +190,8 @@ final class BookSiteCheck {
     'gamblingRisk': inspection.gamblingRisk,
     'adultRisk': inspection.adultRisk,
     'truncated': inspection.truncated,
+    'textIncomplete': inspection.textIncomplete,
+    'visibilityIncomplete': inspection.visibilityIncomplete,
     'statusCode': inspection.statusCode,
     'redirect': inspection.redirect.name,
     'checkedAt': checkedAt.millisecondsSinceEpoch,
@@ -307,6 +312,10 @@ final class BookSiteCheck {
         gamblingRisk: value['gamblingRisk'] == true,
         adultRisk: value['adultRisk'] == true,
         truncated: value['truncated'] == true,
+        // Older or damaged records cannot establish that the text traversal
+        // covered the whole sample. Revisit them without discarding evidence.
+        textIncomplete: value['textIncomplete'] != false,
+        visibilityIncomplete: value['visibilityIncomplete'] != false,
         statusCode: code is int && code >= 100 && code <= 599 ? code : null,
         redirect: redirect,
         scriptReview: review,

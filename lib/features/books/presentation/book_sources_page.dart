@@ -31,6 +31,7 @@ final class BookSourcesPage extends StatefulWidget {
     required this.services,
     required this.kind,
     this.afterSourceReadForTesting,
+    this.beforeSiteReadForTesting,
   });
   final AppServices services;
   final BookKind kind;
@@ -38,6 +39,8 @@ final class BookSourcesPage extends StatefulWidget {
   /// Allows a test to change policy or source metadata between reads.
   @visibleForTesting
   final Future<void> Function()? afterSourceReadForTesting;
+  @visibleForTesting
+  final Future<void> Function()? beforeSiteReadForTesting;
   @override
   State<BookSourcesPage> createState() => _BookSourcesPageState();
 }
@@ -54,6 +57,7 @@ final class _BookSourcesPageState extends State<BookSourcesPage> {
   late final BookSiteChecks _siteChecks;
   late String _sitePolicySnapshot;
   Map<String, BookSiteCheck> _siteResults = {};
+  bool _siteResultsUnavailable = false;
   String? _siteProgress;
   late final StreamSubscription<void> _sourceChanges;
   Timer? _sourceRefresh;
@@ -91,6 +95,7 @@ final class _BookSourcesPageState extends State<BookSourcesPage> {
     setState(() {
       _entries = [];
       _siteResults = {};
+      _siteResultsUnavailable = false;
       _selected.clear();
     });
     if (!_busy) _queueRefresh();
@@ -156,7 +161,15 @@ final class _BookSourcesPageState extends State<BookSourcesPage> {
       final policy = bookSitePolicySnapshot(_services.contentPolicy);
       final entries = await _services.books.sources(widget.kind);
       await widget.afterSourceReadForTesting?.call();
-      final siteResults = await _siteChecks.load(entries);
+      Map<String, BookSiteCheck>? siteResults;
+      try {
+        await widget.beforeSiteReadForTesting?.call();
+        siteResults = await _siteChecks.load(entries);
+      } catch (_) {
+        // Source and policy reads still have to complete and be revalidated.
+        // A failed metadata read is not evidence that a source was unchecked.
+        siteResults = null;
+      }
       final latest = await _services.books.sources(widget.kind);
       if (!mounted) return;
       if (revision != _sourceRevision ||
@@ -168,7 +181,8 @@ final class _BookSourcesPageState extends State<BookSourcesPage> {
       final allowed = latest.where(_services.books.sourceEntryAllowed).toList();
       setState(() {
         _entries = allowed;
-        _siteResults = siteResults;
+        _siteResults = siteResults ?? {};
+        _siteResultsUnavailable = siteResults == null;
       });
       return;
     }
@@ -176,6 +190,7 @@ final class _BookSourcesPageState extends State<BookSourcesPage> {
       setState(() {
         _entries = [];
         _siteResults = {};
+        _siteResultsUnavailable = false;
       });
       _queueRefresh();
     }
@@ -825,7 +840,7 @@ final class _BookSourcesPageState extends State<BookSourcesPage> {
         padding: EdgeInsets.symmetric(horizontal: 16),
         child: Text(
           '启用后台检测时，每 30 分钟抽查最多 20 个已启用源；'
-          '已采样页面 7 天复查；未确认结果的重试间隔从 30 分钟递增至 24 小时，排队可能更久。'
+          '完整样本 7 天复查；未确认结果的重试间隔从 30 分钟递增至 24 小时（含文字、响应或样式可见性未确认），排队可能更久。'
           '监管期间仅检查策略允许的可信内置文字源，不检查外部书源。'
           '只查首页部分静态文字、跳转和内联脚本写法，不执行网页脚本，也不验证解析、木马或安全性。'
           '网页脚本线索、来源规则“动态求值”和历史检出仅供复核，不代表恶意或安全。',
@@ -945,7 +960,14 @@ final class _BookSourcesPageState extends State<BookSourcesPage> {
           if (_selecting) _selectionTools(list),
           Expanded(
             child: list.isEmpty
-                ? const Center(child: Text('没有符合条件的来源'))
+                ? Center(
+                    child: Text(
+                      _siteResultsUnavailable &&
+                              (_pageScriptClues || _saleClues)
+                          ? '网页抽查记录读取失败，无法筛选，请重试'
+                          : '没有符合条件的来源',
+                    ),
+                  )
                 : ListView.builder(
                     itemCount: list.length,
                     itemBuilder: (_, index) => _tile(list[index]),
@@ -1107,6 +1129,8 @@ final class _BookSourcesPageState extends State<BookSourcesPage> {
           if (entry.health.isNotEmpty) '解析：${entry.health}',
           if (siteCheck != null)
             '网页：${siteCheck.inspection.label} · ${siteCheck.inspection.finding == BookSiteFinding.sourceChanged ? '上次检查于 ' : ''}${_siteTime(siteCheck.checkedAt)}${siteCheck.isDue(DateTime.now()) ? '（已过期）' : ''}',
+          if (siteCheck == null)
+            _siteResultsUnavailable ? '网页：抽查记录读取失败，请重试' : '网页：无可用抽查记录，待检查',
           if (siteCheck != null)
             for (final clue in siteCheck.historicalScriptClues.entries)
               '历史网页脚本待复核：${_scriptClueLabel(clue.key)}（上次发现 ${_siteTime(clue.value)}）',

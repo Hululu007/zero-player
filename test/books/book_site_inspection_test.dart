@@ -20,6 +20,280 @@ void main() {
 }
 
 void _contentSignalTests(Uri target) {
+  test('unparsed styles cannot turn hidden content into strong evidence', () {
+    for (final page in [
+      '<style>.old-gate{display:none}</style>'
+          '<div class="old-gate"><form>成人小说，本站仅限年满18岁访问</form></div>'
+          '<p>普通书站</p>',
+      '<link rel="stylesheet" href="/style.css">'
+          '<form>成人小说，本站仅限年满18岁访问</form>',
+      '<div style="opacity:0"><p>在线赌场 立即下注</p></div>',
+    ]) {
+      final result = inspectBookSiteHtml(target, page);
+      expect(result.adultRisk, isFalse, reason: page);
+      expect(result.gamblingRisk, isFalse, reason: page);
+      if (!page.contains('opacity:0')) {
+        expect(result.finding, BookSiteFinding.adultClue);
+        expect(result.visibilityIncomplete, isTrue);
+      }
+    }
+    for (final page in [
+      '<div style="opacity:var(--alpha)">在线赌场 立即下注</div>',
+      '<div aria-hidden="true">在线赌场 立即下注</div>',
+      '<div style="display:none;display:block">在线赌场 立即下注</div>',
+    ]) {
+      final result = inspectBookSiteHtml(target, page);
+      expect(result.finding, BookSiteFinding.gamblingClue);
+      expect(result.gamblingRisk, isFalse);
+      expect(result.visibilityIncomplete, isTrue);
+      expect(result.label, contains('样式可见性未确认'));
+    }
+    final adult = inspectBookSiteHtml(
+      target,
+      '<style>.old-gate{display:none}</style>'
+      '<title>成人小说网</title>'
+      '<meta name="description" content="主要提供成人小说">',
+    );
+    expect(adult.adultRisk, isTrue);
+    expect(adult.visibilityIncomplete, isTrue);
+    final casino = inspectBookSiteHtml(
+      target,
+      '<style>body {font-weight:bold}</style>'
+      '<title>在线赌场</title>'
+      '<meta name="description" content="在线赌场 立即下注">',
+    );
+    expect(casino.gamblingRisk, isTrue);
+    expect(casino.visibilityIncomplete, isTrue);
+    final paired = inspectBookSiteHtml(
+      target,
+      '<title>在线赌场</title>'
+      '<meta name="description" content="立即下注">'
+      '<style>body{font-weight:bold}</style>',
+    );
+    expect(paired.gamblingRisk, isTrue);
+    for (final page in [
+      '<title>在线赌场案例研究</title><meta name="description" content="立即下注">'
+          '<style>body{font-weight:bold}</style>',
+      '<title>在线赌场</title><meta name="description" content="请勿立即下注">'
+          '<style>body{font-weight:bold}</style>',
+    ]) {
+      expect(
+        inspectBookSiteHtml(target, page).gamblingRisk,
+        isFalse,
+        reason: page,
+      );
+    }
+    for (final description in ['研究在线赌场，立即下注的风险', '远离在线赌场，请勿立即下注']) {
+      final warning = inspectBookSiteHtml(
+        target,
+        '<style>body {font-weight:bold}</style>'
+        '<meta name="description" content="$description">',
+      );
+      expect(warning.gamblingRisk, isFalse, reason: description);
+    }
+  });
+
+  test('article prose and local adult warnings remain weak clues', () {
+    final story = inspectBookSiteHtml(
+      target,
+      '<article><h1>侦探小说</h1><p>他看见招牌写着“在线赌场，立即下注”，便转身离开。</p></article>',
+    );
+    expect(story.finding, BookSiteFinding.gamblingClue);
+    expect(story.gamblingRisk, isFalse);
+    final ad = inspectBookSiteHtml(
+      target,
+      '<article><p>他看见“在线赌场，立即下注”，便转身离开。</p></article>'
+      '<p>博彩網站 註冊贈送</p>',
+    );
+    expect(ad.gamblingRisk, isTrue);
+    const articleGate =
+        '<article><p>小说中，他看到招牌写着：成人小说，本站仅限年满18岁访问。</p></article>';
+    final adultStory = inspectBookSiteHtml(target, articleGate);
+    expect(adultStory.finding, BookSiteFinding.adultClue);
+    expect(adultStory.adultRisk, isFalse);
+    final adultEntry = inspectBookSiteHtml(
+      target,
+      '$articleGate<form>成人小说，本站仅限年满18岁访问</form>',
+    );
+    expect(adultEntry.adultRisk, isTrue);
+    final warning = inspectBookSiteHtml(
+      target,
+      '<form><p>本站仅限年满18岁访问</p><p>反对成人小说传播</p></form>',
+    );
+    expect(warning.finding, BookSiteFinding.adultClue);
+    expect(warning.adultRisk, isFalse);
+    final independent = inspectBookSiteHtml(
+      target,
+      '<form><p>反对成人小说传播</p><p>成人小说</p>'
+      '<p>本站仅限年满18岁访问</p></form>',
+    );
+    expect(independent.adultRisk, isTrue);
+    final report = inspectBookSiteHtml(
+      target,
+      '<title>成人小说传播治理研究</title>'
+      '<meta name="description" content="主要提供成人小说传播治理研究资料">',
+    );
+    expect(report.adultRisk, isFalse);
+    final separate = inspectBookSiteHtml(
+      target,
+      '<title>成人小说传播治理研究</title>'
+      '<meta name="description" content="主要提供成人小说传播治理研究资料">'
+      '<form>成人小说，本站仅限年满18岁访问</form>',
+    );
+    expect(separate.adultRisk, isTrue);
+  });
+
+  test('deep entry signals do not combine with unrelated text or prose', () {
+    String deep(String content) => '${'<div>' * 90}$content${'</div>' * 90}';
+    final betting = inspectBookSiteHtml(target, deep('<p>在线赌场 立即下注</p>'));
+    expect(betting.gamblingRisk, isTrue);
+    expect(betting.textIncomplete, isFalse);
+    final adult = inspectBookSiteHtml(
+      target,
+      deep('<form><p>成人小说</p><p>本站仅限年满18岁访问</p></form>'),
+    );
+    expect(adult.adultRisk, isTrue);
+    for (final page in [
+      deep('<p>远离在线赌场，拒绝立即下注。</p>'),
+      deep('<p><span>在线赌场</span><span>立即下注</span></p>'),
+      '<p>在线赌场</p>${deep('<p>立即下注</p>')}',
+      '<article>${deep('<p>在线赌场 立即下注</p>')}</article>',
+      '<div class="chapter-content">${deep('<p>在线赌场 立即下注</p>')}</div>',
+    ]) {
+      expect(
+        inspectBookSiteHtml(target, page).gamblingRisk,
+        isFalse,
+        reason: page,
+      );
+    }
+    final novel = inspectBookSiteHtml(
+      target,
+      '<article>${deep('<form>成人小说，本站仅限年满18岁访问</form>')}</article>',
+    );
+    expect(novel.finding, BookSiteFinding.adultClue);
+    expect(novel.adultRisk, isFalse);
+  });
+
+  test('incomplete text or response retains strong evidence and backs off', () {
+    final source = BookSource.fromJson({
+      'name': '预算样本',
+      'url': target.toString(),
+      'kind': 'text',
+      'format': 'feed',
+    });
+    final sample = inspectBookSiteHtml(
+      target,
+      '<p>在线赌场 立即下注</p>${'<br>' * 16500}<p>未覆盖内容</p>',
+    );
+    expect(sample.gamblingRisk, isTrue);
+    expect(sample.textIncomplete, isTrue);
+    expect(sample.truncated, isFalse);
+    expect(sample.label, contains('成人及博彩文字提取不完整'));
+    final now = DateTime.utc(2026, 11, 16);
+    var check = BookSiteCheck.after(sample, now, source, null);
+    expect(check.needsRetry, isTrue);
+    expect(check.nextDue, now.add(const Duration(minutes: 30)));
+    for (var i = 0; i < 10; i++) {
+      check = BookSiteCheck.after(sample, now, source, check);
+    }
+    expect(check.nextDue, now.add(const Duration(hours: 24)));
+    final saved = check.toJson();
+    final restored = BookSiteCheck.fromJson(saved, source)!;
+    expect(restored.inspection.gamblingRisk, isTrue);
+    expect(restored.inspection.textIncomplete, isTrue);
+    expect(restored.needsRetry, isTrue);
+    final old = BookSiteCheck.fromJson(
+      {...saved}..remove('textIncomplete'),
+      source,
+    )!;
+    expect(old.inspection.textIncomplete, isTrue);
+    final damaged = BookSiteCheck.fromJson({
+      ...saved,
+      'textIncomplete': 'bad',
+    }, source)!;
+    expect(damaged.inspection.textIncomplete, isTrue);
+    final response = BookSiteCheck.after(
+      inspectBookSiteHtml(target, '<p>普通书站</p>', truncated: true),
+      now,
+      source,
+      null,
+    );
+    expect(response.inspection.textIncomplete, isFalse);
+    expect(response.needsRetry, isTrue);
+    final lengthLimit = inspectBookSiteHtml(target, '<p>${'书' * 140000}</p>');
+    expect(lengthLimit.textIncomplete, isTrue);
+  });
+
+  test('warnings and research do not identify a whole adult site', () {
+    for (final page in [
+      '<title>警惕成人小说网站，未成年人防护</title>'
+          '<meta name="description" content="本站讲解如何识别成人小说网站，保护未成年人">',
+      '<title>成人小说网站域名统计报告</title>'
+          '<meta name="description" content="本报告统计成人小说网站域名注册数量">',
+      '<title>成人小说网</title>'
+          '<meta name="description" content="本站主要提供成人小说网站的统计数据">',
+      '<title>成人小说网站域名统计报告</title>'
+          '<meta name="description" content="成人小说网站域名统计报告，提供免费阅读">',
+      '<title>成人小说网</title>'
+          '<meta name="description" content="成人小说网站，提供免费阅读统计报告">',
+    ]) {
+      final result = inspectBookSiteHtml(target, page);
+      expect(result.finding, BookSiteFinding.adultClue, reason: page);
+      expect(result.adultRisk, isFalse, reason: page);
+    }
+    final separate = inspectBookSiteHtml(
+      target,
+      '<title>警惕成人小说网站</title>'
+      '<meta name="description" content="本站讲解如何识别成人小说网站">'
+      '<form><p>成人小说</p><p>本站仅限年满18岁访问</p></form>',
+    );
+    expect(separate.adultRisk, isTrue);
+    final explicit = inspectBookSiteHtml(
+      target,
+      '<title>成人小说网</title>'
+      '<meta name="description" content="本站专属成人小说网站，警惕网络诈骗">',
+    );
+    expect(explicit.adultRisk, isTrue);
+    final named = inspectBookSiteHtml(
+      target,
+      '<title>成人小说网</title>'
+      '<meta name="description" content="成人小说网站，提供免费阅读">',
+    );
+    expect(named.adultRisk, isTrue);
+  });
+
+  test(
+    'clearly hidden and inert gates do not hide an independent visible one',
+    () {
+      for (final wrapper in [
+        '<div style="display:none"><form>成人小说，本站仅限年满18岁访问</form></div>',
+        '<div style="visibility:hidden"><form>成人小说，本站仅限年满18岁访问</form></div>',
+        '<noscript><form>成人小说，本站仅限年满18岁访问</form></noscript>',
+      ]) {
+        final hidden = inspectBookSiteHtml(target, '<p>普通站点</p>$wrapper');
+        expect(hidden.adultRisk, isFalse, reason: wrapper);
+        final separate = inspectBookSiteHtml(
+          target,
+          '$wrapper<form><p>成人小说</p><p>本站仅限年满18岁访问</p></form>',
+        );
+        expect(separate.adultRisk, isTrue, reason: wrapper);
+      }
+      final overridden = inspectBookSiteHtml(
+        target,
+        '<div style="visibility:hidden"><form style="visibility:visible">'
+        '成人小说，本站仅限年满18岁访问</form></div>',
+      );
+      expect(overridden.adultRisk, isTrue);
+      final uncertain = inspectBookSiteHtml(
+        target,
+        '<div style="display:var(--state)">成人小说，本站仅限年满18岁访问</div>'
+        '<form>成人小说，本站仅限年满18岁访问</form>',
+      );
+      expect(uncertain.adultRisk, isTrue);
+      expect(uncertain.visibilityIncomplete, isTrue);
+    },
+  );
+
   test('only independent strong signals trigger automatic markers', () {
     final single = inspectBookSiteHtml(target, '<p>在线赌场</p>');
     expect(single.finding, BookSiteFinding.gamblingClue);
@@ -498,6 +772,78 @@ void _httpResponseTests() {
     expect(result.finding, BookSiteFinding.sampled);
     expect(result.gamblingRisk, isFalse);
   });
+
+  test(
+    'real HTTP deep DOM becomes incomplete without losing prior clues',
+    () async {
+      final page = '${'<div>' * 11000}<p>普通页面</p>${'</div>' * 11000}';
+      expect(utf8.encode(page).length, lessThan(BookSiteInspector.maxBytes));
+      final server = await HttpTestServer.start((request) {
+        request.response.headers.contentType = ContentType.html;
+        request.response.write(page);
+      });
+      final http = MediaHttpClient(allowPrivateNetworks: true);
+      addTearDown(http.close);
+      addTearDown(server.close);
+      final result = await BookSiteInspector(http)
+          .inspectTargetForTesting(server.baseUri, CancellationToken())
+          .timeout(const Duration(seconds: 15));
+      expect(result.truncated, isFalse);
+      expect(result.textIncomplete, isTrue);
+      expect(result.visibilityIncomplete, isTrue);
+      expect(result.scriptReview.coverage.name, 'partial');
+      expect(result.saleReview.coverage.name, 'partial');
+      expect(result.gamblingRisk, isFalse);
+      expect(result.adultRisk, isFalse);
+      expect(server.calls, {'/': 1});
+
+      final root = Uri.parse('https://history.example/');
+      final source = BookSource.fromJson({
+        'name': '历史线索',
+        'url': root.toString(),
+        'kind': 'text',
+        'format': 'feed',
+      });
+      final before = BookSiteCheck.after(
+        inspectBookSiteHtml(
+          root,
+          '<html><body><h1>This domain is for sale</h1>'
+          '<h3>Contact the owner</h3><form></form>'
+          "<script>location.href='https://other.example/'</script>"
+          '</body></html>',
+        ),
+        DateTime.utc(2026, 11, 15),
+        source,
+        null,
+      );
+      expect(before.pendingScriptClues, isNotEmpty);
+      expect(before.pendingSaleClue, isNotNull);
+      final after = BookSiteCheck.after(
+        result,
+        DateTime.utc(2026, 11, 16),
+        source,
+        before,
+      );
+      expect(after.needsRetry, isTrue);
+      expect(after.historicalScriptClues, before.pendingScriptClues);
+      expect(after.historicalSaleClue, before.pendingSaleClue);
+      final restored = BookSiteCheck.fromJson(after.toJson(), source)!;
+      expect(
+        restored.historicalScriptClues.keys,
+        before.pendingScriptClues.keys,
+      );
+      for (final clue in before.pendingScriptClues.keys) {
+        expect(
+          restored.historicalScriptClues[clue]!.millisecondsSinceEpoch,
+          before.pendingScriptClues[clue]!.millisecondsSinceEpoch,
+        );
+      }
+      expect(
+        restored.historicalSaleClue!.millisecondsSinceEpoch,
+        before.pendingSaleClue!.millisecondsSinceEpoch,
+      );
+    },
+  );
 
   test(
     'HTTP errors remain unconfirmed rather than permanent failure',

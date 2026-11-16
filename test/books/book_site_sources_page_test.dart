@@ -16,11 +16,113 @@ import 'package:zero_player/features/books/presentation/book_sources_page.dart';
 import '../../test_support/verified_temp_directory.dart';
 
 void main() {
+  _siteRecordStatusTests();
   _quarantineReviewPageTests();
   _sourceListPolicyRaceTests();
   _ruleCluePageTests();
   _pageScriptClueTests();
   _domainSaleCluePageTests();
+}
+
+void _siteRecordStatusTests() {
+  testWidgets(
+    'source page distinguishes unavailable records from read failures',
+    (tester) async {
+      tester.view.physicalSize = const Size(600, 1000);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+      late VerifiedTempDirectory temp;
+      late AppServices services;
+      final absent = _source('状态测试无记录', 'status-absent.example');
+      final damaged = _source('状态测试坏记录', 'status-damaged.example');
+      final failed = _source('状态测试连接失败', 'status-timeout.example');
+      await tester.runAsync(() async {
+        temp = await VerifiedTempDirectory.create('book-site-status-ui-');
+        services = AppServices.scoped(temp.directory, AppDatabase.memory());
+        await services.supervision.load();
+        await services.settings.load();
+        await _skipCatalogSeed(services);
+        await services.books.importSources([absent, damaged, failed]);
+        await _primeCurrentSample(services, failed);
+        final revision = await services.books.store.siteRevisions.get(
+          failed.id,
+        );
+        final timeout = BookSiteCheck.after(
+          const BookSiteInspection(BookSiteFinding.timeout),
+          DateTime.now(),
+          failed,
+          null,
+          siteRevision: revision,
+        );
+        await services.books.store.write(
+          'books_site_check:${failed.id}',
+          timeout.toJson(),
+        );
+        await services.books.store.write('books_site_check:${damaged.id}', {
+          'bad': true,
+        });
+      });
+      addTearDown(() => _close(tester, services, temp));
+      var failSiteRead = false;
+      await tester.pumpWidget(
+        MaterialApp(
+          home: BookSourcesPage(
+            services: services,
+            kind: BookKind.text,
+            beforeSiteReadForTesting: () async {
+              if (failSiteRead) {
+                throw StateError('controlled local read failure');
+              }
+            },
+          ),
+        ),
+      );
+      await tester.enterText(find.byType(TextField).first, '状态测试');
+      final absentTile = find.widgetWithText(ListTile, absent.name);
+      final damagedTile = find.widgetWithText(ListTile, damaged.name);
+      final failedTile = find.widgetWithText(ListTile, failed.name);
+      Finder status(Finder tile, String text) =>
+          find.descendant(of: tile, matching: find.textContaining(text));
+      await _waitFor(
+        tester,
+        () =>
+            status(absentTile, '无可用抽查记录').evaluate().isNotEmpty &&
+            status(damagedTile, '无可用抽查记录').evaluate().isNotEmpty &&
+            status(failedTile, '连接超时，未确认').evaluate().isNotEmpty,
+      );
+      failSiteRead = true;
+      await tester.runAsync(
+        () => services.books.store.write('site-ui-refresh', true),
+      );
+      await _waitFor(
+        tester,
+        () =>
+            status(absentTile, '抽查记录读取失败，请重试').evaluate().isNotEmpty &&
+            status(failedTile, '抽查记录读取失败，请重试').evaluate().isNotEmpty,
+      );
+      expect(status(absentTile, '无可用抽查记录'), findsNothing);
+      await tester.tap(find.text('网页脚本线索'));
+      await tester.pump();
+      expect(find.text('网页抽查记录读取失败，无法筛选，请重试'), findsOneWidget);
+      expect(find.text('没有符合条件的来源'), findsNothing);
+      await tester.tap(find.text('网页脚本线索'));
+      await tester.pump();
+      failSiteRead = false;
+      await tester.runAsync(
+        () => services.books.store.write('site-ui-refresh', false),
+      );
+      await _waitFor(
+        tester,
+        () =>
+            status(absentTile, '无可用抽查记录').evaluate().isNotEmpty &&
+            status(failedTile, '连接超时，未确认').evaluate().isNotEmpty,
+      );
+      expect(tester.takeException(), isNull);
+    },
+  );
 }
 
 void _domainSaleCluePageTests() {
@@ -381,11 +483,15 @@ void _pageScriptClueTests() {
       ),
     );
     await tester.enterText(find.byType(TextField).first, '网页测试');
-    await _waitFor(
-      tester,
-      () =>
-          find.text('网页测试线索').evaluate().isNotEmpty &&
-          find.text('网页测试普通').evaluate().isNotEmpty,
+    await _waitFor(tester, () => find.text('网页测试普通').evaluate().isNotEmpty);
+    expect(find.text('网页测试普通'), findsOneWidget);
+    await tester.scrollUntilVisible(
+      find.text('网页测试线索'),
+      80,
+      scrollable: find.descendant(
+        of: find.byType(ListView),
+        matching: find.byType(Scrollable),
+      ),
     );
     expect(find.textContaining('跨源跳转写法，待复核'), findsOneWidget);
     await tester.tap(find.text('网页脚本线索'));

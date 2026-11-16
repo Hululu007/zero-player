@@ -30,6 +30,66 @@ void main() {
 }
 
 void _riskCommitRaceTests() {
+  test('deep DOM fallback keeps an existing adult risk record', () async {
+    final fixture = await _Fixture.create(adultVerified: true);
+    addTearDown(fixture.close);
+    await fixture.services.settings.update({'filterAdult': false});
+    final source = _source('deep previous', 'deep-previous.example');
+    final entry = (await fixture.add([source])).single;
+    final repo = fixture.services.books;
+    await repo.markSourceRisk(source, adult: true);
+    final page = '${'<div>' * 11000}<p>普通页面</p>${'</div>' * 11000}';
+    final checks = BookSiteChecks(
+      repo,
+      inspect: (_, _) async => inspectBookSiteHtml(source.endpoint, page),
+    );
+    final result = await checks.run([entry], CancellationToken());
+    expect(result.failed, 1);
+    expect((await repo.riskStore.get(source.id))!.adult, isTrue);
+    final stored = BookSiteCheck.fromJson(
+      await repo.store.read('books_site_check:${source.id}'),
+      source,
+    )!;
+    expect(stored.inspection.textIncomplete, isTrue);
+    expect(stored.needsRetry, isTrue);
+    await fixture.services.settings.update({'filterAdult': true});
+    expect(repo.sourceAllowed(source), isFalse);
+  });
+
+  test(
+    'strong evidence is committed when homepage text coverage is incomplete',
+    () async {
+      final fixture = await _Fixture.create();
+      addTearDown(fixture.close);
+      final source = _source('partial risk', 'partial-risk.example');
+      final entry = (await fixture.add([source])).single;
+      final repo = fixture.services.books;
+      final checks = BookSiteChecks(
+        repo,
+        inspect: (_, _) async => inspectBookSiteHtml(
+          source.endpoint,
+          '<p>在线赌场 立即下注</p>${'<br>' * 16500}<p>未覆盖</p>',
+        ),
+      );
+      final summary = await checks.run([entry], CancellationToken());
+      expect(summary.quarantined, 1);
+      expect(summary.failed, 1);
+      expect((await repo.riskStore.get(source.id))!.quarantinedHost, isTrue);
+      expect(repo.sourceAllowed(source), isFalse);
+      final saved = BookSiteCheck.fromJson(
+        await repo.store.read('books_site_check:${source.id}'),
+        source,
+      )!;
+      expect(saved.inspection.gamblingRisk, isTrue);
+      expect(saved.inspection.textIncomplete, isTrue);
+      expect(saved.needsRetry, isTrue);
+      expect(
+        saved.nextDue.difference(saved.checkedAt),
+        const Duration(minutes: 30),
+      );
+    },
+  );
+
   for (final afterWrite in [false, true]) {
     test(
       'cancellation ${afterWrite ? 'after insert but before the final transaction check' : 'before the transaction'} rolls back the risk',
