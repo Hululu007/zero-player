@@ -41,6 +41,10 @@ void main() {
       if (enabled) {
         expect(counts['db.statements'], 20);
         expect(counts['db.notifications'], 20);
+        expect(counts['music.read.history'], 20);
+        expect(counts['music.read.all'] ?? 0, 0);
+        expect(counts['music.decode.playlists'] ?? 0, 0);
+        expect(counts['music.decode.playlist_tracks'] ?? 0, 0);
         // Aggregate evidence only; elapsed test time is not an energy result.
         stdout.writeln(
           jsonEncode({

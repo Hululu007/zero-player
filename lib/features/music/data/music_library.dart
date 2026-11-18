@@ -52,6 +52,7 @@ final class MusicLibrary extends ChangeNotifier {
   MusicPlayMode mode = MusicPlayMode.sequential;
   Future<void>? _loaded;
   Future<void> _pending = Future.value();
+  ({int writes, int external})? _readVersion;
   bool _closed = false;
   String? notice;
   Future<void> load() => _loaded ??= _read();
@@ -61,13 +62,45 @@ final class MusicLibrary extends ChangeNotifier {
     await _read();
   }
 
-  Future<void> _read() async {
+  Future<({int writes, int external})> _version() async {
+    // total_changes includes raw statements, batches, triggers and rolled-back
+    // writes on this connection; data_version also detects other connections.
+    final row = (await db.rows(
+      'SELECT total_changes() AS writes, data_version AS external FROM pragma_data_version',
+    )).single;
+    return (writes: row['writes'] as int, external: row['external'] as int);
+  }
+
+  Future<void> _read({int? historyChanges}) async {
+    final previous = _readVersion;
+    final historyOnly = historyChanges != null && previous != null;
+    final before = historyOnly ? previous : await _version();
     final rows = await db.rows(
-      "SELECT * FROM app_meta WHERE key GLOB 'music_playlist:*' OR key GLOB 'music_history:*' OR key='music_mode'",
+      historyOnly
+          ? "SELECT * FROM app_meta WHERE key GLOB 'music_history:*'"
+          : "SELECT * FROM app_meta WHERE key GLOB 'music_playlist:*' OR key GLOB 'music_history:*' OR key='music_mode'",
     );
-    final lists = <MusicPlaylist>[];
-    PerformanceCounters.add('music.read.all');
+    final after = await _version();
+    PerformanceCounters.add(
+      historyOnly ? 'music.read.history' : 'music.read.all',
+    );
     PerformanceCounters.add('music.read.rows', rows.length);
+    if (historyOnly &&
+        (after.external != before.external ||
+            after.writes != before.writes + historyChanges)) {
+      PerformanceCounters.add('music.read.fallback');
+      await _read();
+      return;
+    }
+    // An overlapping unknown write leaves this snapshot usable, but prevents
+    // the next write from assuming that its unrelated metadata is current.
+    _readVersion = historyOnly || before == after ? after : null;
+    _decode(rows, historyOnly: historyOnly);
+    if (!_closed) notifyListeners();
+  }
+
+  void _decode(List<Map<String, Object?>> rows, {required bool historyOnly}) {
+    final lists = <MusicPlaylist>[];
     final records = <MusicHistory>[];
     for (final row in rows) {
       try {
@@ -102,17 +135,19 @@ final class MusicLibrary extends ChangeNotifier {
         notice = '部分音乐记录损坏，已保留原数据并跳过。';
       }
     }
-    playlists = lists;
+    if (!historyOnly) playlists = lists;
     history = records..sort((a, b) => b.playedAt.compareTo(a.playedAt));
-    if (!_closed) notifyListeners();
   }
 
-  Future<void> _write(Future<void> Function() action) {
+  Future<void> _write(
+    Future<void> Function() action, {
+    int Function()? historyChanges,
+  }) {
     if (_closed) return Future.error(StateError('音乐库已关闭'));
     final future = _pending.then((_) async {
       await load();
       await action();
-      await _read();
+      await _read(historyChanges: historyChanges?.call());
     });
     _pending = future.catchError((Object _) {});
     return future;
@@ -184,29 +219,32 @@ final class MusicLibrary extends ChangeNotifier {
       jsonEncode(value.name),
     ]),
   );
-  Future<void> record(
-    MusicTrack track,
-    PlaybackSnapshot state,
-  ) => _write(() async {
-    if (state.duration <= Duration.zero) return;
-    await db.write('INSERT OR REPLACE INTO app_meta VALUES(?,?)', [
-      'music_history:${stableId(track.key)}',
-      jsonEncode({
-        'track': track.toJson(),
-        'position': state.position.inMilliseconds.clamp(
-          0,
-          state.duration.inMilliseconds,
-        ),
-        'playedAt': DateTime.now().millisecondsSinceEpoch,
-      }),
-    ]);
-    final rows = await db.rows(
-      "SELECT key FROM app_meta WHERE key GLOB 'music_history:*' ORDER BY json_extract(value,'\$.playedAt') DESC LIMIT -1 OFFSET 200",
-    );
-    for (final row in rows) {
-      await db.write('DELETE FROM app_meta WHERE key=?', [row['key']]);
-    }
-  });
+  Future<void> record(MusicTrack track, PlaybackSnapshot state) {
+    var changes = 0;
+    return _write(() async {
+      if (state.duration <= Duration.zero) return;
+      await db.write('INSERT OR REPLACE INTO app_meta VALUES(?,?)', [
+        'music_history:${stableId(track.key)}',
+        jsonEncode({
+          'track': track.toJson(),
+          'position': state.position.inMilliseconds.clamp(
+            0,
+            state.duration.inMilliseconds,
+          ),
+          'playedAt': DateTime.now().millisecondsSinceEpoch,
+        }),
+      ]);
+      changes++;
+      final rows = await db.rows(
+        "SELECT key FROM app_meta WHERE key GLOB 'music_history:*' ORDER BY json_extract(value,'\$.playedAt') DESC LIMIT -1 OFFSET 200",
+      );
+      for (final row in rows) {
+        await db.write('DELETE FROM app_meta WHERE key=?', [row['key']]);
+        changes++;
+      }
+    }, historyChanges: () => changes);
+  }
+
   Future<void> clearHistory() => _write(
     () => db.write("DELETE FROM app_meta WHERE key GLOB 'music_history:*'"),
   );
