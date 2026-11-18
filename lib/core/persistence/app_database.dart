@@ -150,9 +150,19 @@ final class AppDatabase extends GeneratedDatabase {
   ) async {
     _checkOpen();
     if (!domain.accepts(key)) throw ArgumentError('Metadata domain mismatch');
+    final before =
+        (await rows('SELECT total_changes() AS n')).single['n'] as int;
     await super.customStatement(sql, args);
     PerformanceCounters.add('db.statements');
-    changed(tables: {'app_meta'}, metadataDomains: {domain});
+    final after = (await rows(
+      'SELECT total_changes() AS n, changes() AS direct',
+    )).single;
+    // Triggers/cascades or interleaved writes make the explicit key insufficient.
+    final exact = (after['n'] as int) - before == after['direct'];
+    changed(
+      tables: exact ? {'app_meta'} : null,
+      metadataDomains: exact ? {domain} : null,
+    );
   }
 
   void changed({Set<String>? tables, Set<MetadataDomain>? metadataDomains}) {
@@ -193,6 +203,8 @@ final class AppDatabase extends GeneratedDatabase {
       requireNew: requireNew,
     );
     batch.add(tables, metadataDomains);
+    final parent = Zone.current[_notificationKey] as _ChangeBatch?;
+    if (parent != null && batch.untracked) parent.untracked = true;
     changed(
       tables: batch.all ? null : batch.tables,
       metadataDomains: batch.untracked ? null : batch.metadataDomains,

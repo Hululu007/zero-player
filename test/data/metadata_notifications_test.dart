@@ -3,9 +3,15 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:zero_player/core/persistence/app_database.dart';
 
 void main() {
-  late AppDatabase db;
-  late List<String> events;
-  final subscriptions = <StreamSubscription<void>>[];
+  _preciseContracts();
+  _transactionContracts();
+}
+
+late AppDatabase db;
+late List<String> events;
+final subscriptions = <StreamSubscription<void>>[];
+
+void _fixture() {
   setUp(() async {
     db = AppDatabase.memory();
     await db.rows('SELECT 1');
@@ -31,7 +37,10 @@ void main() {
     subscriptions.clear();
     await db.close();
   });
+}
 
+void _preciseContracts() {
+  _fixture();
   test(
     'precise writes preserve legacy events and filter by explicit keys',
     () async {
@@ -65,7 +74,14 @@ void main() {
     await _flush();
     expect(events, ['legacy', 'history', 'mode']);
   });
-  for (final writer in ['write', 'raw', 'batch', 'nested', 'unknown']) {
+  for (final writer in [
+    'write',
+    'raw',
+    'batch',
+    'nested',
+    'transaction',
+    'unknown',
+  ]) {
     test('$writer cannot be masked by an outer precise declaration', () async {
       await db.atomic(
         () async {
@@ -88,6 +104,8 @@ void main() {
                 () => db.customStatement(sql),
                 tables: {'app_meta'},
               );
+            case 'transaction':
+              await db.transaction(() => db.customStatement(sql));
             case 'unknown':
               db.changed(tables: {'app_meta'});
           }
@@ -99,6 +117,22 @@ void main() {
       expect(events, ['legacy', 'live', 'history', 'mode', 'empty']);
     });
   }
+}
+
+void _transactionContracts() {
+  test(
+    'trigger side effects invalidate every domain and other tables',
+    () async {
+      await db.customStatement(
+        '''CREATE TRIGGER side_effect AFTER INSERT ON app_meta
+      WHEN NEW.key='music_mode' BEGIN
+      INSERT OR REPLACE INTO app_meta VALUES('live_state:x','{}'); END''',
+      );
+      await db.setMetadata('music_mode', '"shuffle"', MetadataDomain.musicMode);
+      await _flush();
+      expect(events, ['legacy', 'live', 'history', 'mode', 'empty']);
+    },
+  );
   test(
     'default null differs from explicit empty and ordinary transactions defer',
     () async {
