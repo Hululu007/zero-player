@@ -416,3 +416,21 @@ python tool/finalize_channel_preflight.py
 冻结脚本校验每个频道全部线路证据，使用 ID + 请求摘要保留多版本，只把摘要与通过线路序号写进 assets/live_channel_audit.json；原始 URL/请求头不从本机副本发布。广播预检更新原有 cn.snapshot.json。直播精选快照保存在 assets/catalogs/live/builtin.snapshots.json，由专项连续解码验收更新。
 
 向本机应用检测结果前再次运行 backup_database.py 创建新的一致性备份，之后显式调用 tool/apply_channel_preflight.dart，提供 PREFLIGHT_TARGET 与 PREFLIGHT_BACKUP。它只更新频道健康状态，不更改来源、收藏、监管或账户配置；变化后的请求重新进入待复检。已启用的监管仍限制恢复操作。最后串行运行完整测试、原生检查及普通 Release，详见上节入口。
+
+
+## 2026-11-18 书源新域回归
+
+迁移和历史规则指纹回归：
+
+~~~powershell
+flutter test --no-pub test/books/book_builtin_domain_updates_test.dart test/books/book_site_observed_sources_test.dart test/books/redirected_legacy_source_test.dart test/widgets/mobile_app_navigation_test.dart
+./tool/run_windows_native.ps1 -TestFiles @('integration_test/book_domain_rule_safety_native_test.dart')
+~~~
+
+公网搜索、目录和各站一章正文为显式可选测试，保留应用直连及默认内容过滤，不将本机系统代理注入应用：
+
+~~~powershell
+./tool/run_windows_native.ps1 -TestFiles @('integration_test/book_domain_updates_native_test.dart') -DartDefines @('RUN_BOOK_DOMAIN_ONLINE=true')
+~~~
+
+本轮直连失败和系统代理抓取成功须分开判断，不能把页面回放当成实网通过。`book_domain_capture_native_test.dart` 是本轮本地证据复放入口，仅在 `build/book-domain-update-20261118/` 保留 `http-observations.json` 所列 HTML 及 `deqi-token-fresh.js`、`deqi-content-browser.json` 时使用；这些完整网页、单章内容和令牌不提交，清理后需重新采样，不能复用过期令牌访问公网。回放命令为同一 wrapper 加 `-DartDefines @('RUN_BOOK_DOMAIN_CAPTURED=true')`。来源与统计见 [新域审核记录](BOOK-DOMAIN-REVIEW-2026-11-18.json)，当前验收范围见 STATUS。

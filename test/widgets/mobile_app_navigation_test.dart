@@ -45,6 +45,10 @@ void _discoveryStateTest() {
     await tester.runAsync(() async {
       rootBundle.evict('assets/catalogs/books/verified.json');
       await rootBundle.loadString('assets/catalogs/books/verified.json');
+      rootBundle.evict('assets/catalogs/books/reviewed-domain-updates.json');
+      await rootBundle.loadString(
+        'assets/catalogs/books/reviewed-domain-updates.json',
+      );
     });
     var prepared = false;
     late BookSource source;

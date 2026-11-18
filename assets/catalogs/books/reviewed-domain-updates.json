@@ -1,0 +1,104 @@
+{
+  "reviewedAt": "2026-11-18",
+  "updates": [
+    {
+      "source": {
+        "name": "得奇小说网",
+        "group": "网络小说",
+        "kind": "text",
+        "format": "html",
+        "url": "https://www.deqixss.com",
+        "defaultEnabled": false,
+        "sample": "夜无疆",
+        "legado": {
+          "search": "/modules/article/search.php?searchkey={{key}}&action=login",
+          "enabledExplore": false,
+          "headers": {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"
+          },
+          "rules": {
+            "searchList": ".bookbox",
+            "searchTitle": ".bookname a@text",
+            "searchAuthor": ".author.0@text##作者：",
+            "searchLink": ".bookname a@href",
+            "searchLatest": ".cat a@text",
+            "infoTitle": "[property=\"og:novel:book_name\"]@content",
+            "infoAuthor": "[property=\"og:novel:author\"]@content",
+            "infoDescription": "[property=\"og:description\"]@content||[property=\"og:novel:description\"]@content",
+            "infoCover": "[property=\"og:image\"]@content",
+            "infoCategory": "[property=\"og:novel:category\"]@content",
+            "infoLatest": "[property=\"og:novel:latest_chapter_name\"]@content",
+            "infoUpdated": "[property=\"og:novel:update_time\"]@content",
+            "chapters": "#list-chapterAll dd a",
+            "chapterTitle": "text",
+            "chapterUrl": "href",
+            "content": "<js>\nconst ids = /^https:\\/\\/www\\.deqixss\\.com\\/books\\/(\\d+)\\/(\\d+)\\.html$/.exec(baseUrl);\nif (!ids) throw new Error('Invalid chapter address');\nconst root = 'https://www.deqixss.com';\nconst raw = java.ajax(root + '/scripts/chapter.js.php?aid=' + ids[1] + '&cid=' + ids[2] + '&referrer=' + encodeURIComponent(baseUrl));\nconst fields = /^\\s*var chapterToken = '([a-f0-9]{32})';\\s*var timestamp = (\\d{10,16});\\s*var nonce = '([a-f0-9]{8,64})';\\s*var tokenUrl = '(https:\\/\\/www\\.deqixss\\.com\\/books\\/\\d+\\/\\d+\\.html)';\\s*var SECRET_KEY = 'hidden';\\s*$/.exec(raw);\nif (!fields || fields[4] !== baseUrl) throw new Error('Invalid token data');\nconst url = root + '/modules/article/ajax2.php?aid=' + ids[1] + '&cid=' + ids[2] + '&token=' + fields[1] + '&timestamp=' + fields[2] + '&nonce=' + fields[3];\nconst response = JSON.parse(java.ajax(url + ',' + JSON.stringify({headers: {Referer: baseUrl, Accept: 'text/plain, */*; q=0.01', 'X-Requested-With': 'XMLHttpRequest'}})));\nif (response.status !== 1 || !response.data || typeof response.data.content !== 'string' || !response.data.content.trim()) throw new Error('Chapter unavailable');\nresponse.data.content;\n</js>"
+          }
+        },
+        "originNote": "2026-11-18 旧域 deqixs.co 的 HTTPS 跳转目标；GET 搜索、目录和单章正文复核；令牌只按固定语法解析，不执行网络脚本。"
+      },
+      "previous": [
+        {
+          "id": "e34ec8773a9504c0d2ecd8fd34426aeeb25cfa8862ea602b9315fca4cace1fe9",
+          "url": "https://www.deqixs.co",
+          "legadoSha256": "566be8fd5dea6feba54029743430ca9236de0eabcd05ce28ca675d802ac1fbf8"
+        }
+      ]
+    },
+    {
+      "source": {
+        "name": "精华书阁",
+        "group": "网络小说",
+        "kind": "text",
+        "format": "html",
+        "url": "https://www.jhsssd.com",
+        "defaultEnabled": false,
+        "sample": "夜无疆",
+        "legado": {
+          "search": "/search.html?ie=utf-8&word={{key}}&page={{page}}",
+          "enabledExplore": false,
+          "headers": {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"
+          },
+          "rules": {
+            "searchList": "ul.list_ul li",
+            "searchTitle": "p.0@text",
+            "searchAuthor": "p.2@text",
+            "searchLink": "a.0@href",
+            "searchLatest": "p.1@text",
+            "infoTitle": "[property=\"og:novel:book_name\"]@content",
+            "infoAuthor": "[property=\"og:novel:author\"]@content",
+            "infoDescription": "[property=\"og:description\"]@content||[property=\"og:novel:description\"]@content",
+            "infoCover": "[property=\"og:image\"]@content",
+            "infoCategory": "[property=\"og:novel:category\"]@content",
+            "infoLatest": "[property=\"og:novel:latest_chapter_name\"]@content",
+            "infoUpdated": "[property=\"og:novel:update_time\"]@content",
+            "chapters": "#list@dl.-1@dd@a",
+            "chapterTitle": "text",
+            "chapterUrl": "href",
+            "content": "#nr_content@html##温馨提示.*?最新章节.*?阅读模式.|精华书阁.*?最新章节.|(?:本章未完，请点击下一页继续阅读)",
+            "nextContent": "text.下一页@href"
+          }
+        },
+        "originNote": "2026-11-18 旧域 jhssd.com 的 HTTPS 跳转目标；GET 搜索、68 章完整目录和两页正文复核。"
+      },
+      "previous": [
+        {
+          "id": "bd2e242ba0e9e327668aa979f2885f08dc437c4b1302d30e0c7f345c873d9862",
+          "url": "https://www.jhssd.com",
+          "legadoSha256": "e9aad38a29f89a9d1ced78fd3e7c7cfc6a53f23c5dd541a95ed44a0e20d377c5"
+        },
+        {
+          "id": "48aae6df950f93b4d1e2473b7c576e049b0b6fbb4393a8993cf477ffc5277a3b",
+          "url": "https://m.jhssd.com",
+          "legadoSha256": "b25537879c383a684bd4042bdaa69ce08b01c22bf02869ff4a86f2b859b7a4f8"
+        },
+        {
+          "id": "5a9262aae9401bcc356020febcceb04ca4df1de95a1e2d0e66ac44c668bc816c",
+          "url": "https://wap.jhssd.com",
+          "legadoSha256": "5654a6d51637633e5f4aa00ec3a07ccfde60218a91772f4135b1bcac14f86386"
+        }
+      ]
+    }
+  ]
+}

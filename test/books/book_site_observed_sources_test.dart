@@ -23,6 +23,8 @@ import 'package:zero_player/features/books/domain/legado_source.dart';
 import '../../test_support/verified_temp_directory.dart';
 
 const _asset = 'assets/catalogs/books/verified.json';
+const _domainUpdatesAsset =
+    'assets/catalogs/books/reviewed-domain-updates.json';
 const _observed = 'books_site_observed_fingerprint:';
 const _check = 'books_site_check:';
 const _supervised = 'books_supervised_site_check:';
@@ -81,10 +83,13 @@ Map<String, Object> _observedValue(BookSource source) => {
 
 void _assets(List<Map<String, Object>> sources) {
   rootBundle.evict(_asset);
+  rootBundle.evict(_domainUpdatesAsset);
   final data = Uint8List.fromList(utf8.encode(jsonEncode(sources)));
+  final updates = Uint8List.fromList(utf8.encode('{"updates":[]}'));
   TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
       .setMockMessageHandler('flutter/assets', (message) async {
         final key = utf8.decode(Uint8List.sublistView(message!));
+        if (key == _domainUpdatesAsset) return ByteData.sublistView(updates);
         return key == _asset ? ByteData.sublistView(data) : null;
       });
 }
@@ -113,6 +118,7 @@ final class _Fixture {
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMessageHandler('flutter/assets', null);
     rootBundle.evict(_asset);
+    rootBundle.evict(_domainUpdatesAsset);
     await temp.delete();
   }
 }

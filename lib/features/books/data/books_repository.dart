@@ -36,6 +36,7 @@ import 'book_download_guard.dart';
 import 'book_latest_aggregation.dart';
 import 'book_discovery_paging.dart';
 import 'book_import.dart';
+import 'book_builtin_domain_updates.dart';
 import 'book_image_payload.dart';
 import 'book_resource_limits.dart';
 import 'book_mixed_content.dart';
@@ -305,6 +306,14 @@ final class BooksRepository {
         .cast<Map>()
         .map((s) => BookSource.fromJson(s, builtin: true))
         .toList();
+    builtins.addAll(
+      await loadReviewedBookDomains(
+        store,
+        riskStore,
+        migratePreferences:
+            !policy.supervision.enabled && !policy.supervision.corrupted,
+      ),
+    );
     _verifiedSources.addEntries(
       builtins.map((source) => MapEntry(source.id, source)),
     );

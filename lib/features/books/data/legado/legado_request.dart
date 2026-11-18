@@ -34,7 +34,11 @@ Object? decodeLegadoJson(String input) {
   }
 }
 
-Map<String, String> legadoHeaders(Object? raw, Uri base) {
+Map<String, String> legadoHeaders(
+  Object? raw,
+  Uri base, {
+  bool allowXmlHttpRequest = false,
+}) {
   if (raw is String) {
     try {
       raw = decodeLegadoJson(raw);
@@ -43,10 +47,11 @@ Map<String, String> legadoHeaders(Object? raw, Uri base) {
     }
   }
   if (raw is! Map) return const {};
-  const names = {
+  final names = {
     'user-agent': 'User-Agent',
     'accept': 'Accept',
     'accept-language': 'Accept-Language',
+    if (allowXmlHttpRequest) 'x-requested-with': 'X-Requested-With',
     'referer': 'Referer',
     'origin': 'Origin',
   };
@@ -130,6 +135,7 @@ final class LegadoRequest {
     final specificHeaders = legadoHeaders(
       options['headers'] ?? options['header'],
       source.endpoint,
+      allowXmlHttpRequest: true,
     );
     final headers = {
       ...legadoHeaders(source.legado?.headers, source.endpoint),
