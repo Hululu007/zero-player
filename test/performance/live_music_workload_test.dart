@@ -74,7 +74,7 @@ void main() {
         await _settle(tester);
       }
       final counts = PerformanceCounters.snapshot();
-      expect(counts['live.channels.calls'] ?? 0, 120);
+      expect(counts['live.channels.calls'] ?? 0, 0);
       expect(
         services.musicLibrary.history.first.position,
         const Duration(seconds: 119),
@@ -86,9 +86,92 @@ void main() {
           'counts': counts,
         }),
       );
+      await _verifyInvalidations(tester, services, channelName!);
       await tester.pumpWidget(const SizedBox.shrink());
     });
   }
+}
+
+Future<void> _verifyInvalidations(
+  WidgetTester tester,
+  AppServices services,
+  String name,
+) async {
+  final channel = services.contentPolicy.liveChannel(name)!;
+  Future<void> change(Future<void> Function() action) async {
+    PerformanceCounters.reset();
+    await tester.runAsync(action);
+    await tester.pump(const Duration(milliseconds: 260));
+    await _settle(tester);
+    expect(PerformanceCounters.snapshot()['live.channels.calls'], 1);
+  }
+
+  await change(() => services.liveHealth.setEnabled([channel.id], false));
+  expect(services.contentPolicy.liveChannel(name)!.health.enabled, false);
+  await change(() => services.liveHealth.setRemoved([channel.id], true));
+  expect(services.contentPolicy.liveChannel(name)!.health.removed, true);
+  await change(() => services.live.setListEnabled(channel.listId, false));
+  expect(services.contentPolicy.liveChannel(name), isNull);
+  await change(() => services.live.setListEnabled(channel.listId, true));
+  await change(
+    () => services.db.write('INSERT OR REPLACE INTO app_meta VALUES(?,?)', [
+      'live_metadata:${channel.id}',
+      jsonEncode({
+        'signature': channel.urls.join('|'),
+        'categories': ['测试'],
+      }),
+    ]),
+  );
+  expect(
+    services.contentPolicy.liveChannel(name)!.metadata.categories,
+    contains('测试'),
+  );
+  await change(() => services.live.favorite(channel, true));
+  expect(services.contentPolicy.liveChannel(name)!.favorite, true);
+  await change(
+    () => services.db.write('UPDATE live_lists SET name=? WHERE id=?', [
+      '新列表',
+      channel.listId,
+    ]),
+  );
+  expect(services.contentPolicy.liveChannel(name)!.listName, '新列表');
+  await change(
+    () => services.db.atomic(
+      () async {
+        await services.musicLibrary.setMode(services.musicLibrary.mode);
+        await services.db.batch(
+          (batch) => batch.customStatement(
+            'INSERT OR REPLACE INTO app_meta VALUES(?,?)',
+            ['builtin_live_quarantined:${channel.listId}', '已隔离'],
+          ),
+        );
+      },
+      tables: {'app_meta'},
+      metadataDomains: {MetadataDomain.musicMode},
+    ),
+  );
+  expect(services.contentPolicy.liveChannel(name), isNull);
+  await change(
+    () => services.db.write('DELETE FROM app_meta WHERE key=?', [
+      'builtin_live_quarantined:${channel.listId}',
+    ]),
+  );
+  PerformanceCounters.reset();
+  services.contentPolicy.refresh();
+  await _settle(tester);
+  expect(PerformanceCounters.snapshot()['live.channels.calls'], 1);
+  await change(
+    () => services.live.importText(
+      '新列表',
+      Uri.parse('https://list.test/a'),
+      'CCTV1,https://media.test/b.ts',
+      headers: {'User-Agent': 'changed'},
+      verify: false,
+    ),
+  );
+  final updated = services.contentPolicy.liveChannel(name)!;
+  expect(updated.headers['User-Agent'], 'changed');
+  expect(updated.urls.single.path, '/b.ts');
 }
 
 Future<void> _settle(WidgetTester tester) async {

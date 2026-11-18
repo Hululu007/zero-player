@@ -170,9 +170,10 @@ final class MusicLibrary extends ChangeNotifier {
     return id;
   }
 
-  Future<void> _save(MusicPlaylist list) => db.write(
-    'INSERT OR REPLACE INTO app_meta VALUES(?,?)',
-    ['music_playlist:${list.id}', jsonEncode(list.toJson())],
+  Future<void> _save(MusicPlaylist list) => db.setMetadata(
+    'music_playlist:${list.id}',
+    jsonEncode(list.toJson()),
+    MetadataDomain.musicPlaylists,
   );
   MusicPlaylist _playlist(String id) => playlists.firstWhere(
     (p) => p.id == id,
@@ -185,7 +186,8 @@ final class MusicLibrary extends ChangeNotifier {
     );
   });
   Future<void> delete(String id) => _write(
-    () => db.write('DELETE FROM app_meta WHERE key=?', ['music_playlist:$id']),
+    () =>
+        db.deleteMetadata('music_playlist:$id', MetadataDomain.musicPlaylists),
   );
   Future<void> add(String id, MusicTrack track) => _write(() async {
     final list = _playlist(id);
@@ -214,16 +216,17 @@ final class MusicLibrary extends ChangeNotifier {
     await _save(MusicPlaylist(id, list.name, tracks));
   });
   Future<void> setMode(MusicPlayMode value) => _write(
-    () => db.write('INSERT OR REPLACE INTO app_meta VALUES(?,?)', [
+    () => db.setMetadata(
       'music_mode',
       jsonEncode(value.name),
-    ]),
+      MetadataDomain.musicMode,
+    ),
   );
   Future<void> record(MusicTrack track, PlaybackSnapshot state) {
     var changes = 0;
     return _write(() async {
       if (state.duration <= Duration.zero) return;
-      await db.write('INSERT OR REPLACE INTO app_meta VALUES(?,?)', [
+      await db.setMetadata(
         'music_history:${stableId(track.key)}',
         jsonEncode({
           'track': track.toJson(),
@@ -233,21 +236,23 @@ final class MusicLibrary extends ChangeNotifier {
           ),
           'playedAt': DateTime.now().millisecondsSinceEpoch,
         }),
-      ]);
+        MetadataDomain.musicHistory,
+      );
       changes++;
       final rows = await db.rows(
         "SELECT key FROM app_meta WHERE key GLOB 'music_history:*' ORDER BY json_extract(value,'\$.playedAt') DESC LIMIT -1 OFFSET 200",
       );
       for (final row in rows) {
-        await db.write('DELETE FROM app_meta WHERE key=?', [row['key']]);
+        await db.deleteMetadata(
+          row['key'] as String,
+          MetadataDomain.musicHistory,
+        );
         changes++;
       }
     }, historyChanges: () => changes);
   }
 
-  Future<void> clearHistory() => _write(
-    () => db.write("DELETE FROM app_meta WHERE key GLOB 'music_history:*'"),
-  );
+  Future<void> clearHistory() => _write(db.clearMusicHistory);
   Future<void> close() async {
     await _pending;
     _closed = true;

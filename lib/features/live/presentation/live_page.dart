@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import '../../../app/app_services.dart';
 import '../../../app/widgets.dart';
 import '../../../core/platform/file_transfer.dart';
+import '../../../core/persistence/metadata_domain.dart';
 import '../../catalog/domain/catalog_item.dart';
 import '../../playback/application/playback_controller.dart';
 import '../data/m3u_parser.dart';
@@ -44,12 +45,10 @@ final class _LivePageState extends State<LivePage> {
     widget.services.contentPolicy.addListener(_policyChanged);
     unawaited(widget.services.builtinLive.refresh(onlyMissing: true));
     changes = widget.services.db
-        .changesFor({
-          'live_channels',
-          'live_lists',
-          'app_meta',
-          'channel_preferences',
-        })
+        .changesFor(
+          {'live_channels', 'live_lists', 'app_meta', 'channel_preferences'},
+          metadataDomains: {MetadataDomain.live},
+        )
         .listen((_) {
           _reloadTimer ??= Timer(const Duration(milliseconds: 250), () {
             _reloadTimer = null;
