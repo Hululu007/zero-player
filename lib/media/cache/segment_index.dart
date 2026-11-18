@@ -69,6 +69,25 @@ final class SegmentIndex implements SegmentMetadata {
     [owner],
   )).map((row) => row['cache_key'] as String).toSet();
   @override
+  Future<Map<String, Set<String>>> ownedKeysFor(Set<String> owners) async {
+    final requested = owners.toList();
+    final result = {for (final owner in requested) owner: <String>{}};
+    // Stay below SQLite's parameter limit, including older Android builds.
+    const chunkSize = 400;
+    for (var offset = 0; offset < requested.length; offset += chunkSize) {
+      final chunk = requested.skip(offset).take(chunkSize).toList();
+      final placeholders = List.filled(chunk.length, '?').join(',');
+      for (final row in await db.rows(
+        'SELECT owner,cache_key FROM segment_references WHERE owner IN ($placeholders)',
+        chunk,
+      )) {
+        result[row['owner']]!.add(row['cache_key'] as String);
+      }
+    }
+    return result;
+  }
+
+  @override
   Future<void> pin(String owner, String key) => db.customStatement(
     'INSERT OR IGNORE INTO segment_references VALUES(?,?)',
     [owner, key],

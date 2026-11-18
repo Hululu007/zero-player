@@ -49,14 +49,13 @@ void _pinWorkloads() {
         }
       });
       PerformanceCounters.reset();
-      final result = <String, Map<String, int>>{};
-      for (var i = 0; i < count; i++) {
-        result['owner-$i'] = await store.pinnedResources('owner-$i');
-      }
+      final result = await store.pinnedResourcesFor({
+        for (var i = 0; i < count; i++) 'owner-$i',
+      });
       final counts = PerformanceCounters.snapshot();
       expect(result, hasLength(count));
       expect(result.values.every((pins) => pins[key] == 3), true);
-      expect(counts['db.queries'], count);
+      expect(counts['db.queries'], (count / 400).ceil());
       _report('pins-$count', counts);
     });
   }

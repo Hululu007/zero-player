@@ -179,6 +179,9 @@ final class _DelayedMetadata implements SegmentMetadata {
   @override
   Future<Set<String>> ownedKeys(String owner) => inner.ownedKeys(owner);
   @override
+  Future<Map<String, Set<String>>> ownedKeysFor(Set<String> owners) =>
+      inner.ownedKeysFor(owners);
+  @override
   Future<void> put(String key, StoredResource value) => inner.put(key, value);
   @override
   Future<void> remove(String key) => inner.remove(key);

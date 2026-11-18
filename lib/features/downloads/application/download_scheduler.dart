@@ -136,8 +136,11 @@ final class DownloadScheduler {
   Future<void> _drain() async {
     final initial = await repository.all();
     final usage = <String, int>{};
+    final pins = await fetcher.store.pinnedResourcesFor({
+      for (final task in initial) task.id,
+    });
     for (final task in initial) {
-      final pinned = await fetcher.store.pinnedResources(task.id);
+      final pinned = pins[task.id]!;
       final bytes = pinned.values.fold(0, (sum, value) => sum + value);
       usage[task.id] = bytes > task.bytes ? bytes : task.bytes;
     }

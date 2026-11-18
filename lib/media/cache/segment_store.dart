@@ -69,15 +69,27 @@ final class SegmentStore {
 
   StoredResource? find(String key) => _entries[key];
 
-  Future<Map<String, int>> pinnedResources(String owner) => _serialize(
-    () async {
-      final keys = await metadata?.ownedKeys(owner) ?? _localPins[owner] ?? {};
+  Future<Map<String, int>> pinnedResources(String owner) async =>
+      (await pinnedResourcesFor({owner}))[owner]!;
+
+  Future<Map<String, Map<String, int>>> pinnedResourcesFor(Set<String> owners) {
+    final requested = owners.toSet();
+    return _serialize(() async {
+      final keys =
+          await metadata?.ownedKeysFor(requested) ??
+          {
+            for (final owner in requested)
+              owner: _localPins[owner] ?? <String>{},
+          };
       return {
-        for (final key in keys)
-          if (_entries.containsKey(key)) key: _entries[key]!.length,
+        for (final owner in requested)
+          owner: {
+            for (final key in keys[owner] ?? <String>{})
+              if (_entries.containsKey(key)) key: _entries[key]!.length,
+          },
       };
-    },
-  );
+    });
+  }
 
   Future<void> initialize() async {
     await directory.create(recursive: true);
