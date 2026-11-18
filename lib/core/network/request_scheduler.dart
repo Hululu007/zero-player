@@ -16,6 +16,30 @@ Future<T> withRequestPriority<T>(
   Future<T> Function() action,
 ) => runZoned(action, zoneValues: {_requestPriorityKey: priority});
 
+enum RequestPhase { queued, started, released, cancelled }
+
+final _requestObservationKey = Object();
+
+/// Opt-in permit lifecycle observations. The observer receives no request data.
+/// Keep one observation per logical request when measuring mixed workloads.
+final class RequestObservation {
+  const RequestObservation(this.onPhase);
+  final void Function(RequestPhase) onPhase;
+
+  void _notify(RequestPhase phase) {
+    try {
+      onPhase(phase);
+    } catch (_) {
+      // Diagnostic failures must not alter permit ownership or cancellation.
+    }
+  }
+}
+
+Future<T> observeRequests<T>(
+  RequestObservation observation,
+  Future<T> Function() action,
+) => runZoned(action, zoneValues: {_requestObservationKey: observation});
+
 final class RequestPermit {
   RequestPermit(this._release);
   final void Function() _release;
@@ -62,12 +86,15 @@ final class RequestScheduler {
       HeaderPolicy.origin(uri),
       priority,
       _sequence++,
+      Zone.current[_requestObservationKey] as RequestObservation?,
     );
     _queue.add(pending);
     PerformanceCounters.add('network.queued');
+    pending.observation?._notify(RequestPhase.queued);
     pending.removeListener = cancellation?.listen(() {
       _queue.remove(pending);
       if (!pending.completer.isCompleted) {
+        pending.observation?._notify(RequestPhase.cancelled);
         pending.completer.completeError(const RequestCancelled());
       }
     });
@@ -98,6 +125,7 @@ final class RequestScheduler {
       PerformanceCounters.add('network.started');
       if (job.priority == RequestPriority.background) _background++;
       _origins.update(job.origin, (count) => count + 1, ifAbsent: () => 1);
+      job.observation?._notify(RequestPhase.started);
       job.completer.complete(
         RequestPermit(() {
           _active--;
@@ -109,6 +137,7 @@ final class RequestScheduler {
           } else {
             _origins[job.origin] = count;
           }
+          job.observation?._notify(RequestPhase.released);
           _drain();
         }),
       );
@@ -119,6 +148,7 @@ final class RequestScheduler {
     _closed = true;
     for (final job in _queue) {
       job.removeListener?.call();
+      job.observation?._notify(RequestPhase.cancelled);
       job.completer.completeError(const RequestCancelled());
     }
     _queue.clear();
@@ -126,10 +156,11 @@ final class RequestScheduler {
 }
 
 final class _WaitingRequest {
-  _WaitingRequest(this.origin, this.priority, this.sequence);
+  _WaitingRequest(this.origin, this.priority, this.sequence, this.observation);
   final String origin;
   final RequestPriority priority;
   final int sequence;
+  final RequestObservation? observation;
   final completer = Completer<RequestPermit>();
   void Function()? removeListener;
 }
