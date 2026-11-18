@@ -47,8 +47,9 @@ void main() {
       final store = SegmentStore(root, maxResourceBytes: 3);
       addTearDown(() => root.delete(recursive: true));
       final key = 'a' * 64;
-      if (failure == 'rename')
+      if (failure == 'rename') {
         await Directory('${root.path}/$key.bin').create();
+      }
       Stream<List<int>> body() async* {
         yield [1, 2, 3];
         if (failure == 'error') throw StateError('stream failed');
@@ -69,8 +70,9 @@ void main() {
       expect(store.sizeBytes, 0);
       expect(store.find(key), isNull);
       expect(await File('${root.path}/$key.part').exists(), false);
-      if (failure == 'rename')
+      if (failure == 'rename') {
         await Directory('${root.path}/$key.bin').delete();
+      }
       final retry = await store.write(
         key,
         Stream.value([1]),

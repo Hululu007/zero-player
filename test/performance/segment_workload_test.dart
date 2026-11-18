@@ -138,7 +138,7 @@ void _report(String scenario, Map<String, int> counts, {int? micros}) =>
       jsonEncode({
         'scenario': scenario,
         'counts': counts,
-        if (micros != null) 'elapsedMicros': micros,
+        'elapsedMicros': ?micros,
         'mode': 'flutter-test-debug',
       }),
     );

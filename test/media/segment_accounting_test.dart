@@ -6,6 +6,11 @@ import 'package:zero_player/media/cache/segment_metadata.dart';
 import 'package:zero_player/media/cache/segment_store.dart';
 
 void main() {
+  _accountingContracts();
+  _failureContracts();
+}
+
+void _accountingContracts() {
   for (final persistent in [false, true]) {
     test(
       'capacity follows replacements, reloads and shared pins: $persistent',
@@ -77,6 +82,9 @@ void main() {
       },
     );
   }
+}
+
+void _failureContracts() {
   test(
     'metadata failures retain conservative accounting until successful retry',
     () async {
