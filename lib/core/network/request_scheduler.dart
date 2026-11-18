@@ -53,6 +53,7 @@ final class RequestPermit {
 
 /// Bounded global/per-origin concurrency. Playback goes ahead of queued
 /// background work, without interrupting an already streaming response.
+/// The oldest eligible background waits at most one foreground pool turnover.
 final class RequestScheduler {
   RequestScheduler({
     this.globalLimit = 8,
@@ -109,15 +110,7 @@ final class RequestScheduler {
       return priority == 0 ? a.sequence.compareTo(b.sequence) : priority;
     });
     while (_active < globalLimit) {
-      final index = _queue.indexWhere(
-        (job) =>
-            (_origins[job.origin] ?? 0) < originLimit &&
-            (job.priority == RequestPriority.playback ||
-                _active <
-                    globalLimit - playbackReserve.clamp(0, globalLimit - 1)) &&
-            (job.priority != RequestPriority.background ||
-                _background < backgroundLimit),
-      );
+      final index = _nextIndex();
       if (index < 0) return;
       final job = _queue.removeAt(index);
       job.removeListener?.call();
@@ -144,6 +137,34 @@ final class RequestScheduler {
     }
   }
 
+  int get _foregroundCapacity =>
+      globalLimit - playbackReserve.clamp(0, globalLimit - 1);
+
+  bool _eligible(_WaitingRequest job) =>
+      (_origins[job.origin] ?? 0) < originLimit &&
+      (job.priority == RequestPriority.playback ||
+          _active < _foregroundCapacity) &&
+      (job.priority != RequestPriority.background ||
+          _background < backgroundLimit);
+
+  int _nextIndex() {
+    final first = _queue.indexWhere(_eligible);
+    if (first < 0 || _queue[first].priority != RequestPriority.interactive) {
+      return first;
+    }
+    final background = _queue.indexWhere(
+      (job) => job.priority == RequestPriority.background && _eligible(job),
+    );
+    if (background < 0) return first;
+    final waiting = _queue[background];
+    if (waiting.foregroundBypasses < _foregroundCapacity) {
+      waiting.foregroundBypasses++;
+      return first;
+    }
+    PerformanceCounters.add('network.background.promoted');
+    return background;
+  }
+
   void close() {
     _closed = true;
     for (final job in _queue) {
@@ -161,6 +182,7 @@ final class _WaitingRequest {
   final RequestPriority priority;
   final int sequence;
   final RequestObservation? observation;
+  int foregroundBypasses = 0;
   final completer = Completer<RequestPermit>();
   void Function()? removeListener;
 }

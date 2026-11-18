@@ -65,6 +65,9 @@ void _sustainedDemand() {
         origin: 9,
         priority: RequestPriority.background,
       );
+      final backgroundReply = background.started.future.then((_) {
+        background.release();
+      });
       var bypassed = 0;
       for (var i = 0; i < 40; i++) {
         final next = fixture.start(module: 'search', origin: i % 9);
@@ -79,6 +82,7 @@ void _sustainedDemand() {
       active.first.release();
       expect((await active.first.result).valid, true);
       await fixture.waitFor([background]);
+      await backgroundReply;
       expect((await fixture.finish()).every((result) => result.valid), true);
       _report(
         'sustained-interactive',
