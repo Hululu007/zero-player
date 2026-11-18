@@ -17,14 +17,18 @@ final class ChannelPreflight {
   Future<void> prepare(List<LiveChannel> channels) async {
     final entries = await defaults.entries;
     if (!defaults.passedOnly && entries.isEmpty) return;
-    await health.db.transaction(
-      () => defaults.apply(
+    await health.db.transaction(() async {
+      final before = await _changeCount();
+      await defaults.apply(
         health.db,
         channels,
         entries,
         canEnable: health.canEnable?.call() ?? true,
-      ),
-    );
+      );
+      if (await _changeCount() != before) {
+        health.db.changed(tables: {'app_meta'});
+      }
+    });
   }
 
   Future<void> refresh(
@@ -57,24 +61,21 @@ final class ChannelPreflight {
       for (final channel in queue) {
         final old = states[channel.id] ?? {};
         if (old['preflight'] == true) continue;
-        await health.db.customStatement(
-          'INSERT OR REPLACE INTO app_meta VALUES(?,?)',
-          [
-            'live_state:${channel.id}',
-            jsonEncode({
-              ...old,
-              'preflight': true,
-              'enabled': false,
-              'autoDisabled': true,
-              'pendingValidation': true,
-              'signature': channel.urls.join('|'),
-              'requestSignature': channelProbeSignature(channel),
-              'userDisabled':
-                  old['userDisabled'] == true ||
-                  old['enabled'] == false && old['autoDisabled'] != true,
-            }),
-          ],
-        );
+        await health.db.write('INSERT OR REPLACE INTO app_meta VALUES(?,?)', [
+          'live_state:${channel.id}',
+          jsonEncode({
+            ...old,
+            'preflight': true,
+            'enabled': false,
+            'autoDisabled': true,
+            'pendingValidation': true,
+            'signature': channel.urls.join('|'),
+            'requestSignature': channelProbeSignature(channel),
+            'userDisabled':
+                old['userDisabled'] == true ||
+                old['enabled'] == false && old['autoDisabled'] != true,
+          }),
+        ]);
       }
     });
     var cursor = 0;
@@ -101,4 +102,7 @@ final class ChannelPreflight {
       return {};
     }
   }
+
+  Future<int> _changeCount() async =>
+      (await health.db.rows('SELECT total_changes() AS n')).single['n'] as int;
 }
