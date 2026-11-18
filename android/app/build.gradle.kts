@@ -31,6 +31,16 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
 
+    testOptions {
+        unitTests.isIncludeAndroidResources = true
+        unitTests.all {
+            // Optional offline SDK jars for repeatable local native tests.
+            providers.gradleProperty("robolectricDependencyDir").orNull?.let { directory ->
+                it.systemProperty("robolectric.dependency.dir", directory)
+            }
+        }
+    }
+
     defaultConfig {
         // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
         applicationId = "dev.zeroplayer.zero_player"
@@ -78,6 +88,12 @@ android {
 
 // Fail a release build explicitly instead of producing unsigned artifacts.
 tasks.configureEach {
+    // AGP's resource-enabled JVM tests package Flutter's generated assets too.
+    // Declare the producer so Gradle validates and orders the shared directory.
+    if (name.startsWith("package") && name.endsWith("UnitTestForUnitTest")) {
+        val variant = name.removePrefix("package").removeSuffix("UnitTestForUnitTest")
+        dependsOn("copyFlutterAssets$variant")
+    }
     if (name == "validateSigningRelease" || name == "packageRelease" || name == "packageReleaseBundle") {
         doFirst {
             check(deviceTestBuild || releaseKeyFile.exists()) {
@@ -95,6 +111,11 @@ kotlin {
 
 flutter {
     source = "../.."
+}
+
+dependencies {
+    testImplementation("junit:junit:4.13.2")
+    testImplementation("org.robolectric:robolectric:4.16.1")
 }
 
 // Both Dart FFI clients use sherpa's bundled libonnxruntime.so. Exclude the

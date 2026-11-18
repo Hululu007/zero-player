@@ -18,7 +18,10 @@ import android.widget.TextView
 import io.flutter.plugin.common.MethodCall
 
 /** A small, non-focusable overlay. The user must grant Android's overlay access. */
-internal class MusicLyricsOverlay(private val activity: Activity) {
+internal class MusicLyricsOverlay(
+    private val activity: Activity,
+    private val onTextAssignment: (() -> Unit)? = null,
+) {
     private val manager = activity.getSystemService(Context.WINDOW_SERVICE) as WindowManager
     private var container: LinearLayout? = null
     private var title: TextView? = null
@@ -40,10 +43,16 @@ internal class MusicLyricsOverlay(private val activity: Activity) {
             return false
         }
         if (container == null) show()
-        title?.text = call.argument<String>("title")?.take(100).orEmpty()
-        lyric?.text = call.argument<String>("lyric")?.take(300).orEmpty()
-        status?.text = call.argument<String>("status")?.take(80).orEmpty()
+        updateText(title, call.argument<String>("title")?.take(100).orEmpty())
+        updateText(lyric, call.argument<String>("lyric")?.take(300).orEmpty())
+        updateText(status, call.argument<String>("status")?.take(80).orEmpty())
         return container != null
+    }
+
+    private fun updateText(view: TextView?, value: String) {
+        if (view == null || view.text.toString() == value) return
+        view.text = value
+        onTextAssignment?.invoke()
     }
 
     private fun show() {
