@@ -51,6 +51,25 @@ flutter test --no-pub --reporter expanded
 
 本轮最终Flutter1538通过/12跳过、五组Windows原生7项业务回归和普通Windows Release通过；Android普通Release在生成本轮AOT后遇到本机代理连接失败，按下文离线续包规则完成。ARM64 devtest新包48.96 MiB，通过70 MiB、CRC、固定PDFium及原测试证书v2签名；`android-release-integrity.json`保存AOT摘要链，失败尝试不记作成功。Python工具仍有1项历史证据摘要错误，规模检查仍有104条既有债务；详见本轮证据目录`final-verification.json`及STATUS。
 
+## 性能专项网络公平性回归
+
+本批源码`f42915e/b9dece7`保留独立客户端及20/2/4、播放预留配置，通过按等待任务计数保证合格后台请求得到授予；播放继续优先，不抢占在途响应。复现时与其他Flutter/原生测试及构建串行：
+
+~~~powershell
+flutter test --no-pub test/network/request_observation_test.dart test/network/request_fairness_test.dart test/performance/network_mixed_workload_test.dart --reporter expanded
+flutter test --no-pub test/network --reporter expanded
+flutter test --no-pub --reporter expanded
+./tool/run_windows_native.ps1 -TestFiles @('integration_test/hardening_native_test.dart','integration_test/music_offline_native_test.dart','integration_test/live_radio_media_test.dart')
+~~~
+
+`observeRequests(RequestObservation(...), action)`显式观察该异步作用域的queued/started/released/cancelled许可阶段；默认不用，不接收地址、请求头或内容。观察回调异常被隔离，不能改变业务取消及许可释放。`PerformanceCounters`新增`network.background.promoted`，只表示等待已达到非播放容量次数后选择后台，不表示请求完成或全应用公平。
+
+`NetworkWorkload`以真实双客户端、10个本机origin和64KiB分块响应测容量包络，模块名为夹具标签；汇总`held/after`的active、queued、取消、字节及等待，观察开/关均验正文。持续交互固定40次补入，后台等待期间交互授予40→18；两客户端合计许可峰值40保持，单客户端公平场景峰值18保持。1000排队请求取消后未进入服务端，active/queued归零。它们不等于全生产模块覆盖、队列容量门禁或真实网络延迟/能耗测量。
+
+修改前后日志、失败契约、解析工作量、源码与保护摘要及本批最终平台证据统一在`build/performance-network-20261118/`，旧批次JSON保留捕获时点。共享网络上限、队列总容量、重试/播放占用及模块反压尚待独立准入；不据此更改第14节候选并发默认值。普通Release构建入口及原生依赖校验沿用下文流程。
+
+本批最终1552项Flutter通过/12跳过、三组Windows原生3项业务回归、普通Windows Release及ARM64 devtest Release通过；Android因生成注册残留在AOT成功后编译失败，按下文既有规则只移除测试注册后离线续包，AOT摘要链核对一致。最新APK51336040字节/48.96 MiB、v2签名/70 MiB/CRC/原生与字体检查通过。末尾API37模拟器经ARM64转译实际安装/启动，合成TXT和34个设备字体的枚举/选择/重启持久化已检查，记录`emulator-validation.json`；它不替代实机性能/能耗或Android TV验收。
+
 ## EPUB／PDF 原生验证
 
 PDF 阅读固定使用 pdfrx 2.2.24 和 PDFium chromium/7520。Windows x64、Android arm64／x64 发布包与原生库的摘要见 `tool/pdfium_checksums.json`；使用 `python tool/verify_pdfium.py win-x64 <pdfium.dll> --archive <pdfium-win-x64.tgz>` 校验。Windows CMake 与 Android Gradle 会拒绝不匹配的库。Android 插件 JNI 目录指向该固定版本的真实目录，避免 Windows 目录链接被 AGP 忽略；不能替换为系统中任意 PDFium。

@@ -1,8 +1,8 @@
 # Zero Player 资源、耗电与流畅度专项评估及优化设计
 
-版本：1.3 | 评估、续实施及验证日期：2026-11-18（Asia/Shanghai） | 平台：Windows、Android 手机及 Android TV
+版本：1.4 | 评估、续实施及验证日期：2026-11-18（Asia/Shanghai） | 平台：Windows、Android 手机及 Android TV
 
-评估对象：`K:/zero-player`。1.0记录原始源码评估，1.1收窄首轮范围，阶段A及B1三项随后已实施；1.2按`9df72fb`复核设计；1.3记录A2、B2-a/b/c、B3-D和C1/C2/C3的续实施。历史评估、首轮及续实施证据分别保留捕获时点，不改写旧JSON或历史PDF。
+评估对象：`K:/zero-player`。1.0记录原始源码评估，1.1收窄首轮范围，阶段A及B1三项随后已实施；1.2按`9df72fb`复核设计；1.3记录A2、B2-a/b/c、B3-D和C1/C2/C3的续实施；1.4补充字体结果、网络许可观测与后台公平授予。历史评估、首轮及续实施证据分别保留捕获时点，不改写旧JSON或历史PDF。
 
 ## 1. 核心结论与实施建议
 
@@ -17,6 +17,7 @@
 3. B3-D已合并隐藏发现页历史展示读取，覆盖分支切换和独立页遮挡、迟到结果、错误重试、策略/标签和焦点。B3-L仍须先分离默认健康状态与策略频道登记职责，当前继续原加载。
 4. 进度去重先证明历史排序、元数据和策略证据均不变；诊断降频、持久化检查点和全应用并发调整均延后，不作为首轮消除冗余措施。
 5. C1/C2/C3已按独立基线完成；本轮另按用户确认保留手写内置字体并使用系统字体，增加设备字体会话缓存。启动恢复、LRU索引、内存和存储迁移按真实瓶颈另选，画质、预读、解码、PiP和后台音频候选独立验收。
+6. 网络许可观测和后台公平授予已实施，保持播放优先、实例并发及各类容量限制。受控持续交互场景中，后台等待期间被交互请求越过40次仍未获准，优化后18次后获准；这是调度工作量证据，全应用共享上限、队列容量与模块反压仍待准入。
 
 ### 1.1 功能影响复审结论与实施边界
 
@@ -159,6 +160,25 @@
 
 B3-L未实施，保存/诊断周期、网络总预算、迁移、原生异步字体枚举及实机稳态/能耗/长时仍按第16–18节准入，不因已减少工作量而视为全部30项完成。
 
+### 2.6 网络续实施：许可观测及后台公平授予
+
+本批基线`f42915e`在原scheduler加入显式作用域的可选许可观测，并建立真实`MediaHttpClient/DocumentClient`双客户端夹具；`b9dece7`实施后台公平授予。默认没有观察者，不记录URL、请求头或正文，观察回调异常不改变许可和取消。queued/started/released/cancelled按许可生命周期采集，不能用较晚结束的网络预算回调代替许可释放。[E32]
+
+| 固定场景 | 修改前 → 修改后 | 已验证边界 |
+| --- | --- | --- |
+| 双客户端、10个受控origin、64KiB流式响应 | 合计许可峰值40、同origin合计4，保持不变；42请求均完成2752512字节 | 证明独立scheduler的容量包络；不是全部业务模块同时发起的真实负载，也未实施全应用共享上限 |
+| 单客户端持续40次交互补入 | 后台等待期间交互获准40次且仍在等待 → 18次后后台获准 | 59请求、3866624字节全部完成，许可峰值仍18；比较授予次数，不将本机微秒等待差换算成用户延迟或能耗收益 |
+| 同origin排队1000请求后全部取消 | 1000个排队请求均未进入服务端，结束active/queued均0，保持不变 | 保留取消与关闭语义；不能据此宣称队列已有容量上限或已证实内存泄漏 |
+| 公平性契约 | 修改前4项失败；修改后19项定向通过，另补FIFO契约并由全量覆盖 | 播放优先、origin/后台/预留限制及取消保留；不抢占已开始的响应，不增加定时器或改变20/2/4及播放预留配置 |
+
+公平保证只适用于**最早且当前合格**的后台请求：当它满足原origin、后台及非播放容量条件时，最多再被现有非播放容量那么多次交互授予越过，随后在下一个合格非播放机会获准。多个后台按原FIFO依次获得保证；被origin、后台容量、播放占用或长时在途响应阻塞时，不承诺固定墙钟等待上限。
+
+本批全量Flutter1552项通过、12项跳过，analyze及515文件模块边界通过；源码规模仍104条原有超限，清单一致。三组Windows原生3项业务回归、普通Windows Release及PDFium/mpv/ANGLE摘要通过。ARM64 devtest Release为51336040字节/48.96 MiB，CRC、唯一ABI、字体、版本/包名、可选资源排除、70 MiB和原测试证书v2签名通过；SHA256为`3a9f875f5fa38923272bd33859ee80f2058fd681910650e6df6a39c5341c99e2`。本轮普通入口AOT已生成，后续Java编译因integration_test生成注册残留失败；核对仅多出测试注册块后去除，以同参数离线续包成功。AOT续包前后及合并摘要一致，剥离输出与APK内AOT一致，六份受保护文件还原后与起点字节相同。
+
+本批末复查发现Android API37模拟器`Medium_Phone_API_37.0`在线，ABI为x86_64/arm64-v8a；新ARM64 Release包经转译安装、启动、首页及字体选择通过。合成TXT导入后原生枚举34个设备字体族，选择`ITC Stone Serif`，重开面板及force-stop/重启后选择保留；中文系统回退、英文及数字实际截图检查通过。证据`emulator-validation.json`及其关联XML/PNG。部分早期uiautomator读取因系统UiAutomationService重复登记失败，旧快照不作通过依据。模拟器补充功能检查，不作为ARM64实机、Android TV、罕见字覆盖、真实媒体、PiP/歌词权限、功耗或长时验收。
+
+最终结果由`build/performance-network-20261118/final-verification.json`及`android-release-integrity.json`关联，输入见`source-before.json/source-final.json`。原始失败和被否决的观测日志保留，解析工作量另存`workloads-before.json/workloads-after.json`，不覆盖历史证据；本批新包较首轮74.49 MiB少25.54 MiB，差值仍包含代码和元数据变化，不能作为仅字体变化的同源码A/B或运行收益。
+
 ## 3. 全模块评估矩阵
 
 优先级用于优化实施排序：P0 为建立测量和保护门槛，P1 为优先消除确定冗余，P2 为有数据支撑后实施的结构优化，P3 为低频或收益尚不明确的候选。它们不是缺陷严重程度。
@@ -167,7 +187,7 @@ B3-L未实施，保存/诊断周期、网络总预算、迁移、原生异步字
 | --- | --- | --- | --- |
 | 启动与 App 装配 | 安全初始化、失败重试、资源关闭 | 串行服务初始化、缓存全索引恢复、非必需音频控制器提前构造；分阶段启动 | P2 |
 | 路由、生命周期、主题 | indexedStack 保留状态；阅读维护 gate | 隐藏分支订阅仍可执行；先审查读取副作用及恢复/焦点 | P2 |
-| core 网络 | 播放优先、origin/后台并发、有界 active 请求 | 多个 scheduler 各自“全局”；等待队列无统一容量；共享许可和反压 | P2 |
+| core 网络 | 播放优先、origin/后台并发、合格后台有限越过、可选许可观测 | 多个 scheduler 各自“全局”；等待队列无统一容量；共享许可和反压 | 局部完成/P2 |
 | core 数据库 | NativeDatabase 后台线程、事务提交后通知 | app_meta 表粒度通知、大 JSON 行更新、全量反序列化 | P1/P2 |
 | 视频播放 | 引擎50 ms合并、视频child/页面结构已稳定、受控缓冲及安全属性验证 | surface/transport仍接业务通知；周期进度写入、自然帧时待测 | B1局部完成/P2 |
 | 播放诊断 | 有界快照、有序写入、退出证据 | 每5秒采样兼具恢复判定；落盘降频改变证据窗口 | P2 |
@@ -357,6 +377,8 @@ A2最终基线：`a2-baseline-final.log`17项通过，计数开/关均验证功�
 队列设置模块配额和总容量。超过配额时，对重复封面/预读可去重或取消最旧无消费者任务；用户下载需要展示等待状态并持久保留任务意图，不能静默丢弃。对不同 origin 使用公平轮转和退避，只有 profile 证明排序成本明显时再更换队列结构。
 
 播放交互优先，但后台任务不能永远饥饿。测试同时包含持续搜索、封面加载和大文件 streaming；优先级不能回收已占用的网络连接，取消只能针对本任务合法持有的 lease。
+
+本批仅实施无需更改容量默认值的公平授予与许可观测，细节见2.6。网络观测目前是显式测试作用域，夹具按模块、优先级和origin汇总active/queued、等待及字节，并非所有生产调用点已自动归类。未测重试混合包络、持续播放占用与真实弱网吞吐前，不据此选用第14节的候选并发值。
 
 ### 7.3 下载写入与检查点
 
@@ -634,7 +656,8 @@ pdfrx 2.2.24 带 `remove_wasm_modules` 工具，但其实现会修改共享 Pub 
 | 发现页局部完成，直播待归属分离 | 02 | B3-D已完成路由/dirty/generation/策略回归；B3-L的channels业务副作用仍执行 |
 | 等待功能及证据窗口契约 | 04、05 | 04核对排序和内容证据；05定义异常快照窗口，保存和诊断周期未改 |
 | 无迁移小批完成 | 10、11、12 | C1 pin批量、C2容量计数、C3单程hash已完成；检查点、LRU索引和分批启动未实施 |
-| 等待规模、混合负载或设备证据 | 08、09、13–25、28 | 按各候选准入，不自动进入本批实现 |
+| 网络基线及公平授予局部完成 | 08、09局部 | 双客户端容量/取消夹具与许可观测已补，合格后台有限越过；共享上限、队列容量、模块反压和真实业务吞吐仍待准入 |
+| 等待规模、混合负载或设备证据 | 13–25、28 | 按各候选准入，不自动进入本批实现 |
 | 产品已确认，字体小批已实施 | 26、27局部 | 保留Xiaolai、使用设备字体并缓存枚举；WASM隔离及原生首次异步枚举后续独立验证 |
 
 | 编号 | 选项/策略 | 主要收益依据 | 顺序/难度 |
@@ -648,7 +671,7 @@ pdfrx 2.2.24 带 `remove_wasm_modules` 工具，但其实现会修改共享 Pub 
 | PERF-06 | 首轮按操作缩小读回；内存增量后置 | 避免历史写后读歌单，保留reload/排序 | P1/S-M |
 | PERF-07 | 首轮仅原生文本免重复赋值 | 保留权限/窗口检查；通道/广播去重后置 | P1/M |
 | PERF-08 | 跨客户端网络许可和模块配额 | 会影响吞吐/排队，基线和公平验证前置 | P2/M |
-| PERF-09 | 等待队列容量、取消、origin公平/退避 | 压力时内存和交互尾延迟 | P2/M |
+| PERF-09 | 后台公平授予已实施；队列容量、origin轮转/退避待准入 | 持续交互下后台可进展；容量/真实尾延迟另测 | 局部完成/P2/M |
 | PERF-10 | 先pin批量查询；UI/checkpoint调整另立项 | 查询优化和持久化语义分批，首轮不改周期 | P2/M |
 | PERF-11 | 分片容量 O(1)、LRU与分批恢复 | 大缓存启动/提交复杂度改善 | P2/M |
 | PERF-12 | 文件写入时单程 hash | 明确减少刚写文件的重复顺序读 | P2/M |
@@ -670,13 +693,13 @@ pdfrx 2.2.24 带 `remove_wasm_modules` 工具，但其实现会修改共享 Pub 
 | PERF-28 | 大解析/备份worker与导出资源许可 | 低频交互阻塞、峰值有界化 | P3/M |
 | PERF-29 | 性能回归场景/包体/长时证据门禁 | 防止后续通知/I/O/生命周期回退 | P0起/M |
 
-当前已完成A/B1子集、A2、B2-a/b/c、B3-D及C1/C2/C3。B3-L还需业务副作用归属分离；04/05、08/09/13/14及迁移类继续按功能、规模或公平性证据准入，不因P2排序自动实现；设备A3与长时验收可在设备到位后开展。
+当前已完成A/B1子集、A2、B2-a/b/c、B3-D、C1/C2/C3、字体分发/会话缓存及网络公平授予。B3-L还需业务副作用归属分离；04/05、08/09剩余范围、13/14及迁移类继续按功能、规模或公平性证据准入，不因P2排序自动实现；设备A3与长时验收可在设备到位后开展。
 
 ## 16. 分阶段实施、回退和交付
 
 ### 16.1 阶段A：已完成基线及待补证据
 
-**A1已完成局部**：默认关闭的`PerformanceCounters`、音乐固定夹具、真实PlayerPage受控通知及原生歌词赋值A/B；入口及字段字典见BUILD，提交和结果见2.3。现有计数不是完整性能平台：`db.queries/rows`只覆盖`rows`，`db.statements`只覆盖成功的`customStatement`调用，batch内SQL不逐条计入；网络值是许可累计次数，不是全应用active/queued瞬时量；缓存值不是全部I/O。尚无分配/GC、全通道消息、全应用排队时长及物理写盘计数。
+**A1已完成局部**：默认关闭的`PerformanceCounters`、音乐固定夹具、真实PlayerPage受控通知及原生歌词赋值A/B；入口及字段字典见BUILD，提交和结果见2.3。现有计数不是完整性能平台：`db.queries/rows`只覆盖`rows`，`db.statements`只覆盖成功的`customStatement`调用，batch内SQL不逐条计入；聚合网络值是许可累计次数，2.6另补显式作用域的生命周期观测及受控瞬时量，生产调用点仍未全覆盖；缓存值不是全部I/O。尚无分配/GC、全通道消息、全应用排队时长及物理写盘计数。
 
 | 任务 | 范围、前置与修改入口 | 验收及停止条件 | 状态 |
 | --- | --- | --- | --- |
@@ -730,6 +753,8 @@ B1三项及续实施B2/B3-D的功能和工作量回归已完成，仍保留A3缺
 | C3 / PERF-12；`SegmentStore.write` | 固定大小/分块/中断流测新写后摘要重读字节及吞吐，才改为流式单程SHA-256 | 独立重读校验产物摘要一致；已确认提交的新资源`cache.hash.read_bytes`从N降至0；长度/容量/空流/异常/取消/rename或metadata失败仍按原契约处理；重启、离线verify及外部篡改验证保留 | 不减少校验范围、不改flush/checkpoint周期；CPU/内存/吞吐出现无解释回退则停止，恢复写后摘要读取。无格式/schema变化 |
 
 全应用许可/队列08/09、预取13、启动14及04/05另行准入：先有模块active/queued/等待/字节、混合公平性、最近播放排序/内容证据或诊断异常窗口基线。现有累计许可数不足以选择新并发默认值。阶段C不能顺带延长保存、健康采样或检查点。
+
+08/09本批已补双客户端容量/取消基线和公平授予，提交`f42915e/b9dece7`；证据范围见2.6。共享上限和模块反压仍须真实业务/重试/播放占用的混合验收，不将传输夹具直接视为所有业务流量，不自动缩减并发。
 
 15/16/18等迁移仅在大JSON/缓存/重开瓶颈被量化后立项，先备份并验证校验和/数量/引用、中断恢复及切换失败；不在成功前删除旧数据。代码revert不保证读取新schema，必须提供受验证备份恢复或前向修复方案。
 
@@ -868,7 +893,7 @@ Get-Content ./tool/capture_reading_power.ps1 -TotalCount 24
 | 时间及资源追踪 | 只读`capture_reading_power.ps1`与受控Profile功能入口 | Perfetto/WPR配置、timeline、分配/GC、通道消息、模块active/queued/等待/字节；按实际瓶颈补，不强制一次建齐 |
 | 长期门禁 | 现有功能、模块边界/规模、原生依赖及APK校验 | 确定性工作量阈值、包体条目差异及30/120分钟资源曲线；功耗用标记设备或人工实验，普通CI不报告节电率 |
 
-上述1.2文档复审仅检查文档及契约，不算本轮实现验证。1.3续实施的音乐混合/域通知、发现页可见性和缓存规模入口见[BUILD续实施回归](BUILD.md#性能专项续实施回归)；实际退出码、源码摘要及平台限制见本轮汇总与STATUS。
+上述1.2文档复审仅检查文档及契约，不算本轮实现验证。1.3续实施的音乐混合/域通知、发现页可见性和缓存规模入口见[BUILD续实施回归](BUILD.md#性能专项续实施回归)；1.4网络入口见[BUILD网络公平性回归](BUILD.md#性能专项网络公平性回归)。实际退出码、源码摘要及平台限制见各批汇总与STATUS。
 
 ## 20. 不推荐的优化路径与决策边界
 
@@ -919,6 +944,7 @@ Get-Content ./tool/capture_reading_power.ps1 -TotalCount 24
 - **E29 / A,S**：首轮提交`d4e666b/e8a9cf6/ef9eb95/edd954f/9df72fb`；`build/performance-implementation-20261118/final-verification.json`、`stage-a-tests.log`、`b1a-tests.log`、`player-page-before.json`、`b1b-native.log`、`player-page-after-profile.json`、`b1b-profile.log`、`lyrics-{before,after}-results.xml`、`full-flutter-tests.log`、`final-{analyze,boundaries,source-size}.log`、`android-release-integrity.json`、`android-release-{online,offline}.log`、`windows-release.log`及`protected-final.json`。`source-manifest.json`记录修改前e03d04e快照。
 - **E30 / A,S**：本次1.2复审以`9df72fb`读取`app_database.dart`、`music_library.dart`、`live_repository/live_audit_defaults/live_health_repository.dart`、`content_policy.dart`、`content_records.dart`、`history_repository.dart`、`live_page/discovery_page/product_app.dart`、`download_scheduler.dart`及`segment_store/segment_index.dart`；本次33项契约复验日志`build/performance-design-review-20261118/contract-tests.log`，文档及受保护摘要检查见同目录`document-verification.json`。
 - **E31 / A,S**：续实施A2/B2/B3-D/C1–C3，源码提交及工作量见2.5。证据根`build/performance-continuation-20261118/`保留修改前后日志、解析的`workloads-before.json/workloads-after.json`、`final-verification.json`、`source-manifest-final.json`和六份受保护文件副本/摘要；Windows原生明细另在`.dart_tool/native-*/`，最终路径由汇总关联。未接设备，不报告节电百分比。
+- **E32 / A,S**：网络基线`f42915e`及公平授予`b9dece7`；`build/performance-network-20261118/`保留`baseline-tests.log`、`fairness-before/after.log`、`fairness-fifo.log`、`network-regressions.log`、解析前后工作量及本批最终验证。仅精确许可生命周期计入active；初版网络预算回调观测已否决并留档。共享上限、队列容量、业务全覆盖和设备能耗待测。
 
 ## 附录B. 包体摘要与交付清单
 
@@ -928,13 +954,13 @@ Get-Content ./tool/capture_reading_power.ps1 -TotalCount 24
 | Windows便携ZIP | `4d3a329ac7b407c56f3b102889f3ba9d1355198011bda2717dbda01a545a624e` |
 | Windows安装器 | `1854c0889999a95f5d7e5f0852ddffb3663966ed310d611dd989dd7d44c254fa` |
 
-上表只对应原始评估交付物。首轮开发测试APK SHA-256为`ab6196132222fbb61f67854a88778fb8a8d4808b987c757b030151bfda9b7b7d`；后续构建可能替换build内同名产物，不能再用该摘要代表当前文件。本轮结果以`final-verification.json`为准，没有生成ZIP或安装器，也未正式发行。
+上表只对应原始评估交付物。首轮开发测试APK SHA-256为`ab6196132222fbb61f67854a88778fb8a8d4808b987c757b030151bfda9b7b7d`；后续构建可能替换build内同名产物，不能再用该摘要代表当前文件。当前网络小批APK SHA256为`3a9f875f5fa38923272bd33859ee80f2058fd681910650e6df6a39c5341c99e2`，详细结果以各批`final-verification.json`为准，没有生成ZIP或安装器，也未正式发行。
 
 维护与分享范围：
 
 - `docs/implementation/PERFORMANCE-OPTIMIZATION-2026-11-18.md`：可维护正文，含30项候选、分阶段设计及验收方案。
-- `output/pdf/Zero-Player-性能专项优化报告-2026-11-18.pdf`：历史1.1分享版，当时逐页渲染检查；未同步1.2/1.3，后续任务以Markdown为准。
+- `output/pdf/Zero-Player-性能专项优化报告-2026-11-18.pdf`：历史1.1分享版，当时逐页渲染检查；未同步1.2–1.4，后续任务以Markdown为准。
 - `docs/implementation/PERFORMANCE-EVIDENCE-2026-11-18.json`：保留原始源码指纹、统计与已有包体证据。
-- `docs/implementation/STATUS.md`：当前进度的唯一入口；首轮、1.2复审及续实施的本地日志分别在E29/E30/E31目录，不新增同义进度文件。
+- `docs/implementation/STATUS.md`：当前进度的唯一入口；首轮、1.2复审及续实施/网络小批的本地日志分别在E29–E32目录，不新增同义进度文件。
 
-报告1.3已同步首轮A/B1及续实施A2/B2/B3-D/C1–C3的源码和工作量结果；B3-L、产品取舍、规模/设备候选保留准入条件。设备性能、功耗、长时及正式发行仍待验收，未推送或发布。
+报告1.4已同步首轮A/B1、续实施A2/B2/B3-D/C1–C3、字体分发和网络公平授予的源码及工作量结果；B3-L和其他条件性候选保留准入要求。设备性能、功耗、长时及正式发行仍待验收，未推送或发布。
