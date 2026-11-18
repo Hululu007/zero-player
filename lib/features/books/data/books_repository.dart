@@ -61,6 +61,7 @@ export 'book_source_import_plan.dart' show BookImportChanges;
 part 'book_comic_download.dart';
 part 'book_chapter_download.dart';
 part 'book_repository_discovery.dart';
+part 'book_repository_editions.dart';
 part 'book_repository_mutations.dart';
 part 'book_repository_media_access.dart';
 part 'book_repository_policy_review.dart';
@@ -73,6 +74,13 @@ part 'book_site_observed_sources.dart';
 part 'book_supervised_site_scan.dart';
 
 typedef BookEdition = ({Book book, List<BookChapter> chapters});
+typedef BookEditionUpdate = ({
+  BookSourceEntry? source,
+  BookEdition? edition,
+  int completed,
+  int total,
+  bool failed,
+});
 typedef BookSearchUpdate = ({
   String? sourceId,
   List<Book> books,
@@ -959,50 +967,15 @@ final class BooksRepository {
     Book book,
     CancellationToken token, {
     bool refresh = false,
-  }) async {
-    final title = bookIdentity(book.title);
-    final author = bookIdentity(book.author);
-    if (author.isEmpty) return [];
-    final results = await find(
-      book.kind,
-      book.title,
-      token,
-      field: BookSearchField.title,
-      excludedSource: book.sourceId,
-    );
-    final candidates = results.books
-        .where(
-          (other) =>
-              other.sourceId != book.sourceId &&
-              bookIdentity(other.title) == title &&
-              bookIdentity(other.author) == author,
-        )
-        .toList();
-    final editions = List<BookEdition?>.filled(candidates.length, null);
-    var cursor = 0;
-    Future<void> loadCatalogs() async {
-      while (cursor < candidates.length) {
-        token.check();
-        final index = cursor++;
-        final candidate = candidates[index];
-        try {
-          final catalog = await chapters(candidate, token, refresh: refresh);
-          token.check();
-          if (catalog.isNotEmpty) {
-            editions[index] = (book: candidate, chapters: catalog);
-          }
-        } on Exception {
-          token.check();
-        }
-      }
-    }
-
-    await Future.wait(
-      List.generate(math.min(3, candidates.length), (_) => loadCatalogs()),
-    );
-    token.check();
-    return editions.whereType<BookEdition>().toList();
-  }
+    bool includeCurrent = false,
+    void Function(BookEditionUpdate)? onProgress,
+  }) => _inspectEditions(
+    book,
+    token,
+    refresh: refresh,
+    includeCurrent: includeCurrent,
+    onProgress: onProgress,
+  );
 
   BookChapter? matchingChapter(
     List<BookChapter> chapters,

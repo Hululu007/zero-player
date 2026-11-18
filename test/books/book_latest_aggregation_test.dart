@@ -89,7 +89,6 @@ void main() {
       for (final titles in [
         ['第一章 起点', '第三章 出发', '第四章 归来'],
         ['第一章 起点', '第二章 相遇', '第二章 相遇', '第三章 出发'],
-        ['第一章 起点', '第二章 相遇', '第三章 出发', '第三章 出发'],
         ['第一章 起点', '第二章 相遇', '第一章 起点'],
         ['前言', '第二章 相遇', '第三章 出发'],
       ]) {
@@ -104,7 +103,38 @@ void main() {
     },
   );
 
+  _duplicateTitleTests(target, current, origin);
+
   _planTests();
+}
+
+void _duplicateTitleTests(Book target, List<BookChapter> current, Book origin) {
+  test(
+    'repeated titles at distinct addresses do not discard an aligned tail',
+    () {
+      final chapters = _catalog('origin', [
+        '第一章 起点',
+        '第二章 相遇',
+        '第三章 出发',
+        '休息一天',
+        '休息一天',
+        '第三章 出发',
+      ]);
+      expect(
+        planBookLatestChapters(target, current, [
+          (book: origin, chapters: chapters),
+        ]),
+        hasLength(4),
+      );
+      chapters[5] = chapters[2];
+      expect(
+        planBookLatestChapters(target, current, [
+          (book: origin, chapters: chapters),
+        ]),
+        isEmpty,
+      );
+    },
+  );
 }
 
 void _planTests() {

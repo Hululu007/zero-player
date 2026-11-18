@@ -15,6 +15,7 @@ import 'book_reader_page.dart';
 import 'book_page_route.dart';
 import 'rich_reader_page.dart';
 import 'book_cover.dart';
+import 'book_edition_panel.dart';
 import 'book_links.dart';
 import 'audiobook_player_page.dart';
 import 'book_download_dialog.dart';
@@ -602,6 +603,13 @@ final class _BookDetailPageState extends State<BookDetailPage> {
       ),
     );
     if (chosen == null || !mounted || token.isCancelled) return;
+    await _switchEdition(chosen, token);
+  });
+
+  Future<void> _switchEdition(
+    BookEdition chosen,
+    CancellationToken token,
+  ) async {
     _requirePageBook(_book);
     final candidate = await _checkedEdition(chosen.book, token);
     token.check();
@@ -633,7 +641,7 @@ final class _BookDetailPageState extends State<BookDetailPage> {
     });
     _attachDownloadTask(widget.services.bookDownloads.active(_book));
     await _load(token);
-  });
+  }
 
   Future<Book> _checkedEdition(Book candidate, CancellationToken token) async {
     try {
@@ -829,6 +837,15 @@ final class _BookDetailPageState extends State<BookDetailPage> {
                               : null,
                         ),
                       _summary(last),
+                      if (!_local && !_audio && !_comic)
+                        BookEditionPanel(
+                          key: ValueKey(_book.id),
+                          repository: _books,
+                          book: _book,
+                          busy: _busy,
+                          onSelected: (edition) =>
+                              _run((token) => _switchEdition(edition, token)),
+                        ),
                       if (_error != null)
                         Padding(
                           padding: const EdgeInsets.all(12),

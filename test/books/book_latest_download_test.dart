@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:zero_player/app/app_services.dart';
@@ -19,6 +20,61 @@ void main() {
   _routingSafetyTests();
   _persistentOriginTests();
   _capacityTests();
+  _observedCatalogDownloadTests();
+}
+
+void _observedCatalogDownloadTests() {
+  test(
+    '68 chapter short edition downloads the observed aggregate and resumes only failures',
+    () async {
+      final f = await _Fixture.create();
+      addTearDown(f.close);
+      final data =
+          jsonDecode(
+                await File(
+                  'test/fixtures/books/yewujiang_catalogs.json',
+                ).readAsString(),
+              )
+              as Map;
+      List<BookChapter> catalog(String key, String host) => [
+        for (final (i, title) in (data[key]['titles'] as List).indexed)
+          BookChapter(title as String, Uri.https(host, '/chapter/$i')),
+      ];
+      f.current = catalog('target', 'target.example');
+      f.newer = catalog('origin', 'origin.example');
+      f.failureTitle = '第69章 无比期待';
+      final task = f.manager.start(f.target, f.current, _aggregatePlan);
+      await task.done;
+      expect(task.status, BookDownloadStatus.partial);
+      expect(task.chapters, hasLength(1300));
+      expect(task.failures, 1);
+      expect(f.calls, hasLength(1300));
+      expect(
+        f.calls.where((call) => call.startsWith('${f.origin.sourceId}:')),
+        hasLength(1232),
+      );
+      final shelf = (await f.books.store.entry(f.target))!;
+      expect(shelf.chapters, hasLength(1300));
+      final addition = shelf.chapters[69];
+      final proof = (await f.books.store.provenText(
+        f.target,
+        addition,
+      ))!.evidence;
+      expect(proof.origin.sourceId, f.origin.sourceId);
+      expect(BookLatestAggregation.isAggregated(addition), isTrue);
+      final plan = BookDownloadPlan.fromJson(
+        await f.books.store.read('books_download:${f.target.id}'),
+      )!;
+      expect(plan.chapterIds, hasLength(1300));
+      f.failureTitle = null;
+      f.calls.clear();
+      final retry = f.manager.start(f.target, shelf.chapters, plan);
+      await retry.done;
+      expect(retry.status, BookDownloadStatus.completed);
+      expect(retry.total, 1);
+      expect(f.calls, ['${f.origin.sourceId}:第69章 无比期待']);
+    },
+  );
 }
 
 void _lifecycleTests() {
@@ -224,6 +280,7 @@ class _Fixture {
   late List<BookChapter> current, newer;
   final calls = <String>[];
   bool failLast = false, cancelScan = false;
+  String? failureTitle;
   int inspections = 0;
   BookEdition get edition => (book: origin, chapters: newer);
 
@@ -241,7 +298,8 @@ class _Fixture {
       (file, token, extension) async {},
       downloadText: (source, book, chapter, token) async {
         f.calls.add('${source.id}:${chapter.title}');
-        if (f.failLast && chapter.title == '第4章') {
+        if (f.failLast && chapter.title == '第4章' ||
+            f.failureTitle != null && chapter.title == f.failureTitle) {
           throw const SocketException('controlled');
         }
         return '正文 ${chapter.title}';

@@ -1,6 +1,7 @@
 import '../../../core/network/cancellation_token.dart';
 import '../../supervision/domain/supervision_rules.dart';
 import '../domain/book.dart';
+import '../domain/book_chapter_alignment.dart';
 import 'book_catalog_window.dart';
 import 'book_download_evidence.dart';
 import 'book_download_guard.dart';
@@ -39,25 +40,22 @@ List<BookLatestChapter> planBookLatestChapters(
 ) {
   if (target.kind != BookKind.text || catalog.isEmpty) return [];
   final result = <BookLatestChapter>[];
-  final titles = catalog.map((c) => bookIdentity(c.title)).toList();
-  final known = titles.toSet();
+  final aligned = List<BookChapter>.of(catalog);
+  final known = catalog.map((c) => bookIdentity(c.title)).toSet();
   final pending = editions.where((e) => _sameWork(target, e.book)).toList();
   while (pending.isNotEmpty) {
     List<BookChapter> best = [];
     Book? origin;
     for (final edition in pending) {
       final keys = edition.chapters.map((c) => bookIdentity(c.title)).toList();
-      final boundary = keys.indexOf(titles.last);
-      if (boundary < 0 || keys.lastIndexOf(titles.last) != boundary) continue;
-      // Require both trailing chapters when available, in the same order.
-      if (titles.length > 1 &&
-          (boundary == 0 || keys[boundary - 1] != titles[titles.length - 2])) {
-        continue;
-      }
+      final boundary = bookChapterTailBoundary(aligned, edition.chapters);
+      if (boundary == null) continue;
       final tail = edition.chapters.skip(boundary + 1).toList();
       final tailKeys = keys.skip(boundary + 1).toList();
+      // Different chapter URLs can legitimately share a title (e.g. notices).
+      // Keep their identities; never discard a complete tail for that alone.
       if (tailKeys.any((key) => key.isEmpty || known.contains(key)) ||
-          tailKeys.toSet().length != tailKeys.length) {
+          tail.map((c) => c.id).toSet().length != tail.length) {
         continue;
       }
       if (tail.length > best.length) {
@@ -73,7 +71,7 @@ List<BookLatestChapter> planBookLatestChapters(
         chapter: chapter,
       ));
       final key = bookIdentity(chapter.title);
-      titles.add(key);
+      aligned.add(chapter);
       known.add(key);
     }
     pending.removeWhere((edition) => edition.book.id == origin!.id);
