@@ -2,6 +2,14 @@
 
 更新：2026-11-18（Asia/Shanghai）。本文件是项目当前进度的唯一入口；下文日期章节和需求矩阵保留历史验收范围。
 
+## 清理历史构建并重新打包（2026-11-18）
+
+- 目标与来源：按用户要求清理历史构建，再基于修复提交 `c13e899` 重新打包；业务源码未修改，版本保持 `0.7.4+74`。Android 沿用已确认的独立 `dev.zeroplayer.zero_player.devtest` 测试签名 Release，不替换正式应用身份。
+- 清理：核实绝对路径与链接目标后，移除 858 个旧构建/本地测试产物目标，共 **14069707884 字节／13.10 GiB（重建前）**；包括项目映射的 Flutter 构建缓存、Android/Windows 中间目录及历史本地 APK/安装器/便携包和展开运行文件。正式 `artifacts/release`、`archive`、源码 ZIP、Git bundle、用户数据库备份、签名材料、评审/测试证据及固定依赖归档保留；旧测试目录中的历史清单不表示对应包仍存在。清单 `build/repack-selfcheck-20261118-213232/cleanup-{plan,result,summary}.json`。
+- 重建：串行 Windows 普通 Release 与 Android ARM64 Release 成功。Windows 初次等待 PDFium 下载，改用摘要匹配的本机固定归档；一次安装步骤失败后诊断安装与完整 Flutter 重跑成功。Android 在线阶段生成本轮 AOT 后停在动态依赖元数据重试，终止该 wrapper 并以相同 Gradle 属性离线续包成功；应用 AOT 续包前后摘要一致，合并输入与剥离输出/包内 AOT 链路一致。失败/中断日志保留，不作为成功依据。
+- 校验：Android **51346968 字节／48.97 MiB**，版本/包名、唯一 arm64 ABI、字体、可选资源排除、70 MiB、CRC、原测试证书及 v2 签名通过；SHA-256 `16b39303d21369cf8744fe596ba7c27b09117461e99b22eddfd671b2bf33975c`。Windows 固定 PDFium/mpv/ANGLE 摘要、版本及字体通过，安装器编译成功，便携 ZIP 与 99 份本轮应用构建文件逐项摘要一致；所有 ZIP/APK CRC 通过。168 包第三方声明和原生源码归档已重新校验。7 份受保护注册/依赖/本机文件恢复后摘要一致，799 份生产输入摘要一致。
+- 交付：`artifacts/device-test/0.7.4-20261118-214816/`，包含 ARM64 测试 APK、Windows x64 setup/portable、固定 `c13e899` Git blob 源码 ZIP、第三方声明/原生源码、`BUILD-INFO.json`、`SOURCE-INFO.json`、`SHA256SUMS.txt`。汇总与日志在 `build/repack-selfcheck-20261118-213232/`。仅本地重新打包，无推送/发布/安装；未重跑上一节 1587 项源码回归，未新增 Android/TV 实机/旋转验收。
+
 ## 修复后场景自查（2026-11-18）
 
 - 目标：基于已提交修复 `2410600` 再查用户举例的部分章节失败、播放锁定仍响应手机旋转，并检查取消、并发、退出和持久化边界。上轮备份 `5ca18b6` 及分支继续保留；原有 `.workbuddy/`、`tmp/` 未纳入改动。
