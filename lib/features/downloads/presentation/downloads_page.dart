@@ -195,6 +195,11 @@ final class _DownloadsPageState extends State<DownloadsPage> {
   };
   Future<void> _play(DownloadTask task) => perform(context, () async {
     widget.services.downloads.requireAllowed(task);
+    if (!await File('${task.directory}/${task.localPath}').exists()) {
+      await widget.services.downloadScheduler.resume(task.id);
+      if (mounted) message(context, '离线文件已缺失，已重新加入下载');
+      return;
+    }
     final sourceId = task.row['source_id'] as String;
     final remoteId = task.row['remote_id'] as String;
     final line = task.row['line_name'] as String;

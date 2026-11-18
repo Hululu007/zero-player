@@ -1,6 +1,7 @@
 import '../../supervision/application/content_policy.dart';
 import '../../supervision/domain/supervision_rules.dart';
 import '../domain/book.dart';
+import 'book_site_check.dart';
 import 'book_download_evidence.dart';
 import 'book_source_risk_store.dart';
 import 'book_store.dart';
@@ -23,6 +24,7 @@ final class BookDownloadGuard {
     required this.bookPolicyGeneration,
     required this.ensureReady,
   }) {
+    _policySnapshot = bookSitePolicySnapshot(policy);
     policy.addListener(_policyChanged);
   }
 
@@ -39,8 +41,15 @@ final class BookDownloadGuard {
   final int Function() bookPolicyGeneration;
   final Future<void> Function() ensureReady;
   int _policyRevision = 0;
+  late String _policySnapshot;
 
-  void _policyChanged() => _policyRevision++;
+  void _policyChanged() {
+    final next = bookSitePolicySnapshot(policy);
+    if (next == _policySnapshot) return;
+    _policySnapshot = next;
+    _policyRevision++;
+  }
+
   BookDownloadLease lease() => (
     generation: generation(),
     policy: _policyRevision,

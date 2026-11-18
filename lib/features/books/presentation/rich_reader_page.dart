@@ -10,6 +10,7 @@ import '../../../core/platform/platform_services.dart';
 import '../data/local_book.dart';
 import '../data/books_repository.dart';
 import '../data/rich_book.dart';
+import '../data/book_site_check.dart';
 import '../domain/book.dart';
 import 'reader_style.dart';
 import 'reader_automation.dart';
@@ -41,6 +42,7 @@ class _RichReaderState extends State<RichReaderPage>
     with WidgetsBindingObserver, SingleTickerProviderStateMixin {
   GlobalKey<VerticalBookTextState> _vertical = GlobalKey();
   bool _horizontal = false;
+  late String _policySnapshot;
   bool _validated = false;
   final _pdf = PdfViewerController();
   late final _systemUi = ReaderSystemUi(widget.platform);
@@ -74,6 +76,7 @@ class _RichReaderState extends State<RichReaderPage>
     super.initState();
     _releaseReading;
     WidgetsBinding.instance.addObserver(this);
+    _policySnapshot = bookSitePolicySnapshot(widget.repository.policy);
     widget.repository.policy.addListener(_onPolicyChanged);
     _scroll.addListener(_scrolled);
     _load();
@@ -117,6 +120,11 @@ class _RichReaderState extends State<RichReaderPage>
   }
 
   void _onPolicyChanged() {
+    final next = bookSitePolicySnapshot(widget.repository.policy);
+    if (next == _policySnapshot && widget.repository.bookAllowed(widget.book)) {
+      return;
+    }
+    _policySnapshot = next;
     _stop();
     _saveTimer?.cancel();
     _searcher?.resetTextSearch();
@@ -786,14 +794,23 @@ class _RichReaderState extends State<RichReaderPage>
         return;
       }
       final position = _scroll.position;
-      if (!position.hasContentDimensions ||
-          position.maxScrollExtent == 0 && _resumeOffset! > 0) {
-        return;
-      }
+      if (!position.hasContentDimensions) return;
       _scroll.jumpTo(_resumeOffset!.clamp(0.0, position.maxScrollExtent));
       _resumeOffset = null;
       _scrolled();
     });
+  }
+
+  int _textBoundary(String text, int offset) {
+    if (offset > 0 &&
+        offset < text.length &&
+        text.codeUnitAt(offset) >= 0xDC00 &&
+        text.codeUnitAt(offset) <= 0xDFFF &&
+        text.codeUnitAt(offset - 1) >= 0xD800 &&
+        text.codeUnitAt(offset - 1) <= 0xDBFF) {
+      return offset - 1;
+    }
+    return offset;
   }
 
   Widget _searchResults(List<RichSection> sections) {
@@ -816,8 +833,14 @@ class _RichReaderState extends State<RichReaderPage>
           title: Text(section.title),
           subtitle: Text(
             section.text.substring(
-              (match.start - 40).clamp(0, section.text.length),
-              (match.end + 100).clamp(0, section.text.length),
+              _textBoundary(
+                section.text,
+                (match.start - 40).clamp(0, section.text.length),
+              ),
+              _textBoundary(
+                section.text,
+                (match.end + 100).clamp(0, section.text.length),
+              ),
             ),
           ),
           onTap: () => _openSection(index),

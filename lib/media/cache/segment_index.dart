@@ -6,9 +6,13 @@ import 'segment_metadata.dart';
 import 'segment_store.dart';
 import '../../core/persistence/app_database.dart';
 
-final class SegmentIndex implements SegmentMetadata {
+final class SegmentIndex implements SegmentMetadata, SegmentRecoveryMetadata {
   const SegmentIndex(this.db);
   final AppDatabase db;
+  @override
+  Future<Set<String>> indexedKeys() async => (await db.rows(
+    'SELECT cache_key FROM segment_index',
+  )).map((row) => row['cache_key'] as String).toSet();
   @override
   Future<Map<String, StoredResource>> entries() async {
     final entries = <String, StoredResource>{};

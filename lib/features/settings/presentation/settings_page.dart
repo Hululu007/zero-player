@@ -433,7 +433,10 @@ final class SettingsPage extends StatelessWidget {
         services.supervision,
         SensitiveOperation.settings,
         () => services.settings.update({key: v}),
-        needed: key == 'filterAdult' && !v,
+        needed:
+            key == 'filterAdult' && !v ||
+            key == 'backgroundProbe' ||
+            key == 'bookSiteAutoCheck',
       ),
     ),
   );

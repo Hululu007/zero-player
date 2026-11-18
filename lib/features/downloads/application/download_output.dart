@@ -142,7 +142,9 @@ Future<void> _cleanInterruptedOutput(Directory directory, String entry) async {
     final name = p.basename(entity.path);
     if (entity is Directory && name.startsWith('.save-')) {
       await entity.delete(recursive: true);
-    } else if (entity is File && name == 'output.mp4' && name != entry) {
+    } else if (entity is File &&
+        name == 'output.mp4' &&
+        name != p.basename(entry)) {
       await entity.delete();
     }
   }

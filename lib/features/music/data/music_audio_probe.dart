@@ -26,7 +26,7 @@ Future<MusicAudioSample> probeMusicAudio(
     policy: HeaderPolicy({resolved.url: repository.headers(resolved)}),
     range: 'bytes=0-2047',
     cancellation: token,
-    priority: RequestPriority.background,
+    priority: RequestPriority.interactive,
   );
   final type =
       payload.response.headers['content-type']?.firstOrNull

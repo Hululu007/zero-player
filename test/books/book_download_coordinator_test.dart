@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:zero_player/app/app_services.dart';
 import 'package:zero_player/core/persistence/app_database.dart';
+import 'package:zero_player/core/persistence/installation_metadata.dart';
 import 'package:zero_player/features/books/data/book_download_coordinator.dart';
 import 'package:zero_player/features/books/domain/book.dart';
 import 'package:zero_player/features/books/domain/book_download_plan.dart';
@@ -163,6 +164,10 @@ void main() {
         await services.close();
         await root.delete(recursive: true);
       });
+      await services.db.write('INSERT OR REPLACE INTO app_meta VALUES(?,?)', [
+        installationAccessKey,
+        upgradedInstallationAccess,
+      ]);
       await services.settings.load();
       await services.supervision.load();
       final book = Book(
@@ -191,7 +196,9 @@ void main() {
         chapter,
       ], const BookDownloadPlan(1, 1, false));
       await started.future.timeout(const Duration(seconds: 5));
-      services.contentPolicy.refresh();
+      await services.settings.update({
+        'filterAdult': !services.settings.value.filterAdult,
+      });
       release.complete();
       await task.done.timeout(const Duration(seconds: 5));
       expect(task.status, BookDownloadStatus.paused);

@@ -11,3 +11,8 @@ abstract interface class SegmentMetadata {
   Future<void> unpin(String owner);
   Future<void> retainPins(String owner, Set<String> keys);
 }
+
+/// Recovery may retain damaged indexed payloads without exposing their headers.
+abstract interface class SegmentRecoveryMetadata {
+  Future<Set<String>> indexedKeys();
+}

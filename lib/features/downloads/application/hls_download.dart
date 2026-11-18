@@ -78,13 +78,23 @@ final class HlsDownload {
       try {
         final saved = jsonDecode(await checkpoint.readAsString());
         if (saved is Map &&
-            saved['root'] == uri.toString() &&
+            saved['root'] is String &&
             saved['revision'] is String &&
             RegExp(
               r'^[a-zA-Z0-9_-]{32}$',
             ).hasMatch(saved['revision'] as String) &&
             saved['manifests'] is Map) {
           _fingerprints.addAll(Map<String, String>.from(saved['manifests']));
+          final previousRoot = saved['root'] as String;
+          if (previousRoot != uri.toString()) {
+            final expected = _fingerprints[previousRoot];
+            if (expected == null) {
+              throw const FormatException('Missing root fingerprint');
+            }
+            // Reuse only after the fresh root body matches. Resource URLs and
+            // headers remain part of each segment identity without normalization.
+            _fingerprints[uri.toString()] = expected;
+          }
           _revision = saved['revision'] as String;
         }
       } on FormatException {

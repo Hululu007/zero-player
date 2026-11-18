@@ -50,6 +50,7 @@ final class DownloadScheduler {
   bool _closed = false;
   bool _pendingKick = false;
   bool foreground = true;
+  final _lifecyclePaused = <String>{};
 
   void _policyChanged() {
     // Cancel immediately; no transfer may continue under an obsolete policy.
@@ -60,19 +61,28 @@ final class DownloadScheduler {
 
   Future<void> initialize() async {
     await repository.recover();
-    await repository.cleanupPending();
+    await repository.cleanupPending(unpin: fetcher.store.unpin);
     kick();
   }
 
-  Future<void> resume(String id) => _control(id, () async {
+  Future<void> resume(String id) => _control(id, () => _resume(id));
+
+  Future<void> _resume(String id, {bool lifecycle = false}) async {
+    if (lifecycle && (!foreground || !_lifecyclePaused.contains(id))) return;
+    _lifecyclePaused.remove(id);
     if (_closed) return;
     final token = _tokens[id];
     if (token != null && !token.isCancelled) return;
     await _jobs[id];
     if (_closed) return;
-    final task = await repository.find(id);
+    var task = await repository.find(id);
     if (task == null) return;
     repository.requireAllowed(task);
+    if (task.localPath != null &&
+        !await File(p.join(task.directory, task.localPath!)).exists()) {
+      await repository.resetMissingOutput(id);
+      task = (await repository.find(id))!;
+    }
     await repository.status(
       id,
       task.localPath != null && await repository.output(id) != null
@@ -80,9 +90,12 @@ final class DownloadScheduler {
           : DownloadStatus.queued,
     );
     kick();
-  });
+  }
 
-  Future<void> pause(String id) => _control(id, () => _pause(id));
+  Future<void> pause(String id) => _control(id, () {
+    _lifecyclePaused.remove(id);
+    return _pause(id);
+  });
 
   Future<void> _pause(String id) async {
     _tokens[id]?.cancel();
@@ -126,9 +139,17 @@ final class DownloadScheduler {
     foreground = value;
     if (!value && Platform.isAndroid) {
       for (final id in _tokens.keys.toList()) {
-        await pause(id);
+        await _control(id, () async {
+          if (foreground || !_tokens.containsKey(id)) return;
+          _lifecyclePaused.add(id);
+          await _pause(id);
+        });
       }
     } else {
+      for (final id in _lifecyclePaused.toList()) {
+        if (!foreground || _closed) break;
+        await _control(id, () => _resume(id, lifecycle: true));
+      }
       kick();
     }
   }
@@ -204,6 +225,7 @@ final class DownloadScheduler {
           task,
           token,
           _activeSources.values.toSet(),
+          timeout: const Duration(seconds: 3),
         );
         if (alternative != null) task = await _switch(task, alternative, token);
       }
@@ -338,6 +360,7 @@ final class DownloadScheduler {
   }
 
   Future<void> remove(String id) => _control(id, () async {
+    _lifecyclePaused.remove(id);
     if (offline.isPlaying(id)) throw StateError('请先停止此任务的离线播放或导出');
     if (_tokens.containsKey(id)) {
       await _pause(id);
@@ -346,9 +369,10 @@ final class DownloadScheduler {
     final task = await repository.find(id);
     if (task == null) return;
     if (!repository.ownsPath(task.directory)) throw StateError('任务路径不属于下载目录');
-    await _cleanupDirectory(Directory(task.directory));
-    await fetcher.store.unpin(id);
     await repository.remove(id);
+    await fetcher.store.unpin(id);
+    await repository.finishUnpin(id);
+    await _cleanupDirectory(Directory(task.directory));
     _quota.release(id);
   });
 

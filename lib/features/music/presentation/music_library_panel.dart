@@ -64,7 +64,10 @@ final class _MusicLibraryPanelState extends State<MusicLibraryPanel> {
     builder: (context, _) => switch (widget.view) {
       'history' => _history(),
       'downloads' => _downloads(),
-      _ => _playlists(),
+      _ => SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: _playlists(),
+      ),
     },
   );
   Widget _playlists() {
@@ -206,24 +209,31 @@ final class _MusicLibraryPanelState extends State<MusicLibraryPanel> {
     );
   }
 
-  Widget _history() => Column(
-    children: [
-      Align(
-        alignment: Alignment.centerRight,
-        child: TextButton(
-          onPressed: () =>
-              musicAction(context, services.musicLibrary.clearHistory),
-          child: const Text('清空播放历史'),
-        ),
-      ),
-      if (services.musicLibrary.history
-          .where((h) => services.music.allowed(h.track))
-          .isEmpty)
-        const Text('暂无可显示的播放历史。播放音乐后可在这里继续收听。'),
-      for (final item in services.musicLibrary.history.where(
-        (h) => services.music.allowed(h.track),
-      ))
-        Card(
+  Widget _history() {
+    final items = services.musicLibrary.history
+        .where((h) => services.music.allowed(h.track))
+        .toList();
+    return ListView.builder(
+      padding: const EdgeInsets.all(16),
+      itemCount: items.length + 1,
+      itemBuilder: (context, index) {
+        if (index == 0) {
+          return Column(
+            children: [
+              Align(
+                alignment: Alignment.centerRight,
+                child: TextButton(
+                  onPressed: () =>
+                      musicAction(context, services.musicLibrary.clearHistory),
+                  child: const Text('清空播放历史'),
+                ),
+              ),
+              if (items.isEmpty) const Text('暂无可显示的播放历史。播放音乐后可在这里继续收听。'),
+            ],
+          );
+        }
+        final item = items[index - 1];
+        return Card(
           child: ListTile(
             title: Text(item.track.title),
             subtitle: Text(
@@ -236,23 +246,35 @@ final class _MusicLibraryPanelState extends State<MusicLibraryPanel> {
             ),
             trailing: MusicTrackMenu(services: services, track: item.track),
           ),
-        ),
-    ],
-  );
-  Widget _downloads() => Column(
-    children: [
-      const Text('下载保存在本机应用目录，完成后优先离线播放。单首最多 128 MiB，总计 1 GiB；关闭应用会暂停任务。'),
-      if (services.musicDownloads.items
-          .where((i) => services.music.allowed(i.track))
-          .isEmpty)
-        const Padding(
-          padding: EdgeInsets.all(24),
-          child: Text('暂无可显示的离线音乐。从歌曲操作菜单选择“下载离线”。'),
-        ),
-      for (final item in services.musicDownloads.items.where(
-        (i) => services.music.allowed(i.track),
-      ))
-        Card(
+        );
+      },
+    );
+  }
+
+  Widget _downloads() {
+    final items = services.musicDownloads.items
+        .where((i) => services.music.allowed(i.track))
+        .toList();
+    return ListView.builder(
+      padding: const EdgeInsets.all(16),
+      itemCount: items.length + 1,
+      itemBuilder: (context, index) {
+        if (index == 0) {
+          return Column(
+            children: [
+              const Text(
+                '下载保存在本机应用目录，完成后优先离线播放。单首最多 128 MiB，总计 1 GiB；关闭应用会暂停任务。',
+              ),
+              if (items.isEmpty)
+                const Padding(
+                  padding: EdgeInsets.all(24),
+                  child: Text('暂无可显示的离线音乐。从歌曲操作菜单选择“下载离线”。'),
+                ),
+            ],
+          );
+        }
+        final item = items[index - 1];
+        return Card(
           child: ListTile(
             title: Text(item.track.title),
             subtitle: Text(
@@ -300,7 +322,8 @@ final class _MusicLibraryPanelState extends State<MusicLibraryPanel> {
               ],
             ),
           ),
-        ),
-    ],
-  );
+        );
+      },
+    );
+  }
 }

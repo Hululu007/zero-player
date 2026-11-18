@@ -48,12 +48,9 @@ class _MediaLibraryHubState extends State<MediaLibraryHub> {
               downloads
                   ? DownloadsPage(services: services)
                   : HistoryPage(services: services),
-              SingleChildScrollView(
-                padding: const EdgeInsets.all(16),
-                child: MusicLibraryPanel(
-                  services: services,
-                  view: downloads ? 'downloads' : 'history',
-                ),
+              MusicLibraryPanel(
+                services: services,
+                view: downloads ? 'downloads' : 'history',
               ),
               BooksPage(
                 services: services,

@@ -7,11 +7,13 @@ final class FakePlayerEngine implements PlayerEngine {
     this.onSeek,
     this.onOpen,
     this.onPlayOrPause,
+    this.initialDuration = const Duration(seconds: 30),
   });
   final Future<void> Function(double)? onVolume;
   final Future<void> Function(Duration)? onSeek;
   final Future<void> Function()? onOpen;
   final Future<void> Function()? onPlayOrPause;
+  final Duration initialDuration;
   final changes = StreamController<PlaybackSnapshot>.broadcast();
   final failures = StreamController<String>.broadcast();
   int opens = 0;
@@ -52,9 +54,7 @@ final class FakePlayerEngine implements PlayerEngine {
   Future<void> open(Uri uri, {Map<String, String> headers = const {}}) async {
     opens++;
     if (onOpen case final callback?) await callback();
-    emit(
-      const PlaybackSnapshot(duration: Duration(seconds: 30), playing: true),
-    );
+    emit(PlaybackSnapshot(duration: initialDuration, playing: true));
   }
 
   @override

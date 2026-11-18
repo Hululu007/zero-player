@@ -87,10 +87,11 @@ final class MusicBrowser extends ChangeNotifier {
       _writes = _writes
           .then((_) async {
             await load();
-            await db!.write('INSERT OR REPLACE INTO app_meta VALUES(?,?)', [
+            await db!.setMetadata(
               'music_source_favorites',
               jsonEncode(_favorites.toList()),
-            ]);
+              MetadataDomain.musicPreferences,
+            );
           })
           .catchError((Object _) {
             if (!_closed && revision == _favoritesRevision) {
@@ -111,10 +112,11 @@ final class MusicBrowser extends ChangeNotifier {
     if (db != null) {
       _writes = _writes
           .then(
-            (_) => db!.write('INSERT OR REPLACE INTO app_meta VALUES(?,?)', [
+            (_) => db!.setMetadata(
               'music_provider',
               jsonEncode(value),
-            ]),
+              MetadataDomain.musicPreferences,
+            ),
           )
           .catchError((Object _) {
             if (!_closed && revision == _choiceRevision) {

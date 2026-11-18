@@ -297,10 +297,11 @@ final class MusicRecommendations extends ChangeNotifier {
     homepage = value;
     _writes = _writes
         .then(
-          (_) => db.write('INSERT OR REPLACE INTO app_meta VALUES(?,?)', [
+          (_) => db.setMetadata(
             'music_discovery_homepage',
             value,
-          ]),
+            MetadataDomain.musicPreferences,
+          ),
         )
         .catchError((Object _) {
           if (!_closed && chart == value) {
@@ -586,7 +587,7 @@ final class MusicRecommendations extends ChangeNotifier {
     _memory[value] = saved;
     _writes = _writes
         .then(
-          (_) => db.write('INSERT OR REPLACE INTO app_meta VALUES(?,?)', [
+          (_) => db.setMetadata(
             'music_recommendation:$value',
             jsonEncode({
               'time': saved.time,
@@ -595,7 +596,8 @@ final class MusicRecommendations extends ChangeNotifier {
               'total': page.total,
               if (info != null) 'info': info.toJson(),
             }),
-          ]),
+            MetadataDomain.musicPreferences,
+          ),
         )
         .catchError((Object _) {
           if (!_closed && chart == value) notice = '推荐已更新，本机缓存未能保存。';

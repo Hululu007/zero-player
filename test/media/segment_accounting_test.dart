@@ -8,6 +8,86 @@ import 'package:zero_player/media/cache/segment_store.dart';
 void main() {
   _accountingContracts();
   _failureContracts();
+  _damagedIndexRecovery();
+  test(
+    'startup removes orphan binaries and reconciles missing indexed files',
+    () async {
+      final root = await Directory.systemTemp.createTemp('cache-reconcile-');
+      final db = AppDatabase.memory();
+      final store = SegmentStore(root, metadata: SegmentIndex(db));
+      addTearDown(() async {
+        await db.close();
+        await root.delete(recursive: true);
+      });
+      final key = 'a' * 64;
+      await store.write(
+        key,
+        Stream.value([1, 2]),
+        statusCode: 200,
+        headers: {},
+      );
+      await store.find(key)!.file.delete();
+      await File('${root.path}/${'b' * 64}.bin').writeAsBytes([3]);
+      await store.initialize();
+      expect(store.find(key), isNull);
+      expect(store.sizeBytes, 0);
+      expect(store.cacheBytes, 0);
+      expect(await root.list().toList(), isEmpty);
+    },
+  );
+  for (final range in [false, true]) {
+    test(
+      'empty or range-truncated body is never committed: range=$range',
+      () async {
+        final root = await Directory.systemTemp.createTemp('cache-body-');
+        addTearDown(() => root.delete(recursive: true));
+        final store = SegmentStore(root);
+        await expectLater(
+          store.write(
+            'a' * 64,
+            Stream.value(range ? [1] : <int>[]),
+            statusCode: range ? 206 : 200,
+            headers: {if (range) 'content-range': 'bytes 2-3/4'},
+          ),
+          throwsA(isA<HttpException>()),
+        );
+        expect(store.sizeBytes, 0);
+        expect(await root.list().toList(), isEmpty);
+      },
+    );
+  }
+}
+
+void _damagedIndexRecovery() {
+  test(
+    'startup retains damaged indexed files and their offline references',
+    () async {
+      final root = await Directory.systemTemp.createTemp('cache-damaged-');
+      final db = AppDatabase.memory();
+      final store = SegmentStore(root, metadata: SegmentIndex(db));
+      addTearDown(() async {
+        await db.close();
+        await root.delete(recursive: true);
+      });
+      final key = 'c' * 64;
+      await store.write(
+        key,
+        Stream.value([1, 2]),
+        statusCode: 200,
+        headers: {},
+      );
+      await store.pin('offline', key);
+      await db.customStatement(
+        'UPDATE segment_index SET headers=? WHERE cache_key=?',
+        ['broken', key],
+      );
+      final recovered = SegmentStore(root, metadata: SegmentIndex(db));
+      await recovered.initialize();
+      expect(recovered.find(key), isNull);
+      expect(await File('${root.path}/$key.bin').readAsBytes(), [1, 2]);
+      expect(await SegmentIndex(db).ownedKeys('offline'), {key});
+    },
+  );
 }
 
 void _accountingContracts() {
@@ -107,6 +187,7 @@ void _failureContracts() {
       await expectLater(write(), throwsStateError);
       expect(store.sizeBytes, 0);
       expect(store.cacheBytes, 0);
+      expect(await root.list().toList(), isEmpty);
       metadata.failPut = false;
       await write();
       metadata.failRemove = true;

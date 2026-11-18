@@ -29,16 +29,33 @@ final class HistoryRepository {
   bool allows(WatchEntry entry) => recordAllowed(policy, entry.row);
   Future<List<WatchEntry>> recentWorks() async {
     PerformanceCounters.add('history.recent_works.calls');
-    return (await db.rows(
+    return _allowedWindow(
       'SELECT * FROM (SELECT h.*, m.value AS content_record, ROW_NUMBER() OVER '
       '(PARTITION BY source_id,remote_id ORDER BY updated_at DESC) AS recent '
-      "FROM watch_history h LEFT JOIN app_meta m ON m.key='content_label:'||h.source_id||':'||h.remote_id) WHERE recent=1 ORDER BY updated_at DESC LIMIT 50",
-    )).where((r) => recordAllowed(policy, r)).map(WatchEntry.new).toList();
+      "FROM watch_history h LEFT JOIN app_meta m ON m.key='content_label:'||h.source_id||':'||h.remote_id) WHERE recent=1 ORDER BY updated_at DESC,id",
+      50,
+    );
   }
 
-  Future<List<WatchEntry>> all() async => (await db.rows(
-    "SELECT h.*,m.value AS content_record FROM watch_history h LEFT JOIN app_meta m ON m.key='content_label:'||h.source_id||':'||h.remote_id ORDER BY updated_at DESC LIMIT 500",
-  )).where((r) => recordAllowed(policy, r)).map(WatchEntry.new).toList();
+  Future<List<WatchEntry>> all() => _allowedWindow(
+    "SELECT h.*,m.value AS content_record FROM watch_history h LEFT JOIN app_meta m ON m.key='content_label:'||h.source_id||':'||h.remote_id ORDER BY updated_at DESC,h.id",
+    500,
+  );
+
+  Future<List<WatchEntry>> _allowedWindow(String sql, int limit) async {
+    final result = <WatchEntry>[];
+    var offset = 0;
+    while (result.length < limit) {
+      final rows = await db.rows('$sql LIMIT ? OFFSET ?', [limit, offset]);
+      result.addAll(
+        rows.where((row) => recordAllowed(policy, row)).map(WatchEntry.new),
+      );
+      if (rows.length < limit) break;
+      offset += rows.length;
+    }
+    return result.where(allows).take(limit).toList();
+  }
+
   Future<WatchEntry?> latest(String sourceId, String remoteId) async {
     final rows = await db.rows(
       'SELECT * FROM watch_history WHERE source_id=? AND remote_id=? ORDER BY updated_at DESC LIMIT 1',
@@ -73,29 +90,31 @@ final class HistoryRepository {
       return;
     }
     policy?.requireItem(item);
-    await rememberContent(db, item);
-    final id = stableId(
-      '${item.sourceId}|${item.id}|${line.name}|${episode.label}',
-    );
-    await db.write(
-      '''INSERT INTO watch_history(id,source_id,remote_id,title,year,poster,line_name,episode_label,
+    await db.atomic(() async {
+      await rememberContent(db, item);
+      final id = stableId(
+        '${item.sourceId}|${item.id}|${line.name}|${episode.label}',
+      );
+      await db.write(
+        '''INSERT INTO watch_history(id,source_id,remote_id,title,year,poster,line_name,episode_label,
       position_ms,duration_ms,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET
       title=excluded.title,poster=excluded.poster,position_ms=excluded.position_ms,
       duration_ms=excluded.duration_ms,updated_at=excluded.updated_at''',
-      [
-        id,
-        item.sourceId,
-        item.id,
-        item.title,
-        item.year,
-        item.poster,
-        line.name,
-        episode.label,
-        position.inMilliseconds,
-        duration.inMilliseconds,
-        DateTime.now().millisecondsSinceEpoch,
-      ],
-    );
+        [
+          id,
+          item.sourceId,
+          item.id,
+          item.title,
+          item.year,
+          item.poster,
+          line.name,
+          episode.label,
+          position.inMilliseconds,
+          duration.inMilliseconds,
+          DateTime.now().millisecondsSinceEpoch,
+        ],
+      );
+    });
   }
 
   Future<void> remove(String id) =>

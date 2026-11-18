@@ -1,4 +1,5 @@
 import 'dart:convert';
+import '../../../core/persistence/metadata_domain.dart';
 import '../../../core/network/cancellation_token.dart';
 import '../data/live_audit_defaults.dart';
 import '../data/live_health_repository.dart';
@@ -57,11 +58,13 @@ final class ChannelPreflight {
                           : 0) >
                   const Duration(hours: 24).inMilliseconds);
     }).toList();
+    // Expired proof still describes the same request. Keep it usable during a
+    // refresh; only a changed request needs immediate evidence invalidation.
     await health.db.transaction(() async {
       for (final channel in queue) {
         final old = states[channel.id] ?? {};
-        if (old['preflight'] == true) continue;
-        await health.db.write('INSERT OR REPLACE INTO app_meta VALUES(?,?)', [
+        if (old['requestSignature'] == channelProbeSignature(channel)) continue;
+        await health.db.setMetadata(
           'live_state:${channel.id}',
           jsonEncode({
             ...old,
@@ -75,7 +78,8 @@ final class ChannelPreflight {
                 old['userDisabled'] == true ||
                 old['enabled'] == false && old['autoDisabled'] != true,
           }),
-        ]);
+          MetadataDomain.live,
+        );
       }
     });
     var cursor = 0;

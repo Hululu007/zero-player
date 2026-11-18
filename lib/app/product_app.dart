@@ -265,6 +265,7 @@ final class _ProductAppState extends ConsumerState<ProductApp>
       unawaited(services.closeSafely());
       return;
     }
+    if (state == AppLifecycleState.inactive) return;
     unawaited(
       services.downloadScheduler.setForeground(
         state == AppLifecycleState.resumed,

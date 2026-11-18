@@ -6,7 +6,7 @@ import 'package:zero_player/media/cache/segment_store.dart';
 
 void main() {
   test(
-    'streaming hash covers empty, uneven chunks and post-write tampering',
+    'streaming hash rejects an empty resource and covers uneven chunks and tampering',
     () async {
       final root = await Directory.systemTemp.createTemp('stream-hash-');
       final store = SegmentStore(root);
@@ -19,6 +19,20 @@ void main() {
         ];
         final key = i.toRadixString(16).padLeft(64, '0');
         final bytes = chunks.expand((c) => c).toList();
+        if (bytes.isEmpty) {
+          await expectLater(
+            store.write(
+              key,
+              Stream.fromIterable(chunks),
+              statusCode: 206,
+              headers: {},
+              expectedLength: 0,
+            ),
+            throwsA(isA<HttpException>()),
+          );
+          expect(store.find(key), isNull);
+          continue;
+        }
         final resource = await store.write(
           key,
           Stream.fromIterable(chunks),

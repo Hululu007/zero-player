@@ -66,9 +66,17 @@ final class _Mp4Transfer {
     cancellation.check();
     final state = await _readState();
     var offset = await part.exists() ? await part.length() : 0;
+    final previous = state['uri'] is String
+        ? Uri.tryParse(state['uri'] as String)
+        : null;
+    // Validators belong to a resource, not a global namespace. Only tolerate
+    // query-token rotation; another host/path must start with a fresh body.
     if (offset > 0 &&
-        (state['uri'] != uri.toString() ||
+        (previous == null ||
+            previous.origin != uri.origin ||
+            previous.path != uri.path ||
             state['etag'] is! String ||
+            (state['etag'] as String).isEmpty ||
             (state['etag'] as String).startsWith('W/'))) {
       await part.delete();
       offset = 0;

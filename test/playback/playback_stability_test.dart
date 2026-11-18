@@ -22,6 +22,23 @@ final item = CatalogItem(
 
 void main() {
   _resetOrderRegression();
+  _resumeRejectionTests();
+  _missingDurationResume();
+  _failedToggleAfterResume();
+  test('manual seek after a rejected resume accepts actual progress', () async {
+    await player.open(
+      PlaybackRequest(item, position: const Duration(minutes: 2)),
+    );
+    await Future<void>.delayed(const Duration(milliseconds: 30));
+    expect(player.error, isNotNull);
+    await player.seek(const Duration(seconds: 5));
+    await player.save();
+    expect(player.error, isNull);
+    expect(
+      (await services.history.all()).single.position,
+      const Duration(seconds: 5),
+    );
+  });
   setUp(() async {
     root = await Directory.systemTemp.createTemp('playback-stability-');
     services = AppServices.scoped(root, AppDatabase.memory());
@@ -107,6 +124,118 @@ void _resetOrderRegression() {
       expect(
         (await services.history.all()).single.position,
         const Duration(seconds: 12),
+      );
+    },
+  );
+}
+
+void _resumeRejectionTests() {
+  for (final seekFailure in [false, true]) {
+    test(
+      'rejected resume permits controls and saves new progress: seekFailure=$seekFailure',
+      () async {
+        if (seekFailure) {
+          await player.close();
+          engine = FakePlayerEngine(
+            onSeek: (_) async => throw StateError('fixture seek'),
+          );
+          player = PlaybackController(services, engine);
+        }
+        await player.open(
+          PlaybackRequest(
+            item,
+            position: Duration(seconds: seekFailure ? 12 : 60),
+          ),
+        );
+        await Future<void>.delayed(const Duration(milliseconds: 30));
+        expect(player.awaitingResume, isFalse);
+        expect(player.error, isNotNull);
+        await player.save();
+        expect(
+          (await services.history.all()).single.position.inSeconds,
+          seekFailure ? 12 : 60,
+        );
+        var notifications = 0;
+        player.addListener(() => notifications++);
+        await player.toggle();
+        engine.change(position: const Duration(seconds: 8), playing: true);
+        await Future<void>.delayed(Duration.zero);
+        await player.save();
+        expect(notifications, greaterThan(0));
+        expect(
+          (await services.history.all()).single.position,
+          const Duration(seconds: 8),
+        );
+        await player.toggle();
+        expect(engine.snapshot.playing, isFalse);
+      },
+    );
+  }
+  test('saving unchanged paused progress does not write again', () async {
+    await player.open(PlaybackRequest(item));
+    await player.toggle();
+    final before = (await services.db.rows(
+      'SELECT total_changes() AS n',
+    )).single['n'];
+    await player.save();
+    await player.save();
+    expect(
+      (await services.db.rows('SELECT total_changes() AS n')).single['n'],
+      before,
+    );
+  });
+}
+
+void _missingDurationResume() {
+  test(
+    'missing duration watchdog releases controls and preserves old progress until accepted',
+    () async {
+      await player.close();
+      engine = FakePlayerEngine(initialDuration: Duration.zero);
+      player = PlaybackController(services, engine);
+      await player.open(
+        PlaybackRequest(item, position: const Duration(minutes: 2)),
+      );
+      expect(player.awaitingResume, isTrue);
+      await Future<void>.delayed(const Duration(milliseconds: 12200));
+      expect(player.awaitingResume, isFalse);
+      expect(player.error, contains('时长'));
+      await player.save();
+      expect(
+        (await services.history.all()).single.position,
+        const Duration(minutes: 2),
+      );
+      await player.toggle();
+      engine.change(position: const Duration(seconds: 7));
+      await Future<void>.delayed(Duration.zero);
+      await player.save();
+      expect(
+        (await services.history.all()).single.position,
+        const Duration(seconds: 7),
+      );
+    },
+  );
+}
+
+void _failedToggleAfterResume() {
+  test(
+    'a failed play command after resume rejection keeps the recovery point',
+    () async {
+      await player.close();
+      engine = FakePlayerEngine(
+        onPlayOrPause: () async => throw StateError('fixture play'),
+      );
+      player = PlaybackController(services, engine);
+      await player.open(
+        PlaybackRequest(item, position: const Duration(minutes: 2)),
+      );
+      await Future<void>.delayed(const Duration(milliseconds: 30));
+      await expectLater(player.toggle(), throwsStateError);
+      await player.save();
+      expect(player.error, isNotNull);
+      expect(
+        (await services.history.all()).single.position,
+        const Duration(minutes: 2),
       );
     },
   );

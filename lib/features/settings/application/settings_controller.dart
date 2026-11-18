@@ -306,6 +306,9 @@ final class SettingsController extends ChangeNotifier {
   }
 
   void _checkAdultFilter(Map<String, Object> changes) {
+    if (['backgroundProbe', 'bookSiteAutoCheck'].any(changes.containsKey)) {
+      authorize?.call();
+    }
     if ([
       'contentFilter',
       'filterOcr',

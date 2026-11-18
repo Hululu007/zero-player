@@ -94,6 +94,7 @@ void main() {
       }
     },
   );
+  _signedRootTest(job);
   _recoveryTests(job);
   _quotaTests();
   test(
@@ -107,6 +108,23 @@ void main() {
       throwsFormatException,
     );
   });
+}
+
+void _signedRootTest(HlsDownload Function() job) {
+  test(
+    'rotated root signature reuses segments after matching manifest bytes',
+    () async {
+      await job().run(upstream.baseUri.resolve('index.m3u8?token=old'));
+      final before = Map.of(upstream.calls);
+      await job().run(upstream.baseUri.resolve('index.m3u8?token=new'));
+      for (final entry in before.entries.where(
+        (entry) => !entry.key.endsWith('.m3u8'),
+      )) {
+        expect(upstream.calls[entry.key], entry.value);
+      }
+      expect(store.sizeBytes, 4);
+    },
+  );
 }
 
 Future<void> _nestedRevisionTest() async {

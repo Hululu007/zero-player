@@ -178,17 +178,20 @@ final class _DownloadSelectionState extends State<_DownloadSelection> {
       await widget.services.settings.update({'multiSourceDownload': multi});
       final line = widget.item.lines[widget.line];
       final indices = selected.toList()..sort();
-      for (final index in indices) {
-        await widget.services.downloads.create(
-          widget.item,
-          line,
-          episodes[index],
-          source?.headers ?? {},
-          destination: destination,
-        );
-        selected.remove(index);
+      try {
+        for (final index in indices) {
+          await widget.services.downloads.create(
+            widget.item,
+            line,
+            episodes[index],
+            source?.headers ?? {},
+            destination: destination,
+          );
+          selected.remove(index);
+        }
+      } finally {
+        widget.services.downloadScheduler.kick();
       }
-      widget.services.downloadScheduler.kick();
       if (mounted) {
         message(context, '已加入 ${indices.length} 集下载');
         Navigator.pop(context);

@@ -21,14 +21,14 @@ final class LiveHealthRepository {
             if (enabled) 'removed': false,
           });
         }
-      }, tables: const {'app_meta'});
+      }, tables: const {});
   Future<void> setRemoved(Iterable<String> ids, bool removed) =>
       db.atomic(() async {
         if (!removed) authorize?.call();
         for (final id in ids.toSet()) {
           await _patch(id, {'removed': removed, if (removed) 'enabled': false});
         }
-      }, tables: const {'app_meta'});
+      }, tables: const {});
   Future<void> record(
     LiveChannel channel,
     LiveHealth result, {
@@ -65,7 +65,7 @@ final class LiveHealthRepository {
           result.availability == LiveAvailability.responding)
         'enabled': true,
     }),
-    tables: const {'app_meta'},
+    tables: const {},
   );
   Future<void> _patch(String id, Map<String, Object?> changes) async {
     final key = 'live_state:$id';
@@ -100,9 +100,10 @@ final class LiveHealthRepository {
         changes['removed'] != false) {
       changes.remove('enabled');
     }
-    await db.customStatement('INSERT OR REPLACE INTO app_meta VALUES(?,?)', [
+    await db.setMetadata(
       key,
       jsonEncode({...old, ...changes}),
-    ]);
+      MetadataDomain.live,
+    );
   }
 }

@@ -121,7 +121,10 @@ final class HlsManifest {
     );
   }
 
-  String rewrite(Uri Function(Uri uri) map) => lines
+  String rewrite(
+    Uri Function(Uri uri) map, {
+    Uri Function(Uri uri)? mapKey,
+  }) => lines
       .map((raw) {
         final line = raw.trim();
         if (line.isEmpty) return raw;
@@ -143,7 +146,7 @@ final class HlsManifest {
           final key = tag == '#EXT-X-KEY' || tag == '#EXT-X-SESSION-KEY';
           final uri = resolveResource(match.group(2)!, key: key);
           if (key && !{'http', 'https'}.contains(uri.scheme)) return match[0]!;
-          return '${match.group(1)}URI="${map(uri)}"';
+          return '${match.group(1)}URI="${key ? (mapKey ?? map)(uri) : map(uri)}"';
         });
       })
       .join('\n');

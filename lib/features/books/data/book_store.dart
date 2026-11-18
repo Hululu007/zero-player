@@ -135,10 +135,12 @@ final class BookStore {
     return row == null ? null : jsonDecode(row['value'] as String);
   }
 
-  Future<void> write(String key, Object? value) => db.write(
-    'INSERT OR REPLACE INTO app_meta(key,value) VALUES(?,?)',
-    [key, jsonEncode(value)],
-  );
+  Future<void> write(String key, Object? value) => key.startsWith('books_')
+      ? db.setMetadata(key, jsonEncode(value), MetadataDomain.books)
+      : db.write('INSERT OR REPLACE INTO app_meta(key,value) VALUES(?,?)', [
+          key,
+          jsonEncode(value),
+        ]);
 
   static String _contentEpochKey(String id) => 'books_content_epoch:$id';
   static String _contentFingerprintKey(String id) =>
@@ -414,29 +416,33 @@ final class BookStore {
     List<({BookSource source, BookSourceEntry? previous})> entries, {
     String? subscriptionId,
     bool fromCatalog = false,
-  }) => db.batch((batch) {
-    for (final (:source, :previous) in entries) {
-      batch.customStatement(_bumpEpochSql, [_contentEpochKey(source.id)]);
-      batch.customStatement(BookSiteRevisions.upsertSql, [
-        BookSiteRevisions.key(source.id),
-        jsonEncode(BookSiteRevisions.newToken()),
-      ]);
-      batch.customStatement(
-        'INSERT OR REPLACE INTO app_meta(key,value) VALUES(?,?)',
-        [
-          'books_source:${source.id}',
-          jsonEncode({
-            'source': source.toJson(),
-            'enabled': previous?.enabled ?? false,
-            'favorite': previous?.favorite ?? false,
-            if (previous != null) 'group': previous.group,
-            'subscription': ?subscriptionId,
-            if (fromCatalog) 'catalog': true,
-          }),
-        ],
-      );
-    }
-  });
+  }) async {
+    await db.atomic(() async {
+      await db.batch((batch) {
+        for (final (:source, :previous) in entries) {
+          batch.customStatement(_bumpEpochSql, [_contentEpochKey(source.id)]);
+          batch.customStatement(BookSiteRevisions.upsertSql, [
+            BookSiteRevisions.key(source.id),
+            jsonEncode(BookSiteRevisions.newToken()),
+          ]);
+          batch.customStatement(
+            'INSERT OR REPLACE INTO app_meta(key,value) VALUES(?,?)',
+            [
+              'books_source:${source.id}',
+              jsonEncode({
+                'source': source.toJson(),
+                'enabled': previous?.enabled ?? false,
+                'favorite': previous?.favorite ?? false,
+                if (previous != null) 'group': previous.group,
+                'subscription': ?subscriptionId,
+                if (fromCatalog) 'catalog': true,
+              }),
+            ],
+          );
+        }
+      });
+    }, tables: {'app_meta'});
+  }
 
   Future<List<BookSourceSubscription>> subscriptions() async {
     final rows = await db.rows(

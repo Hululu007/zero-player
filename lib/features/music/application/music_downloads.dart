@@ -163,7 +163,7 @@ final class MusicDownloads extends ChangeNotifier {
     String? entry,
     String? error,
   }) async {
-    await db.write('INSERT OR REPLACE INTO app_meta VALUES(?,?)', [
+    await db.setMetadata(
       'music_download:${id(track)}',
       jsonEncode({
         'track': track.toJson(),
@@ -172,7 +172,8 @@ final class MusicDownloads extends ChangeNotifier {
         'entry': entry,
         'error': error,
       }),
-    ]);
+      MetadataDomain.musicDownloads,
+    );
     final updated = MusicDownload(
       track,
       status,

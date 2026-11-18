@@ -12,6 +12,7 @@ include: package:flutter_lints/flutter.yaml
 analyzer:
   exclude:
     - build/**
+    - tmp/** # Local audit probes and scratch files; preserved outside product gates.
 
 linter:
   # The lint rules applied to this project can be customized in the

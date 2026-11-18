@@ -9,10 +9,46 @@ import 'package:zero_player/features/downloads/application/mp4_download.dart';
 import '../../test_support/http_test_server.dart';
 
 void main() {
+  _signedUrlTest();
   _completionTests();
   _restartTests();
   _checkpointFailureTest();
   _validationFailureTests();
+}
+
+void _signedUrlTest() {
+  test(
+    'a different resource path cannot reuse another resource validator',
+    () async {
+      final fixture = await _Fixture.create((request) {
+        expect(request.headers.value('range'), isNull);
+        expect(request.headers.value('if-range'), isNull);
+        request.response.headers.set('etag', 'version-a');
+        request.response.add([5, 6, 7, 8]);
+      });
+      await fixture.seed([1, 2]);
+      await fixture.run(uri: fixture.uri.replace(path: '/other.mp4'));
+      expect(await fixture.output.readAsBytes(), [5, 6, 7, 8]);
+    },
+  );
+  test(
+    'a changed signed URL resumes only with the matching strong ETag',
+    () async {
+      final fixture = await _Fixture.create((request) {
+        expect(request.uri.query, 'token=new');
+        expect(request.headers.value('range'), 'bytes=2-');
+        expect(request.headers.value('if-range'), 'version-a');
+        request.response.statusCode = 206;
+        request.response.contentLength = 2;
+        request.response.headers.set('content-range', 'bytes 2-3/4');
+        request.response.headers.set('etag', 'version-a');
+        request.response.add([3, 4]);
+      });
+      await fixture.seed([1, 2]);
+      await fixture.run(uri: fixture.uri.replace(query: 'token=new'));
+      expect(await fixture.output.readAsBytes(), [1, 2, 3, 4]);
+    },
+  );
 }
 
 void _validationFailureTests() {
@@ -202,8 +238,8 @@ final class _Fixture {
     );
   }
 
-  Future<void> run() => downloadMp4(
-    uri: uri,
+  Future<void> run({Uri? uri}) => downloadMp4(
+    uri: uri ?? this.uri,
     directory: directory,
     http: http,
     policy: HeaderPolicy({}),

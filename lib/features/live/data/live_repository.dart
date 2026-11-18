@@ -53,11 +53,12 @@ final class LiveRepository {
       authorize?.call();
       await _requireListAvailable(id);
     }
-    await db.customStatement(
-      'INSERT OR REPLACE INTO app_meta(key,value) VALUES(?,?)',
-      ['live_list_enabled:$id', jsonEncode(enabled)],
+    await db.setMetadata(
+      'live_list_enabled:$id',
+      jsonEncode(enabled),
+      MetadataDomain.live,
     );
-  }, tables: const {'app_meta'});
+  }, tables: const {});
 
   Future<void> _requireListAvailable(String id) async {
     final marker = await db.rows('SELECT value FROM app_meta WHERE key=?', [
@@ -255,7 +256,15 @@ final class LiveRepository {
       if (verifiedPlayback) await _recordVerifiedPlayback(imported);
     });
     if (verify) {
-      await verifyUpdates?.call(imported, cancellation, force: forceVerify);
+      try {
+        await verifyUpdates?.call(imported, cancellation, force: forceVerify);
+      } catch (_) {
+        cancellation?.check();
+        await db.write('UPDATE live_lists SET error=? WHERE id=?', [
+          '频道已更新，媒体复检未完成，请重试复检',
+          id,
+        ]);
+      }
     }
   }
 

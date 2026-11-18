@@ -5,6 +5,7 @@ import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
 
 import '../../../app/app_services.dart';
+import '../../../core/persistence/metadata_domain.dart';
 import '../../../core/network/cancellation_token.dart';
 import '../../../core/network/document_client.dart';
 import '../../supervision/domain/adult_source_evidence.dart';
@@ -74,7 +75,7 @@ final class _BookSourcesPageState extends State<BookSourcesPage> {
     _services.contentPolicy.addListener(_policyChanged);
     _services.books.sourceRiskChanges.addListener(_policyChanged);
     _sourceChanges = _services.books.store.db
-        .changesFor(const {'app_meta'})
+        .changesFor(const {'app_meta'}, metadataDomains: {MetadataDomain.books})
         .listen((_) => _dataChanged());
     _run(_services.books.ensureCatalog);
   }
@@ -197,9 +198,11 @@ final class _BookSourcesPageState extends State<BookSourcesPage> {
     }
     if (mounted) {
       setState(() {
-        _entries = [];
+        _entries.removeWhere(
+          (entry) => !_services.books.sourceEntryAllowed(entry),
+        );
         _siteResults = {};
-        _siteResultsUnavailable = false;
+        _siteResultsUnavailable = true;
       });
       _queueRefresh();
     }

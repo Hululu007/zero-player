@@ -433,6 +433,7 @@ final class PlaybackController extends ChangeNotifier {
         _resumeTimer = Timer(const Duration(seconds: 12), () {
           if (_closed || generation != _generation || !awaitingResume) return;
           _resumeRejected = true;
+          _resume = null;
           cancelRecovery();
           error = '未能读取可续播的时长，已保留原位置，请重试或切换线路';
           notifyListeners();
@@ -581,12 +582,12 @@ final class PlaybackController extends ChangeNotifier {
       enabled: !_userPaused && !_suspended && _resume == null,
       live: isLive,
     );
-    if (_resumeRejected) return;
     if (_resume != null && next.duration > Duration.zero && !next.buffering) {
       _resumeTimer?.cancel();
       final target = _resume!;
       if (target >= originalDuration) {
         _resumeRejected = true;
+        _resume = null;
         error = '当前资源时长不足以恢复进度，已保留原位置，请重试或切换线路';
         cancelRecovery();
         _health.reset();
@@ -651,7 +652,8 @@ final class PlaybackController extends ChangeNotifier {
       if (!_userPaused && !_suspended) await engine.play();
     } catch (failure) {
       if (_closed || generation != _generation) return;
-      _resume = target;
+      _recoveryPosition = target;
+      _resume = null;
       _resumeRejected = true;
       diagnostics.add(
         '恢复进度失败：${failure.runtimeType}，实际 ${engine.snapshot.position.inMilliseconds} ms',
@@ -808,12 +810,19 @@ final class PlaybackController extends ChangeNotifier {
         : position;
     if (rearmSkips) _rearmSkips();
     final processed = timeline.toProcessed(target);
-    return _seekEngine(processed).catchError((Object failure) {
-      if (_closed) return;
-      notice = '跳转失败，请重试';
-      diagnostics.add('跳转失败：${failure.runtimeType}');
-      notifyListeners();
-    });
+    final generation = _generation;
+    return _seekEngine(processed)
+        .then((_) {
+          if (!_closed && generation == _generation && rearmSkips) {
+            _acceptCurrentProgress();
+          }
+        })
+        .catchError((Object failure) {
+          if (_closed) return;
+          notice = '跳转失败，请重试';
+          diagnostics.add('跳转失败：${failure.runtimeType}');
+          notifyListeners();
+        });
   }
 
   Future<void> _startContentFilter(Uri input, int generation) {
@@ -987,7 +996,7 @@ final class PlaybackController extends ChangeNotifier {
   }
 
   Future<void> toggle() async {
-    if (_resumeRejected || awaitingResume) return;
+    if (awaitingResume) return;
     if (request != null && !_allowed(request!)) {
       _policyChanged();
       return;
@@ -996,24 +1005,50 @@ final class PlaybackController extends ChangeNotifier {
     _userPaused = state.playing;
     if (notice?.startsWith('正在尝试恢复') ?? false) notice = null;
     await engine.playOrPause();
+    _acceptCurrentProgress();
     await save();
     if (!_userPaused && error != null) _scheduleRecovery();
   }
 
+  void _acceptCurrentProgress() {
+    // Explicit playback or a successful manual seek accepts the new position.
+    if (_resumeRejected) {
+      _resumeRejected = false;
+      _recoveryPosition = null;
+      _recoveryDuration = null;
+      _recoveryCancelled = false;
+      error = null;
+    }
+  }
+
+  Object? _lastSavedProgress;
   Future<void> save() async {
     if (blocked || request == null || isLive || _switching) {
       return;
     }
+    final position = _resume ?? _recoveryPosition ?? originalPosition;
+    final duration = originalDuration > Duration.zero
+        ? originalDuration
+        : _recoveryDuration ?? Duration.zero;
+    final progress = (
+      request!.item.sourceId,
+      request!.item.id,
+      line.name,
+      episode.label,
+      position,
+      duration,
+      state.playing,
+    );
+    if (progress == _lastSavedProgress) return;
     try {
       await services.history.save(
         request!.item,
         line,
         episode,
-        _resume ?? _recoveryPosition ?? originalPosition,
-        originalDuration > Duration.zero
-            ? originalDuration
-            : _recoveryDuration ?? Duration.zero,
+        position,
+        duration,
       );
+      _lastSavedProgress = progress;
     } catch (_) {
       notice = '进度保存失败，请检查可用空间';
       if (!_closed) notifyListeners();

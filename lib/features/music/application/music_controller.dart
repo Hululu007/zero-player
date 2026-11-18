@@ -684,12 +684,16 @@ final class MusicController extends ChangeNotifier
   Future<void> retry() => selected == null
       ? Future.value()
       : select(queue, index, refresh: true, start: snapshot.position);
+  int _advanceRevision = 0;
   Future<void> next() => _advance();
   Future<void> _advance({bool automatic = false}) async {
     if (queue.isEmpty) return;
     final generation = _generation;
+    final revision = ++_advanceRevision;
     await _record();
-    if (_closed || generation != _generation) return;
+    if (_closed || generation != _generation || revision != _advanceRevision) {
+      return;
+    }
     final target = _nextIndex(automatic: automatic);
     if (target != null) await select(queue, target);
   }
@@ -752,6 +756,7 @@ final class MusicController extends ChangeNotifier
           ? select(queue, index, start: snapshot.position)
           : retry();
     }
+    if (_wantsPlayback) ++_advanceRevision;
     if (snapshot.completed) return select(queue, index);
     final generation = _generation;
     return _command((engine) async {
@@ -776,6 +781,7 @@ final class MusicController extends ChangeNotifier
     if (_closed) return Future.value();
     unawaited(_record());
     final retire = loading || clear;
+    ++_advanceRevision;
     _wantsPlayback = false;
     _cancelSelection();
     // Retire pending opens. Paused engines retain their state subscriptions.

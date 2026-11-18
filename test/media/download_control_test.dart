@@ -10,6 +10,74 @@ import 'package:zero_player/features/downloads/domain/download_task.dart';
 import '../../test_support/http_test_server.dart';
 
 void main() {
+  _committedRemovalRecovery();
+  test(
+    'failed task transaction preserves its complete output and pins',
+    () async {
+      final f = await _Fixture.create();
+      final id = await f.createTask();
+      final task = (await f.services.downloads.find(id))!;
+      final file = await File(
+        '${task.directory}/video.mp4',
+      ).writeAsBytes([1, 2]);
+      await f.services.downloads.complete(id, 'video.mp4');
+      final key = 'a' * 64;
+      await f.services.store.write(
+        key,
+        Stream.value([1]),
+        statusCode: 200,
+        headers: {},
+      );
+      await f.services.store.pin(id, key);
+      await f.services.db.customStatement(
+        "CREATE TRIGGER reject_task_delete BEFORE DELETE ON downloads BEGIN SELECT RAISE(ABORT,'fixture'); END",
+      );
+      final scheduler = DownloadScheduler(
+        f.services.downloads,
+        f.services.fetcher,
+        f.services.http,
+        f.services.offline,
+        f.services.settings,
+        validateMp4: (_, _) async {},
+      );
+      addTearDown(scheduler.close);
+      await expectLater(scheduler.remove(id), throwsA(isA<Exception>()));
+      expect(await file.readAsBytes(), [1, 2]);
+      expect(
+        (await f.services.downloads.find(id))!.status,
+        DownloadStatus.complete,
+      );
+      expect(await f.services.store.pinnedResources(id), {key: 1});
+    },
+  );
+  test(
+    'resume repairs a complete record whose local output disappeared',
+    () async {
+      final f = await _Fixture.create();
+      final id = await f.createTask();
+      await f.services.downloads.complete(id, 'video.mp4');
+      final scheduler = DownloadScheduler(
+        f.services.downloads,
+        f.services.fetcher,
+        f.services.http,
+        f.services.offline,
+        f.services.settings,
+        validateMp4: (_, _) async {},
+      );
+      addTearDown(scheduler.close);
+      final done = f.services.downloads.changes
+          .asyncMap((_) => f.services.downloads.find(id))
+          .firstWhere((task) => task?.status == DownloadStatus.complete);
+      await scheduler.resume(id);
+      final completed = (await done.timeout(const Duration(seconds: 5)))!;
+      expect(
+        await File(
+          '${completed.directory}/${completed.localPath}',
+        ).readAsBytes(),
+        [1, 2, 3, 4],
+      );
+    },
+  );
   test(
     'locked task deletion journals cleanup and releases its pins',
     _lockedRemoval,
@@ -30,6 +98,40 @@ void main() {
   test(
     'download progress does not notify source or settings observers',
     _scopedChanges,
+  );
+}
+
+void _committedRemovalRecovery() {
+  test(
+    'startup releases pins when removal committed before process interruption',
+    () async {
+      final fixture = await _Fixture.create();
+      final id = await fixture.createTask();
+      final key = 'e' * 64;
+      final store = fixture.services.store;
+      await store.write(key, Stream.value([1]), statusCode: 200, headers: {});
+      await store.pin(id, key);
+      await fixture.services.downloads.remove(id);
+      // Simulate process interruption before scheduler unpin/directory cleanup.
+      expect(await store.pinnedResources(id), {key: 1});
+      final scheduler = DownloadScheduler(
+        fixture.services.downloads,
+        fixture.services.fetcher,
+        fixture.services.http,
+        fixture.services.offline,
+        fixture.services.settings,
+        validateMp4: (_, _) async {},
+      );
+      addTearDown(scheduler.close);
+      await scheduler.initialize();
+      expect(await store.pinnedResources(id), isEmpty);
+      expect(
+        await fixture.services.db.rows(
+          "SELECT key FROM app_meta WHERE key GLOB 'download_unpin:*'",
+        ),
+        isEmpty,
+      );
+    },
   );
 }
 

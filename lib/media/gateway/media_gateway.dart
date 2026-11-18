@@ -28,6 +28,8 @@ final class GatewaySession {
   final _ids = <Uri, String>{};
   final _playlists = <Uri>{};
   final _streaming = <Uri>{};
+  final _keyIds = <Uri, String>{};
+  final _keys = <String>{};
   Uri? selectedQuality;
   List<HlsQuality> qualities = [];
   bool filterAds = false;
@@ -75,14 +77,21 @@ final class GatewaySession {
     return register(uri, playlist: hls, streaming: !hls);
   }
 
-  Uri register(Uri uri, {bool playlist = false, bool streaming = false}) {
+  Uri register(
+    Uri uri, {
+    bool playlist = false,
+    bool streaming = false,
+    bool key = false,
+  }) {
     if (_closed) throw StateError('Session is closed');
     NetworkTargetPolicy.validateUri(uri);
-    if (_resources.length >= 20000 && !_ids.containsKey(uri)) {
+    final ids = key ? _keyIds : _ids;
+    if (_resources.length >= 20000 && !ids.containsKey(uri)) {
       throw const FormatException('Playlist resource limit exceeded');
     }
-    final id = _ids.putIfAbsent(uri, () => '${_ids.length}');
-    if (playlist || uri.path.toLowerCase().endsWith('.m3u8')) {
+    final id = ids.putIfAbsent(uri, () => '${key ? 'key-' : ''}${ids.length}');
+    if (key) _keys.add(id);
+    if (!key && (playlist || uri.path.toLowerCase().endsWith('.m3u8'))) {
       _playlists.add(uri);
     }
     _resources[id] = uri;
@@ -93,15 +102,23 @@ final class GatewaySession {
   void close() {
     if (_closed) return;
     _closed = true;
-    prefetch.close();
-    cancellation.cancel();
-    _resources.clear();
-    _ids.clear();
-    _playlists.clear();
-    _streaming.clear();
-    _variables.clear();
-    _timestamps.clear();
-    _gateway._sessions.remove(token);
+    try {
+      prefetch.close();
+    } finally {
+      try {
+        cancellation.cancel();
+      } finally {
+        _resources.clear();
+        _ids.clear();
+        _playlists.clear();
+        _streaming.clear();
+        _keys.clear();
+        _keyIds.clear();
+        _variables.clear();
+        _timestamps.clear();
+        _gateway._sessions.remove(token);
+      }
+    }
   }
 }
 
@@ -156,7 +173,9 @@ final class MediaGateway {
     if (parts.length != 2) return false;
     final session = _sessions[parts[0]];
     final resource = session?._resources[parts[1]];
-    return resource != null && session!._playlists.contains(resource);
+    return resource != null &&
+        !session!._keys.contains(parts[1]) &&
+        session._playlists.contains(resource);
   }
 
   Future<void> start() {
@@ -226,7 +245,9 @@ final class MediaGateway {
         request.response.statusCode = HttpStatus.requestedRangeNotSatisfiable;
         return;
       }
-      if (session._playlists.contains(uri)) {
+      if (session._keys.contains(parts[1])) {
+        await _key(request, session, uri);
+      } else if (session._playlists.contains(uri)) {
         await _manifest(request, session, uri);
       } else if (session.normalizeTimestamps &&
           await session._timestamps.serve(
@@ -305,6 +326,31 @@ final class MediaGateway {
         ),
       );
     }
+  }
+
+  Future<void> _key(
+    HttpRequest request,
+    GatewaySession session,
+    Uri uri,
+  ) async {
+    final payload = await _client.open(
+      uri,
+      policy: session.policy,
+      cancellation: session.cancellation,
+    );
+    final bytes = <int>[];
+    await for (final chunk in payload.body) {
+      if (payload.response.statusCode != HttpStatus.ok ||
+          bytes.length + chunk.length > 16) {
+        throw const FormatException('Invalid HLS key');
+      }
+      bytes.addAll(chunk);
+    }
+    if (bytes.length != 16) throw const FormatException('Invalid HLS key');
+    request.response.headers.contentType = ContentType.binary;
+    request.response.headers.set(HttpHeaders.cacheControlHeader, 'no-store');
+    request.response.contentLength = bytes.length;
+    if (request.method != 'HEAD') request.response.add(bytes);
   }
 
   Future<void> _passthrough(
@@ -433,6 +479,7 @@ final class MediaGateway {
     final output = utf8.encode(
       manifest.rewrite(
         (uri) => session.register(uri, playlist: playlists.contains(uri)),
+        mapKey: (uri) => session.register(uri, key: true),
       ),
     );
     request.response.headers.contentType = ContentType(
@@ -502,14 +549,30 @@ final class MediaGateway {
 
   Future<void> _close() async {
     _closed = true;
-    _transfers.cancel();
-    for (final session in _sessions.values.toList()) {
-      session.close();
+    Object? failure;
+    StackTrace? trace;
+    void attempt(void Function() action) {
+      try {
+        action();
+      } catch (error, stack) {
+        failure ??= error;
+        trace ??= stack;
+      }
     }
-    if (_ownsClient) _client.close();
-    await _starting;
-    await _server?.close(force: true);
-    _server = null;
+
+    attempt(_transfers.cancel);
+    for (final session in _sessions.values.toList()) {
+      attempt(session.close);
+    }
+    if (_ownsClient) attempt(_client.close);
+    try {
+      await _starting;
+    } finally {
+      await _server?.close(force: true);
+      _server = null;
+      _sessions.clear();
+    }
+    if (failure != null) Error.throwWithStackTrace(failure!, trace!);
   }
 }
 

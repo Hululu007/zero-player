@@ -52,6 +52,7 @@ migrate_working_dir/
 /docs/implementation/*
 !/docs/implementation/BUILD.md
 !/docs/implementation/STATUS.md
+!/docs/implementation/CODE-REVIEW-2026-11-18.md
 !/docs/implementation/MODULE-BOUNDARIES.md
 !/docs/implementation/COMIC_SOURCE_AUDIT.md
 !/docs/implementation/BOOK_SOURCE_AUDIT.md

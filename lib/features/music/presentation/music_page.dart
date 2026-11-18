@@ -259,10 +259,7 @@ final class _MusicPageState extends State<MusicPage> {
           initialPlaylist: _pendingPlaylist,
         )
       : _view != 'search'
-      ? SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
-          child: MusicLibraryPanel(services: widget.services, view: _view),
-        )
+      ? MusicLibraryPanel(services: widget.services, view: _view)
       : ListView.builder(
           key: const PageStorageKey('music-results'),
           controller: _scroll,

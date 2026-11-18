@@ -42,8 +42,9 @@ final class DownloadFailover {
   Future<DownloadLocation?> find(
     DownloadTask task,
     CancellationToken parent,
-    Set<String> excluded,
-  ) async {
+    Set<String> excluded, {
+    Duration timeout = const Duration(seconds: 45),
+  }) async {
     final original = _taskIdentity(task);
     if (original == null) return null;
     final candidates =
@@ -62,7 +63,7 @@ final class DownloadFailover {
           );
     final token = CancellationToken();
     final unlink = parent.listen(token.cancel);
-    final deadline = Timer(const Duration(seconds: 45), token.cancel);
+    final deadline = Timer(timeout, token.cancel);
     DownloadLocation? found;
     var index = 0;
     Future<void> worker() async {

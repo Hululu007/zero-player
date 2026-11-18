@@ -11,6 +11,7 @@ import 'books_repository.dart';
 import 'book_chapter_policy.dart';
 import 'book_latest_aggregation.dart';
 import 'book_catalog_window.dart';
+import 'book_site_check.dart';
 
 enum BookDownloadStatus { running, completed, paused, failed }
 
@@ -43,6 +44,7 @@ final class BookDownloadCoordinator extends ChangeNotifier {
     this.maxConcurrency,
     this.loadLatestEditions,
   }) {
+    _policySnapshot = bookSitePolicySnapshot(repository.policy);
     repository.policy.addListener(_policyChanged);
     repository.sourceRiskChanges.addListener(_policyChanged);
   }
@@ -73,6 +75,7 @@ final class BookDownloadCoordinator extends ChangeNotifier {
 
   final Map<String, BookDownloadTask> _tasks = {};
   bool _closed = false;
+  late String _policySnapshot;
 
   BookDownloadTask? active(Book book) => _tasks[book.id];
   List<BookDownloadTask> get activeTasks => List.unmodifiable(_tasks.values);
@@ -309,7 +312,15 @@ final class BookDownloadCoordinator extends ChangeNotifier {
   }
 
   void _policyChanged() {
+    final next = bookSitePolicySnapshot(repository.policy);
+    final changed = next != _policySnapshot;
+    _policySnapshot = next;
     for (final task in _tasks.values) {
+      if (!repository.closing &&
+          !changed &&
+          repository.bookAllowed(task.book)) {
+        continue;
+      }
       if (task.status == BookDownloadStatus.running &&
           !task.token.isCancelled) {
         if (!repository.closing) task._stoppedByPolicy = true;

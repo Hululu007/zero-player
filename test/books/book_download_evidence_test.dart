@@ -289,7 +289,7 @@ void _revisionAndConcurrencyTests() {
   test(
     'policy change during commit rolls back proof and preserves legacy data',
     () async {
-      final f = await _Fixture.create();
+      final f = await _Fixture.create(adultAccess: true);
       addTearDown(f.close);
       await f.books.store.saveText(f.target, f.targetChapter, '旧正文');
       final evidence = await f.capture();
@@ -303,7 +303,11 @@ void _revisionAndConcurrencyTests() {
           evidence,
           () async {
             await f.books.downloadGuard.validate(evidence, expected: lease);
-            if (++calls == 1) f.services.contentPolicy.refresh();
+            if (++calls == 1) {
+              await f.services.settings.update({
+                'filterAdult': !f.services.settings.value.filterAdult,
+              });
+            }
           },
         ),
         throwsA(isA<ContentBlocked>()),

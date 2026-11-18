@@ -166,9 +166,26 @@ final class DownloadRepository {
     );
   }, tables: const {'downloads'});
   Future<void> remove(String id) => db.atomic(() async {
+    final task = await find(id);
+    if (task != null) await deferCleanup(task.directory);
+    await db.write('INSERT OR REPLACE INTO app_meta(key,value) VALUES(?,?)', [
+      'download_unpin:$id',
+      id,
+    ]);
     await db.write('DELETE FROM downloads WHERE id=?', [id]);
     await db.write('DELETE FROM app_meta WHERE key IN (?,?,?)', [
       'download_output:$id',
+      'download_saved:$id',
+      'download_publish:$id',
+    ]);
+  }, tables: const {'downloads', 'app_meta'});
+
+  Future<void> resetMissingOutput(String id) => db.atomic(() async {
+    await db.write(
+      "UPDATE downloads SET local_path=NULL,status='queued',completed=0,total=0,bytes=0,error=NULL WHERE id=?",
+      [id],
+    );
+    await db.write('DELETE FROM app_meta WHERE key IN (?,?)', [
       'download_saved:$id',
       'download_publish:$id',
     ]);
@@ -191,7 +208,21 @@ final class DownloadRepository {
     ]);
   }
 
-  Future<void> cleanupPending() async {
+  Future<void> finishUnpin(String id) =>
+      db.write('DELETE FROM app_meta WHERE key=?', ['download_unpin:$id']);
+
+  Future<void> cleanupPending({Future<void> Function(String)? unpin}) async {
+    if (unpin != null) {
+      final owners = await db.rows(
+        "SELECT value FROM app_meta WHERE key GLOB 'download_unpin:*'",
+      );
+      for (final owner in owners) {
+        final id = owner['value'] as String;
+        if (await find(id) != null) continue;
+        await unpin(id);
+        await finishUnpin(id);
+      }
+    }
     final pending = await db.rows(
       "SELECT key,value FROM app_meta WHERE key GLOB 'download_cleanup:*'",
     );

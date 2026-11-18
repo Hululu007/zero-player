@@ -93,16 +93,30 @@ final class SegmentStore {
         _setEntry(entry.key, entry.value);
       } else {
         await metadata?.remove(entry.key);
+        final stale = _entries.remove(entry.key);
+        if (stale != null) {
+          _sizeBytes -= stale.length;
+          if (!_protected.contains(entry.key)) _cacheBytes -= stale.length;
+        }
       }
     }
     _setProtected({
       ..._protected,
       ...await metadata?.protectedKeys() ?? <String>{},
     });
+    final recovery = metadata;
+    final indexed = recovery is SegmentRecoveryMetadata
+        ? await (recovery as SegmentRecoveryMetadata).indexedKeys()
+        : _entries.keys.toSet();
     await for (final file in directory.list()) {
-      if (file is File &&
-          RegExp(r'^[a-f0-9]{64}\.part$').hasMatch(p.basename(file.path))) {
-        await file.delete();
+      if (file is File) {
+        final name = p.basename(file.path);
+        if (RegExp(r'^[a-f0-9]{64}\.part$').hasMatch(name) ||
+            RegExp(r'^[a-f0-9]{64}\.bin$').hasMatch(name) &&
+                !indexed.contains(name.substring(0, 64)) &&
+                !_protected.contains(name.substring(0, 64))) {
+          await file.delete();
+        }
       }
     }
   }
@@ -325,7 +339,15 @@ final class SegmentStore {
         if (bytes % (1024 * 1024) < chunk.length) await sink.flush();
       }
       await sink.close();
-      if (expectedLength != null && bytes != expectedLength) {
+      final range = RegExp(
+        r'^bytes (\d+)-(\d+)/(\d+|\*)$',
+      ).firstMatch(headers[HttpHeaders.contentRangeHeader] ?? '');
+      final rangeLength = range == null
+          ? null
+          : int.parse(range[2]!) - int.parse(range[1]!) + 1;
+      if (bytes == 0 ||
+          expectedLength != null && bytes != expectedLength ||
+          rangeLength != null && (rangeLength <= 0 || bytes != rangeLength)) {
         throw const HttpException('Incomplete resource');
       }
       digestInput.close();
@@ -364,7 +386,17 @@ final class SegmentStore {
       statusCode: statusCode,
       headers: Map.unmodifiable(headers),
     );
-    await metadata?.put(key, result);
+    try {
+      await metadata?.put(key, result);
+    } catch (_) {
+      try {
+        await target.delete();
+      } on FileSystemException {
+        _setEntry(key, result);
+        _invalid.add(key);
+      }
+      rethrow;
+    }
     _setEntry(key, result);
     PerformanceCounters.add('cache.commits');
     PerformanceCounters.add('cache.committed_bytes', bytes);
