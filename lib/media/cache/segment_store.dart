@@ -311,6 +311,8 @@ final class SegmentStore {
     final temporary = File(p.join(directory.path, '$key.part'));
     final target = File(p.join(directory.path, '$key.bin'));
     final sink = temporary.openWrite();
+    final digestOutput = _DigestSink();
+    final digestInput = sha256.startChunkedConversion(digestOutput);
     var bytes = 0;
     try {
       await for (final chunk in body) {
@@ -319,14 +321,15 @@ final class SegmentStore {
           throw const FileSystemException('Resource exceeds cache budget');
         }
         sink.add(chunk);
+        digestInput.add(chunk);
         if (bytes % (1024 * 1024) < chunk.length) await sink.flush();
       }
       await sink.close();
       if (expectedLength != null && bytes != expectedLength) {
         throw const HttpException('Incomplete resource');
       }
-      final digest = await sha256.bind(temporary.openRead()).first;
-      PerformanceCounters.add('cache.hash.read_bytes', bytes);
+      digestInput.close();
+      final digest = digestOutput.value!;
       return await _commit(
         key,
         temporary,
@@ -394,4 +397,12 @@ final class SegmentStore {
       throw const FileSystemException('Cache is full with active resources');
     }
   }
+}
+
+final class _DigestSink implements Sink<Digest> {
+  Digest? value;
+  @override
+  void add(Digest data) => value = data;
+  @override
+  void close() {}
 }

@@ -7,9 +7,6 @@ import 'package:zero_player/core/persistence/app_database.dart';
 import 'package:zero_player/media/cache/segment_index.dart';
 import 'package:zero_player/media/cache/segment_store.dart';
 
-const _optimized = bool.fromEnvironment('EXPECT_OPTIMIZED_SEGMENTS');
-const _constantCapacity = true;
-
 void main() {
   setUp(() {
     PerformanceCounters.enabled = true;
@@ -96,10 +93,7 @@ void _capacityWorkloads() {
       );
       final counts = PerformanceCounters.snapshot();
       expect(store.sizeBytes, count + 1);
-      expect(
-        counts['cache.capacity.visited'] ?? 0,
-        _constantCapacity ? 0 : count * 21,
-      );
+      expect(counts['cache.capacity.visited'] ?? 0, 0);
       _report('capacity-$count', counts);
     });
   }
@@ -129,10 +123,7 @@ void _hashWorkloads() {
         resource.digest,
         '${await sha256.bind(resource.file.openRead()).first}',
       );
-      expect(
-        counts['cache.hash.read_bytes'] ?? 0,
-        _optimized ? 0 : resource.length,
-      );
+      expect(counts['cache.hash.read_bytes'] ?? 0, 0);
       _report(
         'hash-4MiB-$chunkSize',
         counts,
