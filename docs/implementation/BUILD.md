@@ -26,6 +26,31 @@ try {
 
 `robolectricDependencyDir`是本机可选命令参数，不是业务或构建默认路径。测试报告在`build/app/test-results/testDebugUnitTest/`；首轮A/B证据在`build/performance-implementation-20261118/`。原生JVM回归和短时受控profile检查不能替代Android/TV实机、稳态帧时、功耗及30/120分钟可靠性验收。正式应用构建沿用后文普通Release流程，不能把集成测试入口产物交付为应用。
 
+## 性能专项续实施回归
+
+任务状态和计数前后值见[专项报告2.5](PERFORMANCE-OPTIMIZATION-2026-11-18.md#25-续实施域通知隐藏展示及缓存工作量)。以下为A2、B2、B3-D及C1/C2/C3入口；Flutter测试与原生/构建串行：
+
+~~~powershell
+dart run tool/metadata_write_inventory.dart > build/metadata-writes.json
+flutter test --no-pub test/data/metadata_notifications_test.dart test/data/transaction_notifications_test.dart test/data/live_preflight_notifications_test.dart test/performance/music_history_workload_test.dart test/performance/music_mixed_workload_test.dart test/performance/live_music_workload_test.dart --reporter expanded
+flutter test --no-pub test/widgets/discovery_visibility_test.dart test/widgets/discovery_history_refresh_test.dart test/widgets/discovery_policy_updates_test.dart --reporter expanded
+flutter test --no-pub test/performance/segment_workload_test.dart test/media/segment_pins_test.dart test/media/segment_accounting_test.dart test/media/segment_hash_test.dart test/media/cache_recovery_test.dart test/media/cache_eviction_race_test.dart --reporter expanded
+flutter test --no-pub test/books/reader_font_distribution_test.dart test/books/reader_upgrade_test.dart test/data/interaction_preferences_test.dart --reporter expanded
+python -m unittest discover -s tool -p test_verify_apk.py -v
+flutter test --no-pub --reporter expanded
+./tool/run_windows_native.ps1 -TestFiles @('integration_test/player_page_performance_test.dart','integration_test/music_offline_native_test.dart','integration_test/tv_playback_focus_test.dart','integration_test/player_window_native_test.dart','integration_test/reader_upgrade_native_test.dart')
+~~~
+
+新增字段：`live.channels.calls`和`history.recent_works.calls`为真实仓库调用数；`cache.capacity.visited`为旧容量求和访问条目数，优化后缺字段表示0，不能解释为全部缓存扫描为0。缓存工作量含1/100/1000 owner、1千/1万/5万条目、4MiB与4KiB/64KiB分块；音乐混合场景显式区分video/reading/raw/batch/atomic/trigger/external，开关计数均验功能。
+
+精确元数据写入为安全归因增加两次标量查询，并与写入同事务隔离；`db.queries/rows/statements`覆盖范围仍按首轮字段定义，不包含Drift全部隐式事务SQL。unknown、触发器副作用及未覆盖raw/batch继续保守通知。最终音乐20次保存为100次查询，直播120次保存夹具为600次；中间版本360次已过期。
+
+播放器原生夹具会写`build/performance-implementation-20261118/player-page-workload.json`，续实施重跑前备份该历史文件，运行后把新JSON复制到本批证据目录，再还原历史文件；不覆盖旧实验或混比较Debug/Profile帧时。原生测试后执行普通`flutter pub get`及Windows Release恢复注册，最后核对受保护文件摘要。本轮证据目录为`build/performance-continuation-20261118/`，不把较早日志当最终源码验证。
+
+本轮用户确认仅内置Xiaolai手写字体，使用系统默认/设备枚举字体；Noto源文件仍可供合成素材生成，但不进入Flutter包资源。`verify_apk.py`现在要求Xiaolai存在且两套旧Noto字体缺席，继续检查固定ABI、可选模型排除、版本及70 MiB预算；签名另用`apksigner`核验。旧字体偏好/备份回退系统；设备字体列表成功结果在当前store缓存，失败可重试。Windows真实字体/阅读器复验由最后一个原生入口覆盖，Android/TV字形及换行需设备另验。
+
+本轮最终Flutter1538通过/12跳过、五组Windows原生7项业务回归和普通Windows Release通过；Android普通Release在生成本轮AOT后遇到本机代理连接失败，按下文离线续包规则完成。ARM64 devtest新包48.96 MiB，通过70 MiB、CRC、固定PDFium及原测试证书v2签名；`android-release-integrity.json`保存AOT摘要链，失败尝试不记作成功。Python工具仍有1项历史证据摘要错误，规模检查仍有104条既有债务；详见本轮证据目录`final-verification.json`及STATUS。
+
 ## EPUB／PDF 原生验证
 
 PDF 阅读固定使用 pdfrx 2.2.24 和 PDFium chromium/7520。Windows x64、Android arm64／x64 发布包与原生库的摘要见 `tool/pdfium_checksums.json`；使用 `python tool/verify_pdfium.py win-x64 <pdfium.dll> --archive <pdfium-win-x64.tgz>` 校验。Windows CMake 与 Android Gradle 会拒绝不匹配的库。Android 插件 JNI 目录指向该固定版本的真实目录，避免 Windows 目录链接被 AGP 忽略；不能替换为系统中任意 PDFium。
@@ -241,7 +266,7 @@ Android 构建成功只证明编译与打包；HLS、MP4、FLV 的真实设备�
 
 ## 手机 ARM64 小体积构建
 
-保留三套字体，以 JDK 21 构建单 ABI Release；双 ABI 通用包包含额外原生库，不能用来衡量手机专用包。以下脚本构建后检查 arm64 原生库完整性、三套字体、原生库 ZIP 压缩、可选模型/推理库缺席及 70 MiB 预算，生成 APK 与 SHA256SUMS.txt。需要已有 android/key.properties；不自动创建或更换签名。
+仅内置Xiaolai手写字体，其他字体使用设备自带字体或阅读器按需下载。以 JDK 21 构建单 ABI Release；双 ABI 通用包包含额外原生库，不能用来衡量手机专用包。以下脚本构建后检查 arm64 原生库完整性、手写字体及旧Noto资源缺席、原生库 ZIP 压缩、可选模型/推理库缺席及 70 MiB 预算，生成 APK 与 SHA256SUMS.txt。需要已有 android/key.properties；不自动创建或更换签名。
 
 ~~~powershell
 pwsh -File tool/build_phone.ps1
@@ -249,7 +274,7 @@ pwsh -File tool/build_phone.ps1
 pwsh -File tool/build_phone.ps1 -SkipBuild
 ~~~
 
-产物：artifacts/phone/zero-player-android-arm64.apk。脚本拒绝覆盖内容不同的已有产物；新一轮用 -OutputDirectory 指定其他目录。APK 中保留原有字体选项。不要将已下载的测试模型打入 assets。Flutter 平台测试全部结束后再构建 Release，保留 pub 刷新插件注册的步骤，避免残留 integration_test 插件进入普通构建。
+产物：artifacts/phone/zero-player-android-arm64.apk。脚本拒绝覆盖内容不同的已有产物；新一轮用 -OutputDirectory 指定其他目录。字体选项及旧设置回退规则见用户指南。不要将已下载的测试模型打入 assets。Flutter 平台测试全部结束后再构建 Release，保留 pub 刷新插件注册的步骤，避免残留 integration_test 插件进入普通构建。
 
 手机 APK 使用 jniLibs.useLegacyPackaging 压缩原生库；Android 安装时将库解压。该优化减少下载/安装包大小，不承诺同等降低安装后的占用。2026-10-29 同为 ARM64 Release 的旧包为 91.89 MiB，新包约 64.4 MiB；最终精确字节数和摘要随本地构建记录保存。
 
