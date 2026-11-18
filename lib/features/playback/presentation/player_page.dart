@@ -258,11 +258,7 @@ final class _PlayerPageState extends State<PlayerPage>
                 ),
         },
         child: Focus(
-          child: ListenableBuilder(
-            listenable: controller,
-            builder: (context, _) =>
-                Scaffold(backgroundColor: Colors.black, body: _video()),
-          ),
+          child: Scaffold(backgroundColor: Colors.black, body: _video()),
         ),
       ),
     );
@@ -272,33 +268,46 @@ final class _PlayerPageState extends State<PlayerPage>
     PerformanceCounters.add('player.video.build');
     return Theme(
       data: ThemeData.dark(useMaterial3: true),
-      child: PlaybackSurface(
-        controller: controller,
-        video: controller.blocked
-            ? const ColoredBox(color: Colors.black)
-            : Video(
-                controller: engine.video,
-                controls: NoVideoControls,
-                fit: fit,
-              ),
-        transport: controller.blocked ? const SizedBox.shrink() : _transport(),
-        title: controller.blocked
-            ? '内容已屏蔽'
-            : controller.request?.item.title ?? widget.request.item.title,
-        onBack: _leave,
-        onOptions: () {
-          if (!controller.blocked) _showOptions();
-        },
-        locked: locked,
-        onLock: (value) {
-          controller.endSpeed();
-          setState(() => locked = value);
-        },
-        gestures: widget.services.settings.value.gestures,
-        errorAction:
-            controller.request?.offline == null && controller.request != null
-            ? _failureActions()
-            : null,
+      child: ListenableBuilder(
+        listenable: controller,
+        // Keep the video widget stable during controller notifications. Build
+        // lazily so a blocked initial request cannot create a native output.
+        child: Builder(
+          builder: (_) {
+            PerformanceCounters.add('player.video.node');
+            return Video(
+              controller: engine.video,
+              controls: NoVideoControls,
+              fit: fit,
+            );
+          },
+        ),
+        builder: (context, video) => PlaybackSurface(
+          controller: controller,
+          video: controller.blocked
+              ? const ColoredBox(color: Colors.black)
+              : video!,
+          transport: controller.blocked
+              ? const SizedBox.shrink()
+              : _transport(),
+          title: controller.blocked
+              ? '内容已屏蔽'
+              : controller.request?.item.title ?? widget.request.item.title,
+          onBack: _leave,
+          onOptions: () {
+            if (!controller.blocked) _showOptions();
+          },
+          locked: locked,
+          onLock: (value) {
+            controller.endSpeed();
+            setState(() => locked = value);
+          },
+          gestures: widget.services.settings.value.gestures,
+          errorAction:
+              controller.request?.offline == null && controller.request != null
+              ? _failureActions()
+              : null,
+        ),
       ),
     );
   }
