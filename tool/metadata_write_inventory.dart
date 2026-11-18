@@ -98,7 +98,9 @@ final class _Inventory extends RecursiveAstVisitor<void> {
     ) {
       if (parent is MethodDeclaration) return parent.name.lexeme;
       if (parent is FunctionDeclaration) return parent.name.lexeme;
-      if (parent is ConstructorDeclaration) return parent.returnType.name;
+      if (parent is ConstructorDeclaration) {
+        return parent.typeName?.toSource() ?? '<constructor>';
+      }
     }
     return '<initializer>';
   }

@@ -7,18 +7,23 @@ import 'package:drift/native.dart';
 import 'schema.dart';
 import 'installation_metadata.dart';
 import '../diagnostics/performance_counters.dart';
+import 'metadata_domain.dart';
+export 'metadata_domain.dart';
 
 /// Current development schema; no legacy-format migration scaffolding.
 final class AppDatabase extends GeneratedDatabase {
   AppDatabase(File file) : super(NativeDatabase.createInBackground(file));
   AppDatabase.memory() : super(NativeDatabase.memory());
-  final _changes = StreamController<Set<String>?>.broadcast();
+  final _changes = StreamController<_DatabaseChange>.broadcast();
   bool _closed = false;
   Future<void>? _closing;
   final _notificationKey = Object();
   Stream<void> get changes => _changes.stream.map((_) {});
-  Stream<void> changesFor(Set<String> tables) => _changes.stream
-      .where((changed) => changed == null || changed.any(tables.contains))
+  Stream<void> changesFor(
+    Set<String> tables, {
+    Set<MetadataDomain>? metadataDomains,
+  }) => _changes.stream
+      .where((change) => change.affects(tables, metadataDomains))
       .map((_) {});
   @override
   int get schemaVersion => 3;
@@ -103,29 +108,95 @@ final class AppDatabase extends GeneratedDatabase {
   Future<void> customStatement(String statement, [List<Object?>? args]) async {
     await super.customStatement(statement, args);
     PerformanceCounters.add('db.statements');
+    // Raw SQL is deliberately not parsed for key coverage. It still does not
+    // auto-publish, but prevents a surrounding precise declaration hiding it.
+    (Zone.current[_notificationKey] as _ChangeBatch?)?.untracked = true;
   }
 
-  void changed({Set<String>? tables}) {
+  @override
+  Future<void> batch(FutureOr<void> Function(Batch batch) runInBatch) async {
+    await super.batch(runInBatch);
+    (Zone.current[_notificationKey] as _ChangeBatch?)?.untracked = true;
+  }
+
+  Future<void> setMetadata(String key, String value, MetadataDomain domain) =>
+      _metadataStatement(
+        'INSERT OR REPLACE INTO app_meta VALUES(?,?)',
+        [key, value],
+        key,
+        domain,
+      );
+
+  Future<void> deleteMetadata(String key, MetadataDomain domain) =>
+      _metadataStatement(
+        'DELETE FROM app_meta WHERE key=?',
+        [key],
+        key,
+        domain,
+      );
+
+  Future<void> clearMusicHistory() => _metadataStatement(
+    "DELETE FROM app_meta WHERE key GLOB 'music_history:*'",
+    [],
+    'music_history:',
+    MetadataDomain.musicHistory,
+  );
+
+  Future<void> _metadataStatement(
+    String sql,
+    List<Object?> args,
+    String key,
+    MetadataDomain domain,
+  ) async {
+    _checkOpen();
+    if (!domain.accepts(key)) throw ArgumentError('Metadata domain mismatch');
+    await super.customStatement(sql, args);
+    PerformanceCounters.add('db.statements');
+    changed(tables: {'app_meta'}, metadataDomains: {domain});
+  }
+
+  void changed({Set<String>? tables, Set<MetadataDomain>? metadataDomains}) {
     final batch = Zone.current[_notificationKey] as _ChangeBatch?;
     if (batch != null) {
-      batch.add(tables);
+      batch.add(tables, metadataDomains);
       return;
     }
     if (tables != null && tables.isEmpty) return;
     if (!_changes.isClosed) {
       PerformanceCounters.add('db.notifications');
-      _changes.add(tables == null ? null : Set.unmodifiable(tables));
+      _changes.add(_DatabaseChange(tables, metadataDomains));
     }
   }
 
-  Future<T> atomic<T>(Future<T> Function() work, {Set<String>? tables}) async {
+  Future<T> atomic<T>(
+    Future<T> Function() work, {
+    Set<String>? tables,
+    Set<MetadataDomain>? metadataDomains,
+  }) => _transaction(work, tables: tables, metadataDomains: metadataDomains);
+
+  @override
+  Future<T> transaction<T>(
+    Future<T> Function() action, {
+    bool requireNew = false,
+  }) => _transaction(action, tables: const {}, requireNew: requireNew);
+
+  Future<T> _transaction<T>(
+    Future<T> Function() work, {
+    required Set<String>? tables,
+    Set<MetadataDomain>? metadataDomains,
+    bool requireNew = false,
+  }) async {
     _checkOpen();
     final batch = _ChangeBatch();
-    final result = await transaction(
+    final result = await super.transaction(
       () => runZoned(work, zoneValues: {_notificationKey: batch}),
+      requireNew: requireNew,
     );
-    batch.add(tables);
-    changed(tables: batch.all ? null : batch.tables);
+    batch.add(tables, metadataDomains);
+    changed(
+      tables: batch.all ? null : batch.tables,
+      metadataDomains: batch.untracked ? null : batch.metadataDomains,
+    );
     return result;
   }
 
@@ -145,12 +216,42 @@ final class AppDatabase extends GeneratedDatabase {
 
 final class _ChangeBatch {
   bool all = false;
+  bool untracked = false;
   final tables = <String>{};
-  void add(Set<String>? changed) {
+  Set<MetadataDomain>? metadataDomains = {};
+  void add(Set<String>? changed, Set<MetadataDomain>? domains) {
     if (changed == null) {
       all = true;
     } else {
       tables.addAll(changed);
     }
+    if (changed == null || changed.contains('app_meta')) {
+      if (domains == null) {
+        metadataDomains = null;
+      } else {
+        metadataDomains?.addAll(domains);
+      }
+    }
+  }
+}
+
+final class _DatabaseChange {
+  _DatabaseChange(Set<String>? tables, Set<MetadataDomain>? domains)
+    : tables = tables == null ? null : Set.unmodifiable(tables),
+      metadataDomains = domains == null ? null : Set.unmodifiable(domains);
+  final Set<String>? tables;
+  final Set<MetadataDomain>? metadataDomains;
+
+  bool affects(Set<String> watched, Set<MetadataDomain>? domains) {
+    final changed = tables;
+    if (changed == null) return true;
+    return changed.any(
+      (table) =>
+          watched.contains(table) &&
+          (table != 'app_meta' ||
+              domains == null ||
+              metadataDomains == null ||
+              metadataDomains!.any(domains.contains)),
+    );
   }
 }
