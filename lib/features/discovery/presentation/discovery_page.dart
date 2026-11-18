@@ -104,6 +104,7 @@ final class _DiscoveryPageState extends State<DiscoveryPage> {
       final entries = await widget.services.history.recentWorks();
       if (mounted && widget.visible && generation == _historyGeneration) {
         _historyEntries = entries;
+        _allowStaleHistory = true;
       }
       return _historyEntries;
     } catch (_) {

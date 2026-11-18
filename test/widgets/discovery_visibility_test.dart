@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -24,6 +25,45 @@ void main() {
   _visibilityContracts();
   _raceContracts();
   _failureAndLabelContracts();
+  _pendingReadContract();
+}
+
+void _pendingReadContract() {
+  testWidgets('settled return keeps visible history during ordinary refresh', (
+    tester,
+  ) async {
+    await fixture.pump(tester);
+    final router = GoRouter.of(tester.element(find.byType(AppShell)));
+    router.go('/settings');
+    await fixture.settle(tester);
+    router.go('/');
+    await fixture.settle(tester);
+    final entered = Completer<void>();
+    final release = Completer<void>();
+    late Future<void> held;
+    await tester.runAsync(() async {
+      held = fixture.services.db.transaction(() async {
+        entered.complete();
+        await release.future;
+      });
+    });
+    try {
+      await fixture.waitFor(tester, () => entered.isCompleted);
+      fixture.services.db.changed(tables: {'watch_history'});
+      await tester.pump();
+      await tester.pump();
+      expect(find.text('续播').hitTestable(), findsOneWidget);
+    } finally {
+      await tester.runAsync(() async {
+        release.complete();
+      });
+      var done = false;
+      held.whenComplete(() => done = true);
+      await fixture.waitFor(tester, () => done);
+    }
+    await fixture.settle(tester);
+    await fixture.finish(tester);
+  });
 }
 
 void _failureAndLabelContracts() {
