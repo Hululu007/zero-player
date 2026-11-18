@@ -3,6 +3,7 @@ import 'dart:convert';
 import '../../../core/network/document_client.dart';
 import '../../../core/network/cancellation_token.dart';
 import '../../../core/persistence/app_database.dart';
+import '../../../core/diagnostics/performance_counters.dart';
 import '../../sources/domain/video_source.dart';
 import '../domain/live_channel.dart';
 import 'epg_parser.dart';
@@ -302,6 +303,7 @@ final class LiveRepository {
   }
 
   Future<List<LiveChannel>> channels({bool includeBlocked = false}) async {
+    PerformanceCounters.add('live.channels.calls');
     final rows = await db.rows(
       '''SELECT c.*,p.favorite,p.watched_at,l.name AS list_name,l.url AS list_url,m.value AS health,d.value AS metadata FROM live_channels c
       JOIN live_lists l ON l.id=c.list_id

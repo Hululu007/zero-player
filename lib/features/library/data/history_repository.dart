@@ -1,4 +1,5 @@
 import '../../../core/persistence/app_database.dart';
+import '../../../core/diagnostics/performance_counters.dart';
 import '../../supervision/application/content_policy.dart';
 import '../../supervision/data/content_records.dart';
 import '../../../core/text/display_text.dart';
@@ -25,11 +26,15 @@ final class HistoryRepository {
   final AppDatabase db;
   Stream<void> get changes =>
       db.changesFor(const {'watch_history', 'local_videos', 'content_records'});
-  Future<List<WatchEntry>> recentWorks() async => (await db.rows(
-    'SELECT * FROM (SELECT h.*, m.value AS content_record, ROW_NUMBER() OVER '
-    '(PARTITION BY source_id,remote_id ORDER BY updated_at DESC) AS recent '
-    "FROM watch_history h LEFT JOIN app_meta m ON m.key='content_label:'||h.source_id||':'||h.remote_id) WHERE recent=1 ORDER BY updated_at DESC LIMIT 50",
-  )).where((r) => recordAllowed(policy, r)).map(WatchEntry.new).toList();
+  Future<List<WatchEntry>> recentWorks() async {
+    PerformanceCounters.add('history.recent_works.calls');
+    return (await db.rows(
+      'SELECT * FROM (SELECT h.*, m.value AS content_record, ROW_NUMBER() OVER '
+      '(PARTITION BY source_id,remote_id ORDER BY updated_at DESC) AS recent '
+      "FROM watch_history h LEFT JOIN app_meta m ON m.key='content_label:'||h.source_id||':'||h.remote_id) WHERE recent=1 ORDER BY updated_at DESC LIMIT 50",
+    )).where((r) => recordAllowed(policy, r)).map(WatchEntry.new).toList();
+  }
+
   Future<List<WatchEntry>> all() async => (await db.rows(
     "SELECT h.*,m.value AS content_record FROM watch_history h LEFT JOIN app_meta m ON m.key='content_label:'||h.source_id||':'||h.remote_id ORDER BY updated_at DESC LIMIT 500",
   )).where((r) => recordAllowed(policy, r)).map(WatchEntry.new).toList();

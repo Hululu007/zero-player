@@ -201,6 +201,35 @@
 
 中期把高频进度、音乐历史和阅读缓存索引从通用 `app_meta` 拆出，只在写放大、查询或迁移收益被量化后实施。当前数据库已使用 `NativeDatabase.createInBackground`，再次提出“把 SQLite 搬到 isolate”不能解决这里的主要问题。[E01]
 
+#### 4.2.1 B2-a调用账本与A2基线（2026-11-18续实施）
+
+可复核的逐调用清单由`dart run tool/metadata_write_inventory.dart`生成，记录文件、所属方法、行号、调用及参数源码；本轮接入前清单为`build/performance-continuation-20261118/metadata-writes-before.json`（338个候选调用，包含非元数据表和通用helper，不代表338笔实际SQL）。动态SQL、间接调用及触发器仍须人工核查；没有迁移的入口一律unknown，不能凭清单自动授予精确域。以下账本补充物理key、发布、消费者与reload归属，不另建进度入口。
+
+| 入口/方法（同文件共用前缀已归并） | 物理数据及通知/事务 | 消费、初始化及迁移决定 |
+| --- | --- | --- |
+| `AppDatabase.write/customStatement/batch/transaction/atomic/changed` | write按表通知；raw/batch不自动发布；atomic缺省全量、空tables无附加；逻辑表独立 | 精确元数据仅允许显式key操作；同事务未追踪raw/batch使元数据unknown。普通transaction也要缓冲已有通知至提交，不能提前发布 |
+| `MusicLibrary._save/delete/setMode/record/clearHistory`及record裁剪 | 三族music key；每笔原write各一次app_meta通知；创建/改名/增删移动均经_save | 首批全部审计；按history/playlists/mode发布。playedAt、200条裁剪、串行写及total_changes/data_version保护不变；load/reload全读 |
+| `LiveRepository.channels/lists/schedule` | channels读三张表及四族live key；schedule另读epg_names/programs | LivePage首次_load、表/策略监听、手动操作；channels每次等待defaults.entries，读取后apply并重新取health，rememberChannels在返回前执行。资产审计数据是会话内固定future，无运行时更新入口 |
+| `LiveRepository.import/importText/_writePlaylistChannels/_recordVerifiedPlayback` | headers、metadata、curated、state及lists/channels；默认全量atomic；失败写live_lists | 导入/更新自身发布，不依赖音乐；地址/header变化先应用审计签名并等待复检。保持unknown，不迁移 |
+| `LiveRepository.setListEnabled/removeList/setGuide/favorite/watched/refreshEpg` | enabled/curated/epg_names及各业务表；显式app_meta、偏好或默认全量；EPG有batch | 各自通知足够刷新页面和频道登记；保留三表及unknown通路，不迁移 |
+| `LiveAuditDefaults.apply/_applyPreflight` | raw state写；只在确切签名或preflight准入规则下校正 | importText的atomic负责发布；channels的普通transaction不自发通知以避免读写循环，返回前重读health。首次/再次加载和个人禁用由现有契约测试覆盖 |
+| `LiveHealthRepository.setEnabled/setRemoved/record/_patch` | raw state写包在显式app_meta atomic | 用户禁用/移除、媒体检查与恢复均独立发布unknown；策略授权先于允许启用 |
+| `ChannelPreflight.prepare/refresh` | 普通transaction中defaults和pendingValidation raw写；最终probe经health.record发布 | prepare/pending期间缺少直接失效通知是独立正确性缺口；在缩窄LivePage前补提交后通知。channels内defaults仍保持无通知，不混用两者 |
+| `BuiltinLiveSources.initialize/_quarantineLists/_retireLists/_seedSnapshots/_run` | builtin、enabled、quarantined、curated及lists/channels；atomic/调用importText | AppServices启动初始化，LivePage首入refresh(onlyMissing)，手动恢复及后台刷新；均有自身通知，unknown不迁移 |
+| `rememberContent`；`HistoryRepository.save/remove/clear/recordSearch`、local_video.remember及source标签写 | content_label物理app_meta但逻辑content_records；watch/search/local各自表 | 历史/发现仍监听逻辑标签、history及策略；recentWorks保留分组排序和recordAllowed，不改其刷新语义 |
+| `BookStore.write/writeImported/saveSource/deleteSource/setSourcesEnabled/restoreBuiltinSource/observeTrackedSources/deleteSubscription` | books_source/subscription、epoch/revision/风险等；write/raw/batch/atomic | 书源/书架页面、repository、monitor及安全evidence各自load/变更监听；所有动态key先unknown，不标progress |
+| `BookStore.saveBook/saveReadingPosition/saveRichPosition/clearHistory/updateShelfChapters`、shelf_lists._edit | books_shelf/rich_position/lists及相关目录、来源关系；嵌套atomic | 书架及阅读器即时结果、进度恢复、下载引用；unknown保留 |
+| `BookStore.saveTexts/_writeProven/clearProvenAudio/deleteText/clearOffline/removeLocal`、local_book._saveLocalImport/removeLocalBook | text/audio/下载/本地书与证明；raw/batch/atomic | 读取及下载任务reload/重建；不改引用、4000章窗口或旧来源留存，unknown |
+| `BookStore.cacheReading/cacheMixedReading/cacheReadingImage/saveOfflineImages/readingImage/deleteImages/clearReadingCache/addAnnotation/deleteAnnotation` | 正文/混合/图片/注释key；原子裁剪与损坏清理 | 阅读当前结果及cache命中；仍unknown。A2使用真实saveReadingPosition和cacheReading，不用假通知替代 |
+| book_chapter_policy._save、comic_access.approve、download_guard.capture/validate、latest_aggregation.prepare、policy_evidence.merge/clearAdult | 内容准入/epoch/证明及聚合关系；raw/atomic/普通事务 | immediate安全读取和generation重验；普通事务后changed保留，不参与展示延迟 |
+| books_repository._markSourceRisk、repository_mutations._clearSourceRisk、repository_site_checks._check/_commitSiteRisk、source_editor所有变更、source_importer.importSources、source_risk_store.write/addEvidence、supervised_scan.persist | 书源、站点检查、adult/风险evidence、revision等动态key；原子写/批量helper | 所有入口unknown；由repository/store及页面/监控器load/通知重验。site_observed.observe、site_revision.ensure普通事务后仅实际变更时changed |
+| 音乐browser偏好/downloads._read/_save/_remove/recommendations缓存；radio配置、snapshot与favorite | 其他music/radio key，radio还读live_state；write或显式app_meta atomic | 现有controller/load或changesFor(app_meta)保持；首批仅MusicLibrary精准，不按music前缀扩大范围 |
+| sources repository/identity/duplicates/preferences/diagnostics、builtins/curation/awesome/maccms/subscription | favorite、duplicate、audit、source_overrides/设置及来源表；多种atomic/raw | helper由外层source事务发布；AppServices来源策略刷新及source页面仍用旧接口，全部unknown |
+| download_repository/output、local_video、feature_repository、lan_access、installation_access、supervision、settings、recommendation/synopsis/calendar/qidian缓存及阅读样式 | 各自物理key或settings/逻辑表；write/raw/atomic/BookStore helper | 安全入口即时load/授权/通知；其他缓存显式读回。全部保守，不从SQL正则猜key；完整所属方法见逐调用JSON |
+| `BackupService.restore`、`AppServices.restoreBackup` | 多表raw删除/插入，默认全量atomic | 提交全量失效；显式重载settings、music及策略；导出只读transaction不通知 |
+
+A2最终基线：`a2-baseline-final.log`17项通过，计数开/关均验证功能。七类混合写入（视频、阅读/缓存、raw、batch、atomic、trigger、外部连接）各20次均保守回退20次、歌单/歌曲重复解码400/40000；纯音乐基线仍为0/0，不删除版本保护。原LivePage在可见/隐藏两种情况下，120次纯音乐保存都额外调用channels 120次（对应720次rows查询）；策略频道信息、音乐最终位置均正确。视频历史→发现页原回归保持展示及滚动。计数只按调用点归因，不代表CPU、功耗或稳态帧时；最初夹具编译/异步错误日志不是成功证据。
+
 ### 4.3 验收与收益判断
 
 - B2-c受控窗口先完成直播初始化；120次纯音乐历史保存引起的额外`channels()`调用应为0，直播可见/隐藏均测，不能靠隐藏页停订阅实现。历史值、playedAt、裁剪及通知契约保持；10分钟真实播放另作设备场景。
