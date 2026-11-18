@@ -6,6 +6,7 @@ import 'package:drift/native.dart';
 
 import 'schema.dart';
 import 'installation_metadata.dart';
+import '../diagnostics/performance_counters.dart';
 
 /// Current development schema; no legacy-format migration scaffolding.
 final class AppDatabase extends GeneratedDatabase {
@@ -74,6 +75,8 @@ final class AppDatabase extends GeneratedDatabase {
       sql,
       variables: args.map(_variable).toList(),
     ).get();
+    PerformanceCounters.add('db.queries');
+    PerformanceCounters.add('db.rows', result.length);
     return result.map((row) => Map<String, Object?>.from(row.data)).toList();
   }
 
@@ -96,6 +99,12 @@ final class AppDatabase extends GeneratedDatabase {
     changed(tables: match == null ? null : {match[1]!.toLowerCase()});
   }
 
+  @override
+  Future<void> customStatement(String statement, [List<Object?>? args]) async {
+    await super.customStatement(statement, args);
+    PerformanceCounters.add('db.statements');
+  }
+
   void changed({Set<String>? tables}) {
     final batch = Zone.current[_notificationKey] as _ChangeBatch?;
     if (batch != null) {
@@ -104,6 +113,7 @@ final class AppDatabase extends GeneratedDatabase {
     }
     if (tables != null && tables.isEmpty) return;
     if (!_changes.isClosed) {
+      PerformanceCounters.add('db.notifications');
       _changes.add(tables == null ? null : Set.unmodifiable(tables));
     }
   }

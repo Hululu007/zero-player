@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../app/widgets.dart';
+import '../../../core/diagnostics/performance_counters.dart';
 import '../application/playback_controller.dart';
 import 'timeline_slider.dart';
 
@@ -26,36 +27,39 @@ final class PlayerTransport extends StatelessWidget {
   final VoidCallback? onRestoreVideo;
 
   @override
-  Widget build(BuildContext context) => Column(
-    mainAxisSize: MainAxisSize.min,
-    children: [
-      if (!controller.isLive)
-        TimelineSlider(
-          position: controller.originalPosition,
-          duration: controller.originalDuration,
-          buffer: controller.originalBuffer,
-          marks: controller.marks,
-          seek: controller.seek,
-        ),
-      if (controller.canUndoSkip)
-        Row(
-          children: [
-            Expanded(
-              child: Text(
-                controller.notice ?? '已跳过标记内容',
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
+  Widget build(BuildContext context) {
+    PerformanceCounters.add('player.transport.build');
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        if (!controller.isLive)
+          TimelineSlider(
+            position: controller.originalPosition,
+            duration: controller.originalDuration,
+            buffer: controller.originalBuffer,
+            marks: controller.marks,
+            seek: controller.seek,
+          ),
+        if (controller.canUndoSkip)
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  controller.notice ?? '已跳过标记内容',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
-            ),
-            TextButton(
-              onPressed: controller.undoSkip,
-              child: const Text('撤销跳过'),
-            ),
-          ],
-        ),
-      _toolbar(),
-    ],
-  );
+              TextButton(
+                onPressed: controller.undoSkip,
+                child: const Text('撤销跳过'),
+              ),
+            ],
+          ),
+        _toolbar(),
+      ],
+    );
+  }
 
   Widget _toolbar() => SingleChildScrollView(
     scrollDirection: Axis.horizontal,

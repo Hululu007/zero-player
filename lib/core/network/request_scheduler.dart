@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'cancellation_token.dart';
 import 'header_policy.dart';
+import '../diagnostics/performance_counters.dart';
 
 enum RequestPriority { playback, interactive, background }
 
@@ -63,6 +64,7 @@ final class RequestScheduler {
       _sequence++,
     );
     _queue.add(pending);
+    PerformanceCounters.add('network.queued');
     pending.removeListener = cancellation?.listen(() {
       _queue.remove(pending);
       if (!pending.completer.isCompleted) {
@@ -93,11 +95,13 @@ final class RequestScheduler {
       final job = _queue.removeAt(index);
       job.removeListener?.call();
       _active++;
+      PerformanceCounters.add('network.started');
       if (job.priority == RequestPriority.background) _background++;
       _origins.update(job.origin, (count) => count + 1, ifAbsent: () => 1);
       job.completer.complete(
         RequestPermit(() {
           _active--;
+          PerformanceCounters.add('network.released');
           if (job.priority == RequestPriority.background) _background--;
           final count = _origins[job.origin]! - 1;
           if (count == 0) {

@@ -5,6 +5,7 @@ import 'package:crypto/crypto.dart';
 import 'package:path/path.dart' as p;
 
 import 'segment_metadata.dart';
+import '../../core/diagnostics/performance_counters.dart';
 
 final class StoredResource {
   const StoredResource({
@@ -290,6 +291,7 @@ final class SegmentStore {
         throw const HttpException('Incomplete resource');
       }
       final digest = await sha256.bind(temporary.openRead()).first;
+      PerformanceCounters.add('cache.hash.read_bytes', bytes);
       return await _commit(
         key,
         temporary,
@@ -326,6 +328,8 @@ final class SegmentStore {
     );
     await metadata?.put(key, result);
     _entries[key] = result;
+    PerformanceCounters.add('cache.commits');
+    PerformanceCounters.add('cache.committed_bytes', bytes);
     return result;
   });
 

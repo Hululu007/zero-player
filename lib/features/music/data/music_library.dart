@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:math';
 import 'package:flutter/foundation.dart';
 import '../../../core/persistence/app_database.dart';
+import '../../../core/diagnostics/performance_counters.dart';
 import '../../sources/domain/video_source.dart';
 import '../../playback/domain/player_engine.dart';
 import '../domain/music_track.dart';
@@ -65,15 +66,28 @@ final class MusicLibrary extends ChangeNotifier {
       "SELECT * FROM app_meta WHERE key GLOB 'music_playlist:*' OR key GLOB 'music_history:*' OR key='music_mode'",
     );
     final lists = <MusicPlaylist>[];
+    PerformanceCounters.add('music.read.all');
+    PerformanceCounters.add('music.read.rows', rows.length);
     final records = <MusicHistory>[];
     for (final row in rows) {
       try {
         final key = row['key'] as String;
+        if (PerformanceCounters.enabled) {
+          PerformanceCounters.add(
+            'music.decode.bytes',
+            utf8.encode(row['value'] as String).length,
+          );
+        }
         final value = jsonDecode(row['value'] as String);
         if (key == 'music_mode') {
           mode = MusicPlayMode.values.byName(value as String);
         } else if (key.startsWith('music_playlist:')) {
           lists.add(MusicPlaylist.fromJson(value as Map));
+          PerformanceCounters.add('music.decode.playlists');
+          PerformanceCounters.add(
+            'music.decode.playlist_tracks',
+            lists.last.tracks.length,
+          );
         } else {
           final map = value as Map;
           records.add(

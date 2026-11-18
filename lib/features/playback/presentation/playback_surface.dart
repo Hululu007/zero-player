@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../app/app_layout.dart';
 import '../../../app/widgets.dart';
+import '../../../core/diagnostics/performance_counters.dart';
 import '../application/playback_controller.dart';
 import 'filter_playback_overlay.dart';
 import 'playback_state_overlay.dart';
@@ -135,6 +136,7 @@ final class _PlaybackSurfaceState extends State<PlaybackSurface> {
 
   @override
   Widget build(BuildContext context) {
+    PerformanceCounters.add('player.surface.build');
     final television = _televisionControls;
     final surface = Focus(
       focusNode: _surfaceFocus,

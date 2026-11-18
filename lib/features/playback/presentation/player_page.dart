@@ -11,6 +11,7 @@ import 'package:media_kit_video/media_kit_video.dart';
 import 'package:path/path.dart' as p;
 import '../../../app/app_services.dart';
 import '../../../app/widgets.dart';
+import '../../../core/diagnostics/performance_counters.dart';
 import '../../../core/platform/file_transfer.dart';
 import '../../../media/engine/media_kit_engine.dart';
 import '../../catalog/domain/catalog_item.dart';
@@ -230,6 +231,7 @@ final class _PlayerPageState extends State<PlayerPage>
 
   @override
   Widget build(BuildContext context) {
+    PerformanceCounters.add('player.page.build');
     if (closed) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
@@ -266,37 +268,40 @@ final class _PlayerPageState extends State<PlayerPage>
     );
   }
 
-  Widget _video() => Theme(
-    data: ThemeData.dark(useMaterial3: true),
-    child: PlaybackSurface(
-      controller: controller,
-      video: controller.blocked
-          ? const ColoredBox(color: Colors.black)
-          : Video(
-              controller: engine.video,
-              controls: NoVideoControls,
-              fit: fit,
-            ),
-      transport: controller.blocked ? const SizedBox.shrink() : _transport(),
-      title: controller.blocked
-          ? '内容已屏蔽'
-          : controller.request?.item.title ?? widget.request.item.title,
-      onBack: _leave,
-      onOptions: () {
-        if (!controller.blocked) _showOptions();
-      },
-      locked: locked,
-      onLock: (value) {
-        controller.endSpeed();
-        setState(() => locked = value);
-      },
-      gestures: widget.services.settings.value.gestures,
-      errorAction:
-          controller.request?.offline == null && controller.request != null
-          ? _failureActions()
-          : null,
-    ),
-  );
+  Widget _video() {
+    PerformanceCounters.add('player.video.build');
+    return Theme(
+      data: ThemeData.dark(useMaterial3: true),
+      child: PlaybackSurface(
+        controller: controller,
+        video: controller.blocked
+            ? const ColoredBox(color: Colors.black)
+            : Video(
+                controller: engine.video,
+                controls: NoVideoControls,
+                fit: fit,
+              ),
+        transport: controller.blocked ? const SizedBox.shrink() : _transport(),
+        title: controller.blocked
+            ? '内容已屏蔽'
+            : controller.request?.item.title ?? widget.request.item.title,
+        onBack: _leave,
+        onOptions: () {
+          if (!controller.blocked) _showOptions();
+        },
+        locked: locked,
+        onLock: (value) {
+          controller.endSpeed();
+          setState(() => locked = value);
+        },
+        gestures: widget.services.settings.value.gestures,
+        errorAction:
+            controller.request?.offline == null && controller.request != null
+            ? _failureActions()
+            : null,
+      ),
+    );
+  }
 
   Widget _failureActions() => Wrap(
     spacing: 8,
