@@ -13,7 +13,7 @@ import 'book_latest_aggregation.dart';
 import 'book_catalog_window.dart';
 import 'book_site_check.dart';
 
-enum BookDownloadStatus { running, completed, paused, failed }
+enum BookDownloadStatus { running, completed, partial, paused, failed }
 
 final class BookDownloadTask extends ChangeNotifier {
   BookDownloadTask(this.book, this.token, this.chapters);
@@ -27,6 +27,7 @@ final class BookDownloadTask extends ChangeNotifier {
   int total = 0;
   int failures = 0;
   final Map<String, ChapterContentBlocked> blockedChapters = {};
+  final Map<String, String> failedChapters = {};
   bool _stoppedByPolicy = false;
   final Set<String> savedChapterIds = {};
   String? error;
@@ -107,6 +108,7 @@ final class BookDownloadCoordinator extends ChangeNotifier {
       await task.done;
     }
     await repository.store.write('books_download:${book.id}', null);
+    await repository.store.write('books_download_failures:${book.id}', null);
     notifyListeners();
   }
 
@@ -120,19 +122,12 @@ final class BookDownloadCoordinator extends ChangeNotifier {
     final token = task.token;
     final key = 'books_download:${book.id}';
     final blockedReasons = <String, String>{};
+    final failedReasons = <String, String>{};
+    var reasonsLoaded = false;
     try {
+      await _loadReasons(task.book, catalog, blockedReasons, failedReasons);
+      reasonsLoaded = true;
       catalog = await _extendCatalog(task, catalog, plan);
-      final previous = await repository.store.read(
-        'books_download_blocked:${book.id}',
-      );
-      if (previous is Map) {
-        for (final chapter in catalog) {
-          final reason = previous[chapter.id];
-          if (reason == '成人正文规则命中' || reason == '监管关键词命中') {
-            blockedReasons[chapter.id] = reason as String;
-          }
-        }
-      }
       final ids = plan.fullBook ? null : plan.chapterIds?.toSet();
       final range = ids == null
           ? catalog
@@ -162,23 +157,25 @@ final class BookDownloadCoordinator extends ChangeNotifier {
       final saved = await repository.reusableDownloads(book, range, token);
       token.check();
       blockedReasons.removeWhere((id, _) => saved.contains(id));
+      failedReasons.removeWhere((id, _) => saved.contains(id));
       final chapters = range
           .where((chapter) => !saved.contains(chapter.id))
           .toList();
       task.total = chapters.length;
       task.changed();
       if (chapters.isEmpty) {
-        if (keepPlan) await repository.store.write(key, null);
         task.status = BookDownloadStatus.completed;
         return;
       }
       token.check();
-      await _downloadRange(task, chapters, plan, blockedReasons);
+      await _downloadRange(task, chapters, plan, blockedReasons, failedReasons);
       token.check();
-      if (task.failures == 0 && keepPlan) {
-        await repository.store.write(key, null);
+      task.status = task.failures == 0
+          ? BookDownloadStatus.completed
+          : BookDownloadStatus.partial;
+      if (task.failedChapters.isNotEmpty) {
+        task.error = '${task.failedChapters.length} 章下载失败，可继续下载重试';
       }
-      task.status = BookDownloadStatus.completed;
     } on RequestCancelled {
       task.status = BookDownloadStatus.paused;
       if (task._stoppedByPolicy) task.error = '内容策略已改变，下载已暂停';
@@ -193,16 +190,66 @@ final class BookDownloadCoordinator extends ChangeNotifier {
           ? error.toString()
           : '下载未完成，请检查来源或网络';
     } finally {
-      try {
-        await repository.store.write(
-          'books_download_blocked:${book.id}',
-          blockedReasons,
-        );
-      } on Exception {
-        task.error ??= '过滤原因记录未保存，请重试下载检查';
+      if (reasonsLoaded) {
+        await _saveResult(task, blockedReasons, failedReasons, keepPlan);
       }
       if (identical(_tasks[book.id], task)) _tasks.remove(book.id);
       task.changed();
+    }
+  }
+
+  Future<void> _saveResult(
+    BookDownloadTask task,
+    Map<String, String> blocked,
+    Map<String, String> failed,
+    bool keepPlan,
+  ) async {
+    try {
+      await repository.store.db.atomic(() async {
+        await repository.store.write(
+          'books_download_blocked:${task.book.id}',
+          blocked,
+        );
+        await repository.store.write(
+          'books_download_failures:${task.book.id}',
+          failed,
+        );
+        if (task.status == BookDownloadStatus.completed && keepPlan) {
+          await repository.store.write('books_download:${task.book.id}', null);
+        }
+      });
+    } on Exception {
+      if (task.status == BookDownloadStatus.completed ||
+          task.status == BookDownloadStatus.partial) {
+        task.status = BookDownloadStatus.failed;
+      }
+      task.error = [
+        if (task.error != null) task.error,
+        '下载状态未保存，请继续下载检查',
+      ].join('；');
+    }
+  }
+
+  Future<void> _loadReasons(
+    Book book,
+    List<BookChapter> catalog,
+    Map<String, String> blocked,
+    Map<String, String> failed,
+  ) async {
+    final previous = await repository.store.read(
+      'books_download_blocked:${book.id}',
+    );
+    final previousFailures = await repository.store.read(
+      'books_download_failures:${book.id}',
+    );
+    for (final chapter in catalog) {
+      final reason = previous is Map ? previous[chapter.id] : null;
+      if (reason == '成人正文规则命中' || reason == '监管关键词命中') {
+        blocked[chapter.id] = reason as String;
+      }
+      if (previousFailures is Map && previousFailures.containsKey(chapter.id)) {
+        failed[chapter.id] = '下载失败，请检查来源或网络';
+      }
     }
   }
 
@@ -238,6 +285,7 @@ final class BookDownloadCoordinator extends ChangeNotifier {
     List<BookChapter> chapters,
     BookDownloadPlan plan,
     Map<String, String> blockedReasons,
+    Map<String, String> failedReasons,
   ) async {
     final book = task.book;
     final token = task.token;
@@ -257,10 +305,12 @@ final class BookDownloadCoordinator extends ChangeNotifier {
           );
           task.savedChapterIds.add(chapter.id);
           blockedReasons.remove(chapter.id);
+          failedReasons.remove(chapter.id);
         } on ChapterContentBlocked catch (error) {
           token.check();
           task.failures++;
           task.blockedChapters[chapter.id] = error;
+          failedReasons.remove(chapter.id);
           blockedReasons[chapter.id] = error.supervised
               ? '监管关键词命中'
               : '成人正文规则命中';
@@ -272,6 +322,8 @@ final class BookDownloadCoordinator extends ChangeNotifier {
         } on Exception {
           token.check();
           task.failures++;
+          task.failedChapters[chapter.id] = '下载失败，请检查来源或网络';
+          failedReasons[chapter.id] = task.failedChapters[chapter.id]!;
         }
         task.finished++;
         task.changed();

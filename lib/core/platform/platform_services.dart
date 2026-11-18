@@ -30,6 +30,8 @@ final class PlatformServices {
   bool? _nativeFullscreen;
   bool _appFullscreenAllowed = true;
   String? _playerOrientation;
+  bool _playerOrientationLocked = false;
+  Future<void> _orientationQueue = Future.value();
   late final Future<void> Function(String) _orientationApply;
   bool get appFullscreenAllowed => _appFullscreenAllowed;
 
@@ -112,13 +114,39 @@ final class PlatformServices {
 
   Future<void> fullscreen(bool enabled) => _fullscreen.setPlayer(enabled);
 
-  Future<void> setPlayerOrientation(String mode) async {
+  Future<void> setPlayerOrientation(String mode) {
     if (!{'system', 'landscape', 'auto'}.contains(mode)) {
       throw ArgumentError.value(mode);
     }
-    await _orientationApply(mode);
-    _playerOrientation = mode;
+    return _orientationOperation(() async {
+      if (!_playerOrientationLocked) await _orientationApply(mode);
+      _playerOrientation = mode;
+    });
   }
+
+  Future<void> _orientationOperation(Future<void> Function() action) {
+    final result = _orientationQueue.then((_) => action());
+    _orientationQueue = result.then<void>(
+      (_) {},
+      onError: (Object _, StackTrace _) {},
+    );
+    return result;
+  }
+
+  Future<void> setPlayerOrientationLocked(bool locked) =>
+      _orientationOperation(() async {
+        if (locked == _playerOrientationLocked) return;
+        await _orientationApply(
+          locked ? 'locked' : _playerOrientation ?? 'system',
+        );
+        _playerOrientationLocked = locked;
+      });
+
+  Future<void> _reapplyPlayerOrientation() => _orientationOperation(
+    () => _orientationApply(
+      _playerOrientationLocked ? 'locked' : _playerOrientation ?? 'system',
+    ),
+  );
 
   Future<void> _applyPlayerOrientation(String mode) async {
     if (Platform.isAndroid && !television) {
@@ -159,8 +187,10 @@ final class PlatformServices {
       await SystemChrome.setEnabledSystemUIMode(
         enabled ? SystemUiMode.immersiveSticky : SystemUiMode.edgeToEdge,
       );
-      if (android && _playerOrientation != null && !television) {
-        await setPlayerOrientation(_playerOrientation!);
+      if (android &&
+          (_playerOrientation != null || _playerOrientationLocked) &&
+          !television) {
+        await _reapplyPlayerOrientation();
       } else {
         await SystemChrome.setPreferredOrientations(
           player
@@ -241,10 +271,15 @@ final class PlatformServices {
       _disposed ? Future.value() : _windowOperation(_restorePlayerWindow);
 
   Future<void> _restorePlayerWindow() async {
-    final hadOrientation = _playerOrientation != null;
-    _playerOrientation = null;
+    await _orientationOperation(() async {
+      if ((_playerOrientation != null || _playerOrientationLocked) &&
+          !television) {
+        await _orientationApply('system');
+      }
+      _playerOrientation = null;
+      _playerOrientationLocked = false;
+    });
     await _fullscreen.setPlayer(false);
-    if (hadOrientation && !television) await _orientationApply('system');
     if (Platform.isWindows && smallWindow) await _restoreSmallWindow();
   }
 

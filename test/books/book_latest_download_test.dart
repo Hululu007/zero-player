@@ -30,7 +30,7 @@ void _lifecycleTests() {
       f.failLast = true;
       final task = f.manager.start(f.target, f.current, _aggregatePlan);
       await task.done;
-      expect(task.status, BookDownloadStatus.completed);
+      expect(task.status, BookDownloadStatus.partial);
       expect(task.failures, 1);
       expect(task.chapters, hasLength(4));
       final shelf = (await f.books.store.entry(f.target))!;

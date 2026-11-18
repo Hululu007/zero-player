@@ -15,6 +15,7 @@ import 'package:zero_player/features/books/data/book_import.dart';
 import 'package:zero_player/features/books/domain/book.dart';
 import 'package:zero_player/features/books/presentation/book_detail_page.dart';
 import 'package:zero_player/features/books/presentation/book_reader_page.dart';
+import 'package:zero_player/features/books/domain/book_download_plan.dart';
 
 const expectedId =
     '741f7ba69997207a3fb04701e2f1cf1fe706520e7b80d8268058ecf1321b17f3';
@@ -106,6 +107,47 @@ void main() {
     expect(find.text('刷新对照'), findsNothing);
     expect(http.requests.every((u) => u.host == 'www.nidedizhi2.com'), isTrue);
   });
+  testWidgets(
+    'unrelated policy refresh on an open detail keeps its chapter download running',
+    (tester) async {
+      final f = await _prepare(tester);
+      await _allowedDownloadRefresh(tester, f.services, f.refresh, f.http);
+    },
+  );
+}
+
+Future<void> _allowedDownloadRefresh(
+  WidgetTester tester,
+  AppServices services,
+  Book book,
+  FakeClient http,
+) async {
+  await tester.pumpWidget(const SizedBox.shrink());
+  await tester.pumpWidget(
+    MaterialApp(
+      home: BookDetailPage(services: services, initial: book),
+    ),
+  );
+  await waitFor(tester, _canRead);
+  final chapters = (await services.books.store.entry(book))!.chapters;
+  final task = services.bookDownloads.start(
+    book,
+    chapters,
+    const BookDownloadPlan(1, 1, false),
+  );
+  await waitFor(tester, () => http.chapterWaiting);
+  await tester.pumpWidget(const SizedBox.shrink());
+  await tester.pumpWidget(
+    MaterialApp(
+      home: BookDetailPage(services: services, initial: book),
+    ),
+  );
+  await waitFor(tester, _canRead);
+  services.contentPolicy.refresh();
+  await tester.pump();
+  expect(task.token.isCancelled, isFalse);
+  http.releaseChapter();
+  await tester.runAsync(() => task.done);
 }
 
 Future<
@@ -237,12 +279,18 @@ Future<void> waitFor(WidgetTester tester, bool Function() condition) async {
 final class FakeClient implements HttpClient {
   final requests = <Uri>[];
   final _refreshGate = Completer<void>();
+  final _chapterGate = Completer<void>();
+  bool chapterWaiting = false;
   bool refreshRestricted = false;
   bool holdNextRefresh = false;
   bool refreshWaiting = false;
 
   void releaseRefresh() {
     if (!_refreshGate.isCompleted) _refreshGate.complete();
+  }
+
+  void releaseChapter() {
+    if (!_chapterGate.isCompleted) _chapterGate.complete();
   }
 
   @override
@@ -254,6 +302,7 @@ final class FakeClient implements HttpClient {
           '/book/restricted',
           '/book/offline',
           '/book/refresh',
+          '/chapter/refresh/1',
         }.contains(uri.path)) {
       throw const SocketException('All non-fixture network is disabled');
     }
@@ -261,7 +310,11 @@ final class FakeClient implements HttpClient {
   }
 
   @override
-  void close({bool force = false}) => releaseRefresh();
+  void close({bool force = false}) {
+    releaseRefresh();
+    releaseChapter();
+  }
+
   @override
   dynamic noSuchMethod(Invocation invocation) => null;
 }
@@ -275,6 +328,11 @@ final class FakeRequest implements HttpClientRequest {
   final HttpHeaders headers = FakeHeaders();
   @override
   Future<HttpClientResponse> close() async {
+    if (uri.path == '/chapter/refresh/1') {
+      client.chapterWaiting = true;
+      await client._chapterGate.future;
+      return FakeResponse('', 500);
+    }
     if (uri.path == '/book/refresh' && client.holdNextRefresh) {
       client.holdNextRefresh = false;
       client.refreshWaiting = true;

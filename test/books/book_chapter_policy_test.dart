@@ -272,7 +272,7 @@ void main() {
         const BookDownloadPlan(1, 6, false),
       );
       await task.done;
-      expect(task.status, BookDownloadStatus.completed);
+      expect(task.status, BookDownloadStatus.partial);
       expect(task.finished, 6);
       expect(task.savedChapterIds, hasLength(5));
       expect(task.blockedChapters.keys, [chapter.id]);

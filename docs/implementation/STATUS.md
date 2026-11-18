@@ -2,6 +2,14 @@
 
 更新：2026-11-18（Asia/Shanghai）。本文件是项目当前进度的唯一入口；下文日期章节和需求矩阵保留历史验收范围。
 
+## 修复后场景自查（2026-11-18）
+
+- 目标：基于已提交修复 `2410600` 再查用户举例的部分章节失败、播放锁定仍响应手机旋转，并检查取消、并发、退出和持久化边界。上轮备份 `5ca18b6` 及分支继续保留；原有 `.workbuddy/`、`tmp/` 未纳入改动。
+- 当前：确认防误触锁未请求原生方向锁、章节失败仍标 completed、详情页重复策略通知仍暂停下载三条实际遗漏；补 Android 临时方向锁与串行恢复、partial 状态/失败章节持久化/重试、详情页通知判定。另补结果保存事务/失败保留计划、读取错误不覆盖旧原因、旧任务迟到结果代次保护。详见 [自查附录 D](CODE-REVIEW-2026-11-18.md)。监管、内容过滤、来源证据及网络访问门禁保留。
+- 已验证：全量 Flutter **1587 项通过、12 项跳过、退出 0**（`build/selfcheck-full-tests.log`），全仓 analyze 无问题（`build/selfcheck-analyze-complete.log`），515 文件模块边界通过；规模仍 104 条既有超限，无新增身份。Windows 原生两组 **2 项业务用例通过**，覆盖真实 PlayerPage 锁定失败/重试/锁定中返回/退出恢复及原有播放、暂停、防误触；方向调用注入适配器，不能替代 Android 传感器验证。日志 `build/selfcheck-native-final.log`、`.dart_tool/native-2bb94603/`。
+- 设备边界：当前无连接 Android 设备，已有模拟器启动遇 WHPX 分区初始化错误 `80070005`；未修改主机虚拟化、未清旧设备数据。真实手机锁定后四向旋转/解锁恢复、Android/TV 生命周期、真实公网书源及长时行为仍待验收。
+- 构建与收尾：Android `:app:compileDebugKotlin` 离线编译成功（`build/selfcheck-android-kotlin-final.log`），普通 `flutter pub get` 及 Windows Release 成功（`build/selfcheck-windows-release.log`）；未生成本轮 Android APK。PDFium 库/归档、mpv/ANGLE 归档摘要通过，7 份受保护插件注册/依赖/本机文件已恢复与起点逐字节一致，1239 份最终构建输入摘要一致，14 个本轮 Dart 文件格式无变化。证据 `build/selfcheck-20261118/final-verification.json`。源码、回归及记录完成本地提交，不推送或发布；Windows 应用位于 `build/windows/x64/runner/Release/`。
+
 ## 本轮问题反馈核查与修复（2026-11-18）
 
 - 目标：先本地提交备份，再逐项核查 [本轮反馈报告](CODE-REVIEW-2026-11-18.md)，修复真实问题并纠正误报。备份提交 `5ca18b6`、分支 `zn/backup-before-review-fixes-20261118`；起点受跟踪代码已提交，因此备份为与 `007c2e1` 同内容的标记提交。保留 `.workbuddy/`、`tmp/`，未推送或发布。

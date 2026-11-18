@@ -342,3 +342,31 @@ if (!visual || !audio || _probedInput == input) return;
 早期全量 `build/review-fixes-full.log` 的 4 条失败，以及早期定向夹具/静态分析失败均保留，未改写为成功。人工证据复核和显式多源分配冲突已收敛回原契约；空资源回归更新为拒绝空载荷。原生日志的 integration_test 插件检测提示保留，Flutter driver 最终退出 0 并报告测试通过。
 
 Windows 使用本机合成媒体，不能代表真实公网媒体/书源或 Android/TV 设备；本轮未重建 Android 包、未新增通知栏/权限弹窗/后台恢复的设备验收，未做功耗或长时测量。未改变原生依赖版本、网络访问或内容过滤边界；不发布、不推送。
+
+## 附录 D 修复后场景自查（2026-11-18）
+
+基线为上一轮修复提交 `2410600`。按用户补充的“部分章节失败、播放防误触锁仍随手机旋转”沿实际调用链再查取消、并发、退出及状态落盘，以下均有源码依据；网络下载不能保证任意书源始终成功，本次确保失败可识别、结果可恢复且不重复下载已有有效内容。
+
+| 场景 | 核查与修复 |
+| --- | --- |
+| 锁定后仍响应旋转 | 确认。原防误触仅屏蔽触摸/键盘，未修改 Android 的 auto/sensor landscape 方向请求。增加临时 `SCREEN_ORIENTATION_LOCKED`，成功后才更新锁定 UI；解锁恢复偏好，退出恢复 system，不把临时锁写入设置。方向请求串行，全屏重应用保留锁定，失败可重试；锁定切换期间返回等待结果后解锁，销毁后的迟到操作不会再次发起锁定。TV 保持既有方向行为。 |
+| 下载中部分章节异常 | 确认。逐章普通异常原本只累计计数，最终仍为 completed；改为 partial，持久保存安全的章节失败提示，管理页重开仍能查看失败章节并重试未完成部分。成功章节沿既有有效来源证据校验复用，正文过滤失败与网络失败分别保存，重试仍受策略/来源门禁约束。 |
+| 下载结果落盘失败 | 确认。失败/过滤原因与成功后移除续传计划在同一事务提交；写失败保留计划、明确提示状态未保存，并把完成/部分完成改为失败以便重试。原因读取未完成时不覆盖旧记录，暂停重试保留前次失败。 |
+| 打开详情时重复策略通知中断下载 | 确认上一轮 M-03 的另一个调用者遗漏。详情页只在快照变化或详情仍待复查时重新验证；相同快照且书籍仍允许不暂停下载。正在进行的详情观察仍每次通知撤销，真实策略撤销仍由协调器立即取消，未放宽人工复核语义。 |
+| 旧下载完成结果覆盖新任务 | 确认异步窗口。详情页结果读取增加任务代次校验；新任务已接入时，旧查询不再回写目录/离线状态或弹旧提示。 |
+
+新增回归包括三章中间失败后重建仓库只请求缺章、SQLite trigger 拒绝结果写入后零网络重试、暂停保留失败、320 像素屏幕中千章目录末章失败展示、详情页在真实挂起章节请求期间重复 refresh，以及方向顺序/失败重试。Windows 原生新增真实 `PlayerPage` 交互，注入方向适配器覆盖锁定失败、重试、锁定中返回和退出恢复；同时重跑既有原生播放/暂停/防误触回归。它验证页面与平台调用协作，不等于 Android 传感器验收。
+
+本轮证据根为 `build/selfcheck-20261118/`，日志 `build/selfcheck-*.log`。原生首轮因新夹具漏导入 `PlaybackRequest` 编译失败，已修正并成功重跑；早期定向夹具及静态分析失败日志保留，不计为通过。
+
+Android 设备验证仍有阻碍：`adb devices -l` 无设备；已有 AVD 启动报 `WHPX: Failed to setup partition, hr=80070005` / `failed to initialize WHPX`，详见证据根 `emulator-{out,error}.log`。未改主机虚拟化配置、未清设备数据；真实手机四向旋转、后台恢复及 TV 交互仍待设备验收。
+
+| 检查 | 本轮最终结果 |
+| --- | --- |
+| 全量 Flutter | `flutter test --no-pub --reporter expanded`：**1587 通过、12 跳过、退出 0**；`build/selfcheck-full-tests.log`。 |
+| 静态与边界 | `flutter analyze --no-pub` 无问题、515 文件模块边界通过；`build/selfcheck-analyze-complete.log`、`selfcheck-boundaries.log`。 |
+| 源码规模 | 退出 1，104 条既有超限，按文件/函数身份比对无新增；`build/selfcheck-size-final.log` 及证据根 `size-comparison.json`，未放宽门禁。 |
+| Windows 原生 | `./tool/run_windows_native.ps1 -TestFiles @('integration_test/player_page_lock_native_test.dart','integration_test/playback_touch_native_test.dart')` 两组 **2 项业务用例通过**；driver 退出 0，原有 integration_test 插件检测提示保留，不把 tearDownAll 计为业务用例。 |
+| Android 编译 | 在 `android/` 执行 `./gradlew.bat ':app:compileDebugKotlin' '--offline' '-Ptarget-platform=android-arm64' '-Ptarget=lib/main.dart' '-PZERO_PLAYER_DEVICE_TEST=true' '--max-workers=4'` 成功；`build/selfcheck-android-kotlin-final.log`。首轮未引用参数被 PowerShell 拆成 `.dart` 任务导致失败，已修正；未将失败日志改写为通过。本轮未生成 Android APK。 |
+| Windows Release | 普通 `flutter pub get` 后 `flutter build windows --release --no-pub` 成功；`build/selfcheck-pub-get.log`、`selfcheck-windows-release.log`。PDFium 固定库/归档及 mpv/ANGLE 归档摘要通过；应用位于 `build/windows/x64/runner/Release/`。 |
+| 保护与收尾 | 7 份插件注册/依赖/本机文件恢复后与起点逐字节一致，1239 份最终构建输入摘要一致；14 个本轮 Dart 文件格式无变化、差异空白检查通过。汇总 `build/selfcheck-20261118/final-verification.json`；本地提交，不推送或发布，保留 `.workbuddy/`、`tmp/`。 |

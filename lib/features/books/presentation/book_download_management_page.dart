@@ -19,6 +19,7 @@ typedef _DownloadItem = ({
   BookDownloadPlan? plan,
   Set<String> saved,
   Map<String, String> blocked,
+  Set<String> failed,
 });
 
 enum _DownloadFilter { all, running, pending, saved }
@@ -114,6 +115,7 @@ final class _BookDownloadManagementPageState
             plan: plan,
             saved: saved,
             blocked: await _blocked(book),
+            failed: await _failed(book),
           ));
           seen.add(book.id);
         }
@@ -129,6 +131,7 @@ final class _BookDownloadManagementPageState
           plan: plans[book.id],
           saved: await _saved(book),
           blocked: await _blocked(book),
+          failed: await _failed(book),
         ));
       }
       if (!mounted || sequence != _sequence) return;
@@ -157,6 +160,57 @@ final class _BookDownloadManagementPageState
       for (final key in raw.keys.whereType<String>())
         key: raw[key] == '监管关键词命中' ? '监管关键词命中' : '成人正文规则命中',
     };
+  }
+
+  Future<Set<String>> _failed(Book book) async {
+    final raw = await widget.services.books.store.read(
+      'books_download_failures:${book.id}',
+    );
+    return raw is Map ? raw.keys.whereType<String>().toSet() : {};
+  }
+
+  Future<void> _failureReport(_DownloadItem item) {
+    final chapters = item.entry.chapters.indexed
+        .where((entry) => item.failed.contains(entry.$2.id))
+        .toList();
+    return showDialog<void>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('下载失败章节'),
+        content: SizedBox(
+          width: 420,
+          height: 320,
+          child: ListView.builder(
+            itemCount: chapters.length,
+            itemBuilder: (_, index) {
+              final (position, chapter) = chapters[index];
+              return ListTile(
+                title: Text('第${position + 1}章 · ${chapter.title}'),
+                subtitle: const Text('下载失败，请检查来源或网络'),
+              );
+            },
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('关闭'),
+          ),
+          if (item.plan != null && _manager.active(item.entry.book) == null)
+            FilledButton(
+              onPressed: () {
+                Navigator.pop(context);
+                _manager.start(
+                  item.entry.book,
+                  item.entry.chapters,
+                  item.plan!,
+                );
+              },
+              child: const Text('重试未完成章节'),
+            ),
+        ],
+      ),
+    );
   }
 
   Future<void> _blockedReport(_DownloadItem item) => showBlockedChaptersDialog(
@@ -395,6 +449,10 @@ final class _BookDownloadManagementPageState
           Text(status, maxLines: 1, overflow: TextOverflow.ellipsis),
           if (item.blocked.isNotEmpty)
             Text('过滤跳过 ${item.blocked.length} 章，可在管理菜单复核'),
+          if ((task?.failedChapters.length ?? item.failed.length) > 0)
+            Text(
+              '下载失败 ${task?.failedChapters.length ?? item.failed.length} 章，可在管理菜单重试',
+            ),
           if (task != null && task.total > 0)
             LinearProgressIndicator(value: task.finished / task.total),
         ],
@@ -405,6 +463,8 @@ final class _BookDownloadManagementPageState
         enabled: !busy,
         onSelected: (action) {
           switch (action) {
+            case 'failures':
+              unawaited(_failureReport(item));
             case 'blocked':
               unawaited(_blockedReport(item));
             case 'pause':
@@ -420,6 +480,8 @@ final class _BookDownloadManagementPageState
           }
         },
         itemBuilder: (_) => [
+          if (item.failed.isNotEmpty)
+            const PopupMenuItem(value: 'failures', child: Text('失败章节与重试')),
           if (item.blocked.isNotEmpty)
             const PopupMenuItem(value: 'blocked', child: Text('过滤原因与章节复核')),
           if (task != null)

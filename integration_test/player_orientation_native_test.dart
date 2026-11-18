@@ -60,6 +60,23 @@ void main() {
           expect(services.settings.value.playerOrientation, entry.key);
           results.add({'mode': entry.key, 'device': device});
         }
+        await services.platform.setPlayerOrientation('auto');
+        await services.platform.setPlayerOrientationLocked(true);
+        final locked = await services.platform.playbackDeviceSnapshot();
+        expect(locked['requestedOrientation'], 14);
+        await services.platform.fullscreen(true);
+        expect(
+          (await services.platform
+              .playbackDeviceSnapshot())['requestedOrientation'],
+          14,
+        );
+        await services.platform.setPlayerOrientationLocked(false);
+        expect(
+          (await services.platform
+              .playbackDeviceSnapshot())['requestedOrientation'],
+          10,
+        );
+        results.add({'mode': 'locked', 'device': locked});
         await services.platform.setPlayerOrientation('landscape');
         await services.platform.restorePlayerWindow();
         expect(

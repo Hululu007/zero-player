@@ -5,6 +5,7 @@ import 'package:media_kit_video/media_kit_video.dart';
 import 'package:zero_player/app/app_services.dart';
 import 'package:zero_player/core/network/file_response.dart';
 import 'package:zero_player/core/persistence/app_database.dart';
+import 'package:zero_player/core/platform/platform_services.dart';
 import 'package:zero_player/features/catalog/domain/catalog_item.dart';
 import 'package:zero_player/features/playback/application/playback_controller.dart';
 import 'package:zero_player/features/playback/presentation/feature_rule_dialog.dart';
@@ -27,12 +28,13 @@ final class NativeMarkHarness {
   final MediaKitEngine engine;
   late final PlaybackController player;
 
-  static Future<NativeMarkHarness> create() async {
+  static Future<NativeMarkHarness> create({PlatformServices? platform}) async {
     final root = await Directory.systemTemp.createTemp('native-mark-');
     final services = AppServices.scoped(
       root,
       AppDatabase.memory(),
       allowPrivateNetworks: true,
+      platform: platform,
     );
     await services.settings.load();
     await services.supervision.load();

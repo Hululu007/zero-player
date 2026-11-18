@@ -63,6 +63,7 @@ class MainActivity : FlutterActivity() {
                             "system" -> ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
                             "landscape" -> ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
                             "auto" -> ActivityInfo.SCREEN_ORIENTATION_FULL_SENSOR
+                            "locked" -> ActivityInfo.SCREEN_ORIENTATION_LOCKED
                             else -> null
                         }
                         if (orientation == null) result.error("invalid_orientation", "Unknown orientation mode", null)

@@ -22,6 +22,7 @@ import 'book_source_favorite.dart';
 import 'book_text_policy_dialog.dart';
 import 'book_blocked_chapters_dialog.dart';
 import '../data/book_store.dart';
+import '../data/book_site_check.dart';
 
 final class BookDetailPage extends StatefulWidget {
   const BookDetailPage({
@@ -65,7 +66,9 @@ final class _BookDetailPageState extends State<BookDetailPage> {
   static const _chapterExtent = 58.0;
   final _filter = TextEditingController();
   BookDownloadTask? _downloadTask;
+  int _downloadGeneration = 0;
   CancellationToken? _token;
+  late String _policySnapshot;
   BooksRepository get _books => widget.services.books;
   bool get _audio => _book.kind == BookKind.audio;
   bool get _comic => _book.kind == BookKind.comic;
@@ -76,7 +79,8 @@ final class _BookDetailPageState extends State<BookDetailPage> {
   @override
   void initState() {
     super.initState();
-    _books.policy.addListener(_policyChanged);
+    _policySnapshot = bookSitePolicySnapshot(_books.policy);
+    _books.policy.addListener(_contentPolicyChanged);
     _books.sourceConfigurationChanges.addListener(_policyChanged);
     _books.bookPolicyChanges.addListener(_bookPolicyChanged);
     _downloadTask = widget.services.bookDownloads.active(_book);
@@ -89,7 +93,7 @@ final class _BookDetailPageState extends State<BookDetailPage> {
   void dispose() {
     _token?.cancel();
     _downloadTask?.removeListener(_downloadChanged);
-    _books.policy.removeListener(_policyChanged);
+    _books.policy.removeListener(_contentPolicyChanged);
     _books.sourceConfigurationChanges.removeListener(_policyChanged);
     _books.bookPolicyChanges.removeListener(_bookPolicyChanged);
     _catalogScroll.dispose();
@@ -97,11 +101,20 @@ final class _BookDetailPageState extends State<BookDetailPage> {
     super.dispose();
   }
 
+  void _contentPolicyChanged() {
+    final next = bookSitePolicySnapshot(_books.policy);
+    final changed = next != _policySnapshot;
+    _policySnapshot = next;
+    // Pending detail observations still revoke on every policy notification.
+    if (!changed && !_checkingDetails && _books.bookAllowed(_book)) return;
+    _policyChanged();
+  }
+
   void _policyChanged() {
     _token?.cancel();
     if (!mounted) return;
     if (!_local) {
-      _downloadTask?.pause();
+      if (!_books.bookAllowed(_book)) _downloadTask?.pause();
       _policyReloadPending = true;
       setState(() => _checkingDetails = true);
       _queuePolicyReload();
@@ -129,6 +142,7 @@ final class _BookDetailPageState extends State<BookDetailPage> {
 
   void _attachDownloadTask(BookDownloadTask? task) {
     if (identical(_downloadTask, task)) return;
+    _downloadGeneration++;
     _downloadTask?.removeListener(_downloadChanged);
     _downloadTask = task;
     task?.addListener(_downloadChanged);
@@ -151,6 +165,7 @@ final class _BookDetailPageState extends State<BookDetailPage> {
   }
 
   Future<void> _finishDownload(BookDownloadTask task) async {
+    final generation = _downloadGeneration;
     try {
       final saved = task.book.kind == BookKind.audio
           ? await _books.savedAudio(task.book)
@@ -160,22 +175,29 @@ final class _BookDetailPageState extends State<BookDetailPage> {
       final plan = BookDownloadPlan.fromJson(
         await _books.store.read('books_download:${task.book.id}'),
       );
-      if (!mounted || _book.id != task.book.id) return;
+      if (!mounted ||
+          _book.id != task.book.id ||
+          generation != _downloadGeneration) {
+        return;
+      }
       setState(() {
         _saved = saved;
         _chapters = List.of(task.chapters);
         _plan = plan;
       });
     } on Exception {
-      if (mounted && _book.id == task.book.id) {
+      if (mounted &&
+          _book.id == task.book.id &&
+          generation == _downloadGeneration) {
         _toast('下载状态读取失败，请刷新目录');
       }
       return;
     }
     switch (task.status) {
       case BookDownloadStatus.completed:
+      case BookDownloadStatus.partial:
         _toast(
-          '已完成 ${task.total - task.failures} 章，过滤跳过 ${task.blockedChapters.length} 章，其他失败 ${task.failures - task.blockedChapters.length} 章',
+          '已保存 ${task.total - task.failures} 章，过滤跳过 ${task.blockedChapters.length} 章，其他失败 ${task.failures - task.blockedChapters.length} 章${task.failures > 0 ? '；可继续下载重试' : ''}',
         );
         if (task.blockedChapters.isNotEmpty && mounted) {
           await showBlockedChaptersDialog(

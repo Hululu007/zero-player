@@ -46,6 +46,7 @@ final class _PlayerPageState extends State<PlayerPage>
   Future<void>? _playerClosing;
   bool fullscreen = false;
   bool locked = false;
+  Future<void>? _lockTransition;
   bool leaving = false;
   bool closed = false;
   bool _capturing = false;
@@ -145,8 +146,10 @@ final class _PlayerPageState extends State<PlayerPage>
   }
 
   Future<void> _leave() async {
+    await _lockTransition;
+    if (!mounted) return;
     if (locked) {
-      setState(() => locked = false);
+      await _setLocked(false);
       return;
     }
     if (fullscreen) {
@@ -199,7 +202,7 @@ final class _PlayerPageState extends State<PlayerPage>
       );
 
   Future<void> _fullscreen() async {
-    if (locked || _fullscreenChanging) return;
+    if (locked || _lockTransition != null || _fullscreenChanging) return;
     _fullscreenChanging = true;
     final target = !fullscreen;
     try {
@@ -213,11 +216,27 @@ final class _PlayerPageState extends State<PlayerPage>
   }
 
   Future<void> _setOrientation(String mode) => perform(context, () async {
+    if (locked || _lockTransition != null || leaving || closed) return;
     await widget.services.platform.setPlayerOrientation(mode);
     if (!mounted) return;
     await widget.services.settings.update({'playerOrientation': mode});
     if (mounted) setState(() => _orientation = mode);
   });
+
+  Future<void> _setLocked(bool value) {
+    if (_lockTransition != null || leaving || closed) return Future.value();
+    final operation = perform(context, () async {
+      await controller.endSpeed();
+      if (!mounted || leaving || closed) return;
+      if (widget.services.platform.android &&
+          !widget.services.platform.television) {
+        await widget.services.platform.setPlayerOrientationLocked(value);
+      }
+      if (mounted) setState(() => locked = value);
+    });
+    _lockTransition = operation;
+    return operation.whenComplete(() => _lockTransition = null);
+  }
 
   Future<void> _restoreVideo() => perform(context, () async {
     if (_restoringVideo) return;
@@ -298,10 +317,7 @@ final class _PlayerPageState extends State<PlayerPage>
             if (!controller.blocked) _showOptions();
           },
           locked: locked,
-          onLock: (value) {
-            controller.endSpeed();
-            setState(() => locked = value);
-          },
+          onLock: (value) => unawaited(_setLocked(value)),
           gestures: widget.services.settings.value.gestures,
           errorAction:
               controller.request?.offline == null && controller.request != null
