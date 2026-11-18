@@ -1129,7 +1129,6 @@ final class _BookDiscoveryViewState extends State<BookDiscoveryView> {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: theme.textTheme.titleLarge?.copyWith(
-                      fontFamily: 'NotoSerifSC',
                       fontWeight: FontWeight.w700,
                     ),
                   ),

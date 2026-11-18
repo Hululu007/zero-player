@@ -35,9 +35,12 @@ def main():
         ):
             raise SystemExit('Native libraries must be compressed in the phone APK')
     asset_prefix = 'base/assets/flutter_assets/' if args.file.endswith('.aab') else 'assets/flutter_assets/'
-    for font in ['Xiaolai-Regular.ttf', 'NotoSansSC.ttf', 'NotoSerifSC.ttf']:
+    for font in ['Xiaolai-Regular.ttf']:
         if asset_prefix + 'assets/fonts/' + font not in files:
             raise SystemExit('Missing user-selectable font: ' + font)
+    for font in ['NotoSansSC.ttf', 'NotoSerifSC.ttf']:
+        if asset_prefix + 'assets/fonts/' + font in files:
+            raise SystemExit('Removed bundled font leaked into package: ' + font)
     libraries = ['libflutter.so', 'libmpv.so', 'libffmpegkit.so', 'libsqlite3.so']
     if not args.debug:
         libraries.append('libapp.so')
@@ -59,7 +62,7 @@ def main():
     if overhead > 8 * 1048576:
         print('WARNING: large ZIP padding; regenerate the packaging output before distribution')
     print('Optional inference libraries/models absent from base package')
-    print('All three user-selectable fonts present')
+    print('Handwriting font present; other fonts supplied by the device')
     print('Native ABI completeness verified: ' + ', '.join(sorted(abis)))
 
 

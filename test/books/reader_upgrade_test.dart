@@ -177,7 +177,7 @@ void _fontCases() {
       );
       expect(
         ReaderPreferences.fromJson({'family': 'open:untrusted'}).family,
-        'NotoSerifSC',
+        'system',
       );
       expect(
         ReaderPreferences.fromJson({'preloadChapters': 100}).preloadChapters,

@@ -130,7 +130,6 @@ final class _ClothCover extends StatelessWidget {
                                 overflow: TextOverflow.ellipsis,
                                 textScaler: TextScaler.noScaling,
                                 style: TextStyle(
-                                  fontFamily: 'NotoSerifSC',
                                   fontSize: (width * .16).clamp(13, 29),
                                   height: 1.26,
                                   fontWeight: FontWeight.w700,

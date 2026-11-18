@@ -107,20 +107,12 @@ flutter:
     - assets/catalogs/books/
     - assets/catalogs/books/legado/
     - assets/fonts/OFL.txt
-    - assets/fonts/NotoSans-OFL.txt
-    - assets/fonts/NotoSerif-OFL.txt
     - assets/licenses/
   fonts:
     - family: Xiaolai
       fonts:
         - asset: assets/fonts/Xiaolai-Regular.ttf
           weight: 400
-    - family: NotoSansSC
-      fonts:
-        - asset: assets/fonts/NotoSansSC.ttf
-    - family: NotoSerifSC
-      fonts:
-        - asset: assets/fonts/NotoSerifSC.ttf
 
   # To add assets to your application, add an assets section, like this:
   # assets:

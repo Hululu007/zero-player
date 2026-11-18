@@ -8,12 +8,7 @@ import '../../../core/network/cancellation_token.dart';
 import '../../../core/network/document_client.dart';
 import '../../../core/network/request_scheduler.dart';
 
-const readerBundledFonts = {
-  'NotoSerifSC': '宋体',
-  'NotoSansSC': '黑体',
-  'Xiaolai': '手写',
-  'system': '系统默认',
-};
+const readerBundledFonts = {'Xiaolai': '手写', 'system': '系统默认'};
 
 /// Entries from wordshub/free-font, linked to the upstream OFL projects.
 /// Versions, bytes and licenses were verified against the upstream files.
@@ -72,9 +67,10 @@ bool validReaderFontFamily(Object? family) =>
 String readerFontLabel(String family) =>
     readerBundledFonts[family] ??
     openReaderFonts.where((f) => f.id == family).firstOrNull?.label ??
-    (family.startsWith('system:') ? family.substring(7) : '宋体');
+    (family.startsWith('system:') ? family.substring(7) : '系统默认');
 
-String? readerFontFamily(String family) => family == 'system'
+String? readerFontFamily(String family) =>
+    family == 'system' || !validReaderFontFamily(family)
     ? null
     : family.startsWith('system:')
     ? family.substring(7)
@@ -87,13 +83,24 @@ final class ReaderFontStore {
   static const _channel = MethodChannel('zero_player/reader_fonts');
   final _loaded = <String>{};
   final _loading = <String, Future<bool>>{};
+  List<String>? _systemFamilies;
+  Future<List<String>>? _systemLoading;
 
-  Future<List<String>> systemFamilies() async {
+  Future<List<String>> systemFamilies() {
+    final cached = _systemFamilies;
+    if (cached != null) return Future.value(cached);
+    return _systemLoading ??= _readSystemFamilies().whenComplete(() {
+      _systemLoading = null;
+    });
+  }
+
+  Future<List<String>> _readSystemFamilies() async {
     try {
       final names = await _channel.invokeListMethod<String>('systemFamilies');
-      return {
+      final families = {
         ...?names?.where((s) => s.trim().isNotEmpty && s.length <= 256),
       }.toList()..sort();
+      return _systemFamilies = List.unmodifiable(families);
     } on MissingPluginException {
       return const [];
     } on PlatformException {

@@ -137,7 +137,7 @@ final class _BookReaderPageState extends State<BookReaderPage>
       if (data is Map && mounted) {
         var style = ReaderPreferences.fromJson(data);
         if (!await _books.readerFonts.ensure(style.family)) {
-          style = style.copyWith(family: 'NotoSerifSC');
+          style = style.copyWith(family: 'system');
         }
         if (mounted) setState(() => _style = style);
       }
@@ -733,7 +733,6 @@ final class _BookReaderPageState extends State<BookReaderPage>
     final palette = _style.paper.palette(Theme.of(context).colorScheme);
     final readerTheme = ThemeData(
       useMaterial3: true,
-      fontFamily: 'NotoSansSC',
       colorScheme: ColorScheme.fromSeed(
         seedColor: palette.accent,
         brightness: palette.brightness,

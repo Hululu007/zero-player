@@ -73,7 +73,7 @@ final class ReaderPreferences {
   const ReaderPreferences({
     this.mode = ReaderTurnMode.slide,
     this.paper = ReaderPaper.system,
-    this.family = 'NotoSerifSC',
+    this.family = 'system',
     this.fontSize = 21,
     this.lineHeight = 1.8,
     this.letterSpacing = 0,
@@ -107,7 +107,7 @@ final class ReaderPreferences {
         ReaderPaper.system,
     family: validReaderFontFamily(data['family'])
         ? data['family'] as String
-        : 'NotoSerifSC',
+        : 'system',
     fontSize: _number(data['font'], 21, 12, 44),
     lineHeight: _number(data['line'], 1.8, 1.2, 2.6),
     letterSpacing: _number(data['spacing'], 0, 0, 2),
@@ -141,6 +141,7 @@ final class ReaderPreferences {
   /// Body text style for this preference set. Headings add their own weight in
   /// the pagination layer, so bold here only lifts the reading weight.
   TextStyle get bodyStyle => TextStyle(
+    inherit: false,
     fontFamily: readerFontFamily(family),
     fontSize: fontSize,
     height: lineHeight,

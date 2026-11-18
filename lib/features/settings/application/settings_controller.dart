@@ -131,9 +131,7 @@ final class UserSettings {
   };
 
   factory UserSettings.fromMap(Map<String, Object?> map) => UserSettings(
-    font: appFontLabels.containsKey(map['font'])
-        ? map['font'] as String
-        : 'xiaolai',
+    font: appFontPreference(map['font']),
     startFullscreen: map['startFullscreen'] != false,
     navigationGuideSeen: map['navigationGuideSeen'] == true,
     manualLoadCount: ((map['manualLoadCount'] as num?)?.toInt() ?? 48).clamp(

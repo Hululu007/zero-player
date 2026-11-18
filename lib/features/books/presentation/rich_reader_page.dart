@@ -164,7 +164,7 @@ class _RichReaderState extends State<RichReaderPage>
               .clamp(0, chapters.length - 1);
       var style = data is Map ? ReaderPreferences.fromJson(data) : _style;
       if (!await repository.readerFonts.ensure(style.family)) {
-        style = style.copyWith(family: 'NotoSerifSC');
+        style = style.copyWith(family: 'system');
       }
       if (!mounted || _error != null) return;
       setState(() {
@@ -847,7 +847,7 @@ class _RichReaderState extends State<RichReaderPage>
               _save();
             },
             style: TextStyle(
-              fontFamily: _style.family,
+              fontFamily: _style.bodyStyle.fontFamily,
               fontSize: _style.fontSize,
               color: palette.ink,
             ),

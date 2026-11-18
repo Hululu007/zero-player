@@ -16,13 +16,6 @@ Future<void> main(List<String> args) async {
     ], await rootBundle.loadString('assets/fonts/OFL.txt'));
   });
   LicenseRegistry.addLicense(() async* {
-    for (final font in ['NotoSans', 'NotoSerif']) {
-      yield LicenseEntryWithLineBreaks([
-        font,
-      ], await rootBundle.loadString('assets/fonts/$font-OFL.txt'));
-    }
-  });
-  LicenseRegistry.addLicense(() async* {
     final attribution = await rootBundle.loadString(
       'assets/licenses/CONTENT-FILTER-NOTICE.txt',
     );

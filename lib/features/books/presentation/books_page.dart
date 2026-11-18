@@ -489,7 +489,6 @@ final class _BooksPageState extends State<BooksPage> {
             ? '网络漫画'
             : '网络小说',
         style: theme.textTheme.headlineMedium?.copyWith(
-          fontFamily: 'NotoSerifSC',
           fontWeight: FontWeight.w700,
         ),
       );

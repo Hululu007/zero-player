@@ -2,8 +2,11 @@ import 'app_fonts.dart';
 import '../../music/domain/music_match.dart';
 
 void validateSetting(String key, Object? value) {
+  if (key == 'font') {
+    if (!validAppFont(value)) throw const FormatException('设置选项无效');
+    return;
+  }
   final choices = <String, Set<String>>{
-    'font': appFontLabels.keys.toSet(),
     'theme': {'cinema', 'dark', 'light', 'system'},
     'mode': {'auto', 'television'},
     'playerOrientation': {'system', 'landscape', 'auto'},
