@@ -55,10 +55,18 @@ final class SegmentStore {
   Future<void> _commits = Future.value();
   int hits = 0;
   int writes = 0;
-  int get sizeBytes => _entries.values.fold(0, (sum, e) => sum + e.length);
-  int get cacheBytes => _entries.entries
-      .where((e) => !_protected.contains(e.key))
-      .fold(0, (sum, e) => sum + e.value.length);
+  int get sizeBytes {
+    PerformanceCounters.add('cache.capacity.visited', _entries.length);
+    return _entries.values.fold(0, (sum, e) => sum + e.length);
+  }
+
+  int get cacheBytes {
+    PerformanceCounters.add('cache.capacity.visited', _entries.length);
+    return _entries.entries
+        .where((e) => !_protected.contains(e.key))
+        .fold(0, (sum, e) => sum + e.value.length);
+  }
+
   StoredResource? find(String key) => _entries[key];
 
   Future<Map<String, int>> pinnedResources(String owner) => _serialize(
