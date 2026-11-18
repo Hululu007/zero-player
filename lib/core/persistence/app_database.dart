@@ -147,7 +147,7 @@ final class AppDatabase extends GeneratedDatabase {
     List<Object?> args,
     String key,
     MetadataDomain domain,
-  ) async {
+  ) => transaction(() async {
     _checkOpen();
     if (!domain.accepts(key)) throw ArgumentError('Metadata domain mismatch');
     final before =
@@ -157,13 +157,15 @@ final class AppDatabase extends GeneratedDatabase {
     final after = (await rows(
       'SELECT total_changes() AS n, changes() AS direct',
     )).single;
-    // Triggers/cascades or interleaved writes make the explicit key insufficient.
+    // Keep these counters with this statement; another caller must not replace
+    // changes() between the mutation and its coverage check.
+    // Trigger/cascade effects still make the explicit key insufficient.
     final exact = (after['n'] as int) - before == after['direct'];
     changed(
       tables: exact ? {'app_meta'} : null,
       metadataDomains: exact ? {domain} : null,
     );
-  }
+  });
 
   void changed({Set<String>? tables, Set<MetadataDomain>? metadataDomains}) {
     final batch = Zone.current[_notificationKey] as _ChangeBatch?;

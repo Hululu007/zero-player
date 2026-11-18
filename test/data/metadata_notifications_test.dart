@@ -5,6 +5,7 @@ import 'package:zero_player/core/persistence/app_database.dart';
 void main() {
   _preciseContracts();
   _transactionContracts();
+  _concurrentContracts();
 }
 
 late AppDatabase db;
@@ -210,23 +211,62 @@ void _transactionContracts() {
   );
   test(
     'logical content records stay independent and full restore invalidates all',
+    _logicalRestoreContract,
+  );
+}
+
+Future<void> _logicalRestoreContract() async {
+  var logical = 0;
+  final sub = db.changesFor({'content_records'}).listen((_) => logical++);
+  await db.atomic(
+    () => db.customStatement(
+      "INSERT INTO app_meta VALUES('content_label:x:y','{}')",
+    ),
+    tables: {'content_records'},
+  );
+  await _flush();
+  expect(logical, 1);
+  expect(events, isEmpty);
+  await db.atomic(() => db.customStatement('DELETE FROM app_meta'));
+  await _flush();
+  expect(logical, 2);
+  expect(events, ['legacy', 'live', 'history', 'mode', 'empty']);
+  await sub.cancel();
+}
+
+void _concurrentContracts() {
+  test(
+    'precise statements and concurrent raw transactions stay isolated',
     () async {
-      var logical = 0;
-      final sub = db.changesFor({'content_records'}).listen((_) => logical++);
-      await db.atomic(
-        () => db.customStatement(
-          "INSERT INTO app_meta VALUES('content_label:x:y','{}')",
-        ),
-        tables: {'content_records'},
+      final entered = Completer<void>();
+      final release = Completer<void>();
+      final unknown = db.transaction(() async {
+        entered.complete();
+        await release.future;
+        await db.customStatement(
+          "INSERT INTO app_meta VALUES('live_state:concurrent','{}')",
+        );
+        db.changed(tables: {'app_meta'});
+      });
+      await entered.future;
+      final precise = db.deleteMetadata(
+        'music_history:missing',
+        MetadataDomain.musicHistory,
       );
       await _flush();
-      expect(logical, 1);
       expect(events, isEmpty);
-      await db.atomic(() => db.customStatement('DELETE FROM app_meta'));
+      release.complete();
+      await Future.wait([unknown, precise]);
       await _flush();
-      expect(logical, 2);
-      expect(events, ['legacy', 'live', 'history', 'mode', 'empty']);
-      await sub.cancel();
+      expect(events.where((e) => e == 'legacy'), hasLength(2));
+      expect(events.where((e) => e == 'live'), hasLength(1));
+      expect(events.where((e) => e == 'history'), hasLength(2));
+      expect(
+        await db.rows(
+          "SELECT * FROM app_meta WHERE key='live_state:concurrent'",
+        ),
+        hasLength(1),
+      );
     },
   );
 }
