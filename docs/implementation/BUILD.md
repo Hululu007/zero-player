@@ -2,6 +2,30 @@
 
 当前进度见 [实施状态](STATUS.md)。下文各功能章节的测试数量属于当时快照，不代表重装后重新执行。
 
+## 性能专项首轮回归
+
+固定音乐夹具为20个歌单×100首、200条历史、20次保存；计数关闭/开启均断言功能结果，开启时输出一份JSON聚合计数。播放器回归挂载真实`PlayerPage`和原生视频，用30次受控业务通知检查视频widget身份、局部构建、立即屏蔽、错误、比例、全屏及返回。所有Flutter测试、原生回归与构建串行执行：
+
+~~~powershell
+flutter test --no-pub test/performance/music_history_workload_test.dart test/music/music_history_refresh_test.dart test/music/music_library_test.dart
+./tool/run_windows_native.ps1 -TestFiles @('integration_test/player_page_performance_test.dart','integration_test/playback_touch_native_test.dart','integration_test/tv_playback_focus_test.dart','integration_test/player_window_native_test.dart')
+./tool/run_windows_native.ps1 -ProfileBuild -TestFiles @('integration_test/player_page_performance_test.dart')
+~~~
+
+默认关闭的`PerformanceCounters`用`--dart-define=ZERO_PLAYER_PERF_COUNTERS=true`开启，通过`PerformanceCounters.snapshot()`读取聚合值、`reset()`开始下一窗口；不逐事件记录SQL、媒体URL或内容。字段：`db.queries/rows`为`AppDatabase.rows`调用/返回行，`db.statements`为成功的`customStatement`调用，`db.notifications`为实际表通知；`music.read.*`为读回范围/行数/保守回退，`music.decode.*`为解码UTF-8字节/歌单/歌曲；`player.*.build`与`player.video.node`为展示构建/Video创建；`network.queued/started/released`为许可累计次数；`cache.commits/committed_bytes/hash.read_bytes`为提交/字节/提交前摘要重读量。计数不是物理IO、native解码帧或能耗。
+
+Android歌词使用JUnit/Robolectric验证原生TextView赋值、截断、权限和窗口生命周期，不需要模拟器。项目目录中执行（非离线环境可去掉`--offline`；`robolectricDependencyDir`可省略，由Robolectric下载其固定测试SDK）：
+
+~~~powershell
+Push-Location android
+try {
+    ./gradlew.bat :app:testDebugUnitTest --tests dev.zeroplayer.zero_player.MusicLyricsOverlayTest --offline -Ptarget-platform=android-arm64 -ProbolectricDependencyDir=D:/mvn_rep/org/robolectric/android-all-instrumented/9-robolectric-4913185-2-i7 --max-workers=4
+    if ($LASTEXITCODE -ne 0) { throw 'Native lyrics tests failed' }
+} finally { Pop-Location }
+~~~
+
+`robolectricDependencyDir`是本机可选命令参数，不是业务或构建默认路径。测试报告在`build/app/test-results/testDebugUnitTest/`；首轮A/B证据在`build/performance-implementation-20261118/`。原生JVM回归和短时受控profile检查不能替代Android/TV实机、稳态帧时、功耗及30/120分钟可靠性验收。正式应用构建沿用后文普通Release流程，不能把集成测试入口产物交付为应用。
+
 ## EPUB／PDF 原生验证
 
 PDF 阅读固定使用 pdfrx 2.2.24 和 PDFium chromium/7520。Windows x64、Android arm64／x64 发布包与原生库的摘要见 `tool/pdfium_checksums.json`；使用 `python tool/verify_pdfium.py win-x64 <pdfium.dll> --archive <pdfium-win-x64.tgz>` 校验。Windows CMake 与 Android Gradle 会拒绝不匹配的库。Android 插件 JNI 目录指向该固定版本的真实目录，避免 Windows 目录链接被 AGP 忽略；不能替换为系统中任意 PDFium。

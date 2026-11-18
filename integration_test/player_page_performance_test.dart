@@ -57,13 +57,17 @@ void main() {
         expect(counts['player.transport.build'], greaterThanOrEqualTo(30));
         final evidence = {
           'scenario': 'native-player-page-30ticks',
-          'mode': kProfileMode ? 'profile' : (kReleaseMode ? 'release' : 'debug'),
+          'mode': kProfileMode
+              ? 'profile'
+              : (kReleaseMode ? 'release' : 'debug'),
           'counts': counts,
         };
         stdout.writeln(jsonEncode(evidence));
-        await File(
+        final output = File(
           '$fixtureProject/build/performance-implementation-20261118/player-page-workload.json',
-        ).writeAsString(jsonEncode(evidence));
+        );
+        await output.parent.create(recursive: true);
+        await output.writeAsString(jsonEncode(evidence));
         await _checkBlocking(tester, controller);
         await _checkError(tester, controller);
         await _checkOptions(tester);

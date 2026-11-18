@@ -10,7 +10,13 @@
 - B1-a已完成：仅历史保存允许局部读回；SQLite `total_changes()`和`data_version`检测原始SQL、批量/事务、触发器及其他连接的未知写入，发现差异回退全读。其他操作及`reload()`仍全读；串行队列、playedAt、元数据、模式、200条裁剪、坏行原数据/提示和失败重试保持。
 - B1-a工作量：同夹具歌单/歌曲重复解码400/40000→0/0，JSON解码10301047→1099267字节（减少89.3%）；音乐读回4420→4000行。历史语句/通知各20次不变；额外版本检测使查询40→60次，标量版本行20条，无全歌单读取。不是功耗或帧时结论。
 - B1-a验证：32项定向测试通过、静态分析及514文件模块边界通过；源码规模仍为104条既有超限，无新增。日志`build/performance-implementation-20261118/b1a-{tests,analyze,boundaries,source-size}.log`。阶段A提交`d4e666b`，本批可独立revert，无schema变化。
-- 当前：下一步建立Windows原生播放器构建基线并执行B1-b。Android/TV未连接设备，尚无新增实机帧时、功耗或长时结论；B1-c原生条件仍待核实。
+- B1-a提交`e8a9cf6`；B1-b提交`ef9eb95`，将订阅移到展示局部，Scaffold/Theme和视频child保持稳定；30次位置通知的视频展示结构构建30→0，控制区仍更新30次，不过滤业务通知。Windows真实PlayerPage、触摸锁定、TV焦点及窗口恢复四组原生回归，以及明确记录`mode=profile`的同场景复验均通过；覆盖视频widget身份、立即屏蔽/恢复、错误、比例、全屏和返回。短时受控通知计数不代表自然播放稳态帧时。
+- B1-c提交`edd954f`，原生TextView相同截断文本免赋值，权限检查、窗口创建及Dart通道调用保持；100次相同更新赋值300→3（仅首次3项）。JUnit/Robolectric 8项原生回归全部通过，覆盖歌词即时换行、截断、空值清除、权限撤销/恢复、隐藏重建及Activity重建。前后XML和日志在`build/performance-implementation-20261118/lyrics-{before,after}-*`。Android/TV无连接设备，实机验收仍待完成。
+- 整体验证：`flutter test --no-pub --reporter expanded` **1477项通过、12项按原配置跳过、退出码0**；全仓静态分析、514文件模块边界通过。源码规模检查仍退出1、104条既有超限，前后清单一致，没有新增项；不声称全仓规模门禁通过。新增性能夹具保证证据目录不存在时可创建，复现命令和字段字典已加入BUILD。
+- 构建：Windows普通Release成功，`build/windows/x64/runner/Release/zero_player.exe`及同目录DLL/data可本地运行，PDFium固定SHA-256与mpv/ANGLE缓存摘要通过。Android ARM64开发测试Release成功，`build/app/outputs/flutter-apk/app-release.apk`为本轮新包（同步自`outputs/apk/release`），0.7.4+74、74.49 MiB、独立devtest包名、原测试证书/v2签名、字体/ABI/可选资源检查通过；仍超过历史70 MiB正式包预算，不作为正式发行门禁通过。
+- Android构建在线阶段因动态依赖元数据请求持续重试而取消；同源码普通Release已生成本轮AOT，再以Gradle离线续包。AOT续包前后及合并输入SHA-256一致，APK中的AOT与Gradle剥离符号输出一致，PDFium固定摘要通过；链路证据`android-release-integrity.json`，构建日志`android-release-{online,offline}.log`。新APK SHA-256：`ab6196132222fbb61f67854a88778fb8a8d4808b987c757b030151bfda9b7b7d`。没有复用旧源码/测试入口AOT，没有推送或发布。
+- 保护与回退：阶段A及三项优化各自本地提交，可分别`git revert`，无schema迁移。六份预先保护的插件注册/本机配置最终摘要一致，既有未跟踪`tmp/`保留；保护副本、工作量A/B、完整日志和源码清单位于`build/performance-implementation-20261118/`。工作区仍在`zn/performance-optimization`。
+- 下一步：B2先审计完整元数据写入口与失效域；隐藏直播读取副作用、进度排序/证据和诊断窗口继续按报告前置条件处理。Android/TV实机、自然播放稳态帧时、真实功耗及30/120分钟可靠性待设备验收；当前不提供节电比例，其他候选未作为本轮完成项。
 
 ## 优化前代码备份与功能影响复审（2026-11-18）
 

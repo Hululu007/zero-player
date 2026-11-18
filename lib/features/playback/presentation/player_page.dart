@@ -271,7 +271,7 @@ final class _PlayerPageState extends State<PlayerPage>
       child: ListenableBuilder(
         listenable: controller,
         // Keep the video widget stable during controller notifications. Build
-        // lazily so a blocked initial request cannot create a native output.
+        // lazily so a blocked request never mounts the video widget.
         child: Builder(
           builder: (_) {
             PerformanceCounters.add('player.video.node');
