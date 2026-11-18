@@ -73,7 +73,7 @@ void _menuCases() {
         expect(choices(), containsAll([forest, shark, ordinary]));
         await tester.tap(find.byType(DropdownButton<String>));
         await tester.pumpAndSettle();
-        await tester.runAsync(() async {
+        await _withDatabaseFrames(tester, () async {
           final draft = await services.supervision.prepareCredentials(
             'fixture-password',
           );
@@ -85,7 +85,8 @@ void _menuCases() {
         expect(choices(), contains(ordinary));
         expect(find.text('森林'), findsNothing);
         expect(find.text('鲨鱼'), findsNothing);
-        await tester.runAsync(
+        await _withDatabaseFrames(
+          tester,
           () => services.supervision.execute(
             SensitiveOperation.channels,
             () => services.sources.setEnabled(shark, true),
@@ -96,9 +97,31 @@ void _menuCases() {
         expect(choices(), isNot(contains(shark)));
         expect(tester.takeException(), isNull);
         await tester.pumpWidget(const SizedBox());
+        await _withDatabaseFrames(tester, services.close);
       },
     );
   }
+}
+
+// Queries started by widget policy listeners may still hold a Drift executor
+// across fake-async frames. Pump those frames while real password work runs.
+Future<void> _withDatabaseFrames(
+  WidgetTester tester,
+  Future<void> Function() work,
+) async {
+  var done = false;
+  late Future<void> pending;
+  await tester.runAsync(() async {
+    pending = work().whenComplete(() => done = true);
+  });
+  for (var i = 0; i < 1000 && !done; i++) {
+    await tester.pump(const Duration(milliseconds: 10));
+    await tester.runAsync(
+      () => Future<void>.delayed(const Duration(milliseconds: 5)),
+    );
+  }
+  expect(done, true);
+  await tester.runAsync(() => pending);
 }
 
 void _taxonomyCase() {
@@ -131,5 +154,6 @@ void _taxonomyCase() {
     await tester.pump();
     expect(choices(), isNot(contains(ordinary)));
     await tester.pumpWidget(const SizedBox());
+    await _withDatabaseFrames(tester, services.close);
   });
 }

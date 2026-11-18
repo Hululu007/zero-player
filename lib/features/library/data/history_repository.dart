@@ -26,6 +26,7 @@ final class HistoryRepository {
   final AppDatabase db;
   Stream<void> get changes =>
       db.changesFor(const {'watch_history', 'local_videos', 'content_records'});
+  bool allows(WatchEntry entry) => recordAllowed(policy, entry.row);
   Future<List<WatchEntry>> recentWorks() async {
     PerformanceCounters.add('history.recent_works.calls');
     return (await db.rows(

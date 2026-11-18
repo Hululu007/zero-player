@@ -21,8 +21,9 @@ import '../../sources/domain/source_order.dart';
 import '../../sources/presentation/source_details_dialog.dart';
 
 final class DiscoveryPage extends StatefulWidget {
-  const DiscoveryPage({super.key, required this.services});
+  const DiscoveryPage({super.key, required this.services, this.visible = true});
   final AppServices services;
+  final bool visible;
   @override
   State<DiscoveryPage> createState() => _DiscoveryPageState();
 }
@@ -31,6 +32,10 @@ final class _DiscoveryPageState extends State<DiscoveryPage> {
   final _feed = DiscoveryController();
   final _scroll = ScrollController();
   late Future<List<WatchEntry>> _history;
+  List<WatchEntry> _historyEntries = [];
+  bool _historyDirty = true;
+  int _historyGeneration = 0;
+  bool _allowStaleHistory = true;
   List<VideoSource> _sources = [];
   VideoSource? _inactiveSource;
   String _type = 'movie';
@@ -55,12 +60,12 @@ final class _DiscoveryPageState extends State<DiscoveryPage> {
     _aggregate = settings.homeLayout == 'aggregate';
     _provider = settings.recommendation;
     _filterAdult = widget.services.contentPolicy.filterAdult;
-    _history = widget.services.history.recentWorks();
+    _history = Future.value([]);
+    _refreshHistory();
     _historyChanges = widget.services.history.changes.listen((_) {
       if (mounted) {
-        setState(() {
-          _history = widget.services.history.recentWorks();
-        });
+        _historyDirty = true;
+        if (widget.visible) setState(_refreshHistory);
       }
     });
     _feed.addListener(_changed);
@@ -71,6 +76,41 @@ final class _DiscoveryPageState extends State<DiscoveryPage> {
       (_) => unawaited(_syncSources()),
     );
     unawaited(_refresh());
+  }
+
+  @override
+  void didUpdateWidget(covariant DiscoveryPage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.visible == widget.visible) return;
+    if (widget.visible) {
+      _allowStaleHistory = false;
+      _refreshHistory();
+    } else {
+      _allowStaleHistory = false;
+      _historyDirty = true;
+      _historyGeneration++;
+    }
+  }
+
+  void _refreshHistory() {
+    if (!widget.visible || !_historyDirty) return;
+    _historyDirty = false;
+    final generation = ++_historyGeneration;
+    _history = _readHistory(generation);
+  }
+
+  Future<List<WatchEntry>> _readHistory(int generation) async {
+    try {
+      final entries = await widget.services.history.recentWorks();
+      if (mounted && widget.visible && generation == _historyGeneration) {
+        _historyEntries = entries;
+      }
+      return _historyEntries;
+    } catch (_) {
+      if (generation != _historyGeneration) return _historyEntries;
+      _historyDirty = true;
+      rethrow;
+    }
   }
 
   List<DiscoverySection> get _visibleSections => [
@@ -90,6 +130,10 @@ final class _DiscoveryPageState extends State<DiscoveryPage> {
         [item.title, item.subtitle, item.description].join(' '),
       );
   void _policyChanged() {
+    _allowStaleHistory = false;
+    _historyDirty = true;
+    _historyGeneration++;
+    _refreshHistory();
     final changed = _filterAdult != widget.services.contentPolicy.filterAdult;
     _filterAdult = widget.services.contentPolicy.filterAdult;
     if (mounted) setState(() {});
@@ -131,7 +175,8 @@ final class _DiscoveryPageState extends State<DiscoveryPage> {
         _notice = '默认频道已移除、停用或被过滤，本次使用精选推荐';
       }
       _ready = true;
-      _history = widget.services.history.recentWorks();
+      _historyDirty = true;
+      _refreshHistory();
       await _reload(discoverCategories: true);
     } catch (_) {
       if (!mounted || generation != _sourceGeneration) return;
@@ -319,6 +364,7 @@ final class _DiscoveryPageState extends State<DiscoveryPage> {
 
   @override
   void dispose() {
+    _historyGeneration++;
     unawaited(_sourceChanges?.cancel());
     unawaited(_historyChanges?.cancel());
     widget.services.settings.removeListener(_settingsChanged);
@@ -391,7 +437,13 @@ final class _DiscoveryPageState extends State<DiscoveryPage> {
             ),
           ),
         ),
-        SliverToBoxAdapter(child: ContinueWatching(history: _history)),
+        SliverToBoxAdapter(
+          child: ContinueWatching(
+            history: _history,
+            allowed: widget.services.history.allows,
+            allowStale: _allowStaleHistory,
+          ),
+        ),
         if (_visibleSections.isNotEmpty)
           SliverPadding(
             padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),

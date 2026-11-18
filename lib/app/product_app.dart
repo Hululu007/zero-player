@@ -137,7 +137,15 @@ final class _ProductAppState extends ConsumerState<ProductApp>
           for (final route in <RouteBase>[
             GoRoute(
               path: '/',
-              builder: (_, state) => DiscoveryPage(services: services),
+              builder: (_, state) => ListenableBuilder(
+                listenable: router.routerDelegate,
+                builder: (context, _) => DiscoveryPage(
+                  services: services,
+                  visible:
+                      router.routerDelegate.state.uri.path == '/' &&
+                      (ModalRoute.isCurrentOf(context) ?? true),
+                ),
+              ),
             ),
             GoRoute(
               path: '/search',
