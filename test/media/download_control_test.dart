@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:zero_player/app/app_services.dart';
@@ -9,6 +10,15 @@ import 'package:zero_player/features/downloads/domain/download_task.dart';
 import '../../test_support/http_test_server.dart';
 
 void main() {
+  test(
+    'locked task deletion journals cleanup and releases its pins',
+    _lockedRemoval,
+    skip: !Platform.isWindows,
+  );
+  test(
+    'restart leaves queued work schedulable and pauses only interrupted transfers',
+    _recoverQueue,
+  );
   test(
     'resume queues behind an unfinished pause and completes the task',
     _quickResume,
@@ -21,6 +31,76 @@ void main() {
     'download progress does not notify source or settings observers',
     _scopedChanges,
   );
+}
+
+Future<void> _lockedRemoval() async {
+  final fixture = await _Fixture.create();
+  final repository = fixture.services.downloads;
+  final id = await fixture.createTask();
+  final directory = (await repository.find(id))!.directory;
+  final file = await File('$directory/locked.part').writeAsString('pending');
+  final store = fixture.services.store;
+  final key = 'd' * 64;
+  await store.write(key, Stream.value([1, 2]), statusCode: 200, headers: {});
+  await store.pin(id, key);
+  final process = await Process.start(
+    'powershell.exe',
+    [
+      '-NoProfile',
+      '-NonInteractive',
+      '-Command',
+      r"$lockedFile = [System.IO.File]::Open([Environment]::GetEnvironmentVariable('ZERO_PLAYER_TEST_LOCK'), 'Open', 'Read', 'None'); [Console]::WriteLine('READY'); [Console]::In.ReadLine() | Out-Null; $lockedFile.Dispose()",
+    ],
+    environment: {'ZERO_PLAYER_TEST_LOCK': file.path},
+  );
+  try {
+    expect(
+      await utf8.decoder
+          .bind(process.stdout)
+          .transform(const LineSplitter())
+          .first
+          .timeout(const Duration(seconds: 10)),
+      'READY',
+    );
+    final scheduler = DownloadScheduler(
+      repository,
+      fixture.services.fetcher,
+      fixture.services.http,
+      fixture.services.offline,
+      fixture.services.settings,
+      validateMp4: (_, _) async {},
+    );
+    try {
+      await scheduler.remove(id);
+    } finally {
+      await scheduler.close();
+    }
+    expect(await repository.find(id), isNull);
+    expect(await store.pinnedResources(id), isEmpty);
+    expect(await Directory(directory).exists(), isTrue);
+    expect(
+      (await repository.db.rows(
+        "SELECT value FROM app_meta WHERE key GLOB 'download_cleanup:*'",
+      )).map((row) => row['value']),
+      contains(directory),
+    );
+  } finally {
+    process.kill();
+    await process.exitCode.timeout(const Duration(seconds: 10));
+  }
+  await repository.cleanupPending();
+  expect(await Directory(directory).exists(), isFalse);
+}
+
+Future<void> _recoverQueue() async {
+  final fixture = await _Fixture.create();
+  final repository = fixture.services.downloads;
+  final queued = await fixture.createTask();
+  final running = await fixture.createTask();
+  await repository.status(running, DownloadStatus.running);
+  await repository.recover();
+  expect((await repository.find(queued))!.status, DownloadStatus.queued);
+  expect((await repository.find(running))!.status, DownloadStatus.paused);
 }
 
 Future<void> _quickResume() async {

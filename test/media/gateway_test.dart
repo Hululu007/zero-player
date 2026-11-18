@@ -12,9 +12,45 @@ import 'package:zero_player/media/gateway/media_gateway.dart';
 import '../../test_support/http_test_server.dart';
 
 void main() {
+  _ignoredRangeTest();
   gatewayTests();
   transportTests();
   cancellationTests();
+}
+
+void _ignoredRangeTest() {
+  test(
+    'ignored Range is passed through without caching full copies per range',
+    () async {
+      final root = await Directory.systemTemp.createTemp('ignored-range-');
+      final upstream = await HttpTestServer.start((request) {
+        request.response.headers.contentType = ContentType('video', 'mp2t');
+        request.response.contentLength = 4;
+        request.response.add([1, 2, 3, 4]);
+      });
+      final store = SegmentStore(root);
+      final gateway = MediaGateway(store, allowPrivateNetworks: true);
+      final client = HttpClient();
+      addTearDown(() async {
+        client.close(force: true);
+        await gateway.close();
+        await upstream.close();
+        await root.delete(recursive: true);
+      });
+      await gateway.start();
+      final session = gateway.createSession(HeaderPolicy({}));
+      final uri = session.register(upstream.baseUri.resolve('video.ts'));
+      for (final range in ['bytes=0-1', 'bytes=2-3']) {
+        final request = await client.getUrl(uri);
+        request.headers.set('range', range);
+        final response = await request.close();
+        expect(response.statusCode, 200);
+        expect(await response.expand((chunk) => chunk).toList(), [1, 2, 3, 4]);
+      }
+      expect(store.sizeBytes, 0);
+      expect(await root.list().toList(), isEmpty);
+    },
+  );
 }
 
 void gatewayTests() {

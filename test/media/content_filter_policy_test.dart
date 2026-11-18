@@ -4,6 +4,24 @@ import 'package:zero_player/media/content_filter/keyword_policy.dart';
 import 'package:zero_player/media/content_filter/approved_timeline.dart';
 
 void main() {
+  test(
+    'traditional cash-network spelling matches the existing promotion rule',
+    () {
+      const policy = KeywordPolicy();
+      expect(KeywordPolicy.normalize('現金網'), '现金网');
+      expect(
+        policy.evaluate([
+          const ContentEvidence(
+            text: '現金網',
+            source: EvidenceSource.screen,
+            confidence: .95,
+            heightRatio: .12,
+          ),
+        ]).verdict,
+        FilterVerdict.block,
+      );
+    },
+  );
   const policy = KeywordPolicy();
   FilterDecision screen(String text, {double confidence = 0.95}) =>
       policy.evaluate([

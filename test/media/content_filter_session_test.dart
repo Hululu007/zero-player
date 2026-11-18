@@ -10,11 +10,51 @@ import 'package:zero_player/media/content_filter/filter_types.dart';
 import 'package:zero_player/media/hls/timeline.dart';
 
 void main() {
+  _rangeTests();
   _deferredTests();
   _gateTests();
   _lifecycleTests();
   _boundaryTests();
   _declaredSamplerTests();
+}
+
+void _rangeTests() {
+  test(
+    'approved media supports bounded, suffix, HEAD and invalid ranges',
+    () async {
+      final fixture = await _Fixture.create([FilterVerdict.allow]);
+      try {
+        await fixture.server.start();
+        await fixture.session.begin();
+        final uri = fixture.server.register(fixture.session).resolve('0.ts');
+        for (final range in ['bytes=0-2', 'bytes=-3']) {
+          final request = await fixture.client.getUrl(uri);
+          request.headers.set('range', range);
+          final response = await request.close();
+          expect(response.statusCode, 206);
+          expect(
+            await utf8.decodeStream(response),
+            range == 'bytes=0-2' ? 'app' : 'd:0',
+          );
+        }
+        final head = await fixture.client.openUrl('HEAD', uri);
+        head.headers.set('range', 'bytes=0-2');
+        final response = await head.close();
+        expect(response.statusCode, 206);
+        expect(response.contentLength, 3);
+        expect(await response.toList(), isEmpty);
+        final invalid = await fixture.client.getUrl(uri);
+        invalid.headers.set('range', 'bytes=999-');
+        final rejected = await invalid.close();
+        expect(rejected.statusCode, 416);
+        await rejected.drain<void>();
+        await fixture.server.close();
+        await expectLater(fixture.server.start(), throwsStateError);
+      } finally {
+        await fixture.close();
+      }
+    },
+  );
 }
 
 void _deferredTests() {

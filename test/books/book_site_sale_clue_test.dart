@@ -43,7 +43,7 @@ void _structureTests() {
     final result = inspectBookSiteHtml(target, sale);
     expect(result.saleReview.suspected, isTrue);
     expect(result.saleReview.coverage, BookPageSaleCoverage.complete);
-    expect(result.label, contains('疑似域名出售静态结构（可见性未确认）'));
+    expect(result.label, isNot(contains('域名出售')));
     expect(result.gamblingRisk, isFalse);
     expect(result.adultRisk, isFalse);
     expect(result.finding, BookSiteFinding.sampled);
@@ -149,7 +149,7 @@ void _structureTests() {
         );
         expect(result.saleReview.coverage, BookPageSaleCoverage.partial);
         expect(result.saleReview.suspected, isFalse);
-        expect(result.label, contains('域名出售静态结构检查不完整'));
+        expect(result.label, isNot(contains('域名出售')));
         expect(
           BookSiteCheck.after(
             result,

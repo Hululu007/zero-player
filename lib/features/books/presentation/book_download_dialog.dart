@@ -6,10 +6,11 @@ export '../domain/book_download_plan.dart';
 
 Future<BookDownloadPlan?> showBookDownloadDialog(
   BuildContext context,
-  int total,
-) {
+  int total, {
+  bool allowAggregateLatest = true,
+}) {
   var first = 1, last = total;
-  var all = true, fallback = false;
+  var all = true, fallback = false, aggregateLatest = false;
   return showDialog<BookDownloadPlan>(
     context: context,
     builder: (context) => StatefulBuilder(
@@ -53,6 +54,14 @@ Future<BookDownloadPlan?> showBookDownloadDialog(
                   ],
                 ),
               Text('共 $total 章，自动跳过已下载章节'),
+              if (all && allowAggregateLatest)
+                SwitchListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: const Text('聚合最新'),
+                  subtitle: const Text('自动从同名同作者的其他渠道补充后续章节'),
+                  value: aggregateLatest,
+                  onChanged: (value) => update(() => aggregateLatest = value),
+                ),
               SwitchListTile(
                 contentPadding: EdgeInsets.zero,
                 title: const Text('失败时尝试其他书源'),
@@ -76,6 +85,9 @@ Future<BookDownloadPlan?> showBookDownloadDialog(
                       all ? 1 : first,
                       all ? total : last,
                       fallback,
+                      fullBook: all,
+                      aggregateLatest:
+                          all && allowAggregateLatest && aggregateLatest,
                     ),
                   )
                 : null,

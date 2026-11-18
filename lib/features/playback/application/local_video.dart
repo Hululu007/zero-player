@@ -1,17 +1,26 @@
 import 'dart:io';
 import 'package:path/path.dart' as p;
-import '../../../app/app_services.dart';
+import '../../../media/gateway/offline_server.dart';
+import '../../library/data/history_repository.dart';
 import '../../../core/platform/video_files.dart';
 import '../../catalog/domain/catalog_item.dart';
 import '../../sources/domain/video_source.dart';
-import 'playback_controller.dart';
-import '../data/local_video_repository.dart';
+import 'playback_request.dart';
 
 final class LocalVideo {
-  static String? startupPath;
+  const LocalVideo({
+    required this.requireItem,
+    required this.latestHistory,
+    required this.openFile,
+    required this.rememberPath,
+  });
 
-  static Future<PlaybackRequest> open(
-    AppServices services,
+  final void Function(CatalogItem) requireItem;
+  final Future<WatchEntry?> Function(String) latestHistory;
+  final Future<OfflineSession> Function(File) openFile;
+  final Future<void> Function(String, String) rememberPath;
+
+  Future<PlaybackRequest> open(
     String path, {
     String? previousId,
     String? documentIdentity,
@@ -33,11 +42,14 @@ final class LocalVideo {
       title: p.basename(path),
     );
     // Local files follow the same title and supervision boundary as online items.
-    services.contentPolicy.requireItem(item);
-    final previous = await services.history.latest('local', id);
-    final session = await services.offline.openLocal(File(canonical));
+    requireItem(item);
+    final previous = await latestHistory(id);
+    requireItem(item);
+    final session = await openFile(File(canonical));
     try {
-      await LocalVideoRepository(services.db).remember(id, canonical);
+      requireItem(item);
+      await rememberPath(id, canonical);
+      requireItem(item);
     } catch (_) {
       session.close();
       rethrow;

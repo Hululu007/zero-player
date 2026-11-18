@@ -311,19 +311,8 @@ final class _SourcesPageState extends State<SourcesPage> {
       },
     );
   });
-  Future<void> _probe(VideoSource source) => perform(
-    context,
-    () => runSensitive(
-      context,
-      widget.services.supervision,
-      SensitiveOperation.channels,
-      () => widget.services.sourceProbe.run(
-        [source],
-        concurrency: 1,
-        applyPolicy: true,
-      ),
-    ),
-  );
+  Future<void> _probe(VideoSource source) =>
+      perform(context, () => probeSources(context, widget.services, [source]));
   Future<void> _remove(VideoSource source) async {
     await perform(
       context,

@@ -28,8 +28,7 @@ extension _BookRepositoryMutations on BooksRepository {
   }
 
   Future<void> _refreshChangedSources() async {
-    _riskGeneration++;
-    _riskLoaded = false;
+    _sourceAccess.invalidate(unload: true);
     _sourceRiskChanges.value++;
     try {
       await refreshSourceRisks();
@@ -85,7 +84,7 @@ extension _BookRepositoryMutations on BooksRepository {
                   (risk.sourceId == entry.sourceId && risk.adult) ||
                   (risk.adultHost && hosts.contains(risk.host)),
             );
-        if (_fixedSourceRisk(entry.sourceId, current.host, source) ||
+        if (BookSourceAccess.fixedRisk(entry.sourceId, current.host, source) ||
             (policy.filterAdult && adultRestricted) ||
             !policy.textAllowed(
               '${source?.name ?? current.name} ${current.host}',
@@ -112,7 +111,7 @@ extension _BookRepositoryMutations on BooksRepository {
       await riskStore.write(cleared);
       requireReviewAllowed();
     }, tables: {'app_meta'});
-    _rememberAssessment(cleared);
+    _sourceAccess.rememberAssessment(cleared);
     policy.refresh();
   }
 }

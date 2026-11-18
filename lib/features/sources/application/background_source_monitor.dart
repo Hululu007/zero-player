@@ -1,4 +1,5 @@
 import 'dart:async';
+import '../../../core/platform/foreground_workload.dart';
 import '../../settings/application/settings_controller.dart';
 import 'source_probe.dart';
 import '../../../core/network/request_scheduler.dart';
@@ -17,6 +18,7 @@ final class BackgroundSourceMonitor {
     if (_started || _closed) return;
     _started = true;
     settings.addListener(_settingsChanged);
+    ForegroundWorkload.instance.addListener(_workloadChanged);
     _timer = Timer.periodic(const Duration(minutes: 30), (_) => check());
     check();
   }
@@ -29,8 +31,19 @@ final class BackgroundSourceMonitor {
     }
   }
 
+  void _workloadChanged() {
+    if (!ForegroundWorkload.instance.maintenanceAllowed && _pending != null) {
+      probe.cancel();
+    }
+  }
+
   void check() {
-    if (_closed || !settings.value.backgroundProbe || _pending != null) return;
+    if (_closed ||
+        !settings.value.backgroundProbe ||
+        _pending != null ||
+        !ForegroundWorkload.instance.maintenanceAllowed) {
+      return;
+    }
     _pending = _run()
         .catchError((Object _) {})
         .whenComplete(() => _pending = null);
@@ -39,7 +52,11 @@ final class BackgroundSourceMonitor {
   Future<void> _run() async {
     final now = DateTime.now();
     final all = await probe.repository.all();
-    if (_closed || !settings.value.backgroundProbe) return;
+    if (_closed ||
+        !settings.value.backgroundProbe ||
+        !ForegroundWorkload.instance.maintenanceAllowed) {
+      return;
+    }
     final due = all
         .where(
           (s) =>
@@ -63,7 +80,10 @@ final class BackgroundSourceMonitor {
   Future<void> close() async {
     _closed = true;
     _timer?.cancel();
-    if (_started) settings.removeListener(_settingsChanged);
+    if (_started) {
+      settings.removeListener(_settingsChanged);
+      ForegroundWorkload.instance.removeListener(_workloadChanged);
+    }
     probe.cancel();
     await _pending;
     probe.dispose();

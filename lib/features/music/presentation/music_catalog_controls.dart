@@ -137,23 +137,26 @@ final class _MusicChartNavState extends State<MusicChartNav> {
   ) {
     final visible = groups[_group] ?? groups.values.first;
     return Column(
+      mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: [
-            for (final group in groups.keys)
-              ChoiceChip(
-                label: Text(group),
-                selected: group == _group,
-                onSelected: (active) {
-                  if (active) setState(() => _group = group);
-                },
-              ),
-          ],
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            spacing: 8,
+            children: [
+              for (final group in groups.keys)
+                ChoiceChip(
+                  label: Text(group),
+                  selected: group == _group,
+                  onSelected: (active) {
+                    if (active) setState(() => _group = group);
+                  },
+                ),
+            ],
+          ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 4),
         SingleChildScrollView(
           scrollDirection: Axis.horizontal,
           child: Row(
@@ -187,13 +190,12 @@ final class _MusicChartNavState extends State<MusicChartNav> {
             padding: const EdgeInsets.fromLTRB(12, 12, 12, 4),
             child: Text(
               entry.key,
-              style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                color: scheme.onSurfaceVariant,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.titleSmall?.copyWith(color: scheme.onSurfaceVariant),
             ),
           ),
-          for (final option in entry.value)
-            _tile(context, option, scheme),
+          for (final option in entry.value) _tile(context, option, scheme),
         ],
       ],
     );
@@ -220,9 +222,7 @@ final class _MusicChartNavState extends State<MusicChartNav> {
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: selected
-                    ? scheme.onPrimaryContainer
-                    : scheme.onSurface,
+                color: selected ? scheme.onPrimaryContainer : scheme.onSurface,
                 fontWeight: selected ? FontWeight.w600 : null,
               ),
             ),

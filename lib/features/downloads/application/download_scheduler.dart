@@ -343,8 +343,7 @@ final class DownloadScheduler {
     final task = await repository.find(id);
     if (task == null) return;
     if (!repository.ownsPath(task.directory)) throw StateError('任务路径不属于下载目录');
-    final directory = Directory(task.directory);
-    if (await directory.exists()) await directory.delete(recursive: true);
+    await _cleanupDirectory(Directory(task.directory));
     await fetcher.store.unpin(id);
     await repository.remove(id);
     _quota.release(id);

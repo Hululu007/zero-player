@@ -6,7 +6,6 @@ import 'package:zero_player/app/app_services.dart';
 import 'package:zero_player/core/persistence/app_database.dart';
 import 'package:zero_player/core/persistence/application_ownership.dart';
 import 'package:zero_player/core/persistence/local_open_channel.dart';
-import 'package:zero_player/features/playback/application/local_video.dart';
 import 'package:zero_player/features/playback/application/player_exit.dart';
 import 'package:zero_player/features/playback/presentation/local_video_page.dart';
 
@@ -60,8 +59,7 @@ void _case1() {
         await services.supervision.load();
         final one = await File('${root.path}/one.mp4').writeAsBytes([1, 2, 3]);
         final two = await File('${root.path}/two.mp4').writeAsBytes([1, 2, 3]);
-        final first = await LocalVideo.open(
-          services,
+        final first = await services.localVideo.open(
           one.path,
           documentIdentity: 'document-one',
         );
@@ -73,16 +71,14 @@ void _case1() {
           const Duration(seconds: 60),
         );
         first.offline!.close();
-        final second = await LocalVideo.open(
-          services,
+        final second = await services.localVideo.open(
           two.path,
           documentIdentity: 'document-one',
         );
         expect(second.item.id, first.item.id);
         expect(second.position, const Duration(seconds: 12));
         second.offline!.close();
-        final other = await LocalVideo.open(
-          services,
+        final other = await services.localVideo.open(
           two.path,
           documentIdentity: 'document-two',
         );

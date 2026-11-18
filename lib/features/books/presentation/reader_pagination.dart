@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/gestures.dart';
@@ -48,6 +49,35 @@ final class _ReaderLayout {
     this.headingEnd = 0,
     this.textAlign = TextAlign.start,
   }) {
+    for (final _ in _paginate()) {
+      /* Fully drain for synchronous callers. */
+    }
+  }
+
+  _ReaderLayout.pending(
+    this.text,
+    this.style,
+    this.size,
+    this.scaler,
+    this.direction, {
+    this.headingEnd = 0,
+    this.textAlign = TextAlign.start,
+  });
+
+  Future<bool> complete(bool Function() current) async {
+    final budget = Stopwatch()..start();
+    for (final _ in _paginate(current: current)) {
+      if (budget.elapsedMilliseconds >= 6) {
+        // TextPainter must stay on the UI isolate, but layout need not occupy
+        // the entire event loop. Release it for input, painting and cancellation.
+        await Future<void>.delayed(Duration.zero);
+        budget.reset();
+      }
+    }
+    return current();
+  }
+
+  Iterable<void> _paginate({bool Function()? current}) sync* {
     final fontSize = scaler.scale(style.fontSize ?? 21).clamp(1, 160);
     final capacity =
         (size.width /
@@ -59,7 +89,9 @@ final class _ReaderLayout {
     var start = 0;
     var top = 0.0;
     try {
-      while (start < text.length) {
+      // Drain cancellation through the generator itself so its finally block
+      // runs. Abandoning a sync* iterator at a yield would skip disposal.
+      while (start < text.length && (current?.call() ?? true)) {
         var end = math.min(start + window, text.length);
         if (end < text.length && _lowSurrogate(text.codeUnitAt(end))) end--;
         painter.text = span(start, end);
@@ -91,6 +123,7 @@ final class _ReaderLayout {
         );
         top += painter.height;
         start = end;
+        yield null;
       }
     } finally {
       painter.dispose();
@@ -238,6 +271,7 @@ class ReaderViewport extends StatefulWidget {
     required this.onBoundary,
     required this.onSelection,
     required this.onAnnotate,
+    this.onCleanup,
     this.highlight,
     this.align = TextAlign.start,
   });
@@ -258,6 +292,7 @@ class ReaderViewport extends StatefulWidget {
   final ValueChanged<int> onBoundary;
   final ValueChanged<String> onSelection;
   final VoidCallback onAnnotate;
+  final VoidCallback? onCleanup;
 
   @override
   State<ReaderViewport> createState() => ReaderViewportState();
@@ -270,6 +305,8 @@ class ReaderViewportState extends State<ReaderViewport> {
   ScrollController? _scroller;
   _ReaderLayout? _layout;
   Object? _layoutKey;
+  Object? _pendingLayoutKey;
+  int _layoutGeneration = 0;
   late ReaderProgress _progress = widget.initial;
   int _index = 0;
   double _overscroll = 0;
@@ -457,7 +494,7 @@ class ReaderViewportState extends State<ReaderViewport> {
     return false;
   }
 
-  void _relayout(Size size, TextScaler scaler, TextDirection direction) {
+  bool _relayout(Size size, TextScaler scaler, TextDirection direction) {
     final key = (
       widget.text,
       widget.titleLength,
@@ -467,7 +504,13 @@ class ReaderViewportState extends State<ReaderViewport> {
       direction,
       widget.align,
     );
+    if (_layoutKey != key && widget.text.length > 12000) {
+      _prepareLongLayout(key, size, scaler, direction);
+      return false;
+    }
     if (_layoutKey != key) {
+      _layoutGeneration++;
+      _pendingLayoutKey = null;
       _layout = _ReaderLayout(
         widget.text,
         widget.style,
@@ -520,6 +563,39 @@ class ReaderViewportState extends State<ReaderViewport> {
         pages: progress.pages,
       ));
     });
+    return true;
+  }
+
+  void _prepareLongLayout(
+    Object key,
+    Size size,
+    TextScaler scaler,
+    TextDirection direction,
+  ) {
+    if (_pendingLayoutKey == key) return;
+    _pendingLayoutKey = key;
+    final generation = ++_layoutGeneration;
+    final layout = _ReaderLayout.pending(
+      widget.text,
+      widget.style,
+      size,
+      scaler,
+      direction,
+      headingEnd: widget.titleLength,
+      textAlign: widget.align,
+    );
+    bool current() => mounted && _layoutGeneration == generation;
+    unawaited(
+      layout.complete(current).then((completed) {
+        if (!completed || !current()) return;
+        setState(() {
+          _layout = layout;
+          _layoutKey = key;
+          _pendingLayoutKey = null;
+          _laidOutMode = null;
+        });
+      }),
+    );
   }
 
   Widget _text(int index) {
@@ -562,6 +638,14 @@ class ReaderViewportState extends State<ReaderViewport> {
           anchors: region.contextMenuAnchors,
           buttonItems: [
             ...region.contextMenuButtonItems,
+            if (widget.onCleanup != null)
+              ContextMenuButtonItem(
+                label: '隐藏或替换',
+                onPressed: () {
+                  widget.onCleanup!();
+                  ContextMenuController.removeAny();
+                },
+              ),
             ContextMenuButtonItem(
               label: '摘录或写笔记',
               onPressed: () {
@@ -599,86 +683,102 @@ class ReaderViewportState extends State<ReaderViewport> {
         direction,
         widget.align,
       );
+      if (_pendingLayoutKey != null && _pendingLayoutKey != key) {
+        _pendingLayoutKey = null;
+        _layoutGeneration++;
+      }
       if (_layoutKey != key || _laidOutMode != widget.mode) {
-        _relayout(size, scaler, direction);
+        if (!_relayout(size, scaler, direction)) {
+          return const Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                CircularProgressIndicator(),
+                SizedBox(height: 12),
+                Text('正在排版长章节…'),
+              ],
+            ),
+          );
+        }
         _laidOutMode = widget.mode;
       }
-      final layout = _layout!;
-      // The scroll or curl recognizer receives a horizontal drag before the
-      // selection area. Long presses and mouse selection still reach the text.
-      return ClipRect(
-        child: _selectable(switch (widget.mode) {
-          ReaderTurnMode.curl => ReaderCurl(
-            key: _curl,
-            paper: widget.palette.paper,
-            background: ReaderPaperSurface(
-              palette: widget.palette,
-              texture: widget.texture,
-            ),
-            animate: _animate,
-            page: _index,
-            canTurn: (delta) {
-              final target = _index + delta;
-              return target >= 0 && target < layout.slices.length ||
-                  widget.canCross(delta);
-            },
-            onTurn: (delta) {
-              final target = _index + delta;
-              if (target >= 0 && target < layout.slices.length) {
-                _pageChanged(target);
-              } else {
-                widget.onBoundary(delta);
-              }
-            },
-            pageBuilder: (index, selectable) {
-              if (index < 0 || index >= layout.slices.length) {
-                return const SizedBox.expand();
-              }
-              final page = _pageText(index, pagePadding);
-              return selectable
-                  ? page
-                  : SelectionContainer.disabled(child: page);
-            },
+      return _renderViewport(_layout!, pagePadding);
+    },
+  );
+
+  Widget _renderViewport(_ReaderLayout layout, EdgeInsets pagePadding) {
+    // The scroll or curl recognizer receives a horizontal drag before the
+    // selection area. Long presses and mouse selection still reach the text.
+    return ClipRect(
+      child: _selectable(switch (widget.mode) {
+        ReaderTurnMode.curl => ReaderCurl(
+          key: _curl,
+          paper: widget.palette.paper,
+          background: ReaderPaperSurface(
+            palette: widget.palette,
+            texture: widget.texture,
           ),
-          ReaderTurnMode.scroll => Padding(
-            padding: pagePadding,
-            child: NotificationListener<ScrollNotification>(
-              onNotification: _onScroll,
-              child: Scrollbar(
+          animate: _animate,
+          page: _index,
+          canTurn: (delta) {
+            final target = _index + delta;
+            return target >= 0 && target < layout.slices.length ||
+                widget.canCross(delta);
+          },
+          onTurn: (delta) {
+            final target = _index + delta;
+            if (target >= 0 && target < layout.slices.length) {
+              _pageChanged(target);
+            } else {
+              widget.onBoundary(delta);
+            }
+          },
+          pageBuilder: (index, selectable) {
+            if (index < 0 || index >= layout.slices.length) {
+              return const SizedBox.expand();
+            }
+            final page = _pageText(index, pagePadding);
+            return selectable ? page : SelectionContainer.disabled(child: page);
+          },
+        ),
+        ReaderTurnMode.scroll => Padding(
+          padding: pagePadding,
+          child: NotificationListener<ScrollNotification>(
+            onNotification: _onScroll,
+            child: Scrollbar(
+              controller: _scroller,
+              child: ListView.builder(
+                key: ValueKey(_scroller),
                 controller: _scroller,
-                child: ListView.builder(
-                  key: ValueKey(_scroller),
-                  controller: _scroller,
-                  physics: _physics,
-                  padding: EdgeInsets.zero,
-                  itemCount: layout.slices.length,
-                  itemExtentBuilder: (index, _) => index < layout.slices.length
-                      ? layout.slices[index].height
-                      : null,
-                  itemBuilder: (_, index) =>
-                      Align(alignment: Alignment.topLeft, child: _text(index)),
-                ),
+                physics: _physics,
+                padding: EdgeInsets.zero,
+                itemCount: layout.slices.length,
+                itemExtentBuilder: (index, _) => index < layout.slices.length
+                    ? layout.slices[index].height
+                    : null,
+                itemBuilder: (_, index) =>
+                    Align(alignment: Alignment.topLeft, child: _text(index)),
               ),
             ),
           ),
-          _ => NotificationListener<ScrollNotification>(
-            onNotification: _onScroll,
-            child: PageView.builder(
-              key: ValueKey(_pager),
-              controller: _pager,
-              physics: _physics,
-              scrollDirection: widget.mode.horizontal
-                  ? Axis.horizontal
-                  : Axis.vertical,
-              itemCount: layout.slices.length,
-              onPageChanged: _pageChanged,
-              itemBuilder: (_, index) => _pageText(index, pagePadding),
-            ),
+        ),
+        _ => NotificationListener<ScrollNotification>(
+          onNotification: _onScroll,
+          child: PageView.builder(
+            key: ValueKey(_pager),
+            controller: _pager,
+            physics: _physics,
+            scrollDirection: widget.mode.horizontal
+                ? Axis.horizontal
+                : Axis.vertical,
+            itemCount: layout.slices.length,
+            onPageChanged: _pageChanged,
+            itemBuilder: (_, index) => _pageText(index, pagePadding),
           ),
-        }),
-      );
-    },
-  );
+        ),
+      }),
+    );
+  }
 }
 
 /// Pointer taps coexist with text selection and the viewport's drag gestures.

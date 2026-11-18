@@ -2,18 +2,27 @@ import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
 import '../../../core/network/cancellation_token.dart';
+import '../../../core/network/request_scheduler.dart';
 import '../../../core/network/document_client.dart';
 import '../../../core/platform/platform_services.dart';
+import '../../../core/platform/foreground_workload.dart';
+import '../application/reader_preloader.dart';
+import 'reader_cleanup_sheet.dart';
 import '../data/books_repository.dart';
+import '../data/book_chapter_policy.dart';
+import '../../supervision/domain/supervision_rules.dart';
+import 'book_text_policy_dialog.dart';
 import '../data/book_mixed_content.dart';
 import '../domain/book.dart';
 import 'reader_pagination.dart';
 import 'reader_automation.dart';
 import 'reader_style.dart';
 import 'reader_system_ui.dart';
+import 'reader_safe_area.dart';
 import 'book_image_chapter.dart';
 
 part 'reader_tools.dart';
@@ -51,6 +60,17 @@ final class _BookReaderPageState extends State<BookReaderPage>
   CancellationToken? _token;
   CancellationToken? _endToken;
   Timer? _saveTimer, _clock;
+  final _minute = ValueNotifier<DateTime>(DateTime.now());
+  late final _releaseReading = ForegroundWorkload.instance.beginReading();
+  late final _preloader = ReaderPreloader((chapter, token) async {
+    await withRequestPriority(
+      RequestPriority.background,
+      () => _books.readText(widget.book, chapter, token),
+    );
+  });
+  bool _foreground = true;
+  String? _lastSavedChapter;
+  ReaderProgress? _lastSavedProgress;
   late final _automation = ReaderAutomation(this, _advanceAutomatically);
   bool _autoRunning = false;
   bool _preferencesLoaded = false;
@@ -67,6 +87,7 @@ final class _BookReaderPageState extends State<BookReaderPage>
   bool _reverse = false, _controls = false, _loading = true;
   bool _checkingEnd = false;
   String? _error;
+  ChapterContentBlocked? _blockedChapter;
   double? _seeking;
 
   BooksRepository get _books => widget.repository;
@@ -83,37 +104,49 @@ final class _BookReaderPageState extends State<BookReaderPage>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    _releaseReading;
+    _books.readingCleanup.addListener(_policyChanged);
     _books.policy.addListener(_policyChanged);
     _books.sourceRiskChanges.addListener(_policyChanged);
     unawaited(_start());
-    _clock = Timer.periodic(const Duration(minutes: 1), (_) {
-      if (mounted && _style.status) setState(() {});
-    });
+    _syncClock();
   }
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed) {
+    _foreground = state == AppLifecycleState.resumed;
+    _syncClock();
+    if (_foreground) {
+      _schedulePreload();
       if (_preferencesLoaded && ModalRoute.of(context)?.isCurrent == true) {
         _systemUi.apply(_style.immersive);
       }
     } else {
+      _preloader.cancel();
       _stopAutomation();
+      _saveTimer?.cancel();
+      _saveTimer = null;
       _savePosition();
     }
   }
 
   Future<void> _start() async {
     try {
+      await _books.readingCleanup.load();
       final data = await _books.store.read('books_reader_preferences');
       if (data is Map && mounted) {
-        setState(() => _style = ReaderPreferences.fromJson(data));
+        var style = ReaderPreferences.fromJson(data);
+        if (!await _books.readerFonts.ensure(style.family)) {
+          style = style.copyWith(family: 'NotoSerifSC');
+        }
+        if (mounted) setState(() => _style = style);
       }
     } on Exception {
       // A damaged preference record can be replaced in the style panel.
     }
     if (mounted) {
       _preferencesLoaded = true;
+      _syncClock();
       _systemUi.apply(_style.immersive);
     }
     if (mounted && _token == null) {
@@ -143,22 +176,33 @@ final class _BookReaderPageState extends State<BookReaderPage>
       setState(() => _controls = false);
     }
     _progress.value = progress;
-    _saveTimer?.cancel();
-    _saveTimer = Timer(const Duration(milliseconds: 550), _savePosition);
+    _saveTimer ??= Timer(const Duration(seconds: 3), () {
+      _saveTimer = null;
+      _savePosition();
+    });
   }
 
   void _savePosition() {
     if (!_ready) return;
     final progress = _progress.value;
+    if (_lastSavedChapter == _chapter.id &&
+        _lastSavedProgress?.offset == progress.offset &&
+        _lastSavedProgress?.fraction == progress.fraction) {
+      return;
+    }
+    _lastSavedChapter = _chapter.id;
+    _lastSavedProgress = progress;
     unawaited(
       _books.store
-          .saveBook(
+          .saveReadingPosition(
             widget.book,
-            last: _chapter,
-            position: progress.fraction,
-            textOffset: progress.offset,
+            _chapter,
+            progress.fraction,
+            progress.offset,
           )
-          .onError((_, _) {}),
+          .onError((_, _) {
+            _lastSavedChapter = null;
+          }),
     );
   }
 
@@ -168,7 +212,9 @@ final class _BookReaderPageState extends State<BookReaderPage>
     ReaderProgress? location,
   }) async {
     _saveTimer?.cancel();
+    _saveTimer = null;
     _savePosition();
+    _preloader.cancel();
     _token?.cancel();
     final token = _token = CancellationToken();
     _retryPosition = location;
@@ -178,6 +224,7 @@ final class _BookReaderPageState extends State<BookReaderPage>
       _imageViewport = GlobalKey();
       _loading = true;
       _error = null;
+      _blockedChapter = null;
       _text = _selection = _sourceStatus = '';
       _images = const [];
       _mixedSegments = null;
@@ -209,6 +256,13 @@ final class _BookReaderPageState extends State<BookReaderPage>
         return;
       }
       await _loadTextChapter(chapter, token, restored);
+    } on ChapterContentBlocked catch (error) {
+      if (mounted && identical(_token, token) && !token.isCancelled) {
+        _blockedChapter = error;
+        _fail(token, error.message);
+      }
+    } on ContentBlocked catch (error) {
+      _fail(token, error.message);
     } on FormatException catch (error) {
       if (widget.book.kind == BookKind.comic) {
         _fail(token, error.message);
@@ -274,6 +328,20 @@ final class _BookReaderPageState extends State<BookReaderPage>
       }
     }
     if (!mounted || token.isCancelled) return;
+    final body = _cleanText(
+      result.sourceBook,
+      result.sourceChapter,
+      result.text,
+    );
+    mixed = [
+      for (final part in mixed)
+        if (part is BookTextSegment)
+          BookTextSegment(
+            _cleanText(result.sourceBook, result.sourceChapter, part.text),
+          )
+        else
+          part,
+    ];
     setState(() {
       if (mixed.isNotEmpty) {
         _mixedSegments = mixed;
@@ -284,7 +352,7 @@ final class _BookReaderPageState extends State<BookReaderPage>
         _imageBook = result.sourceBook;
         _imageSourceChapter = result.sourceChapter;
       } else if (images.isEmpty) {
-        _text = _chapterText(chapter.title, result.text);
+        _text = _chapterText(chapter.title, body);
       } else {
         _images = images;
         _imageBook = result.sourceBook;
@@ -295,11 +363,13 @@ final class _BookReaderPageState extends State<BookReaderPage>
           : '已换源 · ${result.sourceBook.uri.host}';
       _loading = false;
     });
+    _schedulePreload();
     unawaited(
       _books.store
           .saveBook(
             widget.book,
             chapters: widget.book.sourceId == 'local' ? null : _chapters,
+            preserveCatalog: true,
             last: chapter,
             position: restored.fraction,
             textOffset: restored.offset,
@@ -326,6 +396,7 @@ final class _BookReaderPageState extends State<BookReaderPage>
           .saveBook(
             widget.book,
             chapters: _chapters,
+            preserveCatalog: true,
             last: chapter,
             position: _progress.value.fraction,
           )
@@ -405,7 +476,11 @@ final class _BookReaderPageState extends State<BookReaderPage>
               _chapters = fresh!;
               _chapter = currentChapter;
             });
-            await _books.store.saveBook(widget.book, chapters: fresh);
+            await _books.store.saveBook(
+              widget.book,
+              chapters: fresh,
+              preserveCatalog: true,
+            );
           }
         }
       } on Exception {
@@ -503,8 +578,81 @@ final class _BookReaderPageState extends State<BookReaderPage>
     return KeyEventResult.ignored;
   }
 
-  Future<void> _settings() =>
-      _editStyle(() => showReaderSettings(context, _style, _applyStyle));
+  Future<void> _settings() => _editStyle(_fullSettings);
+
+  Future<void> _fullSettings() => showReaderSettings(
+    context,
+    _style,
+    _applyStyle,
+    fontStore: _books.readerFonts,
+    onCleanupRules: () => showReadingCleanupRules(context, _books, widget.book),
+    onClearCache: () async {
+      _preloader.cancel();
+      try {
+        await _books.store.clearReadingCache(widget.book);
+        if (mounted) _readerNotice('本书临时阅读缓存已清除，离线下载保留');
+      } on Exception {
+        if (mounted) _readerNotice('清除缓存失败，请重试');
+      }
+    },
+  );
+
+  Future<void> _cleanupSelection() async {
+    _stopAutomation();
+    try {
+      await editReadingCleanup(
+        context,
+        _books,
+        widget.book,
+        selected: _selection,
+        body: _text,
+      );
+    } on Exception {
+      if (mounted) _readerNotice('无法打开阅读净化规则');
+    }
+  }
+
+  String _cleanText(Book book, BookChapter chapter, String original) {
+    final cleaned = _books.readingCleanup.apply(widget.book, original);
+    // The original has already passed readWithFallback; check the result too.
+    if (cleaned == original) return original;
+    return _books.chapterPolicy.checkPrepared(book, chapter, cleaned);
+  }
+
+  void _schedulePreload() {
+    _preloader.cancel();
+    if (!_ready ||
+        !_foreground ||
+        _style.preloadChapters == 0 ||
+        widget.book.sourceId == 'local' ||
+        _images.isNotEmpty ||
+        _index < 0) {
+      return;
+    }
+    final next = _chapters
+        .skip(_index + 1)
+        .take(_style.preloadChapters)
+        .toList();
+    _preloader.schedule(
+      next,
+      allowed: () async =>
+          !_style.preloadUnmeteredOnly ||
+          !(await (widget.platform?.isMetered() ??
+              (defaultTargetPlatform == TargetPlatform.android
+                  ? PlatformServices.queryMeteredConnection()
+                  : Future.value(false)))),
+    );
+  }
+
+  void _syncClock() {
+    _clock?.cancel();
+    _clock = null;
+    if (!_foreground || !_style.status) return;
+    _minute.value = DateTime.now();
+    _clock = Timer.periodic(const Duration(minutes: 1), (_) {
+      _minute.value = DateTime.now();
+    });
+  }
 
   /// Shared by the full style sheet and the compact phone sheet.
   void _applyStyle(ReaderPreferences settings) {
@@ -514,32 +662,43 @@ final class _BookReaderPageState extends State<BookReaderPage>
       _systemUi.apply(settings.immersive);
     }
     setState(() => _style = settings);
+    if (previous.status != settings.status) _syncClock();
+    if (previous.preloadChapters != settings.preloadChapters ||
+        previous.preloadUnmeteredOnly != settings.preloadUnmeteredOnly) {
+      _schedulePreload();
+    }
     if (!settings.autoEnabled) {
       _stopAutomation();
     } else if (!previous.autoEnabled ||
         previous.mode != settings.mode ||
         previous.autoSeconds != settings.autoSeconds) {
-      _startAutomation();
+      if (!_configuring) _startAutomation();
     }
   }
 
   Future<void> _quickStyle() => _editStyle(() async {
     final more = await showReaderQuickStyle(context, _style, _applyStyle);
     if (mounted && more == true) {
-      await showReaderSettings(context, _style, _applyStyle);
+      await _fullSettings();
     }
   });
 
   /// Opens a style sheet and persists the result once it closes; both sheets
   /// write the same preference record.
   Future<void> _editStyle(Future<void> Function() open) async {
+    final wasRunning = _autoRunning;
+    final wasEnabled = _style.autoEnabled;
     _configuring = true;
+    _stopAutomation();
     try {
       await open();
     } finally {
       _configuring = false;
     }
     if (!mounted) return;
+    if (_style.autoEnabled && _foreground && (wasRunning || !wasEnabled)) {
+      _startAutomation();
+    }
     try {
       await _books.store.write('books_reader_preferences', _style.toJson());
     } on Exception {
@@ -554,6 +713,10 @@ final class _BookReaderPageState extends State<BookReaderPage>
     _systemUi.restore();
     _saveTimer?.cancel();
     _clock?.cancel();
+    _minute.dispose();
+    _preloader.dispose();
+    _releaseReading();
+    _books.readingCleanup.removeListener(_policyChanged);
     _savePosition();
     _token?.cancel();
     _endToken?.cancel();
@@ -604,13 +767,12 @@ final class _BookReaderPageState extends State<BookReaderPage>
       Positioned.fill(
         child: ReaderPaperSurface(palette: palette, texture: _style.texture),
       ),
-      SafeArea(
-        top: !_style.immersive,
-        bottom: !_style.immersive,
+      ReaderSafeArea(
+        preferences: _style,
         child: Listener(
           onPointerDown: (_) => _stopAutomation(),
           onPointerSignal: (_) => _stopAutomation(),
-          child: _content(palette),
+          child: RepaintBoundary(child: _content(palette)),
         ),
       ),
       if (_controls || !_ready)
@@ -638,29 +800,57 @@ final class _BookReaderPageState extends State<BookReaderPage>
     _cross(direction, lastPage: false);
   }
 
+  Widget _readingError(ReaderPalette palette) {
+    return Center(
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              _error!,
+              textAlign: TextAlign.center,
+              style: TextStyle(color: palette.ink),
+            ),
+            TextButton(
+              onPressed: () =>
+                  _open(_chapter, resume: true, location: _retryPosition),
+              child: const Text('重试正文'),
+            ),
+            if (_blockedChapter case final block?) ...[
+              TextButton(
+                onPressed: () async {
+                  if (await reviewBlockedChapter(context, _books, block) &&
+                      mounted) {
+                    await _open(
+                      _chapter,
+                      resume: true,
+                      location: _retryPosition,
+                    );
+                  }
+                },
+                child: const Text('验证并查看命中原因 / 复核'),
+              ),
+              TextButton(
+                onPressed: () => showBookTextReplacements(context, _books),
+                child: const Text('验证并设置文本替换'),
+              ),
+              if (_index < _chapters.length - 1)
+                TextButton(
+                  onPressed: () => _open(_chapters[_index + 1]),
+                  child: const Text('跳过本章，阅读下一章'),
+                ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _content(ReaderPalette palette) {
     if (_loading) return const Center(child: CircularProgressIndicator());
     if (_error != null) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                _error!,
-                textAlign: TextAlign.center,
-                style: TextStyle(color: palette.ink),
-              ),
-              TextButton(
-                onPressed: () =>
-                    _open(_chapter, resume: true, location: _retryPosition),
-                child: const Text('重试正文'),
-              ),
-            ],
-          ),
-        ),
-      );
+      return _readingError(palette);
     }
     if (_images.isNotEmpty) {
       return Focus(
@@ -717,6 +907,7 @@ final class _BookReaderPageState extends State<BookReaderPage>
           onBoundary: _cross,
           onSelection: (selection) => _selection = selection,
           onAnnotate: _addAnnotation,
+          onCleanup: _cleanupSelection,
         ),
       ),
     );
@@ -829,18 +1020,21 @@ final class _BookReaderPageState extends State<BookReaderPage>
                   ),
                 ),
                 Expanded(
-                  child: Text(
-                    _style.status
-                        ? MaterialLocalizations.of(context).formatTimeOfDay(
-                            TimeOfDay.now(),
-                            alwaysUse24HourFormat: true,
-                          )
-                        : '',
-                    textAlign: TextAlign.right,
-                    maxLines: 1,
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: palette.ink.withValues(alpha: .76),
+                  child: ValueListenableBuilder<DateTime>(
+                    valueListenable: _minute,
+                    builder: (context, now, _) => Text(
+                      _style.status
+                          ? MaterialLocalizations.of(context).formatTimeOfDay(
+                              TimeOfDay.fromDateTime(now),
+                              alwaysUse24HourFormat: true,
+                            )
+                          : '',
+                      textAlign: TextAlign.right,
+                      maxLines: 1,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: palette.ink.withValues(alpha: .76),
+                      ),
                     ),
                   ),
                 ),

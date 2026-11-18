@@ -14,6 +14,7 @@ final class AppDatabase extends GeneratedDatabase {
   final _changes = StreamController<Set<String>?>.broadcast();
   bool _closed = false;
   Future<void>? _closing;
+  final _notificationKey = Object();
   Stream<void> get changes => _changes.stream.map((_) {});
   Stream<void> changesFor(Set<String> tables) => _changes.stream
       .where((changed) => changed == null || changed.any(tables.contains))
@@ -96,6 +97,12 @@ final class AppDatabase extends GeneratedDatabase {
   }
 
   void changed({Set<String>? tables}) {
+    final batch = Zone.current[_notificationKey] as _ChangeBatch?;
+    if (batch != null) {
+      batch.add(tables);
+      return;
+    }
+    if (tables != null && tables.isEmpty) return;
     if (!_changes.isClosed) {
       _changes.add(tables == null ? null : Set.unmodifiable(tables));
     }
@@ -103,8 +110,12 @@ final class AppDatabase extends GeneratedDatabase {
 
   Future<T> atomic<T>(Future<T> Function() work, {Set<String>? tables}) async {
     _checkOpen();
-    final result = await transaction(work);
-    changed(tables: tables);
+    final batch = _ChangeBatch();
+    final result = await transaction(
+      () => runZoned(work, zoneValues: {_notificationKey: batch}),
+    );
+    batch.add(tables);
+    changed(tables: batch.all ? null : batch.tables);
     return result;
   }
 
@@ -119,5 +130,17 @@ final class AppDatabase extends GeneratedDatabase {
     _closed = true;
     await _changes.close();
     await super.close();
+  }
+}
+
+final class _ChangeBatch {
+  bool all = false;
+  final tables = <String>{};
+  void add(Set<String>? changed) {
+    if (changed == null) {
+      all = true;
+    } else {
+      tables.addAll(changed);
+    }
   }
 }

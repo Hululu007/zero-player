@@ -7,6 +7,7 @@ import '../../settings/application/settings_controller.dart';
 import '../data/books_repository.dart';
 import '../domain/book.dart';
 import 'book_site_checks.dart';
+import '../../../core/platform/foreground_workload.dart';
 
 /// Runs only while the app process is alive, not as an OS background service.
 final class BookSiteMonitor {
@@ -27,16 +28,34 @@ final class BookSiteMonitor {
   int? _configurationAtStart;
   bool _started = false, _closed = false;
   int _manualOperations = 0;
+  int _managementViews = 0;
+
+  /// A management view holds this lease until disposal. Policy checks remain
+  /// active; only automatic network sampling is suspended.
+  VoidCallback pauseForManagement() {
+    _managementViews++;
+    _token?.cancel();
+    var released = false;
+    return () {
+      if (released) return;
+      released = true;
+      _managementViews--;
+    };
+  }
+
   final _manualTokens = <CancellationToken>{};
   final _manualDone = <Completer<void>>{};
   late String _policySnapshot;
 
   bool get _allowed =>
       !_closed &&
+      ForegroundWorkload.instance.maintenanceAllowed &&
       _manualOperations == 0 &&
+      _managementViews == 0 &&
       !checks.books.sourceRisksSuspended &&
       !checks.books.sourceConfigurationChanging &&
       settings.value.backgroundProbe &&
+      settings.value.bookSiteAutoCheck &&
       !checks.books.policy.supervision.corrupted;
 
   void start() {
@@ -53,6 +72,7 @@ final class BookSiteMonitor {
       }),
     );
     _policySnapshot = bookSitePolicySnapshot(checks.books.policy);
+    ForegroundWorkload.instance.addListener(_policyChanged);
     settings.addListener(_policyChanged);
     checks.books.policy.addListener(_policyChanged);
     _initial = Timer(startDelay, () => unawaited(check()));
@@ -164,6 +184,7 @@ final class BookSiteMonitor {
     _initial?.cancel();
     _periodic?.cancel();
     if (_started) {
+      ForegroundWorkload.instance.removeListener(_policyChanged);
       settings.removeListener(_policyChanged);
       checks.books.policy.removeListener(_policyChanged);
     }

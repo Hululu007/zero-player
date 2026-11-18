@@ -5,7 +5,7 @@ const _missingSiteSource = 'missing';
 
 /// Increase when homepage or script-clue interpretation changes, so previous
 /// samples are revisited without clearing their history or strong risk marks.
-const bookSiteInspectionRevision = 3;
+const bookSiteInspectionRevision = 4;
 
 Map<String, Object> _siteObservedValue(String fingerprint) => {
   'fingerprint': fingerprint,
@@ -24,7 +24,7 @@ extension BookSiteSourceObservation on BooksRepository {
   /// Observe local configuration at startup and before exposing old checks.
   /// This performs no requests and does not execute source rules.
   Future<void> ensureSiteObservations() {
-    if (_evidenceClosing || _riskSuspended) {
+    if (_evidenceClosing || _sourceAccess.suspended) {
       return Future.error(const RequestCancelled());
     }
     final existing = _siteObservation;
@@ -48,7 +48,8 @@ extension BookSiteSourceObservation on BooksRepository {
   void _requireSiteObservationAllowed(int restoreRevision) {
     // A normally closing repository waits for already registered observation
     // to commit; otherwise a quick exit could hide an intermediate version.
-    if (_riskSuspended || restoreRevision != _siteObservationRestoreRevision) {
+    if (_sourceAccess.suspended ||
+        restoreRevision != _siteObservationRestoreRevision) {
       throw const RequestCancelled();
     }
   }

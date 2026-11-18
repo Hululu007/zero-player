@@ -182,59 +182,15 @@ final class AudiobookFiles {
       await root.create(recursive: true);
       final budget = await _downloadBudget();
       staging = await root.createTemp('.pending-');
-      final transfer = CancellationToken();
-      final unlink = token.listen(transfer.cancel);
-      final deadline = Timer(const Duration(minutes: 2), transfer.cancel);
-      late String name;
-      try {
-        for (var attempt = 0; ; attempt++) {
-          try {
-            await downloadMp4(
-              uri: uri,
-              directory: staging,
-              http: client.network.http,
-              policy: HeaderPolicy({uri: const {}}),
-              cancellation: transfer,
-              maxBytes: budget,
-              validateTarget: (target) {
-                authorize();
-                source.requestTarget(target, media: true);
-                requestGuard?.call(target, null);
-              },
-              progress: (_, _, _) async => authorize(),
-              validate: (file, cancellation) async {
-                final head = await file
-                    .openRead(0, 64)
-                    .expand((chunk) => chunk)
-                    .toList();
-                final extension = audiobookExtension(
-                  head,
-                  isM4b: uri.path.toLowerCase().endsWith('.m4b'),
-                );
-                name = 'audio.$extension';
-                authorize();
-                await validate(file, cancellation, extension);
-              },
-              fileName: 'audio.download',
-            );
-            break;
-          } on Exception catch (error) {
-            if (attempt >= 2 ||
-                transfer.isCancelled ||
-                !(error is SocketException ||
-                    error is HttpException ||
-                    error is TimeoutException)) {
-              rethrow;
-            }
-          }
-        }
-      } on RequestCancelled {
-        token.check();
-        throw const FormatException('听书下载超时，请重试');
-      } finally {
-        deadline.cancel();
-        unlink();
-      }
+      final name = await _transferAudio(
+        source,
+        uri,
+        staging,
+        token,
+        authorize,
+        budget,
+        requestGuard,
+      );
       await File(
         p.join(staging.path, 'audio.download'),
       ).rename(p.join(staging.path, name));
@@ -262,6 +218,71 @@ final class AudiobookFiles {
         await staging.delete(recursive: true);
       }
     }
+  }
+
+  Future<String> _transferAudio(
+    BookSource source,
+    Uri uri,
+    Directory staging,
+    CancellationToken token,
+    void Function() authorize,
+    int budget,
+    BookRequestGuard? requestGuard,
+  ) async {
+    final transfer = CancellationToken();
+    final unlink = token.listen(transfer.cancel);
+    final deadline = Timer(const Duration(minutes: 2), transfer.cancel);
+    late String name;
+    try {
+      for (var attempt = 0; ; attempt++) {
+        try {
+          await downloadMp4(
+            uri: uri,
+            directory: staging,
+            http: client.network.http,
+            policy: HeaderPolicy({uri: const {}}),
+            cancellation: transfer,
+            maxBytes: budget,
+            validateTarget: (target) {
+              authorize();
+              source.requestTarget(target, media: true);
+              requestGuard?.call(target, null);
+            },
+            progress: (_, _, _) async => authorize(),
+            validate: (file, cancellation) async {
+              final head = await file
+                  .openRead(0, 64)
+                  .expand((chunk) => chunk)
+                  .toList();
+              final extension = audiobookExtension(
+                head,
+                isM4b: uri.path.toLowerCase().endsWith('.m4b'),
+              );
+              name = 'audio.$extension';
+              authorize();
+              await validate(file, cancellation, extension);
+            },
+            fileName: 'audio.download',
+          );
+          break;
+        } on Exception catch (error) {
+          if (attempt >= 2 ||
+              transfer.isCancelled ||
+              !(error is SocketException ||
+                  error is HttpException ||
+                  error is TimeoutException)) {
+            rethrow;
+          }
+        }
+      }
+    } on RequestCancelled {
+      token.check();
+      throw const FormatException('听书下载超时，请重试');
+    } finally {
+      deadline.cancel();
+      unlink();
+    }
+    return name;
   }
 
   Future<int> _downloadBudget() async {

@@ -126,9 +126,15 @@ final class _AppShellState extends State<AppShell> {
                     alignment: Alignment.topCenter,
                     heightFactor: _barVisible ? 1 : 0,
                     duration: _animationDuration(context),
-                    child: ExcludeFocus(
-                      excluding: !_barVisible,
-                      child: _appBar(wide),
+                    child: IgnorePointer(
+                      ignoring: !_barVisible,
+                      child: ExcludeSemantics(
+                        excluding: !_barVisible,
+                        child: ExcludeFocus(
+                          excluding: !_barVisible,
+                          child: _appBar(wide),
+                        ),
+                      ),
                     ),
                   ),
                 ),
@@ -144,7 +150,7 @@ final class _AppShellState extends State<AppShell> {
               ],
             ),
           ),
-          bottomNavigationBar: _navigationBar(full: full, wide: wide),
+          bottomNavigationBar: _navigationBar(wide: wide),
         ),
       ),
     );
@@ -155,28 +161,12 @@ final class _AppShellState extends State<AppShell> {
       ? Duration.zero
       : const Duration(milliseconds: 180);
 
-  Widget? _navigationBar({required bool full, required bool wide}) {
+  Widget? _navigationBar({required bool wide}) {
     if (wide || MediaQuery.viewInsetsOf(context).bottom > 0) return null;
-    return ClipRect(
-      child: AnimatedAlign(
-        alignment: Alignment.topCenter,
-        heightFactor: _barVisible ? 1 : 0,
-        duration: _animationDuration(context),
-        child: IgnorePointer(
-          ignoring: !_barVisible,
-          child: ExcludeSemantics(
-            excluding: !_barVisible,
-            child: ExcludeFocus(
-              excluding: !_barVisible,
-              child: MobileBottomNavigation(
-                location: widget.location,
-                onNavigate: (route) => context.go(route),
-                onMore: _open,
-              ),
-            ),
-          ),
-        ),
-      ),
+    return MobileBottomNavigation(
+      location: widget.location,
+      onNavigate: (route) => context.go(route),
+      onMore: _open,
     );
   }
 
@@ -223,7 +213,8 @@ final class _AppShellState extends State<AppShell> {
     if (notification.depth != 0 || notification.metrics.axis != Axis.vertical) {
       return false;
     }
-    if (widget.location == '/reading' || widget.location == '/audiobooks') {
+    if (!usesCompactNavigation(context, widget.services.platform) &&
+        (widget.location == '/reading' || widget.location == '/audiobooks')) {
       return false;
     }
     final delta = notification.scrollDelta ?? 0;
@@ -260,6 +251,7 @@ final class _AppShellState extends State<AppShell> {
 
   PreferredSizeWidget _appBar(bool wide) => AppBar(
     primary: false,
+    toolbarHeight: wide ? null : 48,
     leadingWidth: wide ? 108 : 56,
     leading: wide
         ? Padding(
@@ -289,6 +281,7 @@ final class _AppShellState extends State<AppShell> {
       wide
           ? 'ZERO PLAYER  /  ${_destinations[_index].$2}'
           : _destinations[_index].$2,
+      style: wide ? null : Theme.of(context).textTheme.titleMedium,
     ),
     actions: [
       if (wide) AppFullscreenButton(platform: widget.services.platform),

@@ -36,6 +36,8 @@ void main() {
       for (final route in [
         '/search',
         '/music',
+        '/reading',
+        '/audiobooks',
         '/history',
         '/downloads',
         '/local',

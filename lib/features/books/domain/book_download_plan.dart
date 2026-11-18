@@ -4,10 +4,12 @@ final class BookDownloadPlan {
     this.last,
     this.fallback, {
     this.chapterIds,
+    this.fullBook = false,
+    this.aggregateLatest = false,
   });
 
   final int first, last;
-  final bool fallback;
+  final bool fallback, fullBook, aggregateLatest;
   final List<String>? chapterIds;
 
   static BookDownloadPlan? fromJson(Object? value) {
@@ -22,6 +24,8 @@ final class BookDownloadPlan {
           first,
           last,
           fallback,
+          fullBook: value['fullBook'] == true,
+          aggregateLatest: value['aggregateLatest'] == true,
           chapterIds: ids is List
               ? ids.whereType<String>().take(4000).toList()
               : null,
@@ -35,6 +39,8 @@ final class BookDownloadPlan {
     'first': first,
     'last': last,
     'fallback': fallback,
+    'fullBook': fullBook,
+    'aggregateLatest': aggregateLatest,
     'chapterIds': ?chapterIds,
   };
 }

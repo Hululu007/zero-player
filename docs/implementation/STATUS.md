@@ -1,6 +1,206 @@
 # 实施状态与需求矩阵
 
-更新：2026-11-16（Asia/Shanghai）。本文件是项目当前进度的唯一入口；下文日期章节和需求矩阵保留历史验收范围。
+更新：2026-11-18（Asia/Shanghai）。本文件是项目当前进度的唯一入口；下文日期章节和需求矩阵保留历史验收范围。
+
+## 资源、耗电与流畅度专项评估（2026-11-18）
+
+- 目标与完成：全面评估当前实际工作区的启动、播放、音频、下载、阅读/文档、搜索/直播/来源、缓存/数据库、内容过滤、原生平台和发行资源；形成 [专项报告](PERFORMANCE-OPTIMIZATION-2026-11-18.md)、[证据清单](PERFORMANCE-EVIDENCE-2026-11-18.json)及 [PDF分享版](../../output/pdf/Zero-Player-性能专项优化报告-2026-11-18.pdf)。报告包含30项候选、优先级/难度、实现策略、迁移/回退、分阶段路线及设备验收矩阵。
+- 首批建议：元数据按域通知及隐藏页面失效合并、播放器局部订阅、进度去重及诊断采样/落盘分层、音乐历史增量维护与歌词消息去重；之后按基线推进跨模块资源预算、存储结构和原生优化。区分已有阅读优化、源码确认的冗余和待设备测量收益，不改监管/网络/缓存完整性及来源留存契约。
+- 本轮验证：11个定向入口 **42项通过、退出码0**；`flutter analyze --no-pub lib test integration_test tool test_support` 无问题、退出码0；模块边界 **513文件通过**，保留2条既有播放装配依赖。规模检查仍因 **104条既有超限**失败（test75/tool28/integration_test1/lib0）。日志位于 `build/performance-review-20261118/`；未将前轮1464项全量结果计作本轮重跑。
+- 量化与边界：实读已有0.7.4+74测试包，ARM64 APK **74.48MiB**，三字体压缩合计 **39.59MiB/53.16%**；包体不等于运行内存或节电收益。无Android/TV设备，未新增真实媒体、Windows性能采样、电池或长时测量，未重建包。本轮538个源码/配置清单摘要复核一致，未改业务代码，保留全部既有修改，未提交、推送或发布。
+- 下一步：固定可构建快照并建立同设备profile/Release基线，按报告阶段B逐项消除通知、重建和重复写入，再用工作量、帧时、内存及能耗A/B验收；字体离线策略及进度恢复窗口仅在实施相应选项时确认。
+
+## 代码问题报告核查与修复（2026-11-18）
+
+- 目标与完成：逐项核查 [2026-11-17 问题报告](../code-review-2026-11-17.md)，按本轮开始时实际工作区修订描述并保留原编号映射。原 77 项调整为 **30 项确认并修复（P2 12、P3 18）**、**46 项撤销或证据不足（撤销 41、未证实 5）**、**1 项既有规模债务 F-1**；另外复核原 19 项观察。删除无证据的永久泄漏、无界耗盘及全部入口安全等断言。
+- 已修复：事务提交后通知与回滚隔离、下载元数据原子删除、缓存引用/淘汰竞态、Range 被忽略时避免重复整文件缓存、删除失败延期清理及 pin 释放；补齐批准媒体测试组件的 Range/取消和启动生命周期。
+- 已修复：直播身份保留与坏行隔离、EPG 展示净化、音乐错误提示、独立手动来源探测、Kanju 错形响应提示、下载记录错误恢复、未知时长历史、下载精确续播及队列恢复、完整断点校验失败清理、标记切集回滚、启动重启页退出、退出失败重试和进度显示；保留电子书隐藏目录及省略标记、预读错误隔离并按 UTF-8 字节限制混合缓存。
+- 契约复核：K-7 所述旧来源版本记录是既有明确留存要求；首次全量暴露回收尝试与原回归冲突，已完整撤回回收实现并保留原断言。未改变独立下载预算、有限时关闭、来源归档、监管/内容过滤、网络访问或恢复码边界。
+- 验证：最终 `flutter test --no-pub --reporter expanded` **1464 项通过、12 项按既有配置跳过，退出码 0**；`flutter analyze --no-pub lib test integration_test tool test_support` 无问题；模块边界 **513 文件通过**，保留 2 条已登记播放装配依赖。下载定向 8 项通过，含 Windows .NET 独占句柄导致目录删除受阻及解锁后延期清理；本轮 49 个 Dart 文件格式无变化，`git diff --check` 通过。证据位于 `build/review-recheck-20261118/`，入口及最终日志见核查报告；初期失败日志不作为通过证据。
+- 规模：全仓门禁仍因 **104 条既有超限**失败（test 75、tool 28、integration_test 1、lib 0），本轮改动及新增 Dart 文件无超限；未提高阈值或增加豁免。
+- 验收范围：内存 SQLite、临时目录、受控本机 HTTP、widget/假播放器及 Windows 文件独占回归；未重建安装包，未新增原生播放器/bind 故障注入、Android/TV 实机、真实媒体/书源网络或性能测量。保留原有工作区改动，未提交、推送或发布。
+- 下一步：按原模块职责计划分批消化 F-1；未证实观察仅在获得具体输入、设备或故障复现后立项，平台退出与真实媒体行为保留设备验收边界。
+
+## 搜索最新章节、全本聚合下载及默认主题（2026-11-18）
+
+- 目标与完成：聚合搜索结果展示渠道返回的最新章节及所属渠道，展开后逐渠道展示最新章节和更新时间；渠道未提供章节时明确标注，避免较新但缺章的结果遮掉已有章节信息。精选来源序列化保留最新章节及更新时间。
+- 下载：网络小说「离线下载 → 全本」增加默认关闭的「聚合最新」，检索已启用且策略允许的同名同作者渠道并刷新候选目录；按唯一尾章及相邻前章衔接追加后续章节，不按目录长度强行拼接。保留当前书籍身份、独立章节标识和实际供稿来源，目录/计划/来源关系落盘后支持后台下载、失败续传和仓库重建后离线阅读；全本模式按完整合并目录下载，指定区间不启动聚合。
+- 安全与容量：沿用双端规则摘要、内容代次、请求租约、来源及章节策略校验；路由缺失、规则改变或来源隔离时禁止将聚合占位地址作为网络请求。重复或无法对齐的尾章不合并；超过 4000 章明确提示目录容量不足，不静默截断。听书/漫画不显示此文字小说聚合开关。
+- 主题：「跟随系统」成为新安装、无主题配置及非法配置回退的默认值，设置界面同步默认标识，保留已有用户的手动主题选择。使用指南已同步搜索、聚合下载与主题行为。
+- 验证：全量 `flutter test --no-pub --reporter expanded` **1422 项通过、12 项按既有配置跳过，退出码 0**（`build/book-latest-full-tests-20261118.log`）。随后补充空最新章展示、仓库重建恢复及容量异常回归，最终定向 **62 项通过**（`build/book-latest-targeted-20261118.log`）。lib 与新增/改动测试定向 analyze 无问题；模块边界 **512 文件通过**，仍保留原 2 条播放装配依赖。
+- 规模：修正本轮新增测试入口超长后，没有新增 lib 或本轮测试超限；全仓规模门禁仍因 **104 条**既有测试/工具超限失败（`build/book-latest-size-20261118.log`），未放宽门禁。格式及差异空白检查通过。
+- 下一步与边界：未重建安装包，未验收 Windows/Android/TV 设备或真实书源网络；本轮使用本地 SQLite、受控下载正文及 widget 回归。保留用户全部原有工作区修改，未提交、推送或发布。
+
+## 网络小说渠道管理提示精简（2026-11-18）
+
+- 目标与完成：将「网页脚本线索」筛选改为「疑似网页脚本」，移除域名出售筛选及检测结果中的当前、历史出售描述；保留脚本筛选和现有风险限制。
+- 自动检测说明保留默认折叠，仅简要介绍定期首页抽查、管理页暂停/离页恢复、手动抽查和不执行网页脚本；使用指南同步当前界面名称及删除入口。
+- 范围：按用户确认先移除出售标签和描述；疑似出售不作为自动删除依据，确认失效后仍使用来源菜单的「删除书源」。本轮未核查实网域名或删除本机渠道数据。
+- 验证：`flutter test --no-pub test/books/book_site_sources_page_test.dart test/books/book_site_sale_clue_test.dart test/books/book_site_checks_test.dart test/books/book_site_script_clues_test.dart test/books/book_site_inspection_test.dart --reporter expanded` **98 项通过，退出码 0**；本轮 4 个 Dart 文件定向 analyze 无问题，格式和差异空白检查通过。首次测试命令误写脚本测试文件名导致加载失败，已更正并完整重跑上述范围。
+- 下一步与边界：尚未重建安装包或新增 Windows/Android/TV 设备验收；后续确认具体失效渠道后再移除。保留工作区原有修改，未提交或发布。
+
+## 审查问题修复与重新打包（2026-11-18）
+
+- 目标：根据 `docs/code-review-2026-11-17.md` 修复保留的实际问题，复查修改后的调用链并串行重建 Windows/Android 本地测试交付；保留既有工作区和插件注册改动。
+- 已实现：安全初始化可完整重试；目录窗口保留续读、离线/待下载条目与新尾章，容量不足明确失败并提示；历史列表监听内容标签；启动重试去重、迟到服务关闭、未安全清理时要求重启；坏缓存逐条隔离保留文件和引用；换源字段一次 SQL 提交；局部写入精确通知、只读事务不广播；坏 EPG 别名局部降级。
+- 已整理：业务 `lib` 的 12 条规模超限全部消除，未提高阈值或增加豁免。全仓规模检查仍失败 **105 条**（test 76、tool 28、integration_test 1），属于后续测试/审计模块整理范围；不能宣称整个规模门禁通过。
+- 复审：[修复后代码复审](../code-review-2026-11-18.md)，逐项复查事务、并发启动/释放、目录保护、安全初始化、损坏数据及通知契约；本轮为同一会话复审，未启用独立模型审核。
+- 验证：最终全量 Flutter **1408 项通过、12 项按既有配置跳过，退出码 0**；新增 22 项回归。最终 analyze 无问题；模块门禁 **511 文件通过**，保留原 2 条播放装配依赖。Windows 原生安全/媒体 **2 项业务用例通过，驱动退出码 0**（不计 tearDownAll），实际覆盖安全属性回读、HLS 引用切换、受控 WAV/HLS、请求头及广播换线。证据目录 `build/review-fixes-20261118/`。
+- 未闭环：规模门禁退出码 1，保留上述 105 条测试/工具超限；Python 工具 **368 项中 1 项错误，退出码 1**，与上一轮同为 `document_client.dart` 和历史台账源码摘要不一致。未改写历史证据、校验器或跳过用例。
+- 构建：版本沿用 **0.7.4+74**。Windows 普通 Release 成功，53.4 秒。Android 本轮 Dart Release/AOT 编译成功后，初次 Gradle 因动态版本网络重试未完成；停止本轮进程，以同参数离线续构。离线编译遭既有生成的 integration_test 注册残留后，按 BUILD.md 仅移除该注册，并在已确认本轮 AOT 成功的前提下跳过重复 Dart 编译续打包；最终 **BUILD SUCCESSFUL，22 秒、退出码 0**，没有把前两次失败当作成功。完整过程见 `android-release.log`、`android-offline.log`、`android-resume.log`。
+- 新本地测试交付：[0.7.4-20261118-072629](../../artifacts/device-test/0.7.4-20261118-072629/)，保留旧包。Windows [安装器](../../artifacts/device-test/0.7.4-20261118-072629/zero-player-0.7.4-windows-x64-setup.exe) **79216145 字节（75.55 MiB）**；[便携 ZIP](../../artifacts/device-test/0.7.4-20261118-072629/zero-player-0.7.4-windows-x64-portable.zip) **103321399 字节（98.54 MiB）**；[Android ARM64 devtest APK](../../artifacts/device-test/0.7.4-20261118-072629/zero-player-0.7.4-android-arm64-devtest.apk) **78099150 字节（74.48 MiB）**。附源码快照、原生源码、第三方声明、复审报告、构建说明及 SHA256SUMS。
+- 包校验：APK 版本/包名/唯一 ABI/字体/原生库、ZIP CRC、v2 签名通过；应用名“Zero Player 测试”，证书 SHA-256 `d66972b598062015bc4092c1e45e05d8b4b437d6a1be8069e07907c1a97c14d6` 与既有测试证书一致。包内 AOT 与本轮 stripped 产物逐字节一致，DEX 无 integration_test；Windows/Android PDFium 均符合固定摘要；590 个源码/配置/素材构建输入前后未变。Windows 构建文件、暂存目录与便携 ZIP 逐文件一致；交付 ZIP CRC 和附件摘要通过。
+- 主附件 SHA-256：安装器 `1854c0889999a95f5d7e5f0852ddffb3663966ed310d611dd989dd7d44c254fa`；便携包 `4d3a329ac7b407c56f3b102889f3ba9d1355198011bda2717dbda01a545a624e`；APK `e6d23bd50ce9cb3a6adb13042bf86425f2a9bda28585db4259f53f7ce171cb40`。
+- 工作区保护：构建前保存的 6 个插件注册/本机配置/锁文件已恢复原字节并逐项核对；源码快照使用隔离临时 Git index，保留当前真实 index 和全部原有未提交改动。未创建提交、推送或公开发布。
+- 验收边界：未运行 Android 手机/TV 真机、Windows 安装卸载、两小时播放压力或用户真实媒体验收；Windows 原生使用受控测试媒体。Android 仍为独立包名 `dev.zeroplayer.zero_player.devtest` 和开发测试签名，超过历史 70 MiB 正式预算，不能视为全部正式发行门禁通过。
+
+下一步：按职责分批整理余下测试/审计工具超限，建立历史审计台账对应的源码快照引用后重验 Python 工具；正式发行前完成实际安装、Android/TV 真机、真实媒体与压力验收，以及正式签名和包体预算门禁。
+
+## 当前源码重新打包（2026-11-17）
+
+- 按用户要求将当前工作区重新串行编译为 Windows x64 普通 Release 和 Android ARM64 devtest Release，版本沿用 **0.7.4+74**。Windows 构建 57.7 秒，Android Gradle 98.6 秒，两者退出码均为 0；本轮普通构建未遇 integration_test 注册残留失败，不复用旧 Dart AOT。日志在 `build/repack-quality-20261117-202917/`。
+- 新测试包目录：[0.7.4-20261117-203746](../../artifacts/device-test/0.7.4-20261117-203746/)，保留旧包。包含 Windows [安装器](../../artifacts/device-test/0.7.4-20261117-203746/zero-player-0.7.4-windows-x64-setup.exe)（75.54 MiB）、[便携包](../../artifacts/device-test/0.7.4-20261117-203746/zero-player-0.7.4-windows-x64-portable.zip)（98.53 MiB）、[Android ARM64 APK](../../artifacts/device-test/0.7.4-20261117-203746/zero-player-0.7.4-android-arm64.apk)（74.47 MiB），以及第三方声明、原生源码、`TEST-INFO.txt`、`BUILD-INFO.json`、`SHA256SUMS.txt`。Windows 沿用原应用身份；Android 沿用 `dev.zeroplayer.zero_player.devtest`、测试名称和既有签名。
+- APK 校验：版本/构建号/包名、唯一 ARM64 ABI、三套字体、必需原生库、可选推理库排除、ZIP CRC、v2 签名均通过；证书 SHA-256 与上一阅读器测试包一致。DEX 不含 integration_test，包内 AOT 与本轮剥离产物逐字节相同；Windows/Android PDFium 符合既定摘要。APK **78087886 字节**，SHA-256 `30854b3f5abb3443b1eee34d74d75b7e4616e21118b6e79ded2bafdbf4398e17`。
+- Windows/交付校验：版本为 0.7.4+74，104 个构建文件与交付暂存目录逐文件一致；便携 ZIP 与暂存目录文件清单和字节一致，三个 ZIP CRC 通过，交付摘要清单通过。原生源码按固定摘要复核，168 个依赖声明已收集。578 个源码/配置/资源构建输入在构建前后摘要一致；五个插件生成文件、Android local.properties 和 pubspec.lock 共七个保护文件已恢复原字节（`restored.json`），未改变已有暂存或用户改动。
+- 验证边界：沿用打包前最新全量 Flutter **1386 项通过、12 项跳过**及静态/模块检查通过证据。本次补跑 Python 工具回归 **368 项，有 1 项错误**（`build/repack-quality-python-checks-20261117.log`）：`test_repository_evidence_links_are_consistent` 发现历史审计台账引用的 `lib/core/network/document_client.dart` 摘要与当前源码不一致。保留台账和失败记录，未修改证据摘要、跳过用例或声称工具全通过。
+- 限制：APK 仍超过历史 70 MiB 正式预算，源码规模门禁也仍有遗留超限；本轮交付为本地开发测试包。未安装新 Windows 安装器，未新增 Windows 运行功能、Android/TV 实机、实网或真实媒体验收；未提交、推送或公开发布。
+
+下一步：继续按代码质量/模块设计优先级推进下文工程拆分；公开发布前须理清历史审计台账与变动源码的快照引用，并重验工具回归和正式发行门禁，不能直接覆盖历史摘要。
+
+## 作品观察与复核状态归属第六轮（2026-11-17）
+
+- 目标：优先改善模块设计和仓库职责边界，继续收窄作品策略观察、证据暂存与人工复核状态的所有权，同时保留来源租约、授权撤销、重载代次与关闭竞态。
+- 已完成：新增独立 `BookPolicyTracker`，私有管理已提交/待提交作品证据、观察登记/代次/序号、复核锁和策略修订号，负责元数据判定、策略阻断和有效授权下的存储失败证据保留。仓库不再直接持有或读写这批可变 Map/Set；内容准入仍由仓库组合来源与作品策略结果。
+- 已完成：单次观察与复核分别使用身份句柄。观察释放幂等且不会结束同作品并发观察；复核期间禁止新观察，结束使下载/策略代次变化；数据库提交后的复核可在关闭期间发布，旧来源重载不能恢复被清除证据。仓库继续验证调用授权、来源/配置租约、书架记录和持久化证据版本。
+- 已完成：把探测详情请求、观察校验和元数据证据记忆提取为独立步骤；关闭流程在等待既有复核后统一销毁作品状态通知器。更新 [模块职责与扩展约定](MODULE-BOUNDARIES.md)，未增加 part、扩大边界例外或允许外部修改状态集合。
+- 整理结果：`BooksRepository` 由规模工具报告的 **1799 行降至 1658 行**，未达到原 1500 行阈值；新 tracker、测试和重构后的探测方法均未超限。模块检查扫描 **508 个文件**，播放模块仍为 **2 条**精确登记的 app 依赖（`build/module-book-policy-boundaries-20261117.log`）。
+- 验证：新增 **10 项**tracker 单元回归，覆盖并发观察/幂等释放、旧复核行失效、关闭期间无通知、复核锁、已提交复核发布、待提交证据独立清理、错误作品不入库、存储失败维持限制、取消数据丢弃、旧快照/损坏数据及策略修订。含复核 UI、详情/搜索、证据和下载定向 **72 项通过**（`build/module-book-policy-targeted-20261117.log`）；全量 `flutter test --no-pub --reporter expanded` **1386 项通过、12 项跳过**（`build/module-book-policy-full-20261117.log`）。
+- 验证：最终 `flutter analyze --no-pub lib test integration_test tool test_support` 无问题（`build/module-book-policy-analyze-final2-20261117.log`）；模块边界、格式与 `git diff --check` 通过（`build/module-book-policy-boundaries-20261117.log`、`build/module-book-policy-final-checks-20261117.log`）。
+- 规模检查仍失败（`build/module-book-policy-size-20261117.log`）：仓库本身仍超长，音频下载、站点分析、页面和既有测试函数也有超限；本轮未放宽阈值、增加豁免或留下新增超限。
+- 验收范围：本轮新增本地 SQLite 和受控测试协作回归及全量 widget/业务测试；未重新构建安装包、未新增 Windows 原生/Android/TV 实机、实网或真实媒体验收，未提交、推送或公开发布。
+
+下一步：评估 `BooksRepository` 剩余代码的行为聚合点和 part 私有依赖，优先将可独立审查的阅读/发现或媒体请求用例按显式能力抽出到普通类；同时继续降低仓库行数并处理超长探测/站点函数。保持来源/作品策略合并顺序与原生及平台发行门禁，不为了达到行数阈值搬迁无关代码。
+
+## 来源风险快照与准入归属第五轮（2026-11-17）
+
+- 目标：按实际调用关系收窄 `BooksRepository` 与 part 共享的来源状态；保留现有工作区全部修改，继续保护快照重载、证据提交、来源配置版本、多主机隔离、授权撤销及关闭顺序。
+- 已完成：新增普通独立类 `BookSourceAccess`，独占来源条目、风险记录、黑名单、来源 ID/精确主机索引及已加载/暂停/代次状态，统一来源/分组准入、风险复核列表与旧复核行重验。仅注入 `ContentPolicy`，不读取数据库、持有仓库或发布通知；外部通过条目查询和判定方法使用，不再共享这些可变 Map/Set。普通标签与根页主机证据的作用范围、复核墓碑和其他主机记录保持原语义。
+- 快照边界：`beginReload/publish` 以代次拒绝旧读取；提交后的风险记忆、配置修改、黑名单和暂停均使旧快照失效，暂停期间禁止发布，恢复后重读。仓库继续协调来源/风险/下载内容版本/作品证据读取及同一同步步骤中的发布，被拒绝时完整重读；作品证据复核仍使共同代次失效，防止来源重载顺带恢复已清除的作品成人证据。
+- 仓库边界：继续负责配置变更租约、配置修订号、漫画授权、作品证据、内置来源、关闭等待及通知顺序。配置/抽查事务成功后才交给来源准入模块记忆；黑名单提交后仍先发布限制再重载。下载校验器改为通过条目查询读取来源，内容版本和租约仍归原下载校验协作，不并入来源准入模块。未新增 part、万能依赖包或放宽边界例外。
+- 整理结果：仓库由规模工具报告的 **1997 行降至 1799 行**；模块检查通过，扫描 **507 个文件**，播放应用层仍有 **2 条**精确 app 依赖例外（`build/module-source-access-boundaries-20261117.log`）。[模块职责与扩展约定](MODULE-BOUNDARIES.md)已更新。
+- 验证：新增 **14 项**回归，其中 9 项独立模块测试覆盖未加载/暂停、输入集合隔离、旧代次拒绝、黑名单即时限制、来源标签与精确主机范围、分组/媒体主机策略、单调墓碑及复核行失效；5 项仓库/SQLite 测试在快照读取后确定性暂停，分别交错风险标记、来源复核清除、配置修改、暂停/恢复及作品证据复核，验证旧读取不得恢复过期状态。前 13 项随来源、授权、风险、下载证据、抽查及关闭定向 **187 项通过**（`build/module-source-access-targeted-20261117.log`）；后补作品竞态后的快照测试 **5 项通过**（`build/module-source-access-snapshot-verified-20261117.log`）。
+- 验证：最终全量 `flutter test --no-pub --reporter expanded` **1376 项通过、12 项跳过**（`build/module-source-access-full-20261117.log`）；静态分析最终无问题（`build/module-source-access-analyze-verified-20261117.log`），格式和 `git diff --check` 通过（`build/module-source-access-final-checks-20261117.log`）。初次分析的两处多行 if 缺少花括号、后补测试中误用 const 构造及测试注册函数超限均已修正并复验，初始日志保留，不作为通过证据。
+- 规模检查仍失败（`build/module-source-access-size-final-20261117.log`）：仓库总行数、音频下载、探测、站点分析、页面及既有工具/测试长函数仍超原阈值；新模块及新增测试无超限，未提高阈值或增加豁免。
+- 验收范围：已执行本地 SQLite 提交、复核、快照交错及全量 widget/业务回归；本轮纯 Dart 重构，未重新制作安装包或新增 Windows 原生、Android/TV 实机、实网及用户真实媒体验收。未创建 worktree、启用子代理、提交、推送或发布，全部已有改动保留。
+
+下一步：梳理作品元数据观察、待提交证据与人工复核的状态所有权，按完整职责继续收窄仓库及 part，保留作品观察/来源租约/快照重载/关闭竞态；播放侧仍按解析、会话、历史和诊断分阶段收窄 `PlaybackController`。沿用静态分析、模块与原规模检查、定向及全量回归，不把目录或文件拆分等同于全部解耦。
+
+## 来源配置事务与风险证据归属第四轮（2026-11-17）
+
+- 目标：继续按职责拆分 `BooksRepository`，分离配置事务、证据持久化及提交后的状态发布，保留原有未提交改动和监管、漫画准入、来源版本、下载证据及关闭边界。
+- 已完成：新增普通独立类 `BookSourceEditor`，负责保存/删除来源、默认恢复、批量启停、黑名单与别名的事务执行；仅注入存储、风险存储、内容策略及来源/漫画准入谓词，不引用仓库或 AppServices。保存和删除返回本次保留的成人证据，事务成功后才交给仓库发布。批量操作在事务内查询可见条目，默认恢复也在事务内读取当前配置及黑名单；漫画启用在事务内再次检查授权。
+- 已完成：多主机证据键选择、合并和版本递增归 `BookSourceRiskStore.addEvidence`；独立调用串行原子执行，嵌套调用参加配置/导入/站点抽查的外层事务，外层失败时回滚证据。保留来源标签与根页主机证据的范围区别、旧主机记录、损坏次记录及复核版本墓碑；存储不负责授权判定或内存发布。导入、普通与受监管抽查使用同一持久化入口。
+- 仓库边界：继续拥有配置变更租约、配置修订号、关闭时等待、风险快照和通知；保留黑名单提交后先发布限制、再刷新快照的顺序。复用 `_refreshChangedSources`，保证快照刷新失败时仍发送结束通知；收藏和健康探测继续沿用原配置分类和探测租约校验。
+- 整理结果：仓库由规模工具报告的 **2156 行降至 1997 行**；新增编辑模块及测试无规模超限，未新增 part 或放宽阈值。模块检查通过，扫描 **506 个文件**，播放模块仍有 **2 条**已登记 app 依赖（`build/module-source-editor-boundaries-20261117.log`）。[模块职责与扩展约定](MODULE-BOUNDARIES.md)已更新。
+- 验证：新增 **13 项**独立模块回归，覆盖改分组/删除保留成人证据、写入后校验失败回滚证据/配置/版本、漫画授权复核、黑名单/别名原子提交和失败回滚、按种类恢复默认、批量准入、主机迁移、并发证据合并、嵌套事务回滚和损坏记录保留。配置、授权、风险、导入、发现及下载证据定向 **75 项通过**（`build/module-source-editor-targeted-initial-20261117.log`）；全量 `flutter test --no-pub` **1362 项通过、12 项跳过**（`build/module-source-editor-full-20261117.log`）。
+- 验证：最终 `flutter analyze --no-pub lib test integration_test tool test_support` 无问题（`build/module-source-editor-analyze-final-20261117.log`）；格式和 `git diff --check` 通过（`build/module-source-editor-final-checks-20261117.log`）。初次静态分析发现黑名单别名函数的导入归属错误，已改为其声明模块后重验，初次失败日志保留，不作为通过证据。
+- 规模检查仍失败（`build/module-source-editor-size-20261117.log`）：仓库总行数和音频下载、站点分析、页面及既有工具/测试长函数尚待分批整理；本轮编辑模块、风险存储和新增测试无超限。
+- 验收范围：实际执行本地 SQLite 提交、回滚与并发回归，以及全量 widget/业务测试；本轮未新增 Windows 原生、Android/TV 实机、实网或用户真实媒体验收，未重新构建安装包，未提交、推送或公开发布。
+
+下一步：梳理来源风险快照、主机索引与许可判定的所有权，按实际调用关系继续收窄仓库及其 part 的共享私有状态，优先保留快照重载与证据提交竞态回归；播放侧分阶段拆分 `PlaybackController` 的解析、会话、历史和诊断依赖。继续使用原静态分析、模块/规模检查、定向及全量测试入口；不以机械拆文件、万能依赖包或阈值豁免替代职责收敛。
+
+## 播放用例依赖收窄第三轮（2026-11-17）
+
+- 目标：落实上一轮播放用例拆分，移除线路探测、本地视频准备对 `AppServices` 的依赖，保留共享网络调度、监管边界和会话所有权。
+- 已完成：`EpisodeProbe` 显式接收来源查询、受控文档/媒体客户端及内容策略；每次探测创建独立取消令牌，关联调用方取消和临时策略监听，结束后解除关联。来源查询、解析及采样后复核策略；策略撤销中止在途请求并释放配额，不取消调用方令牌或关闭共享客户端。保留请求头作用域和 256 KiB 可用性采样预算。
+- 已完成：`LocalVideo` 仅接收内容校验、历史查询、文件会话、路径记录四项能力，由 app 组合。异步历史、打开会话及路径记录后复核授权，失败关闭已创建会话；成功后将会话交给请求接收方。保留规范路径、Android 文档身份、迁移 ID 和末尾五秒重播规则。
+- 已完成：播放请求与媒体种类移至独立 `playback_request.dart`，避免本地用例经控制器间接依赖 app；控制器继续导出原有请求入口。启动待打开路径归 `app/local_open_startup.dart`，由启动转发和导航消费。
+- 边界：删除 line_probe、local_video 两条精确例外；当前检查扫描 **505 个文件**，播放应用层存量 app 依赖由 **4 条降至 2 条**，均在 `PlaybackController`。更新 [模块职责与扩展约定](MODULE-BOUNDARIES.md)，未新增万能依赖容器或扩大例外。
+- 验证：新增 13 项用例回归，覆盖独立使用、会话交付/失败释放、历史/文件打开/路径记录期间撤权、同源与跨源凭据、受控解析、取消/撤权释放单配额及共享客户端复用。最终定向 **33 项通过**（`build/module-playback-targeted-final-20261117.log`）；全量 `flutter test --no-pub` **1349 项通过、12 项跳过**（`build/module-playback-full-20261117.log`）；`flutter analyze --no-pub lib test integration_test tool test_support` 无问题（`build/module-playback-analyze-final2-20261117.log`）；模块检查通过（`build/module-playback-boundaries-20261117.log`）。初版定向测试的媒体地址夹具及 protected 成员断言已修正后重验，失败日志不作为通过证据。
+- Windows 原生：`tool/run_windows_native.ps1 -TestFiles @('integration_test/local_video_native_test.dart')` **2 项业务检查通过**（不计 tearDownAll，`.dart_tool/native-051d7e6e/local_video_native_test.log`），实际执行 FFmpeg HLS 转 MP4，以及本地视频解码、跳转、续播和导出。驱动退出码为 0；日志仍有 integration_test 插件未检测到的提示，业务断言和驱动均明确报告成功。五个插件生成文件已恢复测试前原字节，摘要一致（`build/module-playback-native-registrations-20261117/restored.json`）。
+- 规模检查仍失败（`build/module-playback-size-20261117.log`）：仓库 2156 行及其他既有长函数超限，本轮用例和新增测试无超限；未放宽阈值或添加豁免。格式与差异空白检查见本轮收尾日志 `build/module-playback-final-checks-20261117.log`。
+- 验收范围：已验证本地文件、SQLite、受控本机 HTTP、widget 及 Windows 原生测试媒体；未新增 Android/TV 实机、实网或用户真实媒体验收，未重新制作安装包，未提交、推送或公开发布。
+
+下一步：按来源配置写入和风险证据的所有权继续拆分 `BooksRepository`，优先验证变更租约、来源版本失效及证据发布/回滚；随后分阶段收窄 `PlaybackController` 的解析、会话、历史与诊断依赖，保留换源、续播和关闭竞态回归。不得为删除最后两条例外而引入万能依赖包。验证继续使用静态分析、模块/规模检查、定向及全量测试，原生测试与构建串行执行。
+
+## 来源导入决策与事务边界第二轮（2026-11-17）
+
+- 目标：落实上一轮第一优先级，将来源导入规则与数据库执行分开，保留既有工作区改动和监管、内容过滤、来源风险、订阅归属及取消边界。
+- 已完成：抽取独立 `BookSourceImportPlan`，只使用已安装条目、黑名单快照和当前允许结果，集中处理旧键保留、成人证据继承、顺序去重、订阅所有权、目录版本比较、内置来源保护、自定义 12000 条限制及人工修订判定。导入计划没有数据库调用或实时授权查询，按输入顺序逐条消费，不把被策略拒绝的重复行算作成功。
+- 已完成：抽取独立 `BookSourceImporter`，在一个事务内读取快照、执行计划、每 128 条批量写入、保存风险证据与目录版本/订阅记录。事务入口、逐条执行、风险等待后、批量写入前与提交前检查授权、取消及目录过滤状态；受限旧规则仍仅允许同种类、同完整端点的人工修订，保存后保持禁用，保留原收藏、分组和归属。
+- 安全边界：成人标记更新即使因黑名单或过滤而被拒绝，也先针对**原已安装主机**保留风险证据，防止旧启用版本继续暴露缓存；同批重复证据只写一次。事务成功后才把统计与证据交回仓库发布，检查发现取消、授权失效或目录过滤状态变化时回滚部分来源、检查版本、订阅记录及风险证据。`BooksRepository` 继续管理配置变更租约和提交后的内存状态刷新，不交给导入计划。
+- 整理结果：仓库从上一轮 2332 行降至规模工具报告的 **2156 行**；`_importSources` 从 183 行缩至约 50 行。新增模块为普通 Dart library/class，未新增 part 或扩大边界例外。当前模块检查扫描 **503 个文件**，播放模块 4 条存量 app 依赖保持显式登记。
+- 文档：补充 [模块职责与扩展约定](MODULE-BOUNDARIES.md) 中的来源导入分工；发现上一轮新文档仍被默认忽略规则排除，已在 `.gitignore` 中增加精确白名单，文档现在会进入 Git 的待审阅文件清单；保留既有忽略配置。
+- 验证：来源计划/事务、目录导入、旧规则修订、多主机风险与迁移隔离定向 **45 项通过**（`build/module-import-targeted-final-20261117.log`）；补齐运行中策略变化后，独立事务回归 **7 项通过**（`build/module-import-policy-20261117.log`）。新增共 15 项，覆盖非归属订阅不能覆盖、目录严格版本比较、内置来源保护、旧键/规则变体、证据继承、容量/去重、用户偏好及来源版本失效、多批次取消回滚、风险写入期间取消和目录过滤变化。
+- 验证：全量 `flutter test --no-pub` **1336 项通过、12 项跳过**（`build/module-import-full-20261117.log`）；最终 `flutter analyze --no-pub lib test integration_test tool test_support` 无问题（`build/module-import-analyze-final2-20261117.log`）；模块边界检查通过（`build/module-import-boundaries-20261117.log`），格式和 `git diff --check` 通过。初次静态检查/定向编译暴露抽取后的类型导入及不可变列表泛型推断遗漏，已修正后重验，原失败日志保留，不作为通过证据。
+- 规模检查仍失败（`build/module-import-size-final-20261117.log`）：新导入模块及其测试均无超限，原 `_importSources` 超限已消除；仓库总行数、音频下载、站点分析、部分页面以及既有工具/测试函数仍超原阈值，未放宽规则或添加规模豁免。
+- 验收范围：执行了实际本地 SQLite 事务、批次写入/回滚和 widget 回归；未重新构建安装包，未新增 Windows 原生、Android/TV 实机、实网或真实媒体验收。未提交、推送或公开发布。
+
+下一步：先收窄 `line_probe`、`local_video` 对 AppServices 的依赖并逐条删除例外，再按来源配置写入与风险证据的所有权继续拆分仓库；PlaybackController 按用例逐步收窄，保留换源/续播和关闭竞态回归。验证入口仍为静态分析、模块边界、规模检查、定向回归及全量 Flutter 测试，涉及原生行为再按 BUILD.md 串行执行。
+
+## 工程质量与模块边界第一轮（2026-11-17）
+
+- 目标：在保留工作区已有阅读器、书源、手机布局及原生改动的基础上，为后续修改和开放源码建立清晰的职责归属与可执行边界；保持单仓库，不机械创建接口层或通过 part 掩盖耦合。
+- 分析：当前 501 个 Dart 生产文件，书籍模块 137 个、媒体模块 59 个。主要耦合集中在 `BooksRepository` 的来源配置/导入、风险证据、搜索/阅读/下载协调，以及播放应用层对 `AppServices` 的依赖。presentation 仍共享 app 的服务和界面组件；现阶段没有独立 package 隔离，不能把目录分层等同于全部解耦。
+- 已完成：将 SQLite 分片索引适配器由 core 移入 media/cache，消除 core 对媒体缓存的反向依赖；字体选项移入 settings/domain，消除设置领域对 app 的反向依赖。引用方直接更新，未新增转发兼容文件。
+- 已完成：提取普通独立 library/class `LocalBookLibrary`，负责本地 TXT/EPUB/PDF 解析、过滤与授权、暂存入库及删除；只注入存储、目录、策略和作品授权谓词，在线来源状态不进入该模块。仓库保留原调用入口并委托执行，由 2425 行降至 2332 行；在解析前和事务写入前复核监管状态，保留原有内容身份、正文过滤、失败回滚与暂存清理。
+- 已完成：新增 `dart run tool/check_module_boundaries.dart`，使用 Dart AST 检查 import/export、条件分支和 URI part，覆盖本项目 package/相对地址、目标存在性、core 独立性、领域层方向、非 UI 层禁止引用页面、媒体仅依赖业务领域接口、part 不跨业务或业务层。实际项目检查随 `flutter test` 执行。播放应用层 4 条现有 app 依赖按具体文件对登记；不接受新引用，旧引用删除后未移除例外也会失败。
+- 开发说明：[模块职责与扩展约定](MODULE-BOUNDARIES.md)记录当前允许的协作、存量例外、检查能力限制与新增用例/渠道步骤；README 已加入检查入口。该文档不另建进度入口。
+- 验证：定向导入/缓存/离线/设置及边界回归 **38 项通过**（`build/module-quality-targeted-20261117.log`）；补齐真实项目依赖检查后的全量 `flutter test --no-pub` **1321 项通过、12 项跳过**（`build/module-quality-full-20261117.log`）。新增覆盖独立书库使用、TXT 内容身份、EPUB 文件归属及清理、正文过滤、等待事务时授权撤销；沿用回归覆盖文档移动失败回滚与离线缓存引用保护。
+- 验证：`flutter analyze --no-pub lib test integration_test tool test_support` 无问题（`build/module-quality-analyze-final-20261117.log`）；模块检查通过，明确报告 501 文件及 4 条存量依赖（`build/module-quality-boundaries-20261117.log`）；`git diff --check` 通过。初次静态分析发现新构造器初始化写法提示，已修正后复验，不将初次结果记为通过。
+- 规模检查仍失败（`build/module-quality-size-20261117.log`）：生产文件中仓库 2332 行，以及来源导入、音频下载、站点分析、部分页面等已有函数超过原阈值；另有工具和测试注册函数超限。本轮新增类/工具/测试函数均在原阈值内，未放宽检查或新增规模豁免。
+- 验收范围：本轮实际执行本地文件/数据库及 widget 回归，没有重新构建 Windows/Android 安装包，没有新增原生、Android/TV 实机或真实媒体验收。现有测试包仍对应先前功能批次；已有原生依赖与插件注册文件未因本轮模块调整而修改。
+
+下一步按以下顺序推进，每次保留可单独审阅的职责范围与回归证据：
+
+1. **来源导入与配置**：先从 `BooksRepository._importSources`（183 行）提取不访问数据库的导入规划，再收窄配置写入；优先验证订阅归属、来源指纹/版本、风险授权与异步变更失效，避免单纯增加 part。
+2. **播放依赖注入**：先处理 line_probe、local_video 两个用例，再按解析、会话和历史/诊断收窄 PlaybackController 的依赖；通过本地视频、探测取消、换源/续播、关闭竞态回归后逐条删除上述 4 条例外。
+3. **策略状态与持久化边界**：拆分书籍来源风险/作品证据的状态与写入协作，明确所有权、租约及关闭顺序；将 source_probe_result 所需失败分类从具体网络客户端移到独立值定义，继续减少传递依赖。
+4. **界面与规模债务**：逐步将 app 中的共享界面组件移到合适的共享界面位置，并收窄页面读取服务的范围；按音频下载、站点分析、页面职责处理超长函数。测试注册函数与工具超限单独整理，不引入共享可变测试夹具。
+
+后续每轮入口：`flutter analyze --no-pub lib test integration_test tool test_support`、`dart run tool/check_module_boundaries.dart`、`dart run tool/check_source_size.dart`、对应定向测试与 `flutter test --no-pub`；涉及原生/平台行为时再按 BUILD.md 串行执行必要检查。
+
+## 阅读器净化、预加载、字体与性能完善（2026-11-17）
+
+- 目标：补齐选文隐藏／替换、离线优先预加载、设备与开源字体、漫画手势、沉浸安全区，并分析阅读性能和耗电。
+- 已实现：普通阅读净化规则（本书／全局，原样匹配，可撤销，先查原文再查结果）、0–5 章串行预加载与非计费网络开关、缓存命中免重复写入、Windows DirectWrite／Android 系统字体配置枚举及 Adobe 官方两款 OFL 字体校验下载、漫画中央菜单／长按放大、共享安全区与额外顶部留白。
+- 性能：长于 12000 字符的章节按约 6 ms 预算分批排版，切章会取消旧排版；无命中正文免生成复核摘要；进度最多每 3 秒保存并在切章／离开刷新，SQL 更新位置避免 Dart 重建整份目录；时钟局部刷新，阅读／后台暂停可选源抽查，音乐接口无订阅者不启动心跳。后台下载和即时内容校验继续运行。
+- 验证：全量 `flutter test --no-pub` **1305 项通过、12 项跳过**（`build/reader-upgrade-full-final3-20261117.log`）；收尾补齐取消分页时释放 TextPainter、返回已完成旧章节时取消新任务，最终净化／分页／章节策略定向 **23 项通过**（`build/reader-upgrade-layout-return-20261117.log`）。`flutter analyze --no-pub lib test integration_test tool test_support` 无问题（`build/reader-upgrade-analyze-final5-20261117.log`），`git diff --check` 通过。
+- Windows 原生 **4 项业务／性能检查通过**（不计 tearDownAll，`.dart_tool/native-e867a5e1/`）：实际系统字体、两款校验字体加载、进度节流与退出保存、长章节排版数据及漫画点击／键盘／缩放。47.5 万字符同步基准 1038 ms，为同算法分批让出界面线程提供依据，不代表手机帧率或功耗。上游字体及 OFL 许可证已取样核验；额外应用内实网下载复测超时（`.dart_tool/native-4e855b1d/reader_upgrade_native_test.log`），直接访问同一 GitHub Raw 地址也超时，不能记为在线下载通过；失败可重试，已有字体离线可用。
+- Windows x64 普通 Release 与 Android ARM64 devtest Release 串行构建完成（`build/reader-upgrade-windows-final2-20261117.log`、`build/reader-upgrade-android-final2-20261117.log`、`build/reader-upgrade-android-gradle-final2-20261117.log`）。Android 初次在已完成最新 Dart AOT 后因生成的 integration_test 注册残留失败；确认仅该注册差异，按 BUILD 流程恢复原文件，跳过本轮已完成的 Dart 编译续打包成功。包内 AOT 与本轮剥离产物逐字节一致，DEX 无 integration_test。Windows 三个及 Android 一个注册文件、本机 Gradle 代理配置均与原字节一致。
+- 本地测试包：[Android ARM64 APK](../../artifacts/device-test/0.7.4-reader-upgrade-20261117/zero-player-android-arm64.apk)，附测试说明、声明和 SHA256SUMS；版本 `0.7.4+74`，包名 `dev.zeroplayer.zero_player.devtest`。78080346 字节（74.46 MiB），仍超过历史 70 MiB 正式预算；SHA-256 `f054318f66c6c08b137fe8f4972209c2937d6b371261fbb750a892c18d3143a2`。版本、ABI、三套字体、原生库、ZIP CRC、v2 签名通过，证书与旧测试包一致（`build/reader-upgrade-package-check-20261117.json`）。Windows 可执行文件在 `build/windows/x64/runner/Release/zero_player.exe`，需保留同目录 DLL/data；未制作新安装器，未提交、推送或公开发布。
+- 规模检查仍失败（`build/reader-upgrade-size-final2-20261117.log`）：仓库 2425 行在复杂文件 2500 边界内，但超过工具统一 1500；还包含既有长函数和测试注册函数。本轮新增生产方法按职责拆分在 100 行内，未为测试注册长度引入共享可变夹具。
+- [性能与耗电分析](READER-PERFORMANCE-2026-11-17.md)记录资源路径、优化依据、剩余成本、Windows 基准及设备测量矩阵；新增只读采样脚本已通过 PowerShell 语法检查。下一步：Android／TV 实机验证 OEM 字体、刘海／打孔、遥控／手势、真实站点预加载与后台行为，并做固定亮度／网络／章节的功耗对照。当前无已连接设备，未测得电流或续航提升比例。
+- 验证入口：`flutter test --no-pub`、`flutter analyze --no-pub lib test integration_test tool test_support`、`tool/run_windows_native.ps1`、`tool/capture_reading_power.ps1`。
+
+## 书源管理、章节过滤复核与漫画准入（2026-11-17）
+
+- 保留优化前备份提交 `655a592`。源管理自动检测说明默认折叠，增加持久化「书源自动检测」开关；管理页持有自动检测暂停租约，离开释放，手动抽查不受影响。数据更新静默读取、保留不受影响的选择和滚动，避免后台检查反复进入整页忙碌。
+- 章节正文过滤与全局来源／作品／地址限制分开处理。阅读错误面板可滚动，提供验证监管密码后看命中词、精确章节误报确认、设置替换及跳到下一章。监管关闭时仍需配置并验证密码；权限失效立即隐藏详情，监管自定义关键词不能通过成人误报入口排除。放行记录绑定作品、章节、原文与替换结果摘要，不保存被拦截原文。
+- 设置新增小说文本敏感替换：字面关键词、英文忽略大小写，可替换匹配词或所在换行段落，支持空文本删除；保留原文，替换后重新执行过滤，覆盖在线小说／TXT 阅读、下载校验与文本导出。EPUB／PDF 保留原格式与原有过滤，不应用此转换；普通应用备份不包含本机替换、章节复核和漫画授权。
+- 下载正文命中只跳过该章，继续其他章节；来源／全局策略变化仍暂停。成功数不包含过滤章，下载管理可查看通用原因、验证复核、替换后续传；中途暂停保留已有过滤诊断，成功重试清除旧诊断。普通提示及持久报告只含目录序号／章节 ID 和原因类别，具体词仅在验证后的复核窗口显示。报告列表按需构建，避免大量章节挤满手机横屏。
+- 按用户澄清，仅名称「新人漫画」且 HTTPS `xapi.xinmanhua.net`／指定媒体域符合准入范围的在线漫画可直接启用；同域「新漫画」及其他渠道需监管密码批准当前完整规则摘要，规则变化失效。搜索、探测、启用、已保存作品和离线读取均检查准入；监管开启仍禁用漫画，已有来源风险与内容过滤继续生效。
+- 得奇小说《青山》第一百章四页响应已核对，第三页一个普通颜色／情绪短语的相邻字触发子串误报；只对完整短语调整检测，不改展示原文，也不忽略同页其他真实命中。共享判定语义版本递增以使旧网页观察重新排队。四页本机摘要证据 `build/qingshan-chapter100-four-pages-20261117.json`，原响应只保留于忽略目录，不能据此声称全站或全书安全。
+- 最终全量 `flutter test --no-pub` **1291 项通过、12 项跳过**（`build/chapter-policy-full-final-20261117.log`），覆盖收尾替换编辑、横屏大量诊断列表、原文保留、重复阅读、暂停持久化与续传清除。此前全量 1287 项及定向 22 项通过；新增测试初版曾遇到测试异步区等待和本地夹具监管限制，修正测试等待／夹具后最终全量复验通过，失败日志保留。
+- `flutter analyze --no-pub lib test integration_test tool test_support` 无问题（`build/chapter-policy-analyze-final2-20261117.log`），`git diff --check` 通过。源码规模检查仍失败（`build/chapter-policy-size-final2-20261117.log`）：仓库 2417 行在复杂文件 2500 边界内，但超过工具统一 1500；其余保留既有长函数与新增测试注册函数超限。下载文本存储、下载工作池与阅读错误面板已按职责拆分，新增生产方法在 100 行内；没有为了测试注册长度拆出共享全局可变夹具。
+- Windows 原生 **2 项业务用例通过**，不计 tearDownAll：离线漫画实际解码、分页／缩放／键盘与保留离线内容；监管设置、单次密码授权、恢复码及原生播放停止。日志 `.dart_tool/native-0b28e11a/`，既有 integration_test 插件检测警告仍在，实际用例和退出码成功。Android／TV 未连接实机，手机系统输入法、大字号叠加、真实漫画长期使用及后台行为仍待设备验收。
+- Windows x64 普通 Release 与 Android ARM64 devtest Release 串行构建通过（`build/chapter-policy-windows-20261117.log`、`build/chapter-policy-android-20261117.log`）。交付 `artifacts/device-test/0.7.4-chapter-policy-20261117/zero-player-android-arm64.apk`：版本 `0.7.4+74`、包名 `dev.zeroplayer.zero_player.devtest`、78044186 字节（74.43 MiB），仍超过历史 70 MiB 正式预算，仅作开发测试；SHA-256 `ac01e90e947550ffc0ed83238138459b9be4dfb5f95c76902b661a4b5343ecd5`。v2 证书与旧测试包一致，ZIP CRC、ABI、原生库和三套字体通过，DEX 无 integration_test。Windows 三个及 Android 一个注册文件与构建前逐字节一致，临时禁用的本机 Gradle 代理配置原字节已恢复（`build/chapter-policy-package-check-20261117.json`）。Windows 可执行文件位于 `build/windows/x64/runner/Release/zero_player.exe`，必须保留同目录 DLL/data；本轮未制作新 Windows 安装器，未提交后续改动、推送或公开发布。
+
+
+## 手机专项再审查与 Android 测试包（2026-11-17）
+
+- 修复复审发现的遗漏：音乐榜单搜索和筛选原先仍固定在曲目列表外，展开搜索或键盘/大字号组合会挤压列表；窄屏现与曲目共用同一滚动视图，分类行取消固定 42 px 高度。系统返回键先关闭展开搜索，提交搜索/切换页签/手动收起时释放焦点；紧凑渠道选择仍显示偏好异常提示。顶栏隐藏时排除触摸、焦点与读屏遍历，桌面小说/听书保留原滚动例外；手机小说/听书切换与管理按钮合并一行，去除重复大标题。
+- 验证：全量 `flutter test --no-pub` **1279 项通过、12 项跳过**（`build/mobile-review-full-20261117.log`）；最终补充小说/听书实际路由、320 px/横屏/2 倍文字的搜索与键盘、系统返回键回归 **13 项通过**（`build/mobile-review-viewport-20261117.log`）。`flutter analyze --no-pub lib test integration_test tool test_support` 无问题（`build/mobile-review-analyze-final-20261117.log`）；`git diff --check` 通过。源码规模工具仍失败（`build/mobile-review-size-20261117.log`），包含既有仓库/审核工具大文件及长函数，并保留音乐页面构建方法、扩展的音乐发现测试注册函数超 100 行；未据此宣称规模检查通过。
+- 已基于最终修复构建 Android ARM64 devtest Release（`build/mobile-review-android-final-20261117.log`），交付目录 `artifacts/device-test/0.7.4-mobile-review-20261117/`。APK `zero-player-android-arm64.apk` **78017314 字节（74.40 MiB）**；版本 `0.7.4+74`、包名 `dev.zeroplayer.zero_player.devtest`、标签「Zero Player 测试」，v2 证书 SHA-256 与既有测试包相同（`d66972b598062015bc4092c1e45e05d8b4b437d6a1be8069e07907c1a97c14d6`）。APK SHA-256：`93b79a740b4b1d560b2e40f1e63da2447e48c10afaa7591a6a43e408b98aba1c`。仍超过历史 70 MiB 正式发行预算，仅供开发测试。
+- APK 与最终构建文件摘要一致，ZIP CRC、唯一 ABI、原生库及三套字体检查通过，DEX 无 integration_test 插件。Android 注册文件与构建前 SHA-256 一致（`3f65c30a2fc270d4cbebf8523b6631a11b1e790a9eba347f96ed315a0b504f02`），Windows 三个注册文件无改动。交付附测试说明、依赖声明和摘要清单；未公开发布，未连接 Android/TV 真机，真实输入法、字体/手势、播放及后台行为待设备验收。
+
+## 窄屏手机界面优化（2026-11-17）
+
+- 优化前的工作区状态已先提交为备份 `655a592`（`备份当前工作区代码状态`）；本机 `tmp/` 探针和响应样本继续留在工作区，未纳入提交。
+- 手机顶栏压缩到 48 px、标题采用紧凑字号；下滑收起顶栏，上滑或回到页首恢复。底部导航独立保留，压缩到 60 px 并仅显示当前目的地文字，小说与听书页面也应用滚动收起。
+- 音乐发现页的搜索入口默认收成图标，点按展开渠道、类型和搜索框；搜索后及返回发现页时自动收起。窄屏渠道选择压成单行，榜单内容类别、平台和分组改为横向滚动，减少榜单曲目上方被筛选项占据的高度。
+- 小说/听书页面收紧标题行内外间距，发现页仍保留两列封面布局及原有可读尺寸。没有 Android/TV 实机连接，未做设备视觉验收。
+- 验证：窄屏导航、音乐搜索与榜单分类、小说书架和发现页搜索定向 widget 回归 **22 项通过**（`flutter test --no-pub test/widgets/mobile_app_navigation_test.dart test/music/music_page_test.dart test/music/music_discovery_test.dart test/widgets/book_phone_layout_test.dart test/widgets/book_discovery_phone_search_test.dart`）；改动源码和测试文件 `flutter analyze --no-pub` 无问题。测试模拟 320／390 px 手机宽度与部分放大字号，没有连接 Android/TV 实机。
 
 ## 小说审查问题修复与重新打包（2026-11-16）
 

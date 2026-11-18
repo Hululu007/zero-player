@@ -117,7 +117,7 @@ final _regionalAdultLabel = RegExp(
 );
 
 bool adultContent(String text, {bool category = false}) {
-  final normalized = normalizeContent(text);
+  final normalized = _adultSearchText(text);
   final folded = String.fromCharCodes(
     text.runes.map((r) => r >= 0xff01 && r <= 0xff5e ? r - 0xfee0 : r),
   ).replaceAll(RegExp(r'[\u200B-\u200F\u202A-\u202E\u2060-\u206F\uFEFF]'), '');
@@ -135,3 +135,22 @@ bool adultContent(String text, {bool category = false}) {
             _regionalAdultLabel.hasMatch(label);
       });
 }
+
+/// Diagnostic tokens only. Callers must verify supervision credentials before
+/// rendering these values; normal errors must use a generic reason.
+List<String> adultContentMatches(String text) {
+  final normalized = _adultSearchText(text);
+  return {
+    for (final marker in _adultMarkers)
+      if (normalized.contains(marker)) marker,
+    for (final match in _adultWords.allMatches(text)) match.group(0)!.trim(),
+    if (_adultLabels.contains(normalized)) normalized,
+  }.toList();
+}
+
+String _adultSearchText(String text) =>
+    normalizeContent(text)
+    // Verified ordinary compound: the color adjective and emotion noun meet
+    // at a boundary that happens to form a restricted two-character token.
+    // Only this complete phrase is exempt; other occurrences still match.
+    .replaceAll('灰色情绪', '灰色心绪');

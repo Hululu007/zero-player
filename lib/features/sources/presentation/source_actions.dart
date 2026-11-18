@@ -10,6 +10,7 @@ import '../data/catalog_parser.dart';
 import 'catalog_import.dart';
 import '../application/source_probe.dart';
 import 'source_probe_dialog.dart';
+import '../domain/video_source.dart';
 
 Future<void> importDefaultCatalog(BuildContext context, AppServices services) =>
     perform(context, () async {
@@ -31,36 +32,42 @@ Future<void> batchProbeSources(BuildContext context, AppServices services) =>
     perform(context, () async {
       final sources = await services.sources.all();
       if (!context.mounted) return;
-      await runSensitive(
-        context,
-        services.supervision,
-        SensitiveOperation.channels,
-        () async {
-          final probe = SourceProbe(services.sources, services.network);
-          final work = probe.run(
-            sources,
-            concurrency: services.settings.value.probeConcurrency,
-            applyPolicy: true,
-          );
-          final removeCloseHook = services.addCloseHook(() async {
-            probe.cancel();
-            await work;
-          });
-          try {
-            await showDialog<void>(
-              context: context,
-              builder: (context) =>
-                  SourceProbeDialog(services: services, probe: probe),
-            );
-          } finally {
-            removeCloseHook();
-            probe.cancel();
-            await work;
-            probe.dispose();
-          }
-        },
-      );
+      await probeSources(context, services, sources);
     });
+
+Future<void> probeSources(
+  BuildContext context,
+  AppServices services,
+  List<VideoSource> sources,
+) => runSensitive(
+  context,
+  services.supervision,
+  SensitiveOperation.channels,
+  () async {
+    final probe = SourceProbe(services.sources, services.network);
+    final work = probe.run(
+      sources,
+      concurrency: services.settings.value.probeConcurrency,
+      applyPolicy: true,
+    );
+    final removeCloseHook = services.addCloseHook(() async {
+      probe.cancel();
+      await work;
+    });
+    try {
+      await showDialog<void>(
+        context: context,
+        builder: (context) =>
+            SourceProbeDialog(services: services, probe: probe),
+      );
+    } finally {
+      removeCloseHook();
+      probe.cancel();
+      await work;
+      probe.dispose();
+    }
+  },
+).then<void>((_) {});
 
 Future<void> publishSources(
   BuildContext context,

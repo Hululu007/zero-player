@@ -74,7 +74,7 @@ extension BookSupervisedSiteScan on BooksRepository {
     final current = await store.source(verified, verified.id);
     if (current == null ||
         !current.enabled ||
-        !_sourceEntryAllowed(current) ||
+        !sourceEntryAllowed(current) ||
         (await store.blockedSources()).containsKey(verified.id)) {
       return null;
     }
@@ -97,7 +97,7 @@ final class _SupervisedSiteRun {
 
   bool get _allowed =>
       !books._evidenceClosing &&
-      !books._riskSuspended &&
+      !books._sourceAccess.suspended &&
       books.policy.supervision.enabled &&
       !books.policy.supervision.corrupted &&
       books.policy.settings.value.backgroundProbe &&
@@ -209,7 +209,7 @@ final class _SupervisedSiteRun {
         _requireCurrent();
         if (latest == null || currentRevision != siteRevision) return false;
         if (inspection.gamblingRisk || inspection.adultRisk) {
-          assessment = await books._addSourceAssessment(
+          assessment = await books.riskStore.addEvidence(
             latest.source,
             adult: inspection.adultRisk,
             quarantine: inspection.gamblingRisk,
@@ -257,7 +257,7 @@ final class _SupervisedSiteRun {
         return true;
       }, tables: {'app_meta'});
       if (committed && assessment != null) {
-        books._rememberAssessment(assessment!);
+        books._sourceAccess.rememberAssessment(assessment!);
         books.policy.refresh();
       }
     }

@@ -174,16 +174,7 @@ BookPageSaleReview inspectBookPageSale(
 }) {
   final origin = bookSiteSaleOriginFingerprint(target);
   var partial =
-      truncated ||
-      target.scheme.toLowerCase() != 'https' ||
-      target.port != 443 ||
-      target.path != '/' ||
-      target.hasQuery ||
-      target.hasFragment ||
-      !RegExp(
-        r'</body\s*>\s*</html\s*>\s*$',
-        caseSensitive: false,
-      ).hasMatch(input);
+      truncated || !_saleTargetEligible(target) || !_closedSalePage(input);
   var budgetExhausted = false;
   var visited = 0, textCharacters = 0;
   var saleHeadings = 0, contactHeadings = 0, forms = 0;
@@ -205,78 +196,28 @@ BookPageSaleReview inspectBookPageSale(
       }
     }
     if (node is! dom.Element) {
-      final children = node.nodes;
-      if (children.length + stack.length > _maxNodes - visited) {
+      if (!_pushSaleChildren(node.nodes, depth, stack, visited)) {
         partial = true;
         budgetExhausted = true;
         break;
-      }
-      for (var i = children.length - 1; i >= 0; i--) {
-        stack.add((children[i], depth + 1));
       }
       continue;
     }
     final element = node;
     final rawTag = element.localName ?? '';
-    if (rawTag.length > 1024 ||
-        element.attributes.length > 128 ||
-        (element.attributes['style']?.length ?? 0) > 1024 ||
-        (element.attributes['class']?.length ?? 0) > 1024 ||
-        (element.attributes['id']?.length ?? 0) > 1024 ||
-        (element.attributes['aria-hidden']?.length ?? 0) > 1024 ||
-        (rawTag.toLowerCase() == 'link' &&
-            (element.attributes['rel']?.length ?? 0) > 1024)) {
+    if (_saleElementTooLarge(element, rawTag)) {
       partial = true;
       budgetExhausted = true;
       break;
     }
     final tag = rawTag.toLowerCase();
-    if (const {
-      'script',
-      'style',
-      'iframe',
-      'object',
-      'embed',
-      'template',
-      'noscript',
-      'svg',
-      'base',
-    }.contains(tag)) {
-      partial = true;
-    }
-    if (tag == 'link' &&
-        (element.attributes['rel'] ?? '')
-            .toLowerCase()
-            .split(RegExp(r'\s+'))
-            .contains('stylesheet')) {
-      partial = true;
-    }
-    if (element.attributes.keys.any(
-      (key) => key is String && key.toLowerCase().startsWith('on'),
-    )) {
-      partial = true;
-    }
+    if (_saleElementPartial(element, tag)) partial = true;
     // Inert and embedded subtrees are not traversed or used as clues.
-    if (const {
-      'script',
-      'style',
-      'iframe',
-      'object',
-      'embed',
-      'template',
-      'noscript',
-      'svg',
-    }.contains(tag)) {
-      continue;
-    }
-    final children = element.nodes;
-    if (children.length + stack.length > _maxNodes - visited) {
+    if (_inertSaleTags.contains(tag)) continue;
+    if (!_pushSaleChildren(element.nodes, depth, stack, visited)) {
       partial = true;
       budgetExhausted = true;
       break;
-    }
-    for (var i = children.length - 1; i >= 0; i--) {
-      stack.add((children[i], depth + 1));
     }
     if (!eligibility.eligible(element)) {
       if (eligibility.exhausted) {
@@ -295,24 +236,8 @@ BookPageSaleReview inspectBookPageSale(
         break;
       }
     }
-    if (tag == 'h1' &&
-        const {
-          'this domain is for sale',
-          'this domain name is for sale',
-          '本域名正在出售',
-          '此域名正在出售',
-        }.contains(heading)) {
-      saleHeadings++;
-    }
-    if (tag == 'h3' &&
-        const {
-          'contact the owner',
-          'contact the domain owner',
-          '联系域名所有者',
-          '联系域名持有人',
-        }.contains(heading)) {
-      contactHeadings++;
-    }
+    if (tag == 'h1' && _saleHeading(heading)) saleHeadings++;
+    if (tag == 'h3' && _contactHeading(heading)) contactHeadings++;
     if (tag == 'form') forms++;
   }
   final suspected =
@@ -321,11 +246,7 @@ BookPageSaleReview inspectBookPageSale(
       saleHeadings <= 2 &&
       contactHeadings == 1 &&
       forms == 1 &&
-      target.scheme.toLowerCase() == 'https' &&
-      target.port == 443 &&
-      target.path == '/' &&
-      !target.hasQuery &&
-      !target.hasFragment;
+      _saleTargetEligible(target);
   return BookPageSaleReview(
     coverage: partial
         ? BookPageSaleCoverage.partial
@@ -333,4 +254,94 @@ BookPageSaleReview inspectBookPageSale(
     suspected: suspected,
     originSha256: origin,
   );
+}
+
+const _inertSaleTags = {
+  'script',
+  'style',
+  'iframe',
+  'object',
+  'embed',
+  'template',
+  'noscript',
+  'svg',
+};
+
+bool _saleElementTooLarge(dom.Element element, String rawTag) {
+  return rawTag.length > 1024 ||
+      element.attributes.length > 128 ||
+      (element.attributes['style']?.length ?? 0) > 1024 ||
+      (element.attributes['class']?.length ?? 0) > 1024 ||
+      (element.attributes['id']?.length ?? 0) > 1024 ||
+      (element.attributes['aria-hidden']?.length ?? 0) > 1024 ||
+      (rawTag.toLowerCase() == 'link' &&
+          (element.attributes['rel']?.length ?? 0) > 1024);
+}
+
+bool _saleElementPartial(dom.Element element, String tag) {
+  var partial = false;
+  if (const {
+    'script',
+    'style',
+    'iframe',
+    'object',
+    'embed',
+    'template',
+    'noscript',
+    'svg',
+    'base',
+  }.contains(tag)) {
+    partial = true;
+  }
+  if (tag == 'link' &&
+      (element.attributes['rel'] ?? '')
+          .toLowerCase()
+          .split(RegExp(r'\s+'))
+          .contains('stylesheet')) {
+    partial = true;
+  }
+  if (element.attributes.keys.any(
+    (key) => key is String && key.toLowerCase().startsWith('on'),
+  )) {
+    partial = true;
+  }
+  return partial;
+}
+
+bool _saleHeading(String? heading) => const {
+  'this domain is for sale',
+  'this domain name is for sale',
+  '本域名正在出售',
+  '此域名正在出售',
+}.contains(heading);
+bool _contactHeading(String? heading) => const {
+  'contact the owner',
+  'contact the domain owner',
+  '联系域名所有者',
+  '联系域名持有人',
+}.contains(heading);
+
+bool _saleTargetEligible(Uri target) =>
+    target.scheme.toLowerCase() == 'https' &&
+    target.port == 443 &&
+    target.path == '/' &&
+    !target.hasQuery &&
+    !target.hasFragment;
+
+bool _closedSalePage(String input) => RegExp(
+  r'</body\s*>\s*</html\s*>\s*$',
+  caseSensitive: false,
+).hasMatch(input);
+
+bool _pushSaleChildren(
+  List<dom.Node> children,
+  int depth,
+  List<(dom.Node, int)> stack,
+  int visited,
+) {
+  if (children.length + stack.length > _maxNodes - visited) return false;
+  for (var i = children.length - 1; i >= 0; i--) {
+    stack.add((children[i], depth + 1));
+  }
+  return true;
 }

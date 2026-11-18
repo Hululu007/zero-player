@@ -9,6 +9,7 @@ import '../../core/network/network_target_policy.dart';
 import '../../core/platform/close_resources.dart';
 import '../gateway/media_gateway.dart';
 import 'native_input_policy.dart';
+import 'player_security.dart';
 
 final class MediaKitEngine implements PlayerEngine, VideoRecoveryEngine {
   MediaKitEngine({
@@ -67,7 +68,13 @@ final class MediaKitEngine implements PlayerEngine, VideoRecoveryEngine {
   final Duration? networkTimeout;
   final Duration? audioReadAhead;
   GatewaySession? _session;
-  Future<void>? _securityReady;
+  late final _security = PlayerSecurity(
+    setProperty: (key, value) =>
+        (player.platform as NativePlayer).setProperty(key, value),
+    getProperty: (key) => (player.platform as NativePlayer).getProperty(key),
+    audioReadAhead: audioReadAhead,
+    networkTimeout: networkTimeout,
+  );
   Future<void>? _disposing;
   Timer? _stateTimer;
   bool _softwareDecoder = false;
@@ -133,37 +140,6 @@ final class MediaKitEngine implements PlayerEngine, VideoRecoveryEngine {
     });
   }
 
-  Future<void> _configureSecurity() async {
-    for (final entry in const {
-      'load-scripts': 'no',
-      'config': 'no',
-      'load-unsafe-playlists': 'no',
-      'access-references': 'no',
-      'sub-auto': 'no',
-      'audio-file-auto': 'no',
-      'cache-on-disk': 'no',
-    }.entries) {
-      await _setVerified(entry.key, entry.value);
-    }
-    if (audioReadAhead case final ahead?) {
-      final native = player.platform as NativePlayer;
-      await native.setProperty('cache', 'yes');
-      await native.setProperty('cache-secs', '${ahead.inSeconds}');
-      await native.setProperty('cache-pause-initial', 'yes');
-    }
-    if (networkTimeout case final timeout?) {
-      final seconds = timeout.inSeconds.clamp(1, 60);
-      final native = player.platform as NativePlayer;
-      await native.setProperty('network-timeout', '$seconds');
-      if (double.tryParse(
-            await native.getProperty('options/network-timeout'),
-          ) !=
-          seconds) {
-        throw StateError('播放器网络等待时间未生效');
-      }
-    }
-  }
-
   Future<void> _setVerified(String key, String value) async {
     final native = player.platform as NativePlayer;
     await native.setProperty(key, value);
@@ -200,7 +176,7 @@ final class MediaKitEngine implements PlayerEngine, VideoRecoveryEngine {
     _unavailableDiagnostics.clear();
     NetworkTargetPolicy.validateUri(uri);
     if (_disposing != null) throw StateError('Player is closing');
-    await (_securityReady ??= _configureSecurity());
+    await _security.ensureReady();
     if (_disposing != null) return;
     _session?.close();
     final transport = gateway;

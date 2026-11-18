@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import '../../core/network/loopback_request_policy.dart';
+import '../../core/network/file_response.dart';
 import 'dart:math';
 
 import 'filter_session.dart';
@@ -13,7 +14,12 @@ final class ApprovedMediaServer {
   Future<void>? _starting;
   Future<void>? _closing;
 
-  Future<void> start() => _starting ??= _start();
+  Future<void> start() {
+    if (_closing != null) return Future.error(StateError('Server closed'));
+    if (_server != null) return Future.value();
+    return _starting ??= _start().whenComplete(() => _starting = null);
+  }
+
   Future<void> _start() async {
     _server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
     _server!.listen((request) => unawaited(_handle(request)));
@@ -121,12 +127,12 @@ final class ApprovedMediaServer {
       request.response.statusCode = HttpStatus.notFound;
       return;
     }
-    final file = File(slice.path);
-    request.response.headers.contentType = ContentType('video', 'mp2t');
-    request.response.contentLength = await file.length();
-    if (request.method == 'GET') {
-      await request.response.addStream(file.openRead());
-    }
+    await serveLocalFile(
+      request,
+      File(slice.path),
+      contentType: 'video/mp2t',
+      cancellation: session.cancellation,
+    );
   }
 
   Future<void> close() => _closing ??= _close();

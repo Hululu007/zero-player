@@ -1,3 +1,4 @@
+import '../data/book_catalog_window.dart';
 import 'dart:async';
 import 'dart:io';
 
@@ -190,6 +191,15 @@ final class _BooksPageState extends State<BooksPage> {
     try {
       await _services.books.checkFollowing(widget.kind, token);
       if (mounted && !token.isCancelled) await _reloadShelf();
+    } on BookCatalogCapacityExceeded catch (error) {
+      if (mounted && !token.isCancelled) {
+        await _reloadShelf();
+        if (mounted) {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text('$error')));
+        }
+      }
     } on Exception {
       // A temporary failure leaves the cached catalog and update badges intact.
     } finally {
@@ -206,6 +216,15 @@ final class _BooksPageState extends State<BooksPage> {
     try {
       await _services.books.checkShelfUpdates(entries, token);
       if (mounted && !token.isCancelled) await _reloadShelf();
+    } on BookCatalogCapacityExceeded catch (error) {
+      if (mounted && !token.isCancelled) {
+        await _reloadShelf();
+        if (mounted) {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text('$error')));
+        }
+      }
     } on Exception {
       // Leave cached entries visible if one or more sources fail.
     } finally {
@@ -508,24 +527,19 @@ final class _BooksPageState extends State<BooksPage> {
       );
       return Padding(
         padding: EdgeInsets.fromLTRB(
-          compact ? 16 : 26,
-          12,
-          compact ? 16 : 26,
-          8,
+          compact ? 12 : 26,
+          compact ? 4 : 12,
+          compact ? 12 : 26,
+          compact ? 4 : 8,
         ),
         child: compact
-            ? Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
+            ? Row(
                 children: [
-                  Row(
-                    children: [
-                      Expanded(child: title),
-                      downloadButton,
-                      sourceButton,
-                    ],
+                  Expanded(
+                    child: Align(alignment: Alignment.centerLeft, child: tabs),
                   ),
-                  const SizedBox(height: 8),
-                  Align(alignment: Alignment.centerLeft, child: tabs),
+                  downloadButton,
+                  sourceButton,
                 ],
               )
             : Row(

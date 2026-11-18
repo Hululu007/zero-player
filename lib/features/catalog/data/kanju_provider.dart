@@ -58,12 +58,8 @@ final class KanjuProvider implements VodProvider {
   Future<CatalogItem> detail(String remoteId) async {
     final path = '/v1/catalog/${Uri.encodeComponent(remoteId)}';
     final data = await client.get(transport.url(path));
-    final episodes = <Map>[
-      ...(data['episodes'] as List? ?? []).whereType<Map>(),
-    ];
-    var pagination = data['episode_pagination'] is Map
-        ? data['episode_pagination'] as Map
-        : const {};
+    final episodes = <Map>[..._list(data['episodes']).whereType<Map>()];
+    var pagination = _map(data['episode_pagination']);
     for (var page = 0; pagination['has_more'] == true; page++) {
       if (page >= 49 || episodes.length >= 10000) {
         throw const FormatException('剧集超过加载上限');
@@ -75,13 +71,10 @@ final class KanjuProvider implements VodProvider {
               queryParameters: {'offset': '${episodes.length}', 'limit': '200'},
             ),
       );
-      final batch = (next['episodes'] as List? ?? []).whereType<Map>().toList();
+      final batch = _list(next['episodes']).whereType<Map>().toList();
       if (batch.isEmpty) throw const FormatException('剧集分页没有前进');
       episodes.addAll(batch);
-      pagination =
-          next['episode_pagination'] as Map? ??
-          next['pagination'] as Map? ??
-          {};
+      pagination = _map(next['episode_pagination'] ?? next['pagination']);
     }
     var lines = <Map>[];
     if (episodes.isNotEmpty && episodes.first['token'] is String) {
@@ -90,10 +83,9 @@ final class KanjuProvider implements VodProvider {
           '/v1/playback/resolve/${Uri.encodeComponent(episodes.first['token'] as String)}',
         ),
       );
-      lines = (playback['line_options'] as List? ?? [])
-          .whereType<Map>()
-          .where(_directLine)
-          .toList();
+      lines = _list(
+        playback['line_options'],
+      ).whereType<Map>().where(_directLine).toList();
     }
     return parse({...data, 'episodes': episodes, 'direct_lines': lines});
   }
@@ -103,7 +95,7 @@ final class KanjuProvider implements VodProvider {
         row[key] is List ? (row[key] as List).join(' / ') : '${row[key] ?? ''}';
     String clean(String key) => displayText(text(key));
     final episodes = <Episode>[];
-    for (final ep in (row['episodes'] as List? ?? []).whereType<Map>()) {
+    for (final ep in _list(row['episodes']).whereType<Map>()) {
       final token = '${ep['token'] ?? ''}';
       if (token.isEmpty) continue;
       episodes.add(
@@ -136,7 +128,7 @@ final class KanjuProvider implements VodProvider {
       (num.tryParse('${line['minimum_user_level'] ?? 0}') ?? 0) == 0;
 
   List<PlayLine> _lines(Map row, List<Episode> episodes) {
-    final lines = (row['direct_lines'] as List? ?? []).whereType<Map>();
+    final lines = _list(row['direct_lines']).whereType<Map>();
     final seen = <String>{};
     final result = [
       for (final line in lines)
@@ -172,7 +164,7 @@ final class KanjuProvider implements VodProvider {
       throw const FormatException('播放接口无效');
     }
     final data = await client.get(episode.uri);
-    for (final line in (data['line_options'] as List? ?? []).whereType<Map>()) {
+    for (final line in _list(data['line_options']).whereType<Map>()) {
       final requested = episode.uri.queryParameters['provider_id'];
       if (requested != null && requested != line['provider_id']) continue;
       if (line['resolved'] != true ||
@@ -194,4 +186,16 @@ final class KanjuProvider implements VodProvider {
       '此集没有公开直连线路；原站解析或账户线路暂不支持',
     );
   }
+}
+
+List _list(Object? raw) {
+  if (raw == null) return const [];
+  if (raw is! List) throw const FormatException('看剧AI列表结构已变化');
+  return raw;
+}
+
+Map _map(Object? raw) {
+  if (raw == null) return const {};
+  if (raw is! Map) throw const FormatException('看剧AI分页结构已变化');
+  return raw;
 }

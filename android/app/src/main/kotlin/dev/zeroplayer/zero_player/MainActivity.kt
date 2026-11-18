@@ -28,6 +28,11 @@ class MainActivity : FlutterActivity() {
     private var savePath: String? = null
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "zero_player/reader_fonts")
+            .setMethodCallHandler { call, result ->
+                if (call.method == "systemFamilies") result.success(ReaderFonts.systemFamilies())
+                else result.notImplemented()
+            }
         ActivityRequestCodes.validate()
         videoPicker.progress = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "zero_player/local_video_progress")
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "zero_player/platform")

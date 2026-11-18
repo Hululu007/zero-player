@@ -1,15 +1,28 @@
 import 'dart:io';
 import 'package:zero_player/features/music/application/music_downloads.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:zero_player/app/app_services.dart';
 import 'package:zero_player/core/persistence/app_database.dart';
 import 'package:zero_player/features/music/domain/music_track.dart';
 import 'package:zero_player/features/music/presentation/music_page.dart';
 import 'package:zero_player/features/music/presentation/music_player.dart';
+import 'package:zero_player/features/music/data/music_recommendations.dart';
+import 'package:zero_player/features/music/presentation/music_chart_browser.dart';
 import '../../test_support/fake_player_engine.dart';
 
 void main() {
+  for (final (size, scale) in [
+    (const Size(320, 640), 1.6),
+    (const Size(568, 320), 1.6),
+    (const Size(390, 844), 2.0),
+  ]) {
+    testWidgets(
+      'chart search and keyboard leave content scrollable at $size/$scale',
+      (tester) => _exercisePhoneCharts(tester, size, scale),
+    );
+  }
   testWidgets('search list offers one-tap return to top', (tester) async {
     final (root, services, _) = (await tester.runAsync(_setup))!;
     services.musicBrowser.result = MusicSearchResult([
@@ -88,6 +101,82 @@ void main() {
   }
 }
 
+Future<void> _exercisePhoneCharts(
+  WidgetTester tester,
+  Size size,
+  double scale,
+) async {
+  final (root, services, _) = (await tester.runAsync(_setup))!;
+  services.musicBrowser.query = '';
+  services.musicRecommendations.chart = 'wfu';
+  services.musicRecommendations.items = [
+    for (var i = 0; i < 20; i++) MusicRecommendation('测试榜单曲目$i', '歌手', ''),
+  ];
+  tester.view.physicalSize = size;
+  tester.view.devicePixelRatio = 1;
+  tester.platformDispatcher.textScaleFactorTestValue = scale;
+  addTearDown(tester.view.resetPhysicalSize);
+  addTearDown(tester.view.resetDevicePixelRatio);
+  addTearDown(tester.view.resetViewInsets);
+  addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+  try {
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [servicesProvider.overrideWithValue(services)],
+        child: MaterialApp(
+          home: Scaffold(body: MusicPage(services: services)),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('music-search')), findsNothing);
+    await tester.tap(find.byTooltip('展开音乐搜索'));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.byKey(const ValueKey('music-search')));
+    await tester.tap(find.byKey(const ValueKey('music-search')));
+    tester.view.viewInsets = FakeViewPadding(
+      bottom: size.height > 500 ? 260 : 120,
+    );
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+    await tester.ensureVisible(find.byKey(const ValueKey('music-search')));
+    await tester.pumpAndSettle();
+    final field = tester.getRect(find.byKey(const ValueKey('music-search')));
+    expect(
+      field.bottom,
+      lessThanOrEqualTo(size.height - tester.view.viewInsets.bottom),
+    );
+    tester.view.resetViewInsets();
+    FocusManager.instance.primaryFocus?.unfocus();
+    await tester.pumpAndSettle();
+    final content = find.byKey(const ValueKey('music-recommendation-0'));
+    final scroll = find
+        .descendant(
+          of: find.byType(MusicChartBrowser),
+          matching: find.byType(Scrollable),
+        )
+        .first;
+    await tester.scrollUntilVisible(content, 100, scrollable: scroll);
+    await tester.pumpAndSettle();
+    expect(content.hitTestable(), findsOneWidget);
+    expect(find.byTooltip('收起音乐搜索').hitTestable(), findsNothing);
+    await tester.scrollUntilVisible(
+      find.byTooltip('收起音乐搜索'),
+      -150,
+      scrollable: scroll,
+    );
+    await tester.pumpAndSettle();
+    await tester.binding.handlePopRoute();
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('music-search')), findsNothing);
+    expect(find.byTooltip('展开音乐搜索'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  } finally {
+    await tester.pumpWidget(const SizedBox.shrink());
+    await _closeFixture(tester, services, root);
+  }
+}
+
 Future<void> _exercise(WidgetTester tester, Size size) async {
   final setup = (await tester.runAsync(_setup))!;
   final (root, services, engine) = setup;
@@ -107,7 +196,10 @@ Future<void> _exercise(WidgetTester tester, Size size) async {
   try {
     await tester.pumpWidget(frame(MusicPage(services: services)));
     await tester.pumpAndSettle();
-    expect(find.text('多源聚合 · 并发搜索'), findsOneWidget);
+    expect(
+      find.text(size.width < 620 ? '多源聚合' : '多源聚合 · 并发搜索'),
+      findsOneWidget,
+    );
     await tester.scrollUntilVisible(
       find.byKey(const ValueKey('music-test')),
       200,

@@ -82,15 +82,19 @@ final class _DownloadsPageState extends State<DownloadsPage> {
           Text(task.title, style: Theme.of(context).textTheme.titleMedium),
           const SizedBox(height: 8),
           Text(
-            '${_status(task.status)} · ${(task.bytes / 1048576).toStringAsFixed(1)} MiB · ${task.completed} / ${task.total} 项',
+            '${_status(task.status)} · ${(task.bytes / 1048576).toStringAsFixed(1)} MiB · ${task.completed}${task.total > 0 ? ' / ${task.total}' : ''} 项',
           ),
           _outputLocation(task),
           if (task.error != null) Text(task.error!),
           if (task.status == DownloadStatus.running ||
               task.status == DownloadStatus.saving)
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 8),
-              child: LinearProgressIndicator(),
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              child: LinearProgressIndicator(
+                value: task.status == DownloadStatus.running && task.total > 0
+                    ? (task.completed / task.total).clamp(0.0, 1.0)
+                    : null,
+              ),
             ),
           Wrap(
             spacing: 8,
@@ -191,6 +195,17 @@ final class _DownloadsPageState extends State<DownloadsPage> {
   };
   Future<void> _play(DownloadTask task) => perform(context, () async {
     widget.services.downloads.requireAllowed(task);
+    final sourceId = task.row['source_id'] as String;
+    final remoteId = task.row['remote_id'] as String;
+    final line = task.row['line_name'] as String;
+    final episode = task.row['episode_label'] as String;
+    final saved = await widget.services.history.episodeEntry(
+      sourceId,
+      remoteId,
+      line,
+      episode,
+    );
+    final item = recordedItem(task.row);
     final session = await widget.services.offline.open(
       task.id,
       Directory(task.directory),
@@ -204,16 +219,17 @@ final class _DownloadsPageState extends State<DownloadsPage> {
       '/player',
       extra: PlaybackRequest(
         CatalogItem(
-          sourceId: task.row['source_id'] as String,
-          id: task.row['remote_id'] as String,
-          title: task.title,
-          category: recordedItem(task.row)?.category ?? '',
-          tags: recordedItem(task.row)?.tags ?? '',
-          description: recordedItem(task.row)?.description ?? '',
+          sourceId: sourceId,
+          id: remoteId,
+          title: item?.title ?? task.title,
+          category: item?.category ?? '',
+          tags: item?.tags ?? '',
+          description: item?.description ?? '',
           lines: [
-            PlayLine('离线', [Episode(task.title, session.uri)]),
+            PlayLine(line, [Episode(episode, session.uri)]),
           ],
         ),
+        position: saved?.position ?? Duration.zero,
         offline: session,
         mediaKind: PlaybackMediaKind.downloaded,
       ),

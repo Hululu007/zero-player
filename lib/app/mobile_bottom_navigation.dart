@@ -18,9 +18,9 @@ final class MobileBottomNavigation extends StatelessWidget {
     final selected = _routes.indexOf(location);
     return NavigationBar(
       key: const ValueKey('mobile-bottom-navigation'),
-      height: 64,
+      height: 60,
       selectedIndex: selected < 0 ? 4 : selected,
-      labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
+      labelBehavior: NavigationDestinationLabelBehavior.onlyShowSelected,
       onDestinationSelected: (index) =>
           index == 4 ? onMore() : onNavigate(_routes[index]),
       destinations: const [

@@ -76,11 +76,12 @@
 ~~~powershell
 flutter pub get
 flutter analyze
+dart run tool/check_module_boundaries.dart
 dart run tool/check_source_size.dart
 flutter test
 ~~~
 
-lib/features 按业务划分；lib/media 包含播放、HLS、回环网关、缓存与导出；lib/core 提供网络、数据库和平台边界；lib/app 负责依赖组合、路由与布局。平台测试和 Flutter 构建应串行执行，避免共享插件注册文件冲突。图标由 assets/brand/logo.jpg 通过 tool/generate_brand.py 生成。
+lib/features 按业务划分；lib/media 包含播放、HLS、回环网关、缓存与导出；lib/core 提供网络、数据库和平台边界；lib/app 负责依赖组合、路由与布局。当前模块职责、依赖约束与扩展步骤见[模块边界](docs/implementation/MODULE-BOUNDARIES.md)；边界检查也随 `flutter test` 执行。平台测试和 Flutter 构建应串行执行，避免共享插件注册文件冲突。图标由 assets/brand/logo.jpg 通过 tool/generate_brand.py 生成。
 
 仓库仅提交代码、测试、必要素材、依赖锁文件和构建/使用说明。密钥、本地配置、下载工具链、测试产物、缓存和发行二进制均不进入 Git；发行文件通过 Releases 提供。
 

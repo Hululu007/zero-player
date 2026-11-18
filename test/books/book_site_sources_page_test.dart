@@ -104,11 +104,11 @@ void _siteRecordStatusTests() {
             status(failedTile, '抽查记录读取失败，请重试').evaluate().isNotEmpty,
       );
       expect(status(absentTile, '无可用抽查记录'), findsNothing);
-      await tester.tap(find.text('网页脚本线索'));
+      await tester.tap(find.text('疑似网页脚本'));
       await tester.pump();
       expect(find.text('网页抽查记录读取失败，无法筛选，请重试'), findsOneWidget);
       expect(find.text('没有符合条件的来源'), findsNothing);
-      await tester.tap(find.text('网页脚本线索'));
+      await tester.tap(find.text('疑似网页脚本'));
       await tester.pump();
       failSiteRead = false;
       await tester.runAsync(
@@ -127,7 +127,7 @@ void _siteRecordStatusTests() {
 
 void _domainSaleCluePageTests() {
   testWidgets(
-    'sale filter includes current and historical clues without enabling sources',
+    'source page omits sale labels and descriptions without changing sources',
     (tester) async {
       tester.view.physicalSize = const Size(480, 900);
       tester.view.devicePixelRatio = 1;
@@ -140,7 +140,6 @@ void _domainSaleCluePageTests() {
       final current = _source('出售测试当前', 'sale-current.example');
       final historical = _source('出售测试历史', 'sale-history.example');
       final normal = _source('出售测试普通', 'sale-normal.example');
-      final checks = <String, BookSiteCheck>{};
       const saleHtml =
           '<html><body><h1>This domain is for sale</h1>'
           '<h3>Contact the owner</h3><form></form></body></html>';
@@ -178,7 +177,6 @@ void _domainSaleCluePageTests() {
                   siteRevision: revision,
                 )
               : first;
-          checks[source.id] = observed;
           await services.books.store.write(
             'books_site_check:${source.id}',
             observed.toJson(),
@@ -202,25 +200,13 @@ void _domainSaleCluePageTests() {
             historicalTile.evaluate().isNotEmpty &&
             ordinaryTile.evaluate().isNotEmpty,
       );
-      expect(
-        find.descendant(
-          of: currentTile,
-          matching: find.textContaining('疑似域名出售静态结构'),
-        ),
-        findsOneWidget,
-      );
-      expect(
-        find.descendant(
-          of: historicalTile,
-          matching: find.textContaining('历史域名出售线索'),
-        ),
-        findsOneWidget,
-      );
-      await tester.tap(find.text('域名出售线索'));
-      await tester.pump();
+      expect(find.text('域名出售线索'), findsNothing);
+      expect(find.textContaining('疑似域名出售静态结构'), findsNothing);
+      expect(find.textContaining('历史域名出售线索'), findsNothing);
+      expect(find.text('疑似网页脚本'), findsOneWidget);
       expect(currentTile, findsOneWidget);
       expect(historicalTile, findsOneWidget);
-      expect(ordinaryTile, findsNothing);
+      expect(ordinaryTile, findsOneWidget);
       await tester.runAsync(() async {
         expect(
           (await services.books.sourceEntry(
@@ -230,33 +216,7 @@ void _domainSaleCluePageTests() {
           isFalse,
         );
         expect(await services.books.riskStore.get(current.id), isNull);
-        for (final source in [current, historical]) {
-          final root = Uri(
-            scheme: 'https',
-            host: source.endpoint.host,
-            path: '/',
-          );
-          final previous = checks[source.id]!;
-          final completed = BookSiteCheck.after(
-            inspectBookSiteHtml(root, '<html><body><p>普通书站</p></body></html>'),
-            DateTime(2026, 11, 15, 10, 30),
-            source,
-            previous,
-            siteRevision: previous.siteRevision,
-          );
-          await services.books.store.write(
-            'books_site_check:${source.id}',
-            completed.toJson(),
-          );
-        }
       });
-      await _waitFor(
-        tester,
-        () =>
-            currentTile.evaluate().isEmpty &&
-            historicalTile.evaluate().isEmpty &&
-            find.text('没有符合条件的来源').evaluate().isNotEmpty,
-      );
       expect(tester.takeException(), isNull);
     },
   );
@@ -409,7 +369,7 @@ void _pageScriptClueTests() {
       );
       expect(currentClue, findsOneWidget);
       expect(historicalClue, findsOneWidget);
-      await tester.tap(find.text('网页脚本线索'));
+      await tester.tap(find.text('疑似网页脚本'));
       await tester.pump();
       expect(tile, findsOneWidget);
       await tester.runAsync(() async {
@@ -494,7 +454,7 @@ void _pageScriptClueTests() {
       ),
     );
     expect(find.textContaining('跨源跳转写法，待复核'), findsOneWidget);
-    await tester.tap(find.text('网页脚本线索'));
+    await tester.tap(find.text('疑似网页脚本'));
     await tester.pump();
     expect(find.text('网页测试线索'), findsOneWidget);
     expect(find.text('网页测试普通'), findsNothing);
@@ -618,8 +578,12 @@ void _quarantineReviewPageTests() {
       );
       expect(find.text('网页抽查'), findsOneWidget);
       expect(find.text('风险记录'), findsOneWidget);
+      expect(find.textContaining('不执行网页脚本'), findsNothing);
+      await tester.tap(find.text('自动检测说明'));
+      await tester.pumpAndSettle();
       expect(find.textContaining('不执行网页脚本'), findsOneWidget);
-      expect(find.textContaining('未确认结果的重试间隔从 30 分钟递增'), findsOneWidget);
+      expect(find.textContaining('定期抽查已启用书源的首页'), findsOneWidget);
+      expect(find.textContaining('每 30 分钟'), findsNothing);
       expect(find.textContaining('网页：疑似博彩文字线索'), findsOneWidget);
       expect(tester.takeException(), isNull);
       await tester.tap(find.text('风险记录'));

@@ -4,7 +4,8 @@ extension _ReaderSession on _BookReaderPageState {
   void _advanceAutomatically(double? seconds) {
     if (!_ready ||
         _controls ||
-        (!_configuring && ModalRoute.of(context)?.isCurrent != true)) {
+        _configuring ||
+        ModalRoute.of(context)?.isCurrent != true) {
       return;
     }
     final viewport = _viewport.currentState;

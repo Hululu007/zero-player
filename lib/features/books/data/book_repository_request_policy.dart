@@ -48,22 +48,22 @@ extension _BookRepositoryRequestPolicy on BooksRepository {
     BookSource source,
     Book book,
     CancellationToken token,
-    int observation,
+    BookPolicyObservation observation,
   ) {
     final revision = _discoveryRevision;
     final fingerprint = bookSourceCheckFingerprint(source);
     return _withBookRequestGuard(source, book, token, (active, guard) async {
       void authorizeObservation() {
         active.check();
-        _requireBookObservation(book, observation);
-        final current = _riskSourceEntries[source.id];
+        observation.check();
+        final current = _sourceAccess.entry(source.id);
         if (_evidenceClosing ||
             _evidenceMutations != 0 ||
             !sourceRisksReady ||
             revision != _discoveryRevision ||
             current == null ||
             !current.enabled ||
-            !_sourceEntryAllowed(current) ||
+            !sourceEntryAllowed(current) ||
             bookSourceCheckFingerprint(current.source) != fingerprint) {
           throw const RequestCancelled();
         }
@@ -76,9 +76,15 @@ extension _BookRepositoryRequestPolicy on BooksRepository {
         requestGuard: guard,
       );
       authorizeObservation();
-      await _rememberBookMetadata(book, result, authorizeObservation);
+      await _bookPolicy.rememberMetadata(
+        book,
+        result,
+        bookAllowed: bookAllowed,
+        authorize: authorizeObservation,
+        afterCommit: afterBookPolicyCommitForTesting,
+      );
       authorizeObservation();
-      if (!_bookMetadataAllowed(_bookMetadata(result))) {
+      if (!_bookPolicy.metadataAllowed(result)) {
         throw const ContentBlocked();
       }
       if (!sourceAllowed(source) ||
@@ -130,7 +136,7 @@ extension _BookRepositoryRequestPolicy on BooksRepository {
 
   bool _chapterTargetAllowed(Book book, BookChapter chapter) {
     final source =
-        _riskSourceEntries[book.sourceId]?.source ??
+        _sourceAccess.entry(book.sourceId)?.source ??
         _verifiedSources[book.sourceId];
     return source == null ||
         !_restrictedBookTarget(source, chapter.uri, chapter.request);

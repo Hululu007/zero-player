@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import '../../../app/app_services.dart';
 import '../application/audiobook_controller.dart';
 import '../domain/book.dart';
+import '../../playback/domain/player_engine.dart';
 import 'book_page_route.dart';
 
 final class AudiobookPlayerPage extends StatefulWidget {
@@ -122,7 +123,6 @@ final class _AudiobookPlayerPageState extends State<AudiobookPlayerPage> {
     final chapter = player.chapter;
     final state = player.snapshot;
     final active = player.active && !player.loading && player.error == null;
-    final duration = state.duration.inMilliseconds;
     return Scaffold(
       appBar: AppBar(title: Text(player.book?.title ?? widget.book.title)),
       body: Center(
@@ -159,84 +159,8 @@ final class _AudiobookPlayerPageState extends State<AudiobookPlayerPage> {
                   padding: const EdgeInsets.all(10),
                   child: Text(player.error!, textAlign: TextAlign.center),
                 ),
-              Slider(
-                value: state.position.inMilliseconds
-                    .clamp(0, duration)
-                    .toDouble(),
-                max: duration > 0 ? duration.toDouble() : 1,
-                onChanged: !active || duration <= 0
-                    ? null
-                    : (value) =>
-                          player.seek(Duration(milliseconds: value.round())),
-              ),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(_time(state.position)),
-                  Text(_time(state.duration)),
-                ],
-              ),
-              Wrap(
-                spacing: 12,
-                runSpacing: 8,
-                alignment: WrapAlignment.center,
-                crossAxisAlignment: WrapCrossAlignment.center,
-                children: [
-                  IconButton(
-                    tooltip: '上一章',
-                    icon: const Icon(Icons.skip_previous),
-                    onPressed: !player.loading && player.index > 0
-                        ? () => player.choose(player.chapters[player.index - 1])
-                        : null,
-                  ),
-                  IconButton.filled(
-                    tooltip: state.playing ? '暂停' : '播放',
-                    icon: Icon(state.playing ? Icons.pause : Icons.play_arrow),
-                    onPressed: active ? player.toggle : null,
-                  ),
-                  IconButton(
-                    tooltip: '后退 15 秒',
-                    icon: const Icon(Icons.fast_rewind),
-                    onPressed: active
-                        ? () => _skip(const Duration(seconds: -15))
-                        : null,
-                  ),
-                  IconButton(
-                    tooltip: '前进 30 秒',
-                    icon: const Icon(Icons.forward_30),
-                    onPressed: active
-                        ? () => _skip(const Duration(seconds: 30))
-                        : null,
-                  ),
-                  IconButton(
-                    tooltip: '下一章',
-                    icon: const Icon(Icons.skip_next),
-                    onPressed:
-                        !player.loading &&
-                            player.index >= 0 &&
-                            player.index + 1 < player.chapters.length
-                        ? () => player.choose(player.chapters[player.index + 1])
-                        : null,
-                  ),
-                  DropdownButton<double>(
-                    value: player.rate,
-                    items: [
-                      for (final rate in [.75, 1.0, 1.25, 1.5, 2.0])
-                        DropdownMenuItem(
-                          value: rate,
-                          child: Text(
-                            '${rate.toStringAsFixed(rate == 1 || rate == 2 ? 0 : 2)}×',
-                          ),
-                        ),
-                    ],
-                    onChanged: !active
-                        ? null
-                        : (value) {
-                            if (value != null) unawaited(player.setRate(value));
-                          },
-                  ),
-                ],
-              ),
+              ..._progress(state, active),
+              _transportControls(state, active),
               TextButton.icon(
                 onPressed: player.loading || !player.active
                     ? null
@@ -286,6 +210,81 @@ final class _AudiobookPlayerPageState extends State<AudiobookPlayerPage> {
       ),
     );
   }
+
+  List<Widget> _progress(PlaybackSnapshot state, bool active) {
+    final duration = state.duration.inMilliseconds;
+    return [
+      Slider(
+        value: state.position.inMilliseconds.clamp(0, duration).toDouble(),
+        max: duration > 0 ? duration.toDouble() : 1,
+        onChanged: !active || duration <= 0
+            ? null
+            : (value) => player.seek(Duration(milliseconds: value.round())),
+      ),
+      Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [Text(_time(state.position)), Text(_time(state.duration))],
+      ),
+    ];
+  }
+
+  Widget _transportControls(PlaybackSnapshot state, bool active) => Wrap(
+    spacing: 12,
+    runSpacing: 8,
+    alignment: WrapAlignment.center,
+    crossAxisAlignment: WrapCrossAlignment.center,
+    children: [
+      IconButton(
+        tooltip: '上一章',
+        icon: const Icon(Icons.skip_previous),
+        onPressed: !player.loading && player.index > 0
+            ? () => player.choose(player.chapters[player.index - 1])
+            : null,
+      ),
+      IconButton.filled(
+        tooltip: state.playing ? '暂停' : '播放',
+        icon: Icon(state.playing ? Icons.pause : Icons.play_arrow),
+        onPressed: active ? player.toggle : null,
+      ),
+      IconButton(
+        tooltip: '后退 15 秒',
+        icon: const Icon(Icons.fast_rewind),
+        onPressed: active ? () => _skip(const Duration(seconds: -15)) : null,
+      ),
+      IconButton(
+        tooltip: '前进 30 秒',
+        icon: const Icon(Icons.forward_30),
+        onPressed: active ? () => _skip(const Duration(seconds: 30)) : null,
+      ),
+      IconButton(
+        tooltip: '下一章',
+        icon: const Icon(Icons.skip_next),
+        onPressed:
+            !player.loading &&
+                player.index >= 0 &&
+                player.index + 1 < player.chapters.length
+            ? () => player.choose(player.chapters[player.index + 1])
+            : null,
+      ),
+      DropdownButton<double>(
+        value: player.rate,
+        items: [
+          for (final rate in [.75, 1.0, 1.25, 1.5, 2.0])
+            DropdownMenuItem(
+              value: rate,
+              child: Text(
+                '${rate.toStringAsFixed(rate == 1 || rate == 2 ? 0 : 2)}×',
+              ),
+            ),
+        ],
+        onChanged: !active
+            ? null
+            : (value) {
+                if (value != null) unawaited(player.setRate(value));
+              },
+      ),
+    ],
+  );
 }
 
 final class AudiobookMiniPlayer extends StatelessWidget {

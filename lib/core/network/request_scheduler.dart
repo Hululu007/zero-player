@@ -5,6 +5,16 @@ import 'header_policy.dart';
 
 enum RequestPriority { playback, interactive, background }
 
+final _requestPriorityKey = Object();
+RequestPriority get currentRequestPriority =>
+    Zone.current[_requestPriorityKey] as RequestPriority? ??
+    RequestPriority.interactive;
+
+Future<T> withRequestPriority<T>(
+  RequestPriority priority,
+  Future<T> Function() action,
+) => runZoned(action, zoneValues: {_requestPriorityKey: priority});
+
 final class RequestPermit {
   RequestPermit(this._release);
   final void Function() _release;

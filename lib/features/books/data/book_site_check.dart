@@ -224,41 +224,17 @@ final class BookSiteCheck {
         value['fingerprint'] is! String) {
       return null;
     }
-    final currentFingerprint = bookSourceCheckFingerprint(source);
-    final sameSourceVersion = value['fingerprint'] == currentFingerprint;
-    final currentHost = bookSiteHostFingerprint(source);
-    final conflictingId =
-        value['sourceId'] != null && value['sourceId'] != source.id;
-    final conflictingHost =
-        value['sourceHostSha256'] != null &&
-        value['sourceHostSha256'] != currentHost;
-    final explicitBinding =
-        value['sourceId'] == source.id &&
-        value['sourceHostSha256'] == currentHost;
-    final bound = explicitBinding || sameSourceVersion;
-    if (conflictingId ||
-        conflictingHost ||
-        (!sameSourceVersion && !explicitBinding)) {
-      return null;
-    }
+    final binding = _binding(value, source);
+    if (binding == null) return null;
+    final (currentFingerprint, currentHost, sameSourceVersion, bound) = binding;
     final stamp = value['checkedAt'] as int;
     if (stamp <= 0 || stamp > 253402300799999) return null;
-    final name = value['finding'];
     final finding = BookSiteFinding.values
-        .where((v) => v.name == name)
+        .where((v) => v.name == value['finding'])
         .firstOrNull;
     if (finding == null) return null;
     final code = value['statusCode'];
-    final rawClues = value['scriptCluesLastObserved'];
-    final scriptClues = <BookPageScriptClue, DateTime>{};
-    if (rawClues is Map) {
-      for (final clue in BookPageScriptClue.values) {
-        final observed = rawClues[clue.name];
-        if (observed is int && observed > 0 && observed <= 253402300799999) {
-          scriptClues[clue] = DateTime.fromMillisecondsSinceEpoch(observed);
-        }
-      }
-    }
+    final scriptClues = _scriptClues(value['scriptCluesLastObserved']);
     final review = BookPageScriptReview.fromJson(value['scriptReview']);
     final origin = bookSiteSaleOriginFingerprint(
       Uri(scheme: 'https', host: source.endpoint.host, path: '/'),
@@ -297,15 +273,7 @@ final class BookSiteCheck {
         sourceId: source.id,
       );
     }
-    final redirect =
-        BookSiteRedirect.values
-            .where((entry) => entry.name == value['redirect'])
-            .firstOrNull ??
-        switch (finding) {
-          BookSiteFinding.externalRedirect => BookSiteRedirect.external,
-          BookSiteFinding.sameSiteRedirect => BookSiteRedirect.sameSite,
-          _ => BookSiteRedirect.none,
-        };
+    final redirect = _savedRedirect(value['redirect'], finding);
     return BookSiteCheck(
       BookSiteInspection(
         finding,
@@ -343,5 +311,50 @@ final class BookSiteCheck {
           ? value['siteRevision'] as String
           : null,
     );
+  }
+
+  static (String, String, bool, bool)? _binding(Map value, BookSource source) {
+    final currentFingerprint = bookSourceCheckFingerprint(source);
+    final sameSourceVersion = value['fingerprint'] == currentFingerprint;
+    final currentHost = bookSiteHostFingerprint(source);
+    final conflictingId =
+        value['sourceId'] != null && value['sourceId'] != source.id;
+    final conflictingHost =
+        value['sourceHostSha256'] != null &&
+        value['sourceHostSha256'] != currentHost;
+    final explicitBinding =
+        value['sourceId'] == source.id &&
+        value['sourceHostSha256'] == currentHost;
+    final bound = explicitBinding || sameSourceVersion;
+    if (conflictingId ||
+        conflictingHost ||
+        (!sameSourceVersion && !explicitBinding)) {
+      return null;
+    }
+    return (currentFingerprint, currentHost, sameSourceVersion, bound);
+  }
+
+  static Map<BookPageScriptClue, DateTime> _scriptClues(Object? rawClues) {
+    final scriptClues = <BookPageScriptClue, DateTime>{};
+    if (rawClues is Map) {
+      for (final clue in BookPageScriptClue.values) {
+        final observed = rawClues[clue.name];
+        if (observed is int && observed > 0 && observed <= 253402300799999) {
+          scriptClues[clue] = DateTime.fromMillisecondsSinceEpoch(observed);
+        }
+      }
+    }
+    return scriptClues;
+  }
+
+  static BookSiteRedirect _savedRedirect(Object? raw, BookSiteFinding finding) {
+    return BookSiteRedirect.values
+            .where((entry) => entry.name == raw)
+            .firstOrNull ??
+        switch (finding) {
+          BookSiteFinding.externalRedirect => BookSiteRedirect.external,
+          BookSiteFinding.sameSiteRedirect => BookSiteRedirect.sameSite,
+          _ => BookSiteRedirect.none,
+        };
   }
 }

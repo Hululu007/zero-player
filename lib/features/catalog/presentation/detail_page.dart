@@ -1,5 +1,4 @@
 import '../../../core/network/cancellation_token.dart';
-import '../../playback/application/line_probe.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../app/app_services.dart';
@@ -192,8 +191,7 @@ final class _DetailPageState extends State<DetailPage> {
     setState(() => _checking = true);
     try {
       try {
-        await probeEpisode(
-          widget.services,
+        await widget.services.episodeProbe.probe(
           item,
           item.lines[line].episodes[episode],
           token,

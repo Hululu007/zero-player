@@ -206,7 +206,18 @@ final class _Mp4Transfer {
 
   Future<void> _finish(int bytes) async {
     cancellation.check();
-    await validate(part, cancellation);
+    try {
+      await validate(part, cancellation);
+    } on RequestCancelled {
+      rethrow;
+    } catch (_) {
+      // Keep resumable bytes on cancellation, but never retry a completed file
+      // already rejected by the validator as if it were a valid checkpoint.
+      cancellation.check();
+      if (await checkpoint.exists()) await checkpoint.delete();
+      if (await part.exists()) await part.delete();
+      rethrow;
+    }
     cancellation.check();
     final digest = '${await sha256.bind(part.openRead()).first}';
     await part.rename(p.join(directory.path, fileName));

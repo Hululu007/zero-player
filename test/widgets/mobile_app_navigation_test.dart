@@ -251,7 +251,7 @@ void _basicNavigationTests() {
     await fixture.finish(tester);
   });
 
-  testWidgets('actual shell scroll hides navigation without an overlay menu', (
+  testWidgets('phone scroll hides the top bar and keeps bottom navigation', (
     tester,
   ) async {
     await fixture.pump(tester);
@@ -261,11 +261,11 @@ void _basicNavigationTests() {
     expect(find.byType(NavigationBar), findsOneWidget);
     await tester.drag(find.byType(ListView).first, const Offset(0, -500));
     await tester.pumpAndSettle();
-    expect(find.byType(NavigationBar).hitTestable(), findsNothing);
-    expect(find.byTooltip('展开导航').hitTestable(), findsNothing);
+    expect(find.byType(NavigationBar).hitTestable(), findsOneWidget);
+    expect(find.byTooltip('展开导航 (Ctrl+M)').hitTestable(), findsNothing);
     await tester.drag(find.byType(ListView).first, const Offset(0, 140));
     await tester.pumpAndSettle();
-    expect(find.byType(NavigationBar).hitTestable(), findsOneWidget);
+    expect(find.byTooltip('展开导航 (Ctrl+M)').hitTestable(), findsOneWidget);
     await fixture.finish(tester);
   });
 

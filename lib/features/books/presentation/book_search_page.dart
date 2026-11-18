@@ -449,6 +449,10 @@ class _BookSearchPageState extends State<BookSearchPage> {
               [
                 if (book.author.isNotEmpty) book.author,
                 if (book.id == _preferred?.id) '当前渠道',
+                book.latestChapter.isEmpty
+                    ? '最新章节：渠道未提供'
+                    : '最新章节：${book.latestChapter}',
+                if (book.updatedLabel.isNotEmpty) '更新：${book.updatedLabel}',
                 latency == null ? (_busy ? '等待搜索' : '无搜索耗时') : '$latency ms',
               ].join(' · '),
             ),
@@ -546,6 +550,12 @@ class _BookSearchPageState extends State<BookSearchPage> {
   Widget _result(List<Book> group) {
     group.sort(_compareSources);
     final book = group.first;
+    final knownLatest =
+        group.where((item) => item.latestChapter.isNotEmpty).toList()
+          ..sort(compareBookChapterFreshness);
+    final freshest = knownLatest.firstOrNull ?? book;
+    final freshestSource =
+        _sources[freshest.sourceId]?.source.name ?? freshest.uri.host;
     final authors = group
         .map((book) => book.author)
         .where((name) => name.isNotEmpty)
@@ -558,14 +568,26 @@ class _BookSearchPageState extends State<BookSearchPage> {
         child: BookCover(book: book, repository: widget.repository),
       ),
       title: Text(book.title),
-      subtitle: Text(
-        [
-          if (authors.isNotEmpty) authors.join(' / '),
-          '${group.map((book) => book.sourceId).toSet().length} 个渠道',
-          if (group.any((book) => book.id == _preferred?.id)) '含当前渠道',
-        ].join(' · '),
-        maxLines: 2,
-        overflow: TextOverflow.ellipsis,
+      subtitle: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            [
+              if (authors.isNotEmpty) authors.join(' / '),
+              '${group.map((book) => book.sourceId).toSet().length} 个渠道',
+              if (group.any((book) => book.id == _preferred?.id)) '含当前渠道',
+            ].join(' · '),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+          ),
+          Text(
+            freshest.latestChapter.isEmpty
+                ? '最新章节：渠道未提供'
+                : '最新章节：${freshest.latestChapter}（$freshestSource）',
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ],
       ),
       trailing: const Icon(Icons.chevron_right),
       onTap: () => _choose(group),

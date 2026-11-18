@@ -46,13 +46,11 @@ Future<void> _closeBooksRepository(BooksRepository books) async {
   });
   await step(() => books.policy.removeListener(books._coverPolicyChanged));
   await step(() => books.policy.removeListener(books._discoveryPolicyChanged));
-  await step(() => books.policy.removeListener(books._bookReviewPolicyChanged));
   await step(
     () => books._sourceRiskChanges.removeListener(books._discoveryRiskChanged),
   );
   await step(() => books._downloadGuard?.dispose());
-  await step(books._bookObservationChanges.dispose);
-  await step(books._bookPolicyChanges.dispose);
+  await step(books._bookPolicy.dispose);
   await step(books._sourceRiskChanges.dispose);
   await step(books._http.close);
   await step(books.audioFiles.close);

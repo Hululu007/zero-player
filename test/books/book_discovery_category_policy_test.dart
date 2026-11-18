@@ -16,6 +16,7 @@ import 'package:zero_player/features/books/domain/legado_source.dart';
 import 'package:zero_player/features/supervision/domain/supervision_rules.dart';
 
 import '../../test_support/verified_temp_directory.dart';
+import '../../test_support/comic_source_authorization.dart';
 
 part 'book_discovery_category_reading_cases.dart';
 
@@ -1067,6 +1068,7 @@ final class _Fixture {
   BooksRepository get repo => services.books;
 
   Future<void> install(BookSource source) async {
+    await authorizeComicFixture(services, source);
     await repo.importSources([source]);
     await repo.saveSource(source, {'enabled': true});
   }

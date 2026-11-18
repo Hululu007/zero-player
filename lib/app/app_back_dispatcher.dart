@@ -60,6 +60,7 @@ final class AppBackDispatcher extends RootBackButtonDispatcher {
       await shutdown();
       await SystemNavigator.pop();
     } catch (error, stack) {
+      _exiting = false;
       FlutterError.reportError(
         FlutterErrorDetails(
           exception: error,

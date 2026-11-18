@@ -51,7 +51,8 @@ class BookImageChapterState extends State<BookImageChapter> {
   final ScrollController _scroll = ScrollController();
   late PageController _pager = PageController(initialPage: _initialPage);
   late int _page = _initialPage;
-  List<BookChapterSegment> get _parts =>
+  late List<BookChapterSegment> _parts = _makeParts();
+  List<BookChapterSegment> _makeParts() =>
       widget.segments ??
       [for (final image in widget.images) BookImageSegment(image)];
   int get _initialPage =>
@@ -98,6 +99,10 @@ class BookImageChapterState extends State<BookImageChapter> {
   @override
   void didUpdateWidget(covariant BookImageChapter oldWidget) {
     super.didUpdateWidget(oldWidget);
+    if (oldWidget.images != widget.images ||
+        oldWidget.segments != widget.segments) {
+      _parts = _makeParts();
+    }
     if (oldWidget.mode == widget.mode) return;
     if (!_scrolling) {
       _page = _initialPage;
@@ -198,14 +203,31 @@ class BookImageChapterState extends State<BookImageChapter> {
       address: address,
       index: parts.take(index + 1).whereType<BookImageSegment>().length,
       paged: !_scrolling,
-      horizontal: widget.mode.horizontal,
-      onTurn: turn,
-      onMenu: widget.onMenu,
     );
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) => LayoutBuilder(
+    builder: (context, constraints) => GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTapUp: (details) {
+        final horizontal = !_scrolling && widget.mode.horizontal;
+        final fraction = horizontal
+            ? details.localPosition.dx / constraints.maxWidth
+            : details.localPosition.dy / constraints.maxHeight;
+        if (fraction < .28) {
+          turn(-1);
+        } else if (fraction > .72) {
+          turn(1);
+        } else {
+          widget.onMenu?.call();
+        }
+      },
+      child: _viewport(context),
+    ),
+  );
+
+  Widget _viewport(BuildContext context) {
     if (!_scrolling) {
       return PageView.builder(
         key: ValueKey(_pager),
@@ -242,17 +264,12 @@ class _ChapterImage extends StatefulWidget {
     required this.address,
     required this.index,
     required this.paged,
-    required this.horizontal,
-    required this.onTurn,
-    this.onMenu,
   });
 
   final ChapterImageLoader loadImage;
   final Uri address;
   final int index;
-  final bool paged, horizontal;
-  final ValueChanged<int> onTurn;
-  final VoidCallback? onMenu;
+  final bool paged;
 
   @override
   State<_ChapterImage> createState() => _ChapterImageState();
@@ -345,23 +362,10 @@ class _ChapterImageState extends State<_ChapterImage> {
           final bytes = content.bytes;
           return Semantics(
             label: '第 ${widget.index} 张章节图片',
-            child: InkWell(
-              onLongPress: widget.onMenu,
-              onTapUp: (details) {
-                final box = context.findRenderObject()! as RenderBox;
-                final fraction = widget.horizontal
-                    ? details.localPosition.dx / box.size.width
-                    : details.localPosition.dy / box.size.height;
-                if (fraction < .28) {
-                  widget.onTurn(-1);
-                  return;
-                }
-                if (fraction > .72) {
-                  widget.onTurn(1);
-                  return;
-                }
-                _zoom(bytes);
-              },
+            hint: '长按放大图片；点按两侧翻页，中央打开菜单',
+            onLongPress: () => _zoom(bytes),
+            child: GestureDetector(
+              onLongPress: () => _zoom(bytes),
               child: LayoutBuilder(
                 builder: (context, constraints) => Image.memory(
                   bytes,

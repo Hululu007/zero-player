@@ -8,7 +8,7 @@ import '../../../app/app_layout.dart';
 import '../../../app/widgets.dart';
 import '../../../core/platform/file_transfer.dart';
 import 'home_preferences.dart';
-import '../../../app/app_fonts.dart';
+import '../domain/app_fonts.dart';
 import '../../../app/navigation_guide.dart';
 import 'disclaimer_dialog.dart';
 import 'adult_filter_setting.dart';
@@ -16,6 +16,7 @@ import 'content_filter_setting.dart';
 import 'lan_access_dialog.dart';
 import '../../music/domain/music_match.dart';
 import 'book_cover_cache_setting.dart';
+import '../../books/presentation/book_text_policy_dialog.dart';
 
 final class SettingsPage extends StatelessWidget {
   const SettingsPage({super.key, required this.services});
@@ -79,6 +80,12 @@ final class SettingsPage extends StatelessWidget {
             access: services.installationAccess,
           ),
           ContentFilterSetting(services: services),
+          ListTile(
+            leading: const Icon(Icons.find_replace),
+            title: const Text('小说文本敏感替换'),
+            subtitle: const Text('验证监管密码后管理关键词或整段替换，保留原文'),
+            onTap: () => showBookTextReplacements(context, services.books),
+          ),
           const Divider(),
           _toggle(context, '边播边缓存 HLS 分片', 'cache', settings.cache),
           ..._cacheOptions(context),
@@ -161,10 +168,10 @@ final class SettingsPage extends StatelessWidget {
     final settings = services.settings.value;
     return [
       _choice(context, '主题', 'theme', settings.theme, const {
-        'cinema': '影院 · 沉浸黑金（默认）',
+        'cinema': '影院 · 沉浸黑金',
         'dark': '深色 · 青灰',
         'light': '明亮 · 柔和暖白',
-        'system': '跟随系统',
+        'system': '跟随系统（默认）',
       }),
       _choice(context, '显示模式', 'mode', settings.mode, const {
         'auto': '自动 / 桌面 / 手机',

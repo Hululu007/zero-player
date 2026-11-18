@@ -1,7 +1,219 @@
 part of 'books_repository.dart';
 
+Uri? _bookAddress(String query) {
+  final uri = Uri.tryParse(query);
+  if (uri == null ||
+      !uri.hasAuthority ||
+      !const {'http', 'https'}.contains(uri.scheme)) {
+    return null;
+  }
+  return legacyBookUri(uri);
+}
+
 /// Discovery always selects from the current, policy-filtered categories.
 extension _BookRepositoryDiscovery on BooksRepository {
+  Future<({List<Book> books, int failed})> _find(
+    BookKind kind,
+    String query,
+    CancellationToken token, {
+    String? sourceId,
+    LegadoCategory? category,
+    int page = 1,
+    int? maxSources,
+    Set<String>? sourceIds,
+    String? preferredSource,
+    String? excludedSource,
+    bool skipQidian = false,
+    bool favorites = false,
+    BookSearchField field = BookSearchField.all,
+    List<BookSourceEntry>? availableSources,
+    void Function(BookSearchUpdate)? onProgress,
+  }) async {
+    await ensureSourceRiskLoaded();
+    if (!kindAllowed(kind)) throw const ContentBlocked();
+    if (query.isNotEmpty && !policy.textAllowed(query)) {
+      throw const ContentBlocked();
+    }
+    final address = _bookAddress(query);
+    final entries = (availableSources ?? await sources(kind, enabledOnly: true))
+        .where((entry) {
+          if (!entry.enabled ||
+              !comicAccess.allowed(entry.source) ||
+              entry.source.kind != kind ||
+              !_currentSearchEntry(entry) ||
+              (skipQidian && isQidianHost(entry.source.endpoint.host)) ||
+              entry.source.id == excludedSource ||
+              (sourceId != null && sourceId != entry.source.id) ||
+              (sourceIds != null && !sourceIds.contains(entry.source.id))) {
+            return false;
+          }
+          if (address != null) return entry.source.acceptsBookAddress(address);
+          return entry.source.hasDiscovery ||
+              (query.isNotEmpty && entry.source.hasSearch);
+        })
+        .toList();
+    final prioritized = _prioritize(entries, preferredSource, favorites);
+    final selected = maxSources == null
+        ? prioritized
+        : prioritized.take(maxSources).toList();
+    token.check();
+    onProgress?.call((
+      sourceId: null,
+      books: [],
+      completed: 0,
+      total: selected.length,
+      failed: false,
+      latencyMs: null,
+    ));
+    return _searchSources(
+      selected,
+      query,
+      token,
+      category,
+      page,
+      address,
+      field,
+      onProgress,
+    );
+  }
+
+  Future<void> _checkFollowing(BookKind kind, CancellationToken token) async {
+    await ensureSourceRiskLoaded();
+    BookCatalogCapacityExceeded? capacityError;
+    final entries = (await store.shelf()).where(
+      (entry) =>
+          entry.following && entry.book.kind == kind && bookAllowed(entry.book),
+    );
+    for (final entry in entries) {
+      token.check();
+      try {
+        final fresh = await chapters(entry.book, token, refresh: true);
+        token.check();
+        if (fresh.isEmpty || !bookAllowed(entry.book)) continue;
+        await store.updateFollowedChapters(entry.book, fresh);
+      } on BookCatalogCapacityExceeded catch (error) {
+        capacityError = error;
+      } on Exception {
+        token.check();
+      }
+    }
+    if (capacityError != null) throw capacityError;
+  }
+
+  List<BookSourceEntry> _prioritize(
+    Iterable<BookSourceEntry> entries,
+    String? preferredSource,
+    bool favorites,
+  ) => [
+    ...entries.where(
+      (entry) =>
+          entry.source.id == preferredSource && (!favorites || entry.favorite),
+    ),
+    ...entries.where(
+      (entry) => entry.source.id != preferredSource && entry.favorite,
+    ),
+    if (!favorites)
+      ...entries.where(
+        (entry) => entry.source.id != preferredSource && !entry.favorite,
+      ),
+  ];
+
+  bool _currentSearchEntry(BookSourceEntry snapshot) {
+    final current = _sourceAccess.entry(snapshot.source.id);
+    if (current == null || !current.enabled || !sourceEntryAllowed(current)) {
+      return false;
+    }
+    return identical(current.source, snapshot.source) ||
+        jsonEncode(current.source.toJson()) ==
+            jsonEncode(snapshot.source.toJson());
+  }
+
+  Future<({List<Book> books, int failed})> _searchSources(
+    List<BookSourceEntry> selected,
+    String query,
+    CancellationToken token,
+    LegadoCategory? category,
+    int page,
+    Uri? address,
+    BookSearchField field,
+    void Function(BookSearchUpdate)? onProgress,
+  ) async {
+    final results = <String, List<Book>>{};
+    final match = address == null && query.trim().isNotEmpty
+        ? BookSearchQuery(query, field)
+        : null;
+    var failed = 0;
+    var cursor = 0, completed = 0;
+    Future<void> fetchSources() async {
+      while (cursor < selected.length) {
+        token.check();
+        final entry = selected[cursor++];
+        final source = entry.source;
+        var books = <Book>[];
+        var failure = false;
+        int? latencyMs;
+        try {
+          if (_currentSearchEntry(entry) &&
+              !await _blocked(source.id) &&
+              _currentSearchEntry(entry)) {
+            final watch = Stopwatch()..start();
+            final found = await _booksWithDiscoveryPolicy(
+              source,
+              query,
+              token,
+              category: category,
+              page: page,
+              bookAddress: address,
+            );
+            latencyMs = watch.elapsedMilliseconds;
+            if (_currentSearchEntry(entry) &&
+                !await _blocked(source.id) &&
+                _currentSearchEntry(entry)) {
+              final allowEpisodeMatches =
+                  source.kind == BookKind.audio &&
+                  source.format == BookFormat.feed &&
+                  field == BookSearchField.all;
+              books = found
+                  .where(
+                    (book) =>
+                        bookAllowed(book) &&
+                        (match == null ||
+                            allowEpisodeMatches ||
+                            match.rank(book) != null),
+                  )
+                  .toList();
+            }
+          }
+        } on Exception {
+          failed++;
+          failure = true;
+        }
+        token.check();
+        results[source.id] = books;
+        onProgress?.call((
+          sourceId: source.id,
+          books: books,
+          completed: ++completed,
+          total: selected.length,
+          failed: failure,
+          latencyMs: latencyMs,
+        ));
+      }
+    }
+
+    await Future.wait(
+      List.generate(math.min(4, selected.length), (_) => fetchSources()),
+    );
+    token.check();
+    return (
+      books: selected
+          .expand((entry) => results[entry.source.id] ?? const <Book>[])
+          .where(bookAllowed)
+          .toList(),
+      failed: failed,
+    );
+  }
+
   Future<List<LegadoCategory>> _discoveryCategories(
     BookKind kind,
     String sourceId,
@@ -361,7 +573,7 @@ final class _DiscoveryLease {
 
   void check() {
     token.check();
-    final current = books._riskSourceEntries[source.id];
+    final current = books._sourceAccess.entry(source.id);
     if (books._evidenceClosing ||
         books._evidenceMutations != 0 ||
         !books.sourceRisksReady ||
@@ -370,7 +582,7 @@ final class _DiscoveryLease {
         (current == null && !allowDisabled) ||
         (current != null &&
             ((!allowDisabled && !current.enabled) ||
-                !books._sourceEntryAllowed(current) ||
+                !books.sourceEntryAllowed(current) ||
                 bookSourceCheckFingerprint(current.source) != fingerprint))) {
       throw const RequestCancelled();
     }

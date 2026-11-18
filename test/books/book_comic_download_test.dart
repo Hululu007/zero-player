@@ -9,6 +9,7 @@ import 'package:zero_player/features/books/domain/book.dart';
 import 'package:zero_player/features/supervision/domain/supervision_rules.dart';
 
 import '../../test_support/book_fixture_source.dart';
+import '../../test_support/comic_source_authorization.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -153,6 +154,7 @@ final class _Fixture {
     await services.supervision.load();
     final fixture = _Fixture(root, services);
     await services.books.importSources([fixture.source]);
+    await authorizeComicFixture(services, fixture.source);
     await services.books.saveSource(fixture.source, {'enabled': true});
     return fixture;
   }

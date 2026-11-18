@@ -1,5 +1,6 @@
 import '../media/content_filter/fingerprints/feature_repository.dart';
 import 'dart:async';
+import 'startup_failure.dart';
 import 'dart:io';
 import '../features/supervision/application/content_policy.dart';
 import '../features/supervision/application/supervision_controller.dart';
@@ -22,7 +23,7 @@ import '../core/network/media_http_client.dart';
 import '../core/network/poster_repository.dart';
 import '../core/persistence/app_database.dart';
 import '../core/persistence/application_ownership.dart';
-import '../core/persistence/segment_index.dart';
+import '../media/cache/segment_index.dart';
 import '../core/platform/platform_services.dart';
 import '../features/catalog/data/provider_factory.dart';
 import '../features/catalog/domain/catalog_item.dart';
@@ -49,6 +50,9 @@ import '../features/music/data/music_recommendations.dart';
 import '../features/music/data/music_style_catalog.dart';
 import '../features/music/application/music_open_api.dart';
 import '../features/playback/domain/player_engine.dart';
+import '../features/playback/application/line_probe.dart';
+import '../features/playback/application/local_video.dart';
+import '../features/playback/data/local_video_repository.dart';
 import '../features/books/data/books_repository.dart';
 import '../features/books/data/book_download_coordinator.dart';
 import '../media/engine/media_kit_engine.dart';
@@ -259,6 +263,18 @@ final class AppServices {
     ),
   );
   late final history = HistoryRepository(db, policy: contentPolicy);
+  late final localVideo = LocalVideo(
+    requireItem: contentPolicy.requireItem,
+    latestHistory: (id) => history.latest('local', id),
+    openFile: offline.openLocal,
+    rememberPath: LocalVideoRepository(db).remember,
+  );
+  late final episodeProbe = EpisodeProbe(
+    findSource: sources.find,
+    network: network,
+    http: http,
+    policy: contentPolicy,
+  );
   late final skips = SkipRepository(db);
   late final filterFeatures = FeatureRepository(
     db,
@@ -375,6 +391,7 @@ final class AppServices {
   }
 
   static Future<AppServices> create() async {
+    if (_failedOwners.isNotEmpty) throw const ApplicationRestartRequired();
     final directory = await getApplicationSupportDirectory();
     await directory.create(recursive: true);
     final ownership = Platform.isWindows
@@ -388,7 +405,7 @@ final class AppServices {
     try {
       await services._initialize();
       return services;
-    } catch (_) {
+    } catch (startupError, startupStack) {
       try {
         await services.close();
       } catch (error, stack) {
@@ -398,6 +415,13 @@ final class AppServices {
             stack: stack,
             library: 'startup cleanup',
           ),
+        );
+        Error.throwWithStackTrace(
+          ApplicationRestartRequired(
+            startupError: startupError,
+            cleanupError: error,
+          ),
+          startupStack,
         );
       }
       rethrow;
@@ -572,12 +596,12 @@ final class AppServices {
         () => supervision.close(),
         () => db.close(),
       ]);
+      await _ownership?.close();
+      _ownership = null;
     } catch (_) {
       final ownership = _ownership;
       if (ownership != null) _failedOwners.add(ownership);
       rethrow;
     }
-    await _ownership?.close();
-    _ownership = null;
   }
 }

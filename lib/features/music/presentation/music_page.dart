@@ -36,6 +36,7 @@ final class _MusicPageState extends State<MusicPage> {
   (String, String?) _playlistEntry = ('neteasePlaylist', null);
   MusicStylePlaylist? _pendingPlaylist;
   String _searchKind = '综合';
+  bool _phoneSearchExpanded = false;
   (String?, bool) _selection = (null, false);
 
   @override
@@ -61,7 +62,11 @@ final class _MusicPageState extends State<MusicPage> {
   }
 
   void _search(String query, {int page = 1}) {
-    setState(() => _view = 'search');
+    FocusManager.instance.primaryFocus?.unfocus();
+    setState(() {
+      _view = 'search';
+      _phoneSearchExpanded = false;
+    });
     _query.text = query;
     if (_scroll.hasClients) _scroll.jumpTo(0);
     unawaited(browser.search(query, page: page));
@@ -172,10 +177,12 @@ final class _MusicPageState extends State<MusicPage> {
       }
       final groups = _groups(merged.values);
       return PopScope(
-        canPop: _view == 'discover',
+        canPop: _view == 'discover' && !_phoneSearchExpanded,
         onPopInvokedWithResult: (didPop, _) {
           if (!didPop) {
+            FocusManager.instance.primaryFocus?.unfocus();
             setState(() {
+              _phoneSearchExpanded = false;
               _pendingPlaylist = null;
               _view = 'discover';
             });
@@ -188,6 +195,7 @@ final class _MusicPageState extends State<MusicPage> {
                 alignment: Alignment.centerLeft,
                 child: TextButton.icon(
                   onPressed: () => setState(() {
+                    _phoneSearchExpanded = false;
                     _pendingPlaylist = null;
                     _view = 'discover';
                   }),
@@ -202,55 +210,7 @@ final class _MusicPageState extends State<MusicPage> {
                   Positioned.fill(
                     child: NotificationListener<ScrollNotification>(
                       onNotification: _trackScroll,
-                      child: _view == 'discover'
-                          ? MusicDiscovery(
-                              services: widget.services,
-                              onSearch: _search,
-                              controls: _searchControls(),
-                              onPlaylists: (provider, section) => setState(() {
-                                _playlistEntry = (provider, section);
-                                _pendingPlaylist = null;
-                                _view = 'styles';
-                              }),
-                              onOpenPlaylist: (list) => setState(() {
-                                _playlistEntry = (list.provider, null);
-                                _pendingPlaylist = list;
-                                _view = 'styles';
-                              }),
-                            )
-                          : _view == 'styles'
-                          ? MusicStylePlaylists(
-                              services: widget.services,
-                              initialProvider: _playlistEntry.$1,
-                              initialSection: _playlistEntry.$2,
-                              initialPlaylist: _pendingPlaylist,
-                            )
-                          : _view != 'search'
-                          ? SingleChildScrollView(
-                              padding: const EdgeInsets.all(16),
-                              child: MusicLibraryPanel(
-                                services: widget.services,
-                                view: _view,
-                              ),
-                            )
-                          : ListView.builder(
-                              key: const PageStorageKey('music-results'),
-                              controller: _scroll,
-                              padding: const EdgeInsets.fromLTRB(
-                                16,
-                                12,
-                                16,
-                                24,
-                              ),
-                              itemCount: groups.length + 2,
-                              itemBuilder: (context, index) {
-                                if (index == 0) return _header(context);
-                                if (index == groups.length + 1) {
-                                  return _footer();
-                                }
-                                return _track(groups, index - 1);
-                              },
-                            ),
+                      child: _browseBody(context, groups),
                     ),
                   ),
                   if (_showBackToTop)
@@ -274,6 +234,49 @@ final class _MusicPageState extends State<MusicPage> {
     },
   );
 
+  Widget _browseBody(BuildContext context, List<List<MusicTrack>> groups) =>
+      _view == 'discover'
+      ? MusicDiscovery(
+          services: widget.services,
+          onSearch: _search,
+          controls: _searchControls(),
+          onPlaylists: (provider, section) => setState(() {
+            _playlistEntry = (provider, section);
+            _pendingPlaylist = null;
+            _view = 'styles';
+          }),
+          onOpenPlaylist: (list) => setState(() {
+            _playlistEntry = (list.provider, null);
+            _pendingPlaylist = list;
+            _view = 'styles';
+          }),
+        )
+      : _view == 'styles'
+      ? MusicStylePlaylists(
+          services: widget.services,
+          initialProvider: _playlistEntry.$1,
+          initialSection: _playlistEntry.$2,
+          initialPlaylist: _pendingPlaylist,
+        )
+      : _view != 'search'
+      ? SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
+          child: MusicLibraryPanel(services: widget.services, view: _view),
+        )
+      : ListView.builder(
+          key: const PageStorageKey('music-results'),
+          controller: _scroll,
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+          itemCount: groups.length + 2,
+          itemBuilder: (context, index) {
+            if (index == 0) return _header(context);
+            if (index == groups.length + 1) {
+              return _footer();
+            }
+            return _track(groups, index - 1);
+          },
+        );
+
   Widget _tabs() => Padding(
     padding: const EdgeInsets.symmetric(horizontal: 16),
     child: SingleChildScrollView(
@@ -293,10 +296,12 @@ final class _MusicPageState extends State<MusicPage> {
               label: Text(item.$2),
               selected: _view == item.$1,
               onSelected: (_) {
+                FocusManager.instance.primaryFocus?.unfocus();
                 setState(() {
                   _playlistEntry = ('neteasePlaylist', null);
                   _pendingPlaylist = null;
                   _view = item.$1;
+                  if (item.$1 == 'discover') _phoneSearchExpanded = false;
                 });
                 if (item.$1 == 'discover' &&
                     widget.services.musicRecommendations.items.isEmpty) {
@@ -363,61 +368,94 @@ final class _MusicPageState extends State<MusicPage> {
     ],
   );
 
-  Widget _searchControls() => Column(
-    children: [
-      Wrap(
-        spacing: 8,
-        children: [
-          for (final kind in ['综合', '歌手', '主题'])
-            ChoiceChip(
-              label: Text(kind),
-              selected: _searchKind == kind,
-              onSelected: (_) => setState(() => _searchKind = kind),
+  Widget _searchControls() {
+    final compact = MediaQuery.sizeOf(context).width < 620;
+    final collapsible = compact && _view == 'discover';
+    if (collapsible && !_phoneSearchExpanded) {
+      return Align(
+        alignment: Alignment.centerLeft,
+        child: IconButton.filledTonal(
+          tooltip: '展开音乐搜索',
+          onPressed: () => setState(() => _phoneSearchExpanded = true),
+          icon: const Icon(Icons.search),
+        ),
+      );
+    }
+    final controls = Column(
+      children: [
+        Wrap(
+          spacing: 8,
+          children: [
+            for (final kind in ['综合', '歌手', '主题'])
+              ChoiceChip(
+                label: Text(kind),
+                selected: _searchKind == kind,
+                onSelected: (_) => setState(() => _searchKind = kind),
+              ),
+            if (_searchKind == '主题')
+              for (final theme in ['爵士', '钢琴', '助眠', '运动', '电影原声'])
+                ActionChip(label: Text(theme), onPressed: () => _search(theme)),
+            if (browser.result.tracks.isNotEmpty)
+              ActionChip(
+                avatar: const Icon(Icons.shuffle),
+                label: const Text('随机播放结果'),
+                onPressed: () => musicAction(context, () async {
+                  final groups = _groups(
+                    browser.result.tracks.where(widget.services.music.allowed),
+                  );
+                  if (groups.isEmpty) return;
+                  await player.setMode(MusicPlayMode.shuffle);
+                  await _playResults(groups, Random().nextInt(groups.length));
+                }),
+              ),
+          ],
+        ),
+        MusicSourceSelector(
+          services: widget.services,
+          value: browser.provider,
+          onChanged: browser.selectProvider,
+          compact: compact,
+        ),
+        const SizedBox(height: 12),
+        TextField(
+          key: const ValueKey('music-search'),
+          controller: _query,
+          maxLength: 100,
+          textInputAction: TextInputAction.search,
+          decoration: InputDecoration(
+            labelText: _searchKind == '主题' ? '搜索主题，如：爵士、钢琴、助眠' : '搜索歌名或歌手',
+            counterText: '',
+            prefixIcon: const Icon(Icons.search),
+            suffixIcon: IconButton(
+              tooltip: '搜索音乐',
+              onPressed: () => _search(_query.text),
+              icon: const Icon(Icons.arrow_forward),
             ),
-          if (_searchKind == '主题')
-            for (final theme in ['爵士', '钢琴', '助眠', '运动', '电影原声'])
-              ActionChip(label: Text(theme), onPressed: () => _search(theme)),
-          if (browser.result.tracks.isNotEmpty)
-            ActionChip(
-              avatar: const Icon(Icons.shuffle),
-              label: const Text('随机播放结果'),
-              onPressed: () => musicAction(context, () async {
-                final groups = _groups(
-                  browser.result.tracks.where(widget.services.music.allowed),
-                );
-                if (groups.isEmpty) return;
-                await player.setMode(MusicPlayMode.shuffle);
-                await _playResults(groups, Random().nextInt(groups.length));
-              }),
-            ),
-        ],
-      ),
-      MusicSourceSelector(
-        services: widget.services,
-        value: browser.provider,
-        onChanged: browser.selectProvider,
-      ),
-      const SizedBox(height: 12),
-      TextField(
-        key: const ValueKey('music-search'),
-        controller: _query,
-        maxLength: 100,
-        textInputAction: TextInputAction.search,
-        decoration: InputDecoration(
-          labelText: _searchKind == '主题' ? '搜索主题，如：爵士、钢琴、助眠' : '搜索歌名或歌手',
-          counterText: '',
-          prefixIcon: const Icon(Icons.search),
-          suffixIcon: IconButton(
-            tooltip: '搜索音乐',
-            onPressed: () => _search(_query.text),
-            icon: const Icon(Icons.arrow_forward),
+          ),
+          onSubmitted: _search,
+        ),
+        const SizedBox(height: 12),
+      ],
+    );
+    if (!collapsible) return controls;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Align(
+          alignment: Alignment.centerRight,
+          child: IconButton(
+            tooltip: '收起音乐搜索',
+            onPressed: () {
+              FocusManager.instance.primaryFocus?.unfocus();
+              setState(() => _phoneSearchExpanded = false);
+            },
+            icon: const Icon(Icons.expand_less),
           ),
         ),
-        onSubmitted: _search,
-      ),
-      const SizedBox(height: 12),
-    ],
-  );
+        controls,
+      ],
+    );
+  }
 
   Widget _track(List<List<MusicTrack>> groups, int index) {
     final group = groups[index];

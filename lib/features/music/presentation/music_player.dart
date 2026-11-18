@@ -174,88 +174,7 @@ final class MusicPlayer extends StatelessWidget {
       ),
       Text(musicTime(state.duration)),
     ];
-    final actions = <Widget>[
-      PopupMenuButton<String>(
-        tooltip: controller.switchingSource ? '正在换源…' : '歌曲换源',
-        enabled: !controller.switchingSource && !controller.loading,
-        icon: const Icon(Icons.swap_horiz),
-        onSelected: (value) => musicAction(
-          context,
-          () => value == 'auto'
-              ? controller.setAutoSwitchSource(!controller.autoSwitchSource)
-              : controller.switchSource(
-                  provider: value == 'next' ? null : value,
-                ),
-        ),
-        itemBuilder: (_) => [
-          CheckedPopupMenuItem(
-            value: 'auto',
-            checked: controller.autoSwitchSource,
-            child: const Text('音乐预检与自动换源'),
-          ),
-          const PopupMenuItem(value: 'next', child: Text('查找其他可用渠道')),
-          for (final source in MusicMultiSearch.providers)
-            if (source != controller.playingTrack?.provider)
-              PopupMenuItem(
-                value: source,
-                child: Text(musicSources[source] ?? source),
-              ),
-        ],
-      ),
-      if (controller.repository.supportsLyrics(controller.playingTrack!))
-        IconButton(
-          tooltip: '同步歌词',
-          onPressed: () => showMusicLyrics(context, controller),
-          icon: const Icon(Icons.lyrics_outlined),
-        ),
-      if (defaultTargetPlatform == TargetPlatform.android)
-        ListenableBuilder(
-          listenable: MusicFloatingLyrics.instance,
-          builder: (context, _) => IconButton(
-            tooltip: MusicFloatingLyrics.instance.enabled ? '关闭悬浮歌词' : '开启悬浮歌词',
-            onPressed: () =>
-                MusicFloatingLyrics.instance.toggle(context, controller),
-            icon: Icon(
-              MusicFloatingLyrics.instance.enabled
-                  ? Icons.picture_in_picture_alt
-                  : Icons.picture_in_picture_alt_outlined,
-            ),
-          ),
-        ),
-      PopupMenuButton<MusicPlayMode>(
-        tooltip: '播放模式：${musicModeLabels[controller.mode.index]}',
-        icon: Icon(switch (controller.mode) {
-          MusicPlayMode.shuffle => Icons.shuffle,
-          MusicPlayMode.repeatOne => Icons.repeat_one,
-          _ => Icons.repeat,
-        }),
-        onSelected: (mode) =>
-            musicAction(context, () => controller.setMode(mode)),
-        itemBuilder: (_) => [
-          for (final mode in MusicPlayMode.values)
-            CheckedPopupMenuItem(
-              value: mode,
-              checked: mode == controller.mode,
-              child: Text(musicModeLabels[mode.index]),
-            ),
-        ],
-      ),
-      if (controller.error != null)
-        IconButton(
-          tooltip: '重新获取歌曲并重试',
-          onPressed: controller.retry,
-          icon: const Icon(Icons.refresh),
-        ),
-      PopupMenuButton<double>(
-        tooltip: '音乐音量（${controller.volume.round()}%）',
-        icon: const Icon(Icons.volume_up_outlined),
-        onSelected: controller.setVolume,
-        itemBuilder: (_) => [
-          for (final value in [0.0, 25.0, 50.0, 80.0, 100.0])
-            PopupMenuItem(value: value, child: Text('${value.round()}%')),
-        ],
-      ),
-    ];
+    final actions = _timelineActions(context);
     return LayoutBuilder(
       builder: (context, constraints) {
         if (constraints.maxWidth < 480) {
@@ -271,6 +190,87 @@ final class MusicPlayer extends StatelessWidget {
       },
     );
   }
+
+  List<Widget> _timelineActions(BuildContext context) => <Widget>[
+    PopupMenuButton<String>(
+      tooltip: controller.switchingSource ? '正在换源…' : '歌曲换源',
+      enabled: !controller.switchingSource && !controller.loading,
+      icon: const Icon(Icons.swap_horiz),
+      onSelected: (value) => musicAction(
+        context,
+        () => value == 'auto'
+            ? controller.setAutoSwitchSource(!controller.autoSwitchSource)
+            : controller.switchSource(provider: value == 'next' ? null : value),
+      ),
+      itemBuilder: (_) => [
+        CheckedPopupMenuItem(
+          value: 'auto',
+          checked: controller.autoSwitchSource,
+          child: const Text('音乐预检与自动换源'),
+        ),
+        const PopupMenuItem(value: 'next', child: Text('查找其他可用渠道')),
+        for (final source in MusicMultiSearch.providers)
+          if (source != controller.playingTrack?.provider)
+            PopupMenuItem(
+              value: source,
+              child: Text(musicSources[source] ?? source),
+            ),
+      ],
+    ),
+    if (controller.repository.supportsLyrics(controller.playingTrack!))
+      IconButton(
+        tooltip: '同步歌词',
+        onPressed: () => showMusicLyrics(context, controller),
+        icon: const Icon(Icons.lyrics_outlined),
+      ),
+    if (defaultTargetPlatform == TargetPlatform.android)
+      ListenableBuilder(
+        listenable: MusicFloatingLyrics.instance,
+        builder: (context, _) => IconButton(
+          tooltip: MusicFloatingLyrics.instance.enabled ? '关闭悬浮歌词' : '开启悬浮歌词',
+          onPressed: () =>
+              MusicFloatingLyrics.instance.toggle(context, controller),
+          icon: Icon(
+            MusicFloatingLyrics.instance.enabled
+                ? Icons.picture_in_picture_alt
+                : Icons.picture_in_picture_alt_outlined,
+          ),
+        ),
+      ),
+    PopupMenuButton<MusicPlayMode>(
+      tooltip: '播放模式：${musicModeLabels[controller.mode.index]}',
+      icon: Icon(switch (controller.mode) {
+        MusicPlayMode.shuffle => Icons.shuffle,
+        MusicPlayMode.repeatOne => Icons.repeat_one,
+        _ => Icons.repeat,
+      }),
+      onSelected: (mode) =>
+          musicAction(context, () => controller.setMode(mode)),
+      itemBuilder: (_) => [
+        for (final mode in MusicPlayMode.values)
+          CheckedPopupMenuItem(
+            value: mode,
+            checked: mode == controller.mode,
+            child: Text(musicModeLabels[mode.index]),
+          ),
+      ],
+    ),
+    if (controller.error != null)
+      IconButton(
+        tooltip: '重新获取歌曲并重试',
+        onPressed: controller.retry,
+        icon: const Icon(Icons.refresh),
+      ),
+    PopupMenuButton<double>(
+      tooltip: '音乐音量（${controller.volume.round()}%）',
+      icon: const Icon(Icons.volume_up_outlined),
+      onSelected: controller.setVolume,
+      itemBuilder: (_) => [
+        for (final value in [0.0, 25.0, 50.0, 80.0, 100.0])
+          PopupMenuItem(value: value, child: Text('${value.round()}%')),
+      ],
+    ),
+  ];
 }
 
 final class _MusicSeekBar extends StatefulWidget {

@@ -26,6 +26,30 @@ void main() {
   _textEvidenceTests();
   _revisionAndConcurrencyTests();
   _audioEvidenceTests();
+  _validationNotificationTests();
+}
+
+void _validationNotificationTests() {
+  test(
+    'persistent download validation does not broadcast data changes',
+    () async {
+      final f = await _Fixture.create();
+      addTearDown(f.close);
+      final evidence = await f.books.downloadGuard.capture(
+        f.target,
+        f.targetChapter,
+        f.origin,
+        f.originChapter,
+      );
+      await Future<void>.delayed(Duration.zero);
+      var events = 0;
+      final subscription = f.services.db.changes.listen((_) => events++);
+      addTearDown(subscription.cancel);
+      await f.books.downloadGuard.validate(evidence);
+      await Future<void>.delayed(Duration.zero);
+      expect(events, 0);
+    },
+  );
 }
 
 void _textEvidenceTests() {

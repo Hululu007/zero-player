@@ -143,41 +143,7 @@ extension _ReaderTools on _BookReaderPageState {
                   itemCount: math.min(300, matches.length),
                   itemBuilder: (context, index) {
                     final range = matches[index];
-                    final start = _textBoundary(
-                      text,
-                      math.max(0, range.start - 24),
-                    );
-                    final end = _textBoundary(
-                      text,
-                      math.min(text.length, range.end + 42),
-                    );
-                    return ListTile(
-                      title: Text.rich(
-                        TextSpan(
-                          children: [
-                            TextSpan(
-                              text: text
-                                  .substring(start, range.start)
-                                  .replaceAll('\n', ' '),
-                            ),
-                            TextSpan(
-                              text: text.substring(range.start, range.end),
-                              style: const TextStyle(
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                            TextSpan(
-                              text: text
-                                  .substring(range.end, end)
-                                  .replaceAll('\n', ' '),
-                            ),
-                          ],
-                        ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      onTap: () => Navigator.pop(context, range),
-                    );
+                    return _findResult(context, text, range);
                   },
                 ),
               ),
@@ -194,6 +160,32 @@ extension _ReaderTools on _BookReaderPageState {
       return;
     }
     _showMatch(match);
+  }
+
+  Widget _findResult(BuildContext context, String text, TextRange range) {
+    final start = _textBoundary(text, math.max(0, range.start - 24));
+    final end = _textBoundary(text, math.min(text.length, range.end + 42));
+    return ListTile(
+      title: Text.rich(
+        TextSpan(
+          children: [
+            TextSpan(
+              text: text.substring(start, range.start).replaceAll('\n', ' '),
+            ),
+            TextSpan(
+              text: text.substring(range.start, range.end),
+              style: const TextStyle(fontWeight: FontWeight.w700),
+            ),
+            TextSpan(
+              text: text.substring(range.end, end).replaceAll('\n', ' '),
+            ),
+          ],
+        ),
+        maxLines: 2,
+        overflow: TextOverflow.ellipsis,
+      ),
+      onTap: () => Navigator.pop(context, range),
+    );
   }
 
   Future<void> _addAnnotation() async {

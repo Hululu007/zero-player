@@ -42,6 +42,7 @@ bool FlutterWindow::OnCreate() {
     }
   }
   radio_tray_ = std::make_unique<RadioTray>(GetHandle(), flutter_controller_->engine()->messenger());
+  reader_fonts_ = std::make_unique<ReaderFonts>(flutter_controller_->engine()->messenger());
   SetChildContent(flutter_controller_->view()->GetNativeWindow());
 
   flutter_controller_->engine()->SetNextFrameCallback([&]() {
@@ -57,6 +58,7 @@ bool FlutterWindow::OnCreate() {
 }
 
 void FlutterWindow::OnDestroy() {
+  reader_fonts_.reset();
   radio_tray_.reset();
   if (flutter_controller_) {
     flutter_controller_ = nullptr;

@@ -12,7 +12,7 @@ import 'playlist_epg.dart';
 import 'live_audit_defaults.dart';
 import 'live_health_repository.dart';
 import '../domain/live_health.dart';
-import '../domain/live_metadata.dart';
+import 'live_row_decoder.dart';
 import '../domain/channel_merge.dart';
 import '../domain/epg_channel_match.dart';
 import '../../supervision/application/content_policy.dart';
@@ -313,41 +313,8 @@ final class LiveRepository {
       WHERE q.key IS NULL AND (s.value IS NULL OR s.value!='false') ''',
     );
     var available = rows
-        .map(
-          (r) => LiveChannel(
-            id: r['id'] as String,
-            listId: r['list_id'] as String,
-            headerOrigin: Uri.parse(r['list_url'] as String),
-            name: r['name'] as String,
-            group: r['group_name'] as String,
-            logo: r['logo'] as String,
-            tvgId: r['tvg_id'] as String,
-            urls: (jsonDecode(r['urls'] as String) as List)
-                .map((u) => Uri.parse(u as String))
-                .toList(),
-            headers: Map<String, String>.from(
-              jsonDecode(r['headers'] as String),
-            ),
-            favorite: r['favorite'] == 1,
-            recent: r['watched_at'] != null,
-            watchedAt: r['watched_at'] is int
-                ? DateTime.fromMillisecondsSinceEpoch(r['watched_at'] as int)
-                : null,
-            listName: r['list_name'] as String,
-            metadata: LiveMetadata.decode(
-              r['metadata'],
-              (jsonDecode(r['urls'] as String) as List)
-                  .map((u) => Uri.parse(u as String))
-                  .toList(),
-            ),
-            health: LiveHealth.decode(
-              r['health'],
-              (jsonDecode(r['urls'] as String) as List)
-                  .map((u) => Uri.parse(u as String))
-                  .toList(),
-            ),
-          ),
-        )
+        .map(decodeLiveChannel)
+        .whereType<LiveChannel>()
         .toList();
     if (defaults != null) {
       final audit = await defaults!.entries;
@@ -404,7 +371,7 @@ final class LiveRepository {
         [entry.id, entry.name, value ? 1 : 0],
       );
     }
-  });
+  }, tables: const {'channel_preferences'});
   Future<void> watched(LiveChannel channel) => db.atomic(() async {
     final now = DateTime.now().millisecondsSinceEpoch;
     for (final entry in channel.entries) {
@@ -414,7 +381,7 @@ final class LiveRepository {
         [entry.id, entry.name, now],
       );
     }
-  });
+  }, tables: const {'channel_preferences'});
 
   Future<void> refreshEpg(Uri url, {CancellationToken? cancellation}) async {
     final doc = await network.get(
@@ -454,7 +421,7 @@ final class LiveRepository {
           }
         });
       }
-    }, tables: const {'epg_programs'});
+    }, tables: const {'epg_programs', 'app_meta'});
   }
 
   Future<List<EpgProgram>> schedule(LiveChannel channel) async {
@@ -535,7 +502,7 @@ final class LiveRepository {
           matchEpgChannel(
             id,
             channel.name,
-            ids.map((r) => r['channel_id'] as String),
+            ids.map((r) => r['channel_id']).whereType<String>(),
           ) ??
           '';
       if (id.isEmpty) return [];
@@ -548,7 +515,7 @@ final class LiveRepository {
           matchEpgChannel(
             '',
             channel.name,
-            ids.map((r) => r['channel_id'] as String),
+            ids.map((r) => r['channel_id']).whereType<String>(),
           ) ??
           '';
       if (id.isEmpty) {
@@ -557,16 +524,14 @@ final class LiveRepository {
           ['epg_names:${stableId(list.first['epg_url'] as String)}'],
         );
         if (aliases.isNotEmpty) {
-          final names = jsonDecode(aliases.first['value'] as String) as Map;
+          final names = _epgNames(aliases.first['value']);
           final matches = names.entries
               .where(
-                (entry) => (entry.value as List).any(
-                  (name) =>
-                      matchEpgChannel('', channel.name, [name as String]) !=
-                      null,
+                (entry) => entry.value.any(
+                  (name) => matchEpgChannel('', channel.name, [name]) != null,
                 ),
               )
-              .map((entry) => entry.key as String)
+              .map((entry) => entry.key)
               .toSet();
           if (matches.length == 1) id = matches.single;
         }
@@ -580,21 +545,31 @@ final class LiveRepository {
     );
     return rows
         .map(
-          (r) => EpgProgram(
-            r['channel_id'] as String,
-            r['title'] as String,
-            DateTime.fromMillisecondsSinceEpoch(
-              r['start_ms'] as int,
-              isUtc: true,
-            ),
-            DateTime.fromMillisecondsSinceEpoch(
-              r['end_ms'] as int,
-              isUtc: true,
-            ),
+          (row) => decodeEpgProgram(
+            row,
             matchedByName: channel.tvgId.isEmpty,
             sourceUrl: list.first['epg_url'] as String,
           ),
         )
+        .whereType<EpgProgram>()
         .toList();
+  }
+
+  Map<String, List<String>> _epgNames(Object? raw) {
+    if (raw is! String) return const {};
+    try {
+      final decoded = jsonDecode(raw);
+      if (decoded is! Map) return const {};
+      return {
+        for (final entry in decoded.entries)
+          if (entry.key is String && entry.value is List)
+            entry.key as String: (entry.value as List)
+                .whereType<String>()
+                .toList(),
+      };
+    } on FormatException {
+      // The next guide refresh replaces aliases; keep other guides readable.
+      return const {};
+    }
   }
 }

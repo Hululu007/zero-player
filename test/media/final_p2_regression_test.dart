@@ -15,7 +15,6 @@ import 'package:zero_player/core/persistence/app_database.dart';
 import 'package:zero_player/core/network/cancellation_token.dart';
 import 'package:zero_player/features/catalog/domain/catalog_item.dart';
 import 'package:zero_player/features/downloads/application/download_output.dart';
-import 'package:zero_player/features/playback/application/local_video.dart';
 import 'package:zero_player/features/downloads/domain/download_task.dart';
 import 'package:zero_player/media/export/media_exporter.dart';
 
@@ -35,8 +34,7 @@ void _regression0() {
       await services.supervision.load();
       final a = await File('${root.path}/a.mp4').writeAsBytes([1]);
       final b = await File('${root.path}/b.mp4').writeAsBytes([2]);
-      final first = await LocalVideo.open(
-        services,
+      final first = await services.localVideo.open(
         a.path,
         documentIdentity: 'document-A',
       );
@@ -48,8 +46,7 @@ void _regression0() {
         const Duration(seconds: 100),
       );
       first.offline!.close();
-      final second = await LocalVideo.open(
-        services,
+      final second = await services.localVideo.open(
         b.path,
         previousId: first.item.id,
         documentIdentity: 'document-B',

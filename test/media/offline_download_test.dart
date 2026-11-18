@@ -6,7 +6,7 @@ import 'package:zero_player/core/network/cancellation_token.dart';
 import 'package:zero_player/core/network/header_policy.dart';
 import 'package:zero_player/core/network/media_http_client.dart';
 import 'package:zero_player/core/persistence/app_database.dart';
-import 'package:zero_player/core/persistence/segment_index.dart';
+import 'package:zero_player/media/cache/segment_index.dart';
 import 'package:zero_player/features/downloads/application/hls_download.dart';
 import 'package:zero_player/media/cache/segment_fetcher.dart';
 import 'package:zero_player/media/cache/segment_store.dart';

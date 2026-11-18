@@ -20,9 +20,15 @@ Future<void> transferDownload({
   required void Function(int) reserve,
   required Future<void> Function(File, CancellationToken) validate,
 }) async {
-  final headers = Map<String, String>.from(
-    jsonDecode(task.row['headers'] as String),
-  );
+  final Map<String, String> headers;
+  try {
+    headers = Map<String, String>.from(
+      jsonDecode(task.row['headers'] as String),
+    );
+  } on Object {
+    // Missing credentials must not silently turn into an unauthenticated retry.
+    throw const FormatException('下载请求头记录损坏，请删除任务后重新添加');
+  }
   final policy = HeaderPolicy({task.uri: headers});
   final directory = Directory(task.directory);
   await directory.create(recursive: true);

@@ -1,0 +1,3156 @@
+{
+  "captured_at": "2026-11-18T10:42:54.047264+08:00",
+  "git_head": "655a592f3a1fcf2ea207b97bf0851fdffab338f5",
+  "git_status": " M .gitignore\n M README.md\n M android/app/src/main/kotlin/dev/zeroplayer/zero_player/MainActivity.kt\n M docs/implementation/STATUS.md\n M docs/implementation/USER-GUIDE.md\n M integration_test/books_review_native_test.dart\n M integration_test/local_video_native_test.dart\n M lib/app/app_back_dispatcher.dart\n D lib/app/app_fonts.dart\n M lib/app/app_services.dart\n M lib/app/app_theme.dart\n M lib/app/application_bootstrap.dart\n M lib/app/mobile_bottom_navigation.dart\n M lib/app/product_app.dart\n M lib/app/shell.dart\n M lib/core/network/document_client.dart\n M lib/core/network/request_scheduler.dart\n M lib/core/persistence/app_database.dart\n D lib/core/persistence/segment_index.dart\n M lib/core/platform/platform_services.dart\n M lib/features/books/application/book_site_monitor.dart\n M lib/features/books/data/audiobook_files.dart\n M lib/features/books/data/book_comic_download.dart\n M lib/features/books/data/book_download_coordinator.dart\n M lib/features/books/data/book_download_guard.dart\n M lib/features/books/data/book_repository_discovery.dart\n M lib/features/books/data/book_repository_media_access.dart\n M lib/features/books/data/book_repository_mutations.dart\n M lib/features/books/data/book_repository_policy_review.dart\n M lib/features/books/data/book_repository_probe.dart\n M lib/features/books/data/book_repository_request_policy.dart\n M lib/features/books/data/book_repository_shutdown.dart\n M lib/features/books/data/book_repository_site_checks.dart\n M lib/features/books/data/book_repository_site_lease.dart\n M lib/features/books/data/book_site_check.dart\n M lib/features/books/data/book_site_inspection.dart\n M lib/features/books/data/book_site_observed_sources.dart\n M lib/features/books/data/book_site_sale_clues.dart\n M lib/features/books/data/book_source_risk_store.dart\n M lib/features/books/data/book_store.dart\n M lib/features/books/data/book_supervised_site_scan.dart\n M lib/features/books/data/books_repository.dart\n M lib/features/books/domain/book.dart\n M lib/features/books/domain/book_download_plan.dart\n M lib/features/books/presentation/audiobook_player_page.dart\n M lib/features/books/presentation/book_detail_page.dart\n M lib/features/books/presentation/book_download_dialog.dart\n M lib/features/books/presentation/book_download_management_page.dart\n M lib/features/books/presentation/book_image_chapter.dart\n M lib/features/books/presentation/book_reader_page.dart\n M lib/features/books/presentation/book_search_page.dart\n M lib/features/books/presentation/book_sources_page.dart\n M lib/features/books/presentation/books_page.dart\n M lib/features/books/presentation/reader_pagination.dart\n M lib/features/books/presentation/reader_session.dart\n M lib/features/books/presentation/reader_style.dart\n M lib/features/books/presentation/reader_tools.dart\n M lib/features/books/presentation/rich_reader_page.dart\n M lib/features/catalog/data/kanju_provider.dart\n M lib/features/catalog/presentation/detail_page.dart\n M lib/features/downloads/application/download_failover.dart\n M lib/features/downloads/application/download_scheduler.dart\n M lib/features/downloads/application/download_transfer.dart\n M lib/features/downloads/application/mp4_download.dart\n M lib/features/downloads/data/download_repository.dart\n M lib/features/downloads/presentation/downloads_page.dart\n M lib/features/library/data/history_repository.dart\n M lib/features/live/data/epg_parser.dart\n M lib/features/live/data/live_repository.dart\n M lib/features/live/data/playlist_channels.dart\n M lib/features/music/application/music_controller.dart\n M lib/features/music/application/music_open_api.dart\n M lib/features/music/data/music_audio_probe.dart\n M lib/features/music/data/music_library.dart\n M lib/features/music/presentation/music_catalog_controls.dart\n M lib/features/music/presentation/music_chart_browser.dart\n M lib/features/music/presentation/music_discovery.dart\n M lib/features/music/presentation/music_page.dart\n M lib/features/music/presentation/music_player.dart\n M lib/features/music/presentation/music_source_selector.dart\n M lib/features/playback/application/line_probe.dart\n M lib/features/playback/application/local_video.dart\n M lib/features/playback/application/playback_controller.dart\n M lib/features/playback/presentation/local_video_page.dart\n M lib/features/settings/application/settings_controller.dart\n M lib/features/settings/domain/settings_validation.dart\n M lib/features/settings/presentation/settings_page.dart\n M lib/features/sources/application/background_source_monitor.dart\n M lib/features/sources/presentation/source_actions.dart\n M lib/features/sources/presentation/sources_page.dart\n M lib/features/supervision/application/supervision_controller.dart\n M lib/features/supervision/domain/content_classification.dart\n M lib/features/supervision/domain/supervision_rules.dart\n M lib/main.dart\n M lib/media/cache/segment_store.dart\n M lib/media/content_filter/approved_media_server.dart\n M lib/media/content_filter/keyword_policy.dart\n M lib/media/engine/media_kit_engine.dart\n M lib/media/gateway/media_gateway.dart\n M test/books/book_comic_download_test.dart\n M test/books/book_comic_reader_test.dart\n M test/books/book_discovery_category_policy_test.dart\n M test/books/book_download_evidence_test.dart\n M test/books/book_site_checks_test.dart\n M test/books/book_site_sale_clue_test.dart\n M test/books/book_site_sources_page_test.dart\n M test/books/com_rdap_unavailable_rule_test.dart\n M test/books/reader_session_test.dart\n M test/data/interaction_preferences_test.dart\n M test/media/cache_recovery_test.dart\n M test/media/content_filter_policy_test.dart\n M test/media/content_filter_session_test.dart\n M test/media/download_control_test.dart\n M test/media/final_p2_regression_test.dart\n M test/media/gateway_test.dart\n M test/media/local_video_output_test.dart\n M test/media/mp4_resume_test.dart\n M test/media/offline_download_test.dart\n M test/music/music_discovery_test.dart\n M test/music/music_page_test.dart\n M test/platform/remaining_fixes_test.dart\n M test/playback/episode_mark_recovery_test.dart\n M test/widgets/local_history_selection_test.dart\n M test/widgets/mobile_app_navigation_test.dart\n M test/widgets/release_viewport_audit_test.dart\n M windows/runner/CMakeLists.txt\n M windows/runner/flutter_window.cpp\n M windows/runner/flutter_window.h\n?? android/app/src/main/kotlin/dev/zeroplayer/zero_player/ReaderFonts.kt\n?? docs/code-review-2026-11-17.md\n?? docs/code-review-2026-11-18.md\n?? docs/implementation/MODULE-BOUNDARIES.md\n?? docs/implementation/READER-PERFORMANCE-2026-11-17.md\n?? integration_test/reader_upgrade_native_test.dart\n?? lib/app/local_open_startup.dart\n?? lib/app/startup_failure.dart\n?? lib/core/platform/foreground_workload.dart\n?? lib/features/books/application/reader_preloader.dart\n?? lib/features/books/data/book_catalog_window.dart\n?? lib/features/books/data/book_chapter_download.dart\n?? lib/features/books/data/book_chapter_policy.dart\n?? lib/features/books/data/book_comic_access.dart\n?? lib/features/books/data/book_latest_aggregation.dart\n?? lib/features/books/data/book_policy_tracker.dart\n?? lib/features/books/data/book_reading_cleanup.dart\n?? lib/features/books/data/book_source_access.dart\n?? lib/features/books/data/book_source_editor.dart\n?? lib/features/books/data/book_source_import_plan.dart\n?? lib/features/books/data/book_source_importer.dart\n?? lib/features/books/data/local_book_library.dart\n?? lib/features/books/data/reader_fonts.dart\n?? lib/features/books/presentation/book_blocked_chapters_dialog.dart\n?? lib/features/books/presentation/book_text_policy_dialog.dart\n?? lib/features/books/presentation/reader_cleanup_sheet.dart\n?? lib/features/books/presentation/reader_font_picker.dart\n?? lib/features/books/presentation/reader_safe_area.dart\n?? lib/features/live/data/live_row_decoder.dart\n?? lib/features/playback/application/playback_request.dart\n?? lib/features/settings/domain/app_fonts.dart\n?? lib/media/cache/segment_index.dart\n?? lib/media/engine/player_security.dart\n?? test/architecture/\n?? test/books/book_chapter_policy_test.dart\n?? test/books/book_download_dialog_test.dart\n?? test/books/book_latest_aggregation_test.dart\n?? test/books/book_latest_download_test.dart\n?? test/books/book_policy_tracker_test.dart\n?? test/books/book_search_latest_chapter_test.dart\n?? test/books/book_source_access_test.dart\n?? test/books/book_source_editor_test.dart\n?? test/books/book_source_import_plan_test.dart\n?? test/books/book_source_importer_test.dart\n?? test/books/book_source_snapshot_test.dart\n?? test/books/local_book_library_test.dart\n?? test/books/reader_upgrade_test.dart\n?? test/books/review_storage_consistency_test.dart\n?? test/data/content_label_refresh_test.dart\n?? test/data/download_delete_atomic_test.dart\n?? test/data/epg_review_integrity_test.dart\n?? test/data/live_review_recovery_test.dart\n?? test/data/review_regressions_test.dart\n?? test/data/transaction_notifications_test.dart\n?? test/media/cache_eviction_race_test.dart\n?? test/media/download_record_recovery_test.dart\n?? test/media/episode_probe_test.dart\n?? test/media/local_video_use_case_test.dart\n?? test/media/player_security_test.dart\n?? test/music/review_music_errors_test.dart\n?? test/sources/kanju_invalid_shape_test.dart\n?? test/widgets/application_bootstrap_test.dart\n?? test/widgets/book_text_policy_dialog_test.dart\n?? test/widgets/download_resume_review_test.dart\n?? test/widgets/exit_retry_review_test.dart\n?? test/widgets/source_probe_review_test.dart\n?? test_support/comic_source_authorization.dart\n?? tmp/\n?? tool/architecture/\n?? tool/capture_reading_power.ps1\n?? tool/check_module_boundaries.dart\n?? windows/runner/reader_fonts.cpp\n?? windows/runner/reader_fonts.h\n",
+  "lib_files": 513,
+  "lib_bytes": 2985168,
+  "lib_physical_lines": 90135,
+  "modules": {
+    "app": {
+      "files": 25,
+      "physical_lines": 3098,
+      "nonempty_lines": 2970,
+      "bytes": 104133
+    },
+    "core": {
+      "files": 32,
+      "physical_lines": 3130,
+      "nonempty_lines": 2935,
+      "bytes": 101062
+    },
+    "entry": {
+      "files": 1,
+      "physical_lines": 40,
+      "nonempty_lines": 38,
+      "bytes": 1429
+    },
+    "features/books": {
+      "files": 144,
+      "physical_lines": 36227,
+      "nonempty_lines": 34289,
+      "bytes": 1205076
+    },
+    "features/catalog": {
+      "files": 15,
+      "physical_lines": 1665,
+      "nonempty_lines": 1586,
+      "bytes": 54338
+    },
+    "features/discovery": {
+      "files": 11,
+      "physical_lines": 2099,
+      "nonempty_lines": 2021,
+      "bytes": 68377
+    },
+    "features/downloads": {
+      "files": 14,
+      "physical_lines": 2101,
+      "nonempty_lines": 2015,
+      "bytes": 72403
+    },
+    "features/lab": {
+      "files": 4,
+      "physical_lines": 425,
+      "nonempty_lines": 400,
+      "bytes": 14105
+    },
+    "features/library": {
+      "files": 2,
+      "physical_lines": 205,
+      "nonempty_lines": 194,
+      "bytes": 7942
+    },
+    "features/live": {
+      "files": 33,
+      "physical_lines": 4550,
+      "nonempty_lines": 4387,
+      "bytes": 153630
+    },
+    "features/music": {
+      "files": 43,
+      "physical_lines": 10608,
+      "nonempty_lines": 10152,
+      "bytes": 351919
+    },
+    "features/playback": {
+      "files": 37,
+      "physical_lines": 5873,
+      "nonempty_lines": 5624,
+      "bytes": 193518
+    },
+    "features/radio": {
+      "files": 13,
+      "physical_lines": 1808,
+      "nonempty_lines": 1721,
+      "bytes": 58619
+    },
+    "features/search": {
+      "files": 5,
+      "physical_lines": 1007,
+      "nonempty_lines": 970,
+      "bytes": 34055
+    },
+    "features/settings": {
+      "files": 16,
+      "physical_lines": 2340,
+      "nonempty_lines": 2248,
+      "bytes": 80194
+    },
+    "features/sources": {
+      "files": 43,
+      "physical_lines": 5241,
+      "nonempty_lines": 5002,
+      "bytes": 172958
+    },
+    "features/supervision": {
+      "files": 15,
+      "physical_lines": 1888,
+      "nonempty_lines": 1771,
+      "bytes": 61973
+    },
+    "media/cache": {
+      "files": 6,
+      "physical_lines": 681,
+      "nonempty_lines": 639,
+      "bytes": 21012
+    },
+    "media/content_filter": {
+      "files": 34,
+      "physical_lines": 4548,
+      "nonempty_lines": 4324,
+      "bytes": 142021
+    },
+    "media/engine": {
+      "files": 3,
+      "physical_lines": 336,
+      "nonempty_lines": 319,
+      "bytes": 11499
+    },
+    "media/export": {
+      "files": 2,
+      "physical_lines": 223,
+      "nonempty_lines": 211,
+      "bytes": 6632
+    },
+    "media/gateway": {
+      "files": 3,
+      "physical_lines": 876,
+      "nonempty_lines": 837,
+      "bytes": 29475
+    },
+    "media/hls": {
+      "files": 9,
+      "physical_lines": 772,
+      "nonempty_lines": 739,
+      "bytes": 26029
+    },
+    "media/network": {
+      "files": 3,
+      "physical_lines": 394,
+      "nonempty_lines": 380,
+      "bytes": 12769
+    }
+  },
+  "source_manifest": [
+    {
+      "path": "lib/app/app_back_dispatcher.dart",
+      "sha256": "dc67597ede59953fe46a3cd6f1aa19e79543141c2507bf7eedeb3ccf2c52f354",
+      "bytes": 2312
+    },
+    {
+      "path": "lib/app/app_layout.dart",
+      "sha256": "4129d7b1da8104efc4ca1c0dbe90530ec86e79a07d70f0387710fd4c5204408c",
+      "bytes": 411
+    },
+    {
+      "path": "lib/app/app_services.dart",
+      "sha256": "510bf45d6a0983fca9260392608606180a3599e06e996aa7324cd737131d9f5f",
+      "bytes": 22256
+    },
+    {
+      "path": "lib/app/app_theme.dart",
+      "sha256": "24d1577a2959c09657a77b15539666207fd2915ac83243c2115e1e707fa45142",
+      "bytes": 3636
+    },
+    {
+      "path": "lib/app/app_version.dart",
+      "sha256": "396399f6fb5d923709519382a329938dfcf4fc69adf338e06b16a51e4c5943ec",
+      "bytes": 185
+    },
+    {
+      "path": "lib/app/application_bootstrap.dart",
+      "sha256": "96955721791ac1074d102f83c3ca8be71acca2059a7ee3018907a196db8ab3ac",
+      "bytes": 5055
+    },
+    {
+      "path": "lib/app/application_fullscreen.dart",
+      "sha256": "6f30412299651d1a05a1a48c13480b361b073a9fc6e93c3d549e950225430a1d",
+      "bytes": 2885
+    },
+    {
+      "path": "lib/app/installation_introduction.dart",
+      "sha256": "c578c5aeaedf63a8af126c167a262c387d6750434bbdbd8c45f32df2380ebac8",
+      "bytes": 3936
+    },
+    {
+      "path": "lib/app/list_keyboard_navigation.dart",
+      "sha256": "b3533e1d0e61a1697fb92b9df50fcab9dc456a48cfdc440ec2470b76a82705b4",
+      "bytes": 4158
+    },
+    {
+      "path": "lib/app/local_open_startup.dart",
+      "sha256": "4c5f7b8aedd1d793a3f710b01366aa9e3b75e446242355cda07a13560d2669b1",
+      "bytes": 136
+    },
+    {
+      "path": "lib/app/media_library_hub.dart",
+      "sha256": "d285a136e1c3c7f32e52bdf03aba64514c3549c601525bf9fc8d5a6a4d9c9134",
+      "bytes": 2256
+    },
+    {
+      "path": "lib/app/mobile_bottom_navigation.dart",
+      "sha256": "18bdc06ac7559c0f866567c2e5999c0d2a35ec98b4237ad671fb33f51131665e",
+      "bytes": 1426
+    },
+    {
+      "path": "lib/app/module_sources.dart",
+      "sha256": "bc050ef8a42bb081392773b74d3f09214965ddf10c5a72acbf40641a8e44ae97",
+      "bytes": 2129
+    },
+    {
+      "path": "lib/app/navigation_guide.dart",
+      "sha256": "8cd8112dc3227ea21503b7662b67db8f8c40241a0030586b3eb49ca749b47ad3",
+      "bytes": 4896
+    },
+    {
+      "path": "lib/app/poster_card.dart",
+      "sha256": "7cc7d270380a2501264355f0b2d6b3d87845709b08b42203b811a8115461d52f",
+      "bytes": 6678
+    },
+    {
+      "path": "lib/app/poster_image.dart",
+      "sha256": "549defc6405e5d8d4915143ec2dc3a50280d1b9595551507e260e0fc5fe633f4",
+      "bytes": 2912
+    },
+    {
+      "path": "lib/app/probe_cleanup_actions.dart",
+      "sha256": "0494e845ad7de5a6f7cf17530956dc692fc7f6cf6136dda97c81d77c58e53ef5",
+      "bytes": 2359
+    },
+    {
+      "path": "lib/app/product_app.dart",
+      "sha256": "31bb3719df21aa7794323a5a0fb264901755ca6cf6c3a2519427b1d4438e77f0",
+      "bytes": 11202
+    },
+    {
+      "path": "lib/app/scroll_reveal_header.dart",
+      "sha256": "609eb727d9ef96048bdc2aaefa3105ed804fc8c91682ccaeb59c2cbd126a5660",
+      "bytes": 2447
+    },
+    {
+      "path": "lib/app/setting_dropdown.dart",
+      "sha256": "572cc72df2a1e1ee2a94555ade9e53400767384ab333e5c77f827584cbb87e7d",
+      "bytes": 782
+    },
+    {
+      "path": "lib/app/shell.dart",
+      "sha256": "58e598e338a7684b05096e29da4953a3cf5a051f8519de23d9d958f21fb71bc9",
+      "bytes": 11442
+    },
+    {
+      "path": "lib/app/startup_failure.dart",
+      "sha256": "67265bd5929327d1f6d426cf7675ff15371e6d619c1e0b5295f5bc508d7f66fb",
+      "bytes": 357
+    },
+    {
+      "path": "lib/app/synopsis_text.dart",
+      "sha256": "c014fee6f23c9328e2e30082515c024d964e0dd1c659586b35bb7c0191fd7ffd",
+      "bytes": 1044
+    },
+    {
+      "path": "lib/app/widgets.dart",
+      "sha256": "f859503d12a2c2c402edf03914996542b139efcb25da4434d9e268b338d68644",
+      "bytes": 7375
+    },
+    {
+      "path": "lib/app/zero_player_app.dart",
+      "sha256": "ebf799d029550106cb63b247286b645b3488277f856f25716a56610ef04cdbc4",
+      "bytes": 1858
+    },
+    {
+      "path": "lib/core/network/cancellation_token.dart",
+      "sha256": "2dafe895a7132de479df834238f8b358ddea655a007d0121140075e7a0cc5984",
+      "bytes": 1018
+    },
+    {
+      "path": "lib/core/network/document_client.dart",
+      "sha256": "322f1556d3739917f37b9cae48329ff2ebedeb66af82b1c2211e94815570ba58",
+      "bytes": 10091
+    },
+    {
+      "path": "lib/core/network/document_encoding.dart",
+      "sha256": "172e2da9ab62964439b147ba9d570e215e44c39ded113de40ba8ec68f022fa28",
+      "bytes": 2810
+    },
+    {
+      "path": "lib/core/network/file_response.dart",
+      "sha256": "d32c15cde15ece1b06b24f2f0395e539b0c2b689e07594056f4be946b4316122",
+      "bytes": 3133
+    },
+    {
+      "path": "lib/core/network/header_policy.dart",
+      "sha256": "80c21afe38a4ac83a095f2665d7fe2e78eed8039cf45ec4128e315a00c7a10d6",
+      "bytes": 3583
+    },
+    {
+      "path": "lib/core/network/lan_access_policy.dart",
+      "sha256": "9ab4f5a8b67c17e7431ed7ba5dfd35b7de9ac7cb35506c370708a8b1f5c30518",
+      "bytes": 387
+    },
+    {
+      "path": "lib/core/network/loopback_request_policy.dart",
+      "sha256": "fb34c1aa393e81a50304e162566e0a920f81e1664f04bf410cce5ff0b542a55d",
+      "bytes": 1228
+    },
+    {
+      "path": "lib/core/network/media_http_client.dart",
+      "sha256": "696795c08d2ffad763aad053913b247896decd7bb3ba9a766200b8043d27cb02",
+      "bytes": 8319
+    },
+    {
+      "path": "lib/core/network/network_budget.dart",
+      "sha256": "5748f4ebc67d9a3aeba081ece1139417c0f06e8399297fb9da27596a06cd4080",
+      "bytes": 757
+    },
+    {
+      "path": "lib/core/network/network_target_policy.dart",
+      "sha256": "b79b7fb7376cc832b956f48cdca7bdc0980b9ba4458a95c363c01904128a01ba",
+      "bytes": 4516
+    },
+    {
+      "path": "lib/core/network/poster_repository.dart",
+      "sha256": "e66b98c948a1aa371f5a3fca364b7a15cd7a29275a2ec2ccd732219456bf294d",
+      "bytes": 5552
+    },
+    {
+      "path": "lib/core/network/request_scheduler.dart",
+      "sha256": "10a22db99ea49f31fc2ada384712132f16df04e3b846fa87440e232041049cbe",
+      "bytes": 3935
+    },
+    {
+      "path": "lib/core/network/request_trace.dart",
+      "sha256": "a849a412f365c9bd9c686bd29987baae6167d9cc7c806c6362b3c7c002ab1467",
+      "bytes": 2028
+    },
+    {
+      "path": "lib/core/persistence/app_database.dart",
+      "sha256": "2de42ca570cf6a5b7f9da1b950f2e04406454a65f40ee614a7ddd3b96fb618f5",
+      "bytes": 4683
+    },
+    {
+      "path": "lib/core/persistence/application_ownership.dart",
+      "sha256": "dd3caa11b6252c6930d297a55f6cccc6ce39d2388c192cb4c85ab14672bb16d5",
+      "bytes": 1220
+    },
+    {
+      "path": "lib/core/persistence/installation_metadata.dart",
+      "sha256": "3f6e365ec9a268653b5a8927ec9ae01f7eadd9b38b685baca9ba35a7b4559bdf",
+      "bytes": 465
+    },
+    {
+      "path": "lib/core/persistence/local_open_channel.dart",
+      "sha256": "b3e4364e3ab84de31a3ba90e69951698eb8729c3d1e1f336ae6bde72373a7732",
+      "bytes": 4242
+    },
+    {
+      "path": "lib/core/persistence/schema.dart",
+      "sha256": "7f581fb53c03f2df72fd8f85a066b6b1459547926b11b5a03ec5dee15dcb76cf",
+      "bytes": 4627
+    },
+    {
+      "path": "lib/core/platform/background_audio_group.dart",
+      "sha256": "98d0e938c31ec8ad136f7824bac7c173d644f09b12dc8d18119f5a46b4209674",
+      "bytes": 1399
+    },
+    {
+      "path": "lib/core/platform/background_audio_session.dart",
+      "sha256": "02dcc01b81dd080c0ea01108b36efeec7d1227c97a2f0874a1115e737e13d3fb",
+      "bytes": 307
+    },
+    {
+      "path": "lib/core/platform/close_resources.dart",
+      "sha256": "054b54092290531712c5a281dcced02dd795d3d41bfe70e817698ccb2d5a0f13",
+      "bytes": 563
+    },
+    {
+      "path": "lib/core/platform/desktop_lifecycle.dart",
+      "sha256": "7509898944c2dd22a86d3ec8485bedcff35c4d43cb5235ba79349025ed364e3f",
+      "bytes": 3015
+    },
+    {
+      "path": "lib/core/platform/desktop_radio_tray.dart",
+      "sha256": "6437ff2b7abc597c65d9f919ea9c8c7060d79e3d7efbc931628ff9ea7e1a5a3e",
+      "bytes": 2831
+    },
+    {
+      "path": "lib/core/platform/file_transfer.dart",
+      "sha256": "f36aff5bd79daf3e286d7f086156540e8a94b3ac66e0e740ce54a2e2a5a23042",
+      "bytes": 1718
+    },
+    {
+      "path": "lib/core/platform/foreground_workload.dart",
+      "sha256": "55675dd547e9adde1b09dc1cfad337c47ac351ec8bf22758e273ca16324e0d8a",
+      "bytes": 805
+    },
+    {
+      "path": "lib/core/platform/fullscreen_controller.dart",
+      "sha256": "f35139710ceafd17a7fa28e47abeac7493f0b4d393f8176b489e1de7258cb361",
+      "bytes": 2130
+    },
+    {
+      "path": "lib/core/platform/platform_services.dart",
+      "sha256": "3c445953b52db61cd4bd761111d401e3ff9e7e174f233c5e642c0e76625d6813",
+      "bytes": 9418
+    },
+    {
+      "path": "lib/core/platform/protected_book_export.dart",
+      "sha256": "a3715e380ccf42ac7dfac5ae4fccf5ca20803316cd05370c1ed62007020b964b",
+      "bytes": 8756
+    },
+    {
+      "path": "lib/core/platform/publish_file.dart",
+      "sha256": "67196296e846d45e0e97abae4dd1f3553a391bd3e7298769da16c61d6b8b6f29",
+      "bytes": 1080
+    },
+    {
+      "path": "lib/core/platform/video_file_types.dart",
+      "sha256": "89f041fd96f18404e609840a7c3cf4f0d70f8c27f3c1f9865a06a6cf05426b82",
+      "bytes": 339
+    },
+    {
+      "path": "lib/core/platform/video_files.dart",
+      "sha256": "c6a787be4dc205d937c1738905299be9bfde5a9af9c70c054023d42c1c851874",
+      "bytes": 4964
+    },
+    {
+      "path": "lib/core/text/display_text.dart",
+      "sha256": "56625c9568d0848bd466b61e7d0729c8118514992b781c9d33fdce284896b463",
+      "bytes": 1143
+    },
+    {
+      "path": "lib/features/books/application/audiobook_controller.dart",
+      "sha256": "0b3f304eef48fabb01d4302b6b6a0aec0bc28fb706b3171d47eb98a85966fff0",
+      "bytes": 9986
+    },
+    {
+      "path": "lib/features/books/application/book_category_policy.dart",
+      "sha256": "e0038237590116b8d2a0536ee918819e6d462683f000a8c9042c660d1ce37656",
+      "bytes": 3830
+    },
+    {
+      "path": "lib/features/books/application/book_site_checks.dart",
+      "sha256": "35462306ec92675dabc5bccc5d75b4a7cd0cd772534b876ba9bedac849936055",
+      "bytes": 125
+    },
+    {
+      "path": "lib/features/books/application/book_site_monitor.dart",
+      "sha256": "1388807f2f6817947e987bac203b49de3875992584bb9d1e2f577dee89a2b8b9",
+      "bytes": 6507
+    },
+    {
+      "path": "lib/features/books/application/reader_preloader.dart",
+      "sha256": "7ef25c0b65bcc28bf0f4b509e6abb2521908297aed3bf970ceba96f86baf75e6",
+      "bytes": 1398
+    },
+    {
+      "path": "lib/features/books/data/aoaostar_book_catalog.dart",
+      "sha256": "16e831e23a50f945ec2d11b2d1202e110f1d37201933fafea05f54868921d440",
+      "bytes": 2418
+    },
+    {
+      "path": "lib/features/books/data/audiobook_files.dart",
+      "sha256": "c581562bda6bc7c0d424a18dc907ab79e8181036ed9da83e3c8058842f7825b2",
+      "bytes": 12361
+    },
+    {
+      "path": "lib/features/books/data/audiobook_format.dart",
+      "sha256": "52ac6aadbf2bddc3a7fd4dba367ce36087b79f97e35eb75058fc9e8368efcb36",
+      "bytes": 832
+    },
+    {
+      "path": "lib/features/books/data/book_catalog_window.dart",
+      "sha256": "2ef2ec0382a3c0b1322a5c7c62ca91c0f68458b45307da2cef75612e6503d363",
+      "bytes": 1566
+    },
+    {
+      "path": "lib/features/books/data/book_chapter_download.dart",
+      "sha256": "70c5e81c964191631d3ad2e5c94e8f494f5df7da37911a94a8010d9d6a2426e9",
+      "bytes": 5708
+    },
+    {
+      "path": "lib/features/books/data/book_chapter_policy.dart",
+      "sha256": "3fe565089d91c168f20fb4cb974bca69b903bf2e9bb4e5cb03c4589b37cdafcc",
+      "bytes": 7219
+    },
+    {
+      "path": "lib/features/books/data/book_client.dart",
+      "sha256": "b4ee36c66dab2f9f9cc7504c33f60b80ab932faeeec07752807905272dde9b11",
+      "bytes": 27340
+    },
+    {
+      "path": "lib/features/books/data/book_comic_access.dart",
+      "sha256": "a6e88e396ab137fd657625f2127d3ed572aab1dcb2018cc0712129d026c68dba",
+      "bytes": 2010
+    },
+    {
+      "path": "lib/features/books/data/book_comic_download.dart",
+      "sha256": "7e94ff7dab32d2055f9d55e21c6465958c0ae44180820d46c7fd5035447bc594",
+      "bytes": 1854
+    },
+    {
+      "path": "lib/features/books/data/book_comic_export.dart",
+      "sha256": "08650f585e7a36794e1ddbb581bc67922c9819e6fa573268ba8d6dd5f17b5f20",
+      "bytes": 556
+    },
+    {
+      "path": "lib/features/books/data/book_cover_cache.dart",
+      "sha256": "0eb92c22bccacb27862e81ccfaa2869f8c4971dd4af754915438fb93ba9e59f2",
+      "bytes": 5497
+    },
+    {
+      "path": "lib/features/books/data/book_discovery_paging.dart",
+      "sha256": "0f617915c6da815b2b09071b853bab0c060cbdce9451814e0e8b84693123295d",
+      "bytes": 14109
+    },
+    {
+      "path": "lib/features/books/data/book_download_coordinator.dart",
+      "sha256": "f059f1b58ac75c90d5b2dfd14b46eab0faa85e5a28b6cfcb6cecd040f91b61f6",
+      "bytes": 10405
+    },
+    {
+      "path": "lib/features/books/data/book_download_evidence.dart",
+      "sha256": "9b82b7a8479e37c73ae4f3fd9fb39ad9120d3fa207f694a83fcdea1027ce80a1",
+      "bytes": 3311
+    },
+    {
+      "path": "lib/features/books/data/book_download_guard.dart",
+      "sha256": "18b42b7ba122e5f5400f2d9cb4de4db65720b4b869f40f27e89d480d9bb0d2b0",
+      "bytes": 7093
+    },
+    {
+      "path": "lib/features/books/data/book_html.dart",
+      "sha256": "3ef516a3dbac36b22da40c8f78b99a7fe56616bd6087a4aa5cc159b2c8ba7ecf",
+      "bytes": 6009
+    },
+    {
+      "path": "lib/features/books/data/book_image_payload.dart",
+      "sha256": "bf04b5da7cfe9d4db7cec67f10e7e0f4b9bbd09aedfdc8f6dd69ded60618e98c",
+      "bytes": 1712
+    },
+    {
+      "path": "lib/features/books/data/book_import.dart",
+      "sha256": "5c27a8cac7806ca8854672f89fcc90d0d98e5ab25b92ec4fc13f094bfe93a629",
+      "bytes": 7130
+    },
+    {
+      "path": "lib/features/books/data/book_latest_aggregation.dart",
+      "sha256": "afa06953a82d09a4e3e422b93d9a3c8703c52a956d4b6ee9fd6860c268c98b3c",
+      "bytes": 5695
+    },
+    {
+      "path": "lib/features/books/data/book_mixed_content.dart",
+      "sha256": "0190cdfb05dd2893f4b3e7b7bfdb8b314e7805efe48605bc54127e1ae4b953b3",
+      "bytes": 2954
+    },
+    {
+      "path": "lib/features/books/data/book_policy_evidence.dart",
+      "sha256": "204af14deae6d8456d594a5fe646bc66435efe7bded7847b8e3b86dfe6036f46",
+      "bytes": 12877
+    },
+    {
+      "path": "lib/features/books/data/book_policy_tracker.dart",
+      "sha256": "172731d0fcf0b6d312ea93c8c82d5fe3f35e1ec9d5863e7a13c0f4dcd439a42a",
+      "bytes": 8218
+    },
+    {
+      "path": "lib/features/books/data/book_reading_cleanup.dart",
+      "sha256": "e773736c61aae42c53c0d1b4179685a65db56bd5c4be14837189816847dacf5e",
+      "bytes": 3589
+    },
+    {
+      "path": "lib/features/books/data/book_repository_discovery.dart",
+      "sha256": "0ae7ec3b9247ec941a0412e57c7b60357285d2def7fa4c02a1f96515435dc05b",
+      "bytes": 18331
+    },
+    {
+      "path": "lib/features/books/data/book_repository_media_access.dart",
+      "sha256": "9605fa64d915209a063697d28274671adab2870839ad6d42cbe2f45a6100b0ef",
+      "bytes": 5737
+    },
+    {
+      "path": "lib/features/books/data/book_repository_mutations.dart",
+      "sha256": "03ff03ab88ccf81ff00282c60234c543baec4eef0fbe8258ed4aeba3af646a11",
+      "bytes": 4436
+    },
+    {
+      "path": "lib/features/books/data/book_repository_policy_review.dart",
+      "sha256": "9740adf6f0c0e76ce009caa51b4c398b5571f90f56a5854625a34210c4532b5c",
+      "bytes": 4499
+    },
+    {
+      "path": "lib/features/books/data/book_repository_probe.dart",
+      "sha256": "0c907c0255b3c0b7a7331042cdf484ee5f04bbd9eb91559574d59b2c4e35700a",
+      "bytes": 5275
+    },
+    {
+      "path": "lib/features/books/data/book_repository_request_policy.dart",
+      "sha256": "28873f3841e90f26b0c07662d23b2c7b237c402fdc1e8b49526702cb90d0645e",
+      "bytes": 5576
+    },
+    {
+      "path": "lib/features/books/data/book_repository_shutdown.dart",
+      "sha256": "7c62ea02feab3d81fc69bbbcc5563fac567906479f6176eb1e6b712babd563ed",
+      "bytes": 2018
+    },
+    {
+      "path": "lib/features/books/data/book_repository_site_checks.dart",
+      "sha256": "914784c62f779f4ea5526715a5773e53f499d118a53eb1600c172e6531202891",
+      "bytes": 15478
+    },
+    {
+      "path": "lib/features/books/data/book_repository_site_lease.dart",
+      "sha256": "2d9e437ca4a8af8085d660e6be8065b7d549e889b2d44097b81c3d0e629e150e",
+      "bytes": 1339
+    },
+    {
+      "path": "lib/features/books/data/book_request_guard.dart",
+      "sha256": "67b3daa6fa25a23e298114d227afd7784439f16c81ffb7b2efd42b45334c53ed",
+      "bytes": 212
+    },
+    {
+      "path": "lib/features/books/data/book_resource_limits.dart",
+      "sha256": "ae397c0bd0ef5acb10dcaa0b217499becf14e08e17ec2a99740fb1e10970277a",
+      "bytes": 357
+    },
+    {
+      "path": "lib/features/books/data/book_shelf_lists.dart",
+      "sha256": "4465d443d170cc7ad6828b33e01a90f32755ec21939cae6e47b42325a0aa2960",
+      "bytes": 3186
+    },
+    {
+      "path": "lib/features/books/data/book_site_check.dart",
+      "sha256": "e1bd7f45212c421c160b3a9c367ff7c7c930b48a56aa99069a214ee15c2e0a98",
+      "bytes": 14477
+    },
+    {
+      "path": "lib/features/books/data/book_site_inspection.dart",
+      "sha256": "5372dff944e5051bf086996b00824616f5add222e7c76a77a42ad8e528fbd35d",
+      "bytes": 47008
+    },
+    {
+      "path": "lib/features/books/data/book_site_observed_sources.dart",
+      "sha256": "8d0f3420579901c7d49853fe9d9e03e56f19ea3b5cc26db17934c5e35979640e",
+      "bytes": 7623
+    },
+    {
+      "path": "lib/features/books/data/book_site_revision.dart",
+      "sha256": "9f5a99547e8e5fcf74963053237f1a05cd83b7e86331f875e61e9cac7e1cdf2e",
+      "bytes": 2956
+    },
+    {
+      "path": "lib/features/books/data/book_site_sale_clues.dart",
+      "sha256": "55a3a76369424368c63a70b75423c0aaaad68ad29b28ae48bd88b9f4c7f6d492",
+      "bytes": 10389
+    },
+    {
+      "path": "lib/features/books/data/book_site_script_clues.dart",
+      "sha256": "1501f2982d6f7d1b7133f04f3a6542b451719792f4bf3f74c417e42b29300ae8",
+      "bytes": 15547
+    },
+    {
+      "path": "lib/features/books/data/book_source_access.dart",
+      "sha256": "8cd8ee91772f2ad3a3082298825893228142a946c4dbf5c65917b2895b296ae0",
+      "bytes": 10187
+    },
+    {
+      "path": "lib/features/books/data/book_source_editor.dart",
+      "sha256": "d3147f6b7fcd58318bfe5096f9e4c6906897ebe5f02db2e23dd9364e68e4397c",
+      "bytes": 6160
+    },
+    {
+      "path": "lib/features/books/data/book_source_import_plan.dart",
+      "sha256": "0848dd8fb9ee772475f5471641df539313f5034db515d11b06756f594f7a438a",
+      "bytes": 5382
+    },
+    {
+      "path": "lib/features/books/data/book_source_importer.dart",
+      "sha256": "f47a351b2a31b50944e1abc88fed2ee1b7ecad8c5cd2a9db9f3e9d78e7daf343",
+      "bytes": 6075
+    },
+    {
+      "path": "lib/features/books/data/book_source_links.dart",
+      "sha256": "4ba0b45a4138bfb7ea6e66c11986bbfd8ef2e9ed2797bb8531789b8e83408a88",
+      "bytes": 4613
+    },
+    {
+      "path": "lib/features/books/data/book_source_risk_store.dart",
+      "sha256": "fe6196791955d2f7b27abb74f30d97cbe4d1930bea7cd37352338a9ffb3ada0f",
+      "bytes": 6601
+    },
+    {
+      "path": "lib/features/books/data/book_store.dart",
+      "sha256": "3a3dd3c59dac64e4f92f30e72c8f4ac7bc0b27851e5de7065dd753c4fad83eb3",
+      "bytes": 46535
+    },
+    {
+      "path": "lib/features/books/data/book_supervised_site_scan.dart",
+      "sha256": "039a0f3b49a77db1ec0ef24703b58b0c4c15cd07a55a97b7cf30921c57c51085",
+      "bytes": 9137
+    },
+    {
+      "path": "lib/features/books/data/bookan_audio_client.dart",
+      "sha256": "7531cf3950432ea2aab6fd9edb831867d5939a0a0a612b1a96c6263e17070406",
+      "bytes": 6256
+    },
+    {
+      "path": "lib/features/books/data/books_repository.dart",
+      "sha256": "878d6f1def58b933acca123a85ab2a77c99e13d5e5c109cec9b60d6699d8aa6a",
+      "bytes": 50516
+    },
+    {
+      "path": "lib/features/books/data/epub_styles.dart",
+      "sha256": "7d9b90763ad447aa35531d5a1010342f933da26d7deae03740851aaaaf0ef1b2",
+      "bytes": 3561
+    },
+    {
+      "path": "lib/features/books/data/legado/kuwo_discovery.dart",
+      "sha256": "a6ad484d2755bc7c6a594ee85c6ca61157676af79c72d46087a65ae2ade2740b",
+      "bytes": 3947
+    },
+    {
+      "path": "lib/features/books/data/legado/legado_client.dart",
+      "sha256": "1e0489f523688ff1917aa52a2cfec46f8e95472c2740e5c7e380f62c5ec40f27",
+      "bytes": 21686
+    },
+    {
+      "path": "lib/features/books/data/legado/legado_css.dart",
+      "sha256": "4fb7cbadd4904cfe72949705d634beb1bfe7b3d0de955aa9523961c75b3b3b5d",
+      "bytes": 3882
+    },
+    {
+      "path": "lib/features/books/data/legado/legado_discovery.dart",
+      "sha256": "c4c8039a58e66522547a4d71991be415a8c5ad571bf105c891bace70f2c77c7e",
+      "bytes": 1986
+    },
+    {
+      "path": "lib/features/books/data/legado/legado_import.dart",
+      "sha256": "3d4f0f1fb848c26bf65a0eec25373bc993403576634c60524dc17c5a6e217b69",
+      "bytes": 9437
+    },
+    {
+      "path": "lib/features/books/data/legado/legado_request.dart",
+      "sha256": "da65df24e85c72e12e9b6305407612084bd8ea2f6d9197ce66fc96e0bd717914",
+      "bytes": 7548
+    },
+    {
+      "path": "lib/features/books/data/legado/legado_rule_tokens.dart",
+      "sha256": "4833544f325c73292eebf09e9d82d0573a97cf9e5ba16971cc4b3d3576c30333",
+      "bytes": 1056
+    },
+    {
+      "path": "lib/features/books/data/legado/legado_rules.dart",
+      "sha256": "c851fe91379c2c96ab860f17189e8f1a8a29c31d39fd89b167e379014abc4194",
+      "bytes": 12760
+    },
+    {
+      "path": "lib/features/books/data/legado/legado_script.dart",
+      "sha256": "a88ad3d65468df5840ff5a6e750cc124062044bd608875d71d07e0bda992c3df",
+      "bytes": 4644
+    },
+    {
+      "path": "lib/features/books/data/legado/legado_script_budget.dart",
+      "sha256": "fdc1f3bdcdcff71987d0a4f1b14b587301da7ba7a66cc18246ddd62a07dee6fb",
+      "bytes": 5367
+    },
+    {
+      "path": "lib/features/books/data/legado/legado_script_flutter.dart",
+      "sha256": "18af87c2f57bd680bfdfcf48968c82a65e6c47082b17d88c183cc4a60c7f9474",
+      "bytes": 939
+    },
+    {
+      "path": "lib/features/books/data/legado/legado_script_stub.dart",
+      "sha256": "c94f290e6328a5d60289329e2a9cc80b9381a770b4758df2b2a6ac2b8feca5e4",
+      "bytes": 194
+    },
+    {
+      "path": "lib/features/books/data/legado/legado_worker.dart",
+      "sha256": "bdc2285367dec024d2d9ea58335ee464c9e3334d34ece85b06d37316afbabafd",
+      "bytes": 15779
+    },
+    {
+      "path": "lib/features/books/data/legado/yuque_book_list.dart",
+      "sha256": "d76c7de35ef5e6dfff749fdd4332897faee70d8bcf9cdd1928d3d84fda21941e",
+      "bytes": 4255
+    },
+    {
+      "path": "lib/features/books/data/lit2go_audio_client.dart",
+      "sha256": "ddd2c5d7da1605101f3ef95995e916616480a0a7272e46798b916387d01228bf",
+      "bytes": 4572
+    },
+    {
+      "path": "lib/features/books/data/local_book.dart",
+      "sha256": "07e9ad2b75cca59edfa2ea781510128667a9ad84eca4589b0c90e14b6d3480b8",
+      "bytes": 2034
+    },
+    {
+      "path": "lib/features/books/data/local_book_library.dart",
+      "sha256": "f347f1375eba1a108661357a9f5759df7b62ce524fec0b9b4eccf09e3cd4d9c6",
+      "bytes": 4306
+    },
+    {
+      "path": "lib/features/books/data/qidian_catalog.dart",
+      "sha256": "ebacb4b7393d3d10d2a49d3d21904441aba2dfc2c1771a6d1d20fac077e1b90e",
+      "bytes": 33343
+    },
+    {
+      "path": "lib/features/books/data/qidian_saved_page.dart",
+      "sha256": "9ddcd7f2796bfd89578d51fa517a552a94d821fc2cfbecf896457fc7972a32f4",
+      "bytes": 4973
+    },
+    {
+      "path": "lib/features/books/data/reader_fonts.dart",
+      "sha256": "d3c2ef67a70cf0730b36eda184ef4f564fc4c8b57936b98ed1196ab63b82a787",
+      "bytes": 7033
+    },
+    {
+      "path": "lib/features/books/data/rich_book.dart",
+      "sha256": "e9f4fc5f2d3309898ebc25b97712c7a336fb44f7156dab0d178d159d4679ca27",
+      "bytes": 11708
+    },
+    {
+      "path": "lib/features/books/data/shuyin_audio_client.dart",
+      "sha256": "5fb71abd8f78ac7e512f02e84a502efbc513b47129e82545cf28a6f213dddfe5",
+      "bytes": 7844
+    },
+    {
+      "path": "lib/features/books/data/ximalaya_audio_client.dart",
+      "sha256": "8fcaed8c4a8441910ab0544a8ef789c0eb93b90f49e5e01db2382162fd475d13",
+      "bytes": 7658
+    },
+    {
+      "path": "lib/features/books/domain/biquge7_legacy_source_fix.dart",
+      "sha256": "5dda76dfee900d2ebe8a44142656615b8226a118ee5a8979cade11e5e4c05bb7",
+      "bytes": 2297
+    },
+    {
+      "path": "lib/features/books/domain/book.dart",
+      "sha256": "3d4d08aba549d50542499737e039b98729fc93c455e43c7ebfaefd581397b786",
+      "bytes": 18187
+    },
+    {
+      "path": "lib/features/books/domain/book_download_plan.dart",
+      "sha256": "199c34e1a3c4399a32b8f34a3eb027e58a72069b0de7d7ae948ea71f03154992",
+      "bytes": 1144
+    },
+    {
+      "path": "lib/features/books/domain/book_rule_clues.dart",
+      "sha256": "63a1ee71ebd851a8ef985678587259198710603f08eadc40fe91b4eefec167e2",
+      "bytes": 1285
+    },
+    {
+      "path": "lib/features/books/domain/book_search.dart",
+      "sha256": "5df399376fea21f96f571af17139b0b90e1ea8880f7f373e73898dccac05e9ab",
+      "bytes": 1805
+    },
+    {
+      "path": "lib/features/books/domain/book_site_audit_clues.dart",
+      "sha256": "1a68d394987d2db11e5798109763145faad62516b0f14e869875137faee462cd",
+      "bytes": 656
+    },
+    {
+      "path": "lib/features/books/domain/book_source_risk.dart",
+      "sha256": "b12dc79c22861530726afc1440bf7d96998f516402506255162aa7f49153681e",
+      "bytes": 15184
+    },
+    {
+      "path": "lib/features/books/domain/com_rdap_legacy_quarantine.dart",
+      "sha256": "9060d2b95fb5027bb9fd43babcc3bb0125cb226f1f0557ac88d2a842a0c3b2c5",
+      "bytes": 3251
+    },
+    {
+      "path": "lib/features/books/domain/fanfanu_legacy_source_fix.dart",
+      "sha256": "0c3801d4380b8d5c5bab58f0f548725d55699bdf599585156d5894be415c5827",
+      "bytes": 1349
+    },
+    {
+      "path": "lib/features/books/domain/iqiyi_legacy_quarantine.dart",
+      "sha256": "e87cff1c42533bed307dfd419ccea31acdcbd23b78a708dff91dfd3d861876d0",
+      "bytes": 2328
+    },
+    {
+      "path": "lib/features/books/domain/jhsssd_legacy_source_fix.dart",
+      "sha256": "0b2d0dd3bb14f62e0e03a8ed24d6fa18e8e0047d71c0fe856aee4d70db2a405d",
+      "bytes": 1550
+    },
+    {
+      "path": "lib/features/books/domain/jingzhi_legacy_source_fix.dart",
+      "sha256": "e6035921a1ac0c5c29835c0c70e8acc340af1363cb613b312fdc4227e71aa925",
+      "bytes": 1426
+    },
+    {
+      "path": "lib/features/books/domain/known_untrusted_book_rules.dart",
+      "sha256": "8caf6f3b50868d858a0bbb461c0f680c70dc60c8673c5a8c24639676f28a8c89",
+      "bytes": 7162
+    },
+    {
+      "path": "lib/features/books/domain/kuwo_legacy_source_fix.dart",
+      "sha256": "dfdcad7cced36e68c4f3ac8db7a3697a6b71c84f43787acb0e8ba54a1d55f7e2",
+      "bytes": 1956
+    },
+    {
+      "path": "lib/features/books/domain/legado_source.dart",
+      "sha256": "5b907923968332090760ecc9f4d6f7e652aa06501ac7981b5f477ef7c0d954d1",
+      "bytes": 3052
+    },
+    {
+      "path": "lib/features/books/domain/legado_source_fingerprint.dart",
+      "sha256": "46bb8cd624ba136bd3dcea983bd80278b849a46fa340522ac7ac81788249a41a",
+      "bytes": 583
+    },
+    {
+      "path": "lib/features/books/domain/legado_source_fixes.dart",
+      "sha256": "5861cc4c175989a116074165f9aa0500cf56e5e82ebe8399833dc84470330f25",
+      "bytes": 1284
+    },
+    {
+      "path": "lib/features/books/domain/moe_rdap_legacy_quarantine.dart",
+      "sha256": "03d9e9d51e1d33be6ae52c7db79b2764bb803d996661ba1b87d8c18adad5576b",
+      "bytes": 1358
+    },
+    {
+      "path": "lib/features/books/domain/net_rdap_legacy_quarantine.dart",
+      "sha256": "a04eaaad9fe536c20552c8349d6ade7675b5826fa4cfb069df8233665d932913",
+      "bytes": 1457
+    },
+    {
+      "path": "lib/features/books/domain/novel_242_legacy_quarantine.dart",
+      "sha256": "c84724c46f535857124386f6c4b843331c4d2f88c583647509becf37abaed69d",
+      "bytes": 704
+    },
+    {
+      "path": "lib/features/books/domain/qq_reading_legacy_source_fix.dart",
+      "sha256": "8b536b19cb6d220ee745a02604a6205e8e072300c2a0a8fa8fcea3f0eb67ef00",
+      "bytes": 1879
+    },
+    {
+      "path": "lib/features/books/domain/redirected_legacy_quarantine.dart",
+      "sha256": "af26fb252ef33f88a16bb158eafb2b321e8ddaafa7b64d3915b046f133ff7b79",
+      "bytes": 1003
+    },
+    {
+      "path": "lib/features/books/domain/sanyou_legacy_quarantine.dart",
+      "sha256": "86393cd0604725f59cc9f3c63693879431b5769da922e06a63ddade95c8b2946",
+      "bytes": 1115
+    },
+    {
+      "path": "lib/features/books/domain/sfwx_legacy_source_fix.dart",
+      "sha256": "dee711b0b3ec1a7e87491eebcc0a9daadbbcf7a865166d11430b76bffd72c4dc",
+      "bytes": 3098
+    },
+    {
+      "path": "lib/features/books/domain/shubang_legacy_source_fix.dart",
+      "sha256": "1e9e7f8a3db66c470cb00ceba46ebedb0c4b24e3a29a70fbe5174e73afe26f5b",
+      "bytes": 1456
+    },
+    {
+      "path": "lib/features/books/domain/taotaoshu_legacy_quarantine.dart",
+      "sha256": "201afe93945d4c0d6f5b3fd1da0ed658e54e755577160e5748140db1fa8e3e61",
+      "bytes": 899
+    },
+    {
+      "path": "lib/features/books/domain/top_rdap_legacy_quarantine.dart",
+      "sha256": "f319e7c0f2d732a96672f2313ea6d81e03ca9dd0f886a3c0c123e15832be0985",
+      "bytes": 1002
+    },
+    {
+      "path": "lib/features/books/domain/yingyu_legacy_source_fix.dart",
+      "sha256": "a979ed63e5b91a6ff5d992a959e4fc5bcffdf23141ff5586e77da0017c82bb8a",
+      "bytes": 1803
+    },
+    {
+      "path": "lib/features/books/domain/yuque_legacy_source_fix.dart",
+      "sha256": "bc1f1d63d64010d8b281740a168c9ccf7744ba51ed29d44dae97d44668111f88",
+      "bytes": 2501
+    },
+    {
+      "path": "lib/features/books/domain/zhongyi_legacy_source_fix.dart",
+      "sha256": "86922a9b696b173b00efd4831a9acfc126b10bfd918b94e81222c9055716e164",
+      "bytes": 1326
+    },
+    {
+      "path": "lib/features/books/presentation/audiobook_player_page.dart",
+      "sha256": "88ccc7326025c08d8dec26d9ab6ea2e72970d027504a2bbc2139d0ef28fca5e5",
+      "bytes": 13992
+    },
+    {
+      "path": "lib/features/books/presentation/book_blocked_chapters_dialog.dart",
+      "sha256": "8b82b75f173fdbfa109023ec0f06355c546a9304962e38c9ef552e27cdc01f7e",
+      "bytes": 1712
+    },
+    {
+      "path": "lib/features/books/presentation/book_category_picker.dart",
+      "sha256": "65b1d4b22a37d5379669d526a53c1890b3e31c52593ca8823be051866be5a07b",
+      "bytes": 2554
+    },
+    {
+      "path": "lib/features/books/presentation/book_cover.dart",
+      "sha256": "80191ef0fce2e575d09d012410c49339e5bed1eafdda55a8fbd7ddb208e3c3e2",
+      "bytes": 6614
+    },
+    {
+      "path": "lib/features/books/presentation/book_detail_page.dart",
+      "sha256": "70080fff755b6a07c0a07daff93f93856a1456e914eb796b6366fd25418cd318",
+      "bytes": 40212
+    },
+    {
+      "path": "lib/features/books/presentation/book_discovery_toolbar.dart",
+      "sha256": "546cf3774182576b23b6ad570dab34fc5295172e85c85c37673fb250cc987225",
+      "bytes": 11123
+    },
+    {
+      "path": "lib/features/books/presentation/book_discovery_view.dart",
+      "sha256": "ca189af5efda1e363f0abec6d9d97bb64e694c2ce5d7003736d881ce160be941",
+      "bytes": 44860
+    },
+    {
+      "path": "lib/features/books/presentation/book_download_dialog.dart",
+      "sha256": "ba0cb4b254ac2063ac8f0eee841fc1755689b4b8f34931b930e12cba67b0cc52",
+      "bytes": 3954
+    },
+    {
+      "path": "lib/features/books/presentation/book_download_management_page.dart",
+      "sha256": "e29371f89a5ef87de36627e14aaf2008d05ad2e1f0294c2e7fccf6e590ebf5e1",
+      "bytes": 14935
+    },
+    {
+      "path": "lib/features/books/presentation/book_image_chapter.dart",
+      "sha256": "0ec14679542211eaefa34fd10ffaa99cbed6becfa87ebdc101d585096e3e29a0",
+      "bytes": 12174
+    },
+    {
+      "path": "lib/features/books/presentation/book_links.dart",
+      "sha256": "0818235dc7aa79c69e4710a106b2095d9f34e9837bb1fd598f7a89ccc2f1012b",
+      "bytes": 800
+    },
+    {
+      "path": "lib/features/books/presentation/book_page_route.dart",
+      "sha256": "e3a62ac671e58020f3cdce72bc9521fc0413db28c1fb93a3d9d1132cc7e1f3dd",
+      "bytes": 2115
+    },
+    {
+      "path": "lib/features/books/presentation/book_reader_page.dart",
+      "sha256": "fab4d5a989bb2a5ea3d2a61882384e2d7e7beeb36924f1daa4076a9af3df0d1d",
+      "bytes": 37287
+    },
+    {
+      "path": "lib/features/books/presentation/book_search_page.dart",
+      "sha256": "dca7351037f548df79f953df291e61b11e6eefb2cfe9e4e17d09d66660ca687b",
+      "bytes": 22161
+    },
+    {
+      "path": "lib/features/books/presentation/book_shelf_view.dart",
+      "sha256": "25798bbcf9a955f10de4376e8f30e40115a82a1455fb091a64a1a3db83bce1cc",
+      "bytes": 18797
+    },
+    {
+      "path": "lib/features/books/presentation/book_source_favorite.dart",
+      "sha256": "2014d2c9b41f955fd74f58088716e9e18ce80ea09e3d7713392c01371a951a4b",
+      "bytes": 1669
+    },
+    {
+      "path": "lib/features/books/presentation/book_sources_page.dart",
+      "sha256": "ad2f695db340984c0407935854037a6eabd0a325649ee81ff27d1a9237a62439",
+      "bytes": 42688
+    },
+    {
+      "path": "lib/features/books/presentation/book_text_policy_dialog.dart",
+      "sha256": "beea005609f49477c29cb7776762b06029a8055a3db4c2af55399293936dc0b3",
+      "bytes": 8449
+    },
+    {
+      "path": "lib/features/books/presentation/books_page.dart",
+      "sha256": "9ba69683083a4e0171594f6ef915525f685819b09df8f4e827b8dc3f23374323",
+      "bytes": 17767
+    },
+    {
+      "path": "lib/features/books/presentation/qidian_book_preview.dart",
+      "sha256": "155b6757f016586663562b01f700c7b0d7f90f69cef348957df839786b0803fa",
+      "bytes": 11192
+    },
+    {
+      "path": "lib/features/books/presentation/qidian_browser_import.dart",
+      "sha256": "6f6a24fc65762dfbfb40b7a1cb978316a67db6501f47110303e066b4541a4511",
+      "bytes": 2389
+    },
+    {
+      "path": "lib/features/books/presentation/reader_automation.dart",
+      "sha256": "a5761e0f3d18d78f9f1f5ea0f032ea013a85ce1e0a849f1978d93c32489062f7",
+      "bytes": 1042
+    },
+    {
+      "path": "lib/features/books/presentation/reader_cleanup_sheet.dart",
+      "sha256": "d9cda6eeb08a139707c27ce762954d5ecd686ae7d2d17e8c897e188e1f19857d",
+      "bytes": 9246
+    },
+    {
+      "path": "lib/features/books/presentation/reader_curl.dart",
+      "sha256": "e51bbf45d83ba8efd882b214668ca693b8c2cdedffba4b7d8eec93aa43d60a14",
+      "bytes": 7476
+    },
+    {
+      "path": "lib/features/books/presentation/reader_font_picker.dart",
+      "sha256": "b7134b9a168cd544ceabe317cf8157bfa7ec0262e3bef41e89b5028b2a8debd6",
+      "bytes": 7367
+    },
+    {
+      "path": "lib/features/books/presentation/reader_pagination.dart",
+      "sha256": "3c72a9d550181eb100a23acb8d45a47cbfcd7148512a07d7d95dc0048101d120",
+      "bytes": 26423
+    },
+    {
+      "path": "lib/features/books/presentation/reader_safe_area.dart",
+      "sha256": "df79cfd698d99a6d7d8e8193229a5fd298cdc705bfcd9a78964d79a77013a06d",
+      "bytes": 1290
+    },
+    {
+      "path": "lib/features/books/presentation/reader_session.dart",
+      "sha256": "192c5798a53c736238b79bdacaff99d80e6f327b4af00eed0041cb06b31adbb4",
+      "bytes": 1115
+    },
+    {
+      "path": "lib/features/books/presentation/reader_style.dart",
+      "sha256": "143724fa57c0cafb51cd75a5572bace656269b364962805a2952e0cc48847274",
+      "bytes": 25715
+    },
+    {
+      "path": "lib/features/books/presentation/reader_system_ui.dart",
+      "sha256": "cd32bee2fadb79ee2c0d1713020a37d505aa2599139b0eb706dfc7707dd68f98",
+      "bytes": 1555
+    },
+    {
+      "path": "lib/features/books/presentation/reader_tools.dart",
+      "sha256": "4ede33a0f3a4bea0edad41c01dbf2402875711727cb3b48035a089da58a36a53",
+      "bytes": 14677
+    },
+    {
+      "path": "lib/features/books/presentation/rich_reader_page.dart",
+      "sha256": "05c279fd6368b9d7dcd1d671646316132184554a602d8f9367ad1a9289869056",
+      "bytes": 28464
+    },
+    {
+      "path": "lib/features/books/presentation/vertical_book_text.dart",
+      "sha256": "c067ec89bc43545c4038429d812c20223e813d079150c904ad6e4f18e2a960ec",
+      "bytes": 5336
+    },
+    {
+      "path": "lib/features/books/presentation/vertical_epub_flow.dart",
+      "sha256": "47f5149f53158d9eebfd8e2fa011ceb9f6db86cfbed3f003f5896c8bf4059028",
+      "bytes": 5099
+    },
+    {
+      "path": "lib/features/catalog/data/cms_document_parser.dart",
+      "sha256": "e4675066587797e6cb1589ead70d6fecdedd632f757fb5dde00772b7fa054975",
+      "bytes": 2034
+    },
+    {
+      "path": "lib/features/catalog/data/cms_provider.dart",
+      "sha256": "c5d942f7aba03cb626de8459ca6276053240bf86758aaa59daed633b107565b3",
+      "bytes": 5423
+    },
+    {
+      "path": "lib/features/catalog/data/kanju_client.dart",
+      "sha256": "ad99e6b45b50c982d409b3debfb3cfedcf166c491a420c71faf4482fe0954a3a",
+      "bytes": 2141
+    },
+    {
+      "path": "lib/features/catalog/data/kanju_provider.dart",
+      "sha256": "4f3d8931b03a99d5b9720f308b2dae3153b023d17fc47919806d9783187197ab",
+      "bytes": 7266
+    },
+    {
+      "path": "lib/features/catalog/data/mac_cms_html_parser.dart",
+      "sha256": "5c27f0bf1228797763333429178972fa8fa6ed8b6ccaced7e36d8f124a1d0e3c",
+      "bytes": 6424
+    },
+    {
+      "path": "lib/features/catalog/data/mac_cms_html_provider.dart",
+      "sha256": "3c22353385e2fb2d074522d354c4ae07e7ce40f84c1d0efbdc3ae604852995fe",
+      "bytes": 2252
+    },
+    {
+      "path": "lib/features/catalog/data/provider_factory.dart",
+      "sha256": "55ed65c7961ee8b733125526fd36ae6011f21a559375cad4a30f35ad515d9dc4",
+      "bytes": 1377
+    },
+    {
+      "path": "lib/features/catalog/data/website_transport.dart",
+      "sha256": "0886f3964f97b354bd7aac554277242cc5f1781f0b8ed0589cbaa3db55d08818",
+      "bytes": 2035
+    },
+    {
+      "path": "lib/features/catalog/domain/catalog_item.dart",
+      "sha256": "c667878642b5dd84710fa975eddda1e4a187178332d24085e0ab26a4a74fb1f7",
+      "bytes": 4376
+    },
+    {
+      "path": "lib/features/catalog/domain/vod_provider.dart",
+      "sha256": "d5eba3986afcd19fb44d7ba1348f9bc6f544b6a2e5cbf63e696660b54e62062c",
+      "bytes": 614
+    },
+    {
+      "path": "lib/features/catalog/domain/work_identity.dart",
+      "sha256": "8db6de4be25f16fd027c0ee45b653a3fce7ace8e7eb015be657abcf3212e513b",
+      "bytes": 3132
+    },
+    {
+      "path": "lib/features/catalog/presentation/detail_page.dart",
+      "sha256": "88fe4e3b2b4d9c1545d1b509854c7d9a7d61b8811d3975fce1205405e1f0bfc4",
+      "bytes": 8823
+    },
+    {
+      "path": "lib/features/catalog/presentation/movie_header.dart",
+      "sha256": "152a72564c0e814ceaba86d722ed143d2854fbf0d121d1e33f7f72d36ef72094",
+      "bytes": 1908
+    },
+    {
+      "path": "lib/features/catalog/presentation/source_choices.dart",
+      "sha256": "6c80664d0adfb9936e01d594e213342d7ce489c08acd25df6c7888b6a536981e",
+      "bytes": 4503
+    },
+    {
+      "path": "lib/features/catalog/presentation/source_choices_dialog.dart",
+      "sha256": "a02f900422aab3381ce778e2cfac55ce5b0eb0514b905e6f892987a4cb69c945",
+      "bytes": 2030
+    },
+    {
+      "path": "lib/features/discovery/application/discovery_controller.dart",
+      "sha256": "00ef01df250c5147a0cba1a0ad1c5ba52d85dd5cf2092f6ebc666ae4af33ac7d",
+      "bytes": 9226
+    },
+    {
+      "path": "lib/features/discovery/data/catalog_discovery.dart",
+      "sha256": "ee67dd0eab127a5ce7bca4937f2b90be5b0c2ff70a4c73af07b2cf2aa1720966",
+      "bytes": 1661
+    },
+    {
+      "path": "lib/features/discovery/data/recommendation_repository.dart",
+      "sha256": "7c29a820f0b6d052231ffb5e73a24e6fde4e3571bf88fb40fe090a749cf0f2d2",
+      "bytes": 6672
+    },
+    {
+      "path": "lib/features/discovery/data/release_calendar.dart",
+      "sha256": "c6b9291b283afb133fa2416fb915ad33c64e2f5d1f585fa08d7c4fca34741dc8",
+      "bytes": 4514
+    },
+    {
+      "path": "lib/features/discovery/data/synopsis_repository.dart",
+      "sha256": "076dd31eeeaab328ed8c9376febc3b80b3a4f465aa7a9bb5f37801462bd60823",
+      "bytes": 5080
+    },
+    {
+      "path": "lib/features/discovery/presentation/continue_watching.dart",
+      "sha256": "ff8e6ddac6b7514ad3112cf8eab036e0016e13f6047fe4f348c6d39c8382a592",
+      "bytes": 2283
+    },
+    {
+      "path": "lib/features/discovery/presentation/discovery_hero.dart",
+      "sha256": "8488f771e2a669336a48bc900a26a63486d70a88d17833eca39defdd1554da4c",
+      "bytes": 3977
+    },
+    {
+      "path": "lib/features/discovery/presentation/discovery_page.dart",
+      "sha256": "bb6149ba2b4af2d700de4f1fdd8a52079369b1214cdab7a29bb3aef4781e3527",
+      "bytes": 22347
+    },
+    {
+      "path": "lib/features/discovery/presentation/discovery_toolbar.dart",
+      "sha256": "ae01157fc382239f6dc489c654f31cd13b95f9bd9d9c92d0f7d72bdbd2c05f21",
+      "bytes": 6383
+    },
+    {
+      "path": "lib/features/discovery/presentation/home_search.dart",
+      "sha256": "b2d97e5ca4c01c683cafff65ab36f4c46eb39e5a5dd291b34122fa6afeb22201",
+      "bytes": 1488
+    },
+    {
+      "path": "lib/features/discovery/presentation/release_calendar_page.dart",
+      "sha256": "7001dbeef13a6313662e097b9d1180d5a3d9a3823a06c01dfc0a159011376b22",
+      "bytes": 4746
+    },
+    {
+      "path": "lib/features/downloads/application/download_failover.dart",
+      "sha256": "55a383b7a59ba290b4123f535eed743c01f4838b5cd26ad2d10b9e6de35a1621",
+      "bytes": 4563
+    },
+    {
+      "path": "lib/features/downloads/application/download_format.dart",
+      "sha256": "65fb3039732a64c0a76f9b74e6e77feff39edd9b17dca25cc7bcbc74bdd802c3",
+      "bytes": 1385
+    },
+    {
+      "path": "lib/features/downloads/application/download_output.dart",
+      "sha256": "aff0ca4eefbe1af968e8f7fcc87a6cc3a7cb86cfe657a6185ad8ee771f90303f",
+      "bytes": 4846
+    },
+    {
+      "path": "lib/features/downloads/application/download_quota.dart",
+      "sha256": "f40b3a99bc011bf6c8edd9316e868e30fa7d0e603ca2774c7b4ba81810772e09",
+      "bytes": 1025
+    },
+    {
+      "path": "lib/features/downloads/application/download_resolver.dart",
+      "sha256": "61a63f9fa7889bda5d7841770ac17dec8c6013ec36958e95430bad64b7ebcd90",
+      "bytes": 2021
+    },
+    {
+      "path": "lib/features/downloads/application/download_scheduler.dart",
+      "sha256": "5c809d5f2c2a4726d1d1b7d6ebe4a8ec02d9b59b4a08f9e08bdf68974bcc24e7",
+      "bytes": 12283
+    },
+    {
+      "path": "lib/features/downloads/application/download_transfer.dart",
+      "sha256": "0981cabaf185be556be1d7ea44a2a6eb650ccf0e3867107d59613e79b10cbb42",
+      "bytes": 2211
+    },
+    {
+      "path": "lib/features/downloads/application/hls_download.dart",
+      "sha256": "dfaf03960225a1d43b1b03de7ec3ef550c5a572eb3ffb7df114673d83f920dd1",
+      "bytes": 8930
+    },
+    {
+      "path": "lib/features/downloads/application/mp4_download.dart",
+      "sha256": "bf493aa12506f0b717adde1440ae93fc4be5366cfc628105152a57e4fb4ceac2",
+      "bytes": 7650
+    },
+    {
+      "path": "lib/features/downloads/data/download_repository.dart",
+      "sha256": "65f62522623e63d46b58d7e595164b759cdf1f8c103f09f928b656468236459d",
+      "bytes": 8375
+    },
+    {
+      "path": "lib/features/downloads/domain/download_location.dart",
+      "sha256": "dcd6603ad59f602e6864771c1bb8dee9cd48eb2d4d5da6d9824688211b6545e4",
+      "bytes": 279
+    },
+    {
+      "path": "lib/features/downloads/domain/download_task.dart",
+      "sha256": "e0aec57956623acf95d236303498bd721dc5f334fa631b881f26a6e6b6b984b6",
+      "bytes": 713
+    },
+    {
+      "path": "lib/features/downloads/presentation/download_selection.dart",
+      "sha256": "a99d96da752caf2e77398aa4252267952399b7a2562acb212a4e952e82f90849",
+      "bytes": 6641
+    },
+    {
+      "path": "lib/features/downloads/presentation/downloads_page.dart",
+      "sha256": "7919b5c98a56432b16c7a80dc5d02726bef013e882b4138edaaf3b645fdc2cdd",
+      "bytes": 11481
+    },
+    {
+      "path": "lib/features/lab/application/lab_controller.dart",
+      "sha256": "cb47b9c7ca237c344ed59ed45ba5ec9de7f45cdf3b4a682ee29762b2c51e6aed",
+      "bytes": 3550
+    },
+    {
+      "path": "lib/features/lab/presentation/lab_page.dart",
+      "sha256": "5f6fa87dec0ef0e59aefec579cc1a9de3298831940f5a418d0b9ff34c7196f8d",
+      "bytes": 4665
+    },
+    {
+      "path": "lib/features/lab/presentation/media_input.dart",
+      "sha256": "2e2877ae1d7422df32b895a08728c0ead4f61b288cde81846236a78fd97db9e5",
+      "bytes": 3130
+    },
+    {
+      "path": "lib/features/lab/presentation/playback_panel.dart",
+      "sha256": "933b67a95779790dbce9a77048cbde3990e78e5398f67e52c9f2979adf49d2f7",
+      "bytes": 2760
+    },
+    {
+      "path": "lib/features/library/data/history_repository.dart",
+      "sha256": "0f5a8c4b8192a6abfc87c2d11e3fad92de56fbe57b334abb9835280ddce6e37a",
+      "bytes": 4581
+    },
+    {
+      "path": "lib/features/library/presentation/history_page.dart",
+      "sha256": "695c8d71892f6da67dbba510b9a4aa16542ff3e881f209532d9296eab0d698b0",
+      "bytes": 3361
+    },
+    {
+      "path": "lib/features/live/application/builtin_live_sources.dart",
+      "sha256": "ee59c2ab420d9d73d14d9e964e91fbf3a33347c7d5370c392482084548fd1786",
+      "bytes": 7951
+    },
+    {
+      "path": "lib/features/live/application/channel_preflight.dart",
+      "sha256": "ae76f2d439ace9439466b9fecc94ce651791f4ffdc72f02fde24697fceb50e1d",
+      "bytes": 3542
+    },
+    {
+      "path": "lib/features/live/application/live_probe.dart",
+      "sha256": "2b80882cd6c1be08681f1b4462c7faee94484e04241ad223c37cf007f7e8c358",
+      "bytes": 3671
+    },
+    {
+      "path": "lib/features/live/data/channel_urls.dart",
+      "sha256": "58995fc647c07936a85cfa84eaee0e8f9b1c2a7af70ec4ec7600c87867f91dc1",
+      "bytes": 343
+    },
+    {
+      "path": "lib/features/live/data/epg_parser.dart",
+      "sha256": "7724f92977e8c8ad201930c2d530ef29768793223d64be4839846730669f9c3f",
+      "bytes": 5414
+    },
+    {
+      "path": "lib/features/live/data/live_audit_defaults.dart",
+      "sha256": "130d5b6949b43bab39a0097d98c00ffbcc80a56fc569874b37e62ad06971a6c2",
+      "bytes": 5849
+    },
+    {
+      "path": "lib/features/live/data/live_health_repository.dart",
+      "sha256": "b05a4cab44c227405b82e12e9cad843ab0be1c9e8aab874186c1c8f9a2f4a1e6",
+      "bytes": 4115
+    },
+    {
+      "path": "lib/features/live/data/live_playlist_parser.dart",
+      "sha256": "3fa6c9727daa6dd345ef506ff8228f0d6f67f3cec9969fead119c03b534b17a8",
+      "bytes": 2210
+    },
+    {
+      "path": "lib/features/live/data/live_repository.dart",
+      "sha256": "4ade7b875fd492b26f8a816a1c2e6b00a7c55d3c4f4e81ea50a7bec0f767c667",
+      "bytes": 19428
+    },
+    {
+      "path": "lib/features/live/data/live_row_decoder.dart",
+      "sha256": "cb030de9101fde1e6340d128696c6b22f40a7ab51d81008d867ed00331d743a7",
+      "bytes": 2234
+    },
+    {
+      "path": "lib/features/live/data/m3u_parser.dart",
+      "sha256": "1166b60b3e2a78de86277059e75595a5f441a569c45ba037616ae06569adcf64",
+      "bytes": 4509
+    },
+    {
+      "path": "lib/features/live/data/playlist_channels.dart",
+      "sha256": "4547f896461c4c3c7306c65595ba3a115f8783d22d30bd0ca5bb7746b1042e75",
+      "bytes": 2803
+    },
+    {
+      "path": "lib/features/live/data/playlist_epg.dart",
+      "sha256": "856c0d7c6fa924998a0dad357ed89c14a78c07fb3e677cc50b9f5648eda7f83c",
+      "bytes": 804
+    },
+    {
+      "path": "lib/features/live/data/playlist_request_headers.dart",
+      "sha256": "362fab1943a19d40451c828c240fe333777a6ae6eae0f8031a5b232d2b24ee61",
+      "bytes": 1480
+    },
+    {
+      "path": "lib/features/live/data/tonkiang_service.dart",
+      "sha256": "fff993cebf6adf148e65585b7249cdf78c6181ac155015d626c925b1d501feb5",
+      "bytes": 4737
+    },
+    {
+      "path": "lib/features/live/domain/channel_identity.dart",
+      "sha256": "9f33f89c27f09295f7eecca3900c57d21d091d5fe4b4e03421614d42865a0dd3",
+      "bytes": 1994
+    },
+    {
+      "path": "lib/features/live/domain/channel_merge.dart",
+      "sha256": "e7c04f1202085568f4082959e3c9473d3bdffcfa4706a7ab46881975b6c048a2",
+      "bytes": 3932
+    },
+    {
+      "path": "lib/features/live/domain/channel_order.dart",
+      "sha256": "febd311ab98d4cf2e5471d58f55ddf601f129a87eaf0c7c6258756ca165896ea",
+      "bytes": 3121
+    },
+    {
+      "path": "lib/features/live/domain/channel_probe_signature.dart",
+      "sha256": "916ecb24c7ad2c2aa0c43680d56611d63ecd7f7997ca2faad5e4ade5d66720db",
+      "bytes": 497
+    },
+    {
+      "path": "lib/features/live/domain/epg_channel_match.dart",
+      "sha256": "b733d1a35b26043b136f125de65c56939ff040952779a888b5b9c8da17fadc33",
+      "bytes": 643
+    },
+    {
+      "path": "lib/features/live/domain/live_channel.dart",
+      "sha256": "b9c755855cbbdeb6265066c30e551d47441672ba00a19d536b5b123033e5b6bf",
+      "bytes": 4220
+    },
+    {
+      "path": "lib/features/live/domain/live_health.dart",
+      "sha256": "660270b73931a431ffffad88f0a8d1e11994d46c9e0f2593f49f8f80f2855dc9",
+      "bytes": 3060
+    },
+    {
+      "path": "lib/features/live/domain/live_metadata.dart",
+      "sha256": "590af62a3d8767435ec6140c574a760dee3bc2d8bff0f21408985139cca6b57f",
+      "bytes": 1646
+    },
+    {
+      "path": "lib/features/live/domain/sports_channels.dart",
+      "sha256": "4caca28257cca0373628a7a819eb331aefdf858edacaff8cad8e5d068c5a3c88",
+      "bytes": 1720
+    },
+    {
+      "path": "lib/features/live/presentation/live_browser.dart",
+      "sha256": "8e334688d5073a120f0b917050c3f8097889a3a0dea7c1b230fef3c1258bef90",
+      "bytes": 14075
+    },
+    {
+      "path": "lib/features/live/presentation/live_channel_details.dart",
+      "sha256": "202618cf49f996090ac9e13b90d6792ec208adc3f4601c2ffc6a4c72fdcbd72b",
+      "bytes": 3148
+    },
+    {
+      "path": "lib/features/live/presentation/live_channel_filters.dart",
+      "sha256": "a1657e8ea8312e511ec68d0a0a792a656a590076b1f1e366074b7202599b9c25",
+      "bytes": 3372
+    },
+    {
+      "path": "lib/features/live/presentation/live_channel_tile.dart",
+      "sha256": "acbe1fd116737036e6ca1e0a1a5d987227920eff561b00dbe4be0e8f205b1219",
+      "bytes": 4585
+    },
+    {
+      "path": "lib/features/live/presentation/live_page.dart",
+      "sha256": "ce77b93e9cf3326049eef3c08e4518317e1993911bab46418c9ca481fcc53c1b",
+      "bytes": 13963
+    },
+    {
+      "path": "lib/features/live/presentation/live_probe_dialog.dart",
+      "sha256": "397715d72efab743456312122ad4b227b5666b663af09c52b8db8e0c61761023",
+      "bytes": 6360
+    },
+    {
+      "path": "lib/features/live/presentation/live_schedule_dialog.dart",
+      "sha256": "5760adcabda64d527afa5379f9f8950590990799d50d4f947a09b8bbb3ac1ed2",
+      "bytes": 4164
+    },
+    {
+      "path": "lib/features/live/presentation/live_subscriptions_dialog.dart",
+      "sha256": "ce1bc20cab6c3d4cf0446d10e783ba133de02fca942736e6190f53327cb36007",
+      "bytes": 6752
+    },
+    {
+      "path": "lib/features/live/presentation/tonkiang_dialog.dart",
+      "sha256": "2ab71584951fb507b7f8abda5f5b1515d078ce11a7c7fd6105381d7e40f1da6f",
+      "bytes": 7288
+    },
+    {
+      "path": "lib/features/music/application/music_browser.dart",
+      "sha256": "a56bb2dc61cec14480f6bef3de7b1ed162a95d3f67dbd4d4142aebc89677a37b",
+      "bytes": 7541
+    },
+    {
+      "path": "lib/features/music/application/music_controller.dart",
+      "sha256": "2352080cc9be5a1407ee3598356b142368b6f47dd3b8506455edad008f0a526f",
+      "bytes": 27738
+    },
+    {
+      "path": "lib/features/music/application/music_downloads.dart",
+      "sha256": "2ccef743927869ab0817bde32a0daadeccf140798a7f6efb52cf86516c8af0b1",
+      "bytes": 13869
+    },
+    {
+      "path": "lib/features/music/application/music_multi_search.dart",
+      "sha256": "a24313524ffcfd83541e9e3ed976ccdd10735899f8e14e7463b4cb6d034f8820",
+      "bytes": 2333
+    },
+    {
+      "path": "lib/features/music/application/music_open_api.dart",
+      "sha256": "c39f3bc5f551ab88a3bc19bb5da7e2b4750ae9ad41dfb3e94706eae5e95fffaf",
+      "bytes": 6735
+    },
+    {
+      "path": "lib/features/music/application/music_preflight.dart",
+      "sha256": "a8d964a74e6a823c21b66318ce13ce7467d966013f1fe9b768f595efb9dc189b",
+      "bytes": 7285
+    },
+    {
+      "path": "lib/features/music/data/flac_music_sources.dart",
+      "sha256": "a5c716e44254cb625f45b8aad813d534130a96caa9affa92089785cb42589b5e",
+      "bytes": 4404
+    },
+    {
+      "path": "lib/features/music/data/kugou_lyrics.dart",
+      "sha256": "0b80b79298de65cab9a72979e25fc779748c7ba480887247801fd2f1e7c9b216",
+      "bytes": 5970
+    },
+    {
+      "path": "lib/features/music/data/kugou_music_source.dart",
+      "sha256": "103b352dd11097dec491a430e97cf516fb25ed44d4cda613db7b46730316e817",
+      "bytes": 3486
+    },
+    {
+      "path": "lib/features/music/data/lrclib_lyrics.dart",
+      "sha256": "442f173241e2afb45f6845160a05a7fb548408c8ea59ef66888d905e8a7876cb",
+      "bytes": 2362
+    },
+    {
+      "path": "lib/features/music/data/lx_native_sources.dart",
+      "sha256": "e79af1a9fd0308efce254525feea6a413a77e4678c4bb02d74e9f42043b8559b",
+      "bytes": 5421
+    },
+    {
+      "path": "lib/features/music/data/music_audio_probe.dart",
+      "sha256": "389c8c7619ef52998db9f1419378624b7bfd3e7bd513842625526058299d3239",
+      "bytes": 3545
+    },
+    {
+      "path": "lib/features/music/data/music_catalog_api.dart",
+      "sha256": "6d6e551f8ba81dcc170be01ec825851e3819b53b83a7484a195a0d01a5df2fd7",
+      "bytes": 3594
+    },
+    {
+      "path": "lib/features/music/data/music_chart_catalog.dart",
+      "sha256": "fc7dfb1c0bff8cefe5b3cb15f81b9ce91cc2e7c627f05716c8512877165f43d5",
+      "bytes": 11414
+    },
+    {
+      "path": "lib/features/music/data/music_collections.dart",
+      "sha256": "bc6a38bfccff6de8904fb1a338003146a0af7a1eb7939a8ac2634aa2c897b345",
+      "bytes": 3402
+    },
+    {
+      "path": "lib/features/music/data/music_discovery_sources.dart",
+      "sha256": "71a7075697be78006bf54a95c2f6a8de63d32ee0ee49a90d404d7b4bc0083037",
+      "bytes": 6006
+    },
+    {
+      "path": "lib/features/music/data/music_library.dart",
+      "sha256": "e623f0f735a728611be4d54aa886342d27e57c1ca218e122728f352b611b430f",
+      "bytes": 8083
+    },
+    {
+      "path": "lib/features/music/data/music_parser.dart",
+      "sha256": "63d0acac566d331abd73cd847c4dd6348cfd7338b4f8e9025dde1c3d020b837a",
+      "bytes": 2876
+    },
+    {
+      "path": "lib/features/music/data/music_recommendations.dart",
+      "sha256": "12f4c227914edd9dd4a6207326301860743c2d7957f75e9cf4c31e0ca3b254f8",
+      "bytes": 20381
+    },
+    {
+      "path": "lib/features/music/data/music_repository.dart",
+      "sha256": "c5648bb1503f2293fac0fe6860f93512a8f51194a5e6341576867773671fc1cc",
+      "bytes": 10510
+    },
+    {
+      "path": "lib/features/music/data/music_style_catalog.dart",
+      "sha256": "c4391e54c56cdf9d63ab30a08508cee749263258ea7087db56ec758509c95b00",
+      "bytes": 23059
+    },
+    {
+      "path": "lib/features/music/data/myfreemp3_client.dart",
+      "sha256": "cba5691ffb458346668de22f3d35ad5360e25f19c3b7f724a2502ebfc4428aab",
+      "bytes": 2628
+    },
+    {
+      "path": "lib/features/music/data/netease_music_details.dart",
+      "sha256": "ee13c27ebf64b3df5b9cb765f713f9e19e36a7557985b3dd154ac73f36b413d8",
+      "bytes": 6451
+    },
+    {
+      "path": "lib/features/music/data/public_music_sources.dart",
+      "sha256": "f731984139fdb986908493d4c3005e59e0107ff0151c3f95243456bc2f6661dd",
+      "bytes": 8782
+    },
+    {
+      "path": "lib/features/music/data/website_music_sources.dart",
+      "sha256": "f61a77f9e5facf3b81d55045483c67a868c00fd0fca363ff6a61ffae6ecd0943",
+      "bytes": 4627
+    },
+    {
+      "path": "lib/features/music/domain/music_lyrics.dart",
+      "sha256": "7c4438a62be58e284f7ce4073ab0f30cb905ebe2db3fa3889a951d74ab48f98e",
+      "bytes": 5820
+    },
+    {
+      "path": "lib/features/music/domain/music_match.dart",
+      "sha256": "9b4a285ca8213d0d0ac57fbdd166be8675d5db53f22526c9dc1d99c34ef9508d",
+      "bytes": 1064
+    },
+    {
+      "path": "lib/features/music/domain/music_recommendation.dart",
+      "sha256": "b0cf2645779d16e303790a30efefc620137a6de3c5cb795d5479c3fbb0039155",
+      "bytes": 1714
+    },
+    {
+      "path": "lib/features/music/domain/music_track.dart",
+      "sha256": "587f582805178570319c92d7146cd61615e2ef4eb64ebb915e4595ec8f3686a4",
+      "bytes": 4611
+    },
+    {
+      "path": "lib/features/music/presentation/lx_sources_dialog.dart",
+      "sha256": "04c66b5f54b5d7521123db9f7e4097fce442bc22d0dfa41acbc4f064dc7164a7",
+      "bytes": 8343
+    },
+    {
+      "path": "lib/features/music/presentation/music_actions.dart",
+      "sha256": "df14594a0b80949a310786f8b698e20f1edd8fbdc3b160c20d16363fbc822d87",
+      "bytes": 5260
+    },
+    {
+      "path": "lib/features/music/presentation/music_cards.dart",
+      "sha256": "788f21b3cea5b2bb28155bc2fb7cebb940b81a4cd2a50cc3454bfed8b8dfddb6",
+      "bytes": 8330
+    },
+    {
+      "path": "lib/features/music/presentation/music_catalog_controls.dart",
+      "sha256": "94cc08b26910ec404153dce8fc08ff7cb83360a92203895c349e89756838202b",
+      "bytes": 8112
+    },
+    {
+      "path": "lib/features/music/presentation/music_chart_browser.dart",
+      "sha256": "4b26fd1297ddd9a11ba583028cddcf3b7b0f92a7e8c13259adfce4335947ba62",
+      "bytes": 16918
+    },
+    {
+      "path": "lib/features/music/presentation/music_discovery.dart",
+      "sha256": "574ac12b038b5134adeabf40e1a312b01ba50eb871068bb4a4efca2425664484",
+      "bytes": 10007
+    },
+    {
+      "path": "lib/features/music/presentation/music_floating_lyrics.dart",
+      "sha256": "f930b84f0705cb6cdffc4cc61972385b180a76e641384009c49006b98d30225d",
+      "bytes": 4537
+    },
+    {
+      "path": "lib/features/music/presentation/music_library_panel.dart",
+      "sha256": "ef3e6cf0ffea27c5b853ec2a7241736d12bb6d08e41441c5e3e98032846ddd14",
+      "bytes": 11766
+    },
+    {
+      "path": "lib/features/music/presentation/music_lyrics_dialog.dart",
+      "sha256": "9cba8d812ec16cf383eac05e5f324c560008762183bbdec0fca22468ccaa9d44",
+      "bytes": 7968
+    },
+    {
+      "path": "lib/features/music/presentation/music_page.dart",
+      "sha256": "6a312505e310c820a8cf725d2e77fe3f3268441c8c374c62a54f8df38f881ece",
+      "bytes": 19359
+    },
+    {
+      "path": "lib/features/music/presentation/music_player.dart",
+      "sha256": "ff3ba162393495d04d0381830922b4e5da408dc6baaed932cecf05163c1e25bc",
+      "bytes": 10884
+    },
+    {
+      "path": "lib/features/music/presentation/music_queue.dart",
+      "sha256": "54a7f85ee6369980d7532f16a739017dbc1b8b8035c617f781115a38d0e98cdb",
+      "bytes": 2800
+    },
+    {
+      "path": "lib/features/music/presentation/music_source_selector.dart",
+      "sha256": "1c07f08c070679850d665f78bf1bb6534cbcfe06dddfc1d67a8ac60cc588880b",
+      "bytes": 4991
+    },
+    {
+      "path": "lib/features/music/presentation/music_style_playlists.dart",
+      "sha256": "ae5d71f8c39820f9e2bdab47f04b93cd6d38df39f0957dc5cf3e72d2eb10ed4f",
+      "bytes": 16933
+    },
+    {
+      "path": "lib/features/playback/application/filter_detection_queue.dart",
+      "sha256": "48b8cc88aae88d3be1871e6af0ef728a861fda1c060374dc455ffac262404624",
+      "bytes": 2003
+    },
+    {
+      "path": "lib/features/playback/application/line_probe.dart",
+      "sha256": "b83dca7ba1e903fb05d77d2fd0d563ee96c3fb454415a41c3265571b6c5fcc63",
+      "bytes": 2904
+    },
+    {
+      "path": "lib/features/playback/application/line_recommendation.dart",
+      "sha256": "04b53aec04aeba0dc0aa2dd40fdd1e75611b43e0d2ba6d838baef341388653f3",
+      "bytes": 586
+    },
+    {
+      "path": "lib/features/playback/application/local_video.dart",
+      "sha256": "bda456533ce30e74b40f190205c55466eaf289b780751fd02240528b659f8bb6",
+      "bytes": 2423
+    },
+    {
+      "path": "lib/features/playback/application/playback_controller.dart",
+      "sha256": "85d6cc8d1768b45ea7738bbe430d07bac69ef6783b8c978eb2df155553859070",
+      "bytes": 50558
+    },
+    {
+      "path": "lib/features/playback/application/playback_diagnostics.dart",
+      "sha256": "42d4c5ae1bcaf60248ff06e4c847a332b64e75fd1203ff566140af6cdcc72104",
+      "bytes": 551
+    },
+    {
+      "path": "lib/features/playback/application/playback_health.dart",
+      "sha256": "f88ce6989f6bd0a519209dc6131c2db83ecfae1ba39a89a9eb15956ca8b57791",
+      "bytes": 2359
+    },
+    {
+      "path": "lib/features/playback/application/playback_journal.dart",
+      "sha256": "3e97264973b2b353d30d0681d001490c723f2285427ab85501de5ca44c8088a1",
+      "bytes": 1998
+    },
+    {
+      "path": "lib/features/playback/application/playback_monitor.dart",
+      "sha256": "dcd084f45fadeb0e88be2f7c39cfca909963a9245ffdbfb29ff57b54aa96641d",
+      "bytes": 3473
+    },
+    {
+      "path": "lib/features/playback/application/playback_request.dart",
+      "sha256": "ffda4cdd63173ca96506d1afa89176eb698440c0a8d182d22393624cffe37850",
+      "bytes": 1169
+    },
+    {
+      "path": "lib/features/playback/application/player_exit.dart",
+      "sha256": "b700700a5997d5f988a12506f824dcaeabe119d15100fa456ebd0df542b70846",
+      "bytes": 704
+    },
+    {
+      "path": "lib/features/playback/data/local_video_repository.dart",
+      "sha256": "e7b7354ea9b0979e04ffbf35e52e4c000d2a69194d435598da8388b0e37053f3",
+      "bytes": 622
+    },
+    {
+      "path": "lib/features/playback/data/skip_repository.dart",
+      "sha256": "324fdb019e26f417dc8cf208bc0781be416e3bc0c63fd1cb7754c29d7d9f3310",
+      "bytes": 2739
+    },
+    {
+      "path": "lib/features/playback/domain/feature_time.dart",
+      "sha256": "1bea0b44908547048f493ad09b188ea6a5f3425c4baa179a33c4f6b157cf8b7a",
+      "bytes": 1267
+    },
+    {
+      "path": "lib/features/playback/domain/feature_work_identity.dart",
+      "sha256": "55a099ee39b0940afc7e4e95c45419a009d41ea1cc4120e777a8390e83aff7f6",
+      "bytes": 616
+    },
+    {
+      "path": "lib/features/playback/domain/playback_mark_target.dart",
+      "sha256": "f03339e09f57f413d69dc255680225a70cdd420e029ea0b2b5d617ddf692e053",
+      "bytes": 387
+    },
+    {
+      "path": "lib/features/playback/domain/player_engine.dart",
+      "sha256": "bc8c9e10758e429eb9b2c59257c7f542c53ba3e6d7ef2479c6b70bed69d541a9",
+      "bytes": 1220
+    },
+    {
+      "path": "lib/features/playback/domain/video_recovery_engine.dart",
+      "sha256": "6827e74ee14d86d688293403a276eb2c5517794be3a2e86f291aeb16b9c63e8e",
+      "bytes": 221
+    },
+    {
+      "path": "lib/features/playback/presentation/feature_rule_dialog.dart",
+      "sha256": "fcebae535f22b59b500ee8ce1be3703e342221456e5910d66f3e44bafd067f62",
+      "bytes": 15832
+    },
+    {
+      "path": "lib/features/playback/presentation/feature_rules_dialog.dart",
+      "sha256": "4788ff9b3e421a47f24d03457fa4d3763790430f43be3a80a6870a9abd014bac",
+      "bytes": 7673
+    },
+    {
+      "path": "lib/features/playback/presentation/feature_sample_preview.dart",
+      "sha256": "be0362408e614d0ed38f5d401257428caa073e510153bbd13712b0ef567ca116",
+      "bytes": 3027
+    },
+    {
+      "path": "lib/features/playback/presentation/feature_time_field.dart",
+      "sha256": "3307e02b085b85f023e1491e9902e7eb5739e0dbdbcfff1fbfc7cf3ab2a64d26",
+      "bytes": 1462
+    },
+    {
+      "path": "lib/features/playback/presentation/filter_playback_overlay.dart",
+      "sha256": "05a706cf83faf80cf1a8cd3edc34bd39f330473da3241086030cbb7fba77b7b9",
+      "bytes": 3616
+    },
+    {
+      "path": "lib/features/playback/presentation/line_selector.dart",
+      "sha256": "22de4e7bf1718dfd0f4e131b16340bcd3ace2c2fed15dce1c191914c825dd01c",
+      "bytes": 9101
+    },
+    {
+      "path": "lib/features/playback/presentation/local_video_page.dart",
+      "sha256": "6864c3151b3410ee1d2539d79735070f79df2491b7301968e901330d605acb54",
+      "bytes": 5775
+    },
+    {
+      "path": "lib/features/playback/presentation/playback_diagnostics_dialog.dart",
+      "sha256": "598ce215cc83f20c7c69b7d929ef526fc401e558f3a2efb46b7334a99a6be949",
+      "bytes": 1431
+    },
+    {
+      "path": "lib/features/playback/presentation/playback_state_overlay.dart",
+      "sha256": "80be6e1718158dd3d52e990982c55fdbf70b69870963715c48c4723d9e08965c",
+      "bytes": 1662
+    },
+    {
+      "path": "lib/features/playback/presentation/playback_surface.dart",
+      "sha256": "514e539a3c50235ca915e1d2d47ced272a81db41b9368bdf58aef1043b0de731",
+      "bytes": 17539
+    },
+    {
+      "path": "lib/features/playback/presentation/player_orientation_menu.dart",
+      "sha256": "508b0b4ae0a124ccd73b2edf71ff1e018f4c844f58c675b4272c652f30fa7622",
+      "bytes": 956
+    },
+    {
+      "path": "lib/features/playback/presentation/player_page.dart",
+      "sha256": "17ed4eaec6efed9c00bb5dc6df396e384c67b55bce485df469825310974f4881",
+      "bytes": 20178
+    },
+    {
+      "path": "lib/features/playback/presentation/player_transport.dart",
+      "sha256": "6e566729868276212f72fdda133cbb8f8c425e086eccd69db6c3ff136994a313",
+      "bytes": 5958
+    },
+    {
+      "path": "lib/features/playback/presentation/probe_dialog.dart",
+      "sha256": "5bab382b5b5ae463190ae008c377be96886401e06a7135016e45e8b2aa1c01d8",
+      "bytes": 2829
+    },
+    {
+      "path": "lib/features/playback/presentation/quality_selector.dart",
+      "sha256": "d7549d33cba123b681cf742732ab3202affb5822e16b7920ddb12843399fc5bd",
+      "bytes": 1223
+    },
+    {
+      "path": "lib/features/playback/presentation/skip_marks_dialog.dart",
+      "sha256": "89336f2c015d0c366e9ab308afedda8ce20bc9a31c6cff326890454058938c7d",
+      "bytes": 5663
+    },
+    {
+      "path": "lib/features/playback/presentation/source_switch.dart",
+      "sha256": "3e224b8107035142b2253d96e3eb19760e347d2c89737c71e8c15f9b6c634e36",
+      "bytes": 6573
+    },
+    {
+      "path": "lib/features/playback/presentation/timeline_slider.dart",
+      "sha256": "9d8b1f04fad995ead9d3dd6921bd8a0ef1209392587bcedfb585d3df0b3a5db3",
+      "bytes": 4710
+    },
+    {
+      "path": "lib/features/playback/presentation/track_selector.dart",
+      "sha256": "f289ceb628c248925316664e98d625e81c3cce6d7e74c9dcf280b6cc676b8403",
+      "bytes": 2510
+    },
+    {
+      "path": "lib/features/radio/application/radio_controller.dart",
+      "sha256": "c1b8791f4ca7040d2334b918a1a3cc190a71b4a999a8718cba13c032b6aac35e",
+      "bytes": 8562
+    },
+    {
+      "path": "lib/features/radio/data/radio_backup_validation.dart",
+      "sha256": "58c91c24cf2589a5d17d5a559c48a53d41a5192ddb1b87962a542be5fd00c4d6",
+      "bytes": 1264
+    },
+    {
+      "path": "lib/features/radio/data/radio_repository.dart",
+      "sha256": "c32678262d6dccc64c28cf8c30a09d6ed040f6983d0c3836efb2f1766bf866ce",
+      "bytes": 8665
+    },
+    {
+      "path": "lib/features/radio/data/radio_snapshot.dart",
+      "sha256": "37095ad7e80fc60eaa4575cd28e2b68c3297aeae8b3a33069ac57b1d0f15b080",
+      "bytes": 2158
+    },
+    {
+      "path": "lib/features/radio/data/radio_snapshot_store.dart",
+      "sha256": "8a681614eaa5f3a74ed200b147d8d0b00a6b0e514ec2db0cdc5b37094afdbc14",
+      "bytes": 3298
+    },
+    {
+      "path": "lib/features/radio/data/radio_subscription_store.dart",
+      "sha256": "8d545766c54992bd30d94bf282ca6d740f543be96cf1f0caeea90a449c9097c6",
+      "bytes": 1631
+    },
+    {
+      "path": "lib/features/radio/domain/radio_category.dart",
+      "sha256": "ffacff82ad53638b0c80cadf6052a2f16fcd1f052dd2dc92b3ccbda1a6d12067",
+      "bytes": 1491
+    },
+    {
+      "path": "lib/features/radio/domain/radio_subscription.dart",
+      "sha256": "87ae2c52ba20539bce77c1a0c61982bb490bc86bb7e910d3f881f6623fd0cfdf",
+      "bytes": 1141
+    },
+    {
+      "path": "lib/features/radio/presentation/radio_mini_player.dart",
+      "sha256": "86f03b767875fe4013e0fb1b9acfcabb513f4cd2044fb77ac6ce386177f6d066",
+      "bytes": 3174
+    },
+    {
+      "path": "lib/features/radio/presentation/radio_page.dart",
+      "sha256": "21c2db9576f40451f3e80220977df1dd8fd9520ef97eff3531b9d14ec3dbb32e",
+      "bytes": 11944
+    },
+    {
+      "path": "lib/features/radio/presentation/radio_player_controls.dart",
+      "sha256": "814355b1fc534828d703ccc07b223acdaaa0d2e2fdb175f56c017740f2af842c",
+      "bytes": 4158
+    },
+    {
+      "path": "lib/features/radio/presentation/radio_subscriptions_dialog.dart",
+      "sha256": "caa0e0048d78483c176359d31ba8269985842a8a0717ff679dd0c9e520790673",
+      "bytes": 5677
+    },
+    {
+      "path": "lib/features/radio/presentation/radio_toolbar.dart",
+      "sha256": "a73d4f27ca67627e23d5d6a1b73f41a2a4708f4f22649b9bf7f6c9ac64a9e5bb",
+      "bytes": 5456
+    },
+    {
+      "path": "lib/features/search/application/search_controller.dart",
+      "sha256": "8dc5846ea00ab8cfae9d888e6aef1d9dd34fa4622ec246a423f7516067a7be60",
+      "bytes": 14110
+    },
+    {
+      "path": "lib/features/search/application/search_options.dart",
+      "sha256": "6abfa72dfccfa7644b2c988def62c73675646ffff1da8587acf081e6d92d603b",
+      "bytes": 1592
+    },
+    {
+      "path": "lib/features/search/presentation/advanced_search_dialog.dart",
+      "sha256": "3b0f3fe6af2f25be5051b7aa94391861ec22f951c278a57ca90e4de0f54d9b3d",
+      "bytes": 4219
+    },
+    {
+      "path": "lib/features/search/presentation/search_page.dart",
+      "sha256": "8a3ea85035eb1b9f06f4701d0cf958566650040f2311a85e9d754469ef9a336d",
+      "bytes": 11376
+    },
+    {
+      "path": "lib/features/search/presentation/search_status_panel.dart",
+      "sha256": "6bb0c8888a4437d288ff50ce9b18544de43cc2f5ab66d706d5fc0118f7758712",
+      "bytes": 2758
+    },
+    {
+      "path": "lib/features/settings/application/settings_controller.dart",
+      "sha256": "da45117ac2dd221f7702dfb6eded0c35ed600655e968e5a9a61c218299536835",
+      "bytes": 11613
+    },
+    {
+      "path": "lib/features/settings/data/backup_service.dart",
+      "sha256": "b111e60347310b158bea26bb3a402b523ded6a69180801ba9903a75ae7e6c3c2",
+      "bytes": 5608
+    },
+    {
+      "path": "lib/features/settings/data/backup_validation.dart",
+      "sha256": "90f9858d81df34e9a03e63015afca5d02894157f23bf6931913bafab9a2d9260",
+      "bytes": 8892
+    },
+    {
+      "path": "lib/features/settings/data/lan_access_store.dart",
+      "sha256": "2e802d309bcabbec17bbc8dd695b36db5d9c40fd690ebf4ae99915b6d1224b0b",
+      "bytes": 2993
+    },
+    {
+      "path": "lib/features/settings/domain/app_fonts.dart",
+      "sha256": "23f6cc87a758463238929b6d10f6ebd444c68efb921f82268ca85837fdc2236f",
+      "bytes": 473
+    },
+    {
+      "path": "lib/features/settings/domain/settings_validation.dart",
+      "sha256": "c90e2b9061d8bd57b637f944ba59352054f218a6fa96e81780f30f029a5c07ca",
+      "bytes": 2857
+    },
+    {
+      "path": "lib/features/settings/presentation/adult_filter_setting.dart",
+      "sha256": "18f79f01f11b37fac9dcda982e975dc87974192cd13286aef9259d6cf8be543f",
+      "bytes": 1900
+    },
+    {
+      "path": "lib/features/settings/presentation/backup_restore.dart",
+      "sha256": "a662e801502e97b6b5beae9c7f1ea934db9103093859126fa27e21033c5d5e97",
+      "bytes": 1112
+    },
+    {
+      "path": "lib/features/settings/presentation/book_cover_cache_setting.dart",
+      "sha256": "7f198aa1e8fe6d5264dd390a1f960ed20ba848c314e41eb558fe9568e0ab6e00",
+      "bytes": 2486
+    },
+    {
+      "path": "lib/features/settings/presentation/content_filter_protection.dart",
+      "sha256": "48deb1e9f77f2b482f9a22e673a4c4c2e573e83e094dbc8469837288d366c047",
+      "bytes": 2465
+    },
+    {
+      "path": "lib/features/settings/presentation/content_filter_setting.dart",
+      "sha256": "c151a3e4371d4765a346a99c784ac23022cf2a39ab8d4fdf65020ef61d9f1401",
+      "bytes": 4455
+    },
+    {
+      "path": "lib/features/settings/presentation/disclaimer_dialog.dart",
+      "sha256": "f509cee3c683466ef1a1ea9a973564762d7811a8554298890efae1643c9e18a9",
+      "bytes": 2251
+    },
+    {
+      "path": "lib/features/settings/presentation/filter_resources_dialog.dart",
+      "sha256": "d26df24c1dd415c5a1dd687f7ce0e973945c48a8231c738b3d9b0eb0a2116f21",
+      "bytes": 7826
+    },
+    {
+      "path": "lib/features/settings/presentation/home_preferences.dart",
+      "sha256": "a05d033fcca0b52524dc4869009908ea0bf92ff52ac831c3f0770bbc63bff569",
+      "bytes": 5023
+    },
+    {
+      "path": "lib/features/settings/presentation/lan_access_dialog.dart",
+      "sha256": "06b9563040436b543eb2319b7bf0f8048e8d0fea55fb166a6d6e70afb89e62ce",
+      "bytes": 3764
+    },
+    {
+      "path": "lib/features/settings/presentation/settings_page.dart",
+      "sha256": "ce1d5ba5666703db1be58baf7cc575ccf03561a985eea2c5697fb0eeb64b975c",
+      "bytes": 16476
+    },
+    {
+      "path": "lib/features/sources/application/awesome_zhuiju_discovery.dart",
+      "sha256": "acc6aab8f514bc2c4ff778dbd402944749ba8a331c5c1aa4784ebb25ffbad647",
+      "bytes": 5929
+    },
+    {
+      "path": "lib/features/sources/application/awesome_zhuiju_sync.dart",
+      "sha256": "5101f549ce9a7c278f3db12078568d954c7f104f6be909d69d178f8184b81cd8",
+      "bytes": 9575
+    },
+    {
+      "path": "lib/features/sources/application/awesome_zhuiju_verification.dart",
+      "sha256": "f8363b5a403dad0a9b246e6c21804191c8bb7079420ba444f385cefc59cb20c5",
+      "bytes": 6327
+    },
+    {
+      "path": "lib/features/sources/application/background_source_monitor.dart",
+      "sha256": "09b5948dc911821e1cdc695e8e0fadd0c61a42269dd260f30b3fb9bf04185115",
+      "bytes": 2597
+    },
+    {
+      "path": "lib/features/sources/application/builtin_sources.dart",
+      "sha256": "8d2785ef50d3914ece56e964aa3ee7d8b8ead67664607fb49f1274dd77db0068",
+      "bytes": 5273
+    },
+    {
+      "path": "lib/features/sources/application/maccms_sources.dart",
+      "sha256": "b8fe0c49544cbcf55725af9fdf1299e157943413540064e68dd9cc80db40c9dc",
+      "bytes": 2301
+    },
+    {
+      "path": "lib/features/sources/application/source_connectivity.dart",
+      "sha256": "867ec24dd44308fa2344e603f544ade698b7e2984f1112f536c4a8ad5b89dc67",
+      "bytes": 4286
+    },
+    {
+      "path": "lib/features/sources/application/source_curation.dart",
+      "sha256": "c6d8bb09f0fc4301d88770037ad68fd84c64e354fe53940cc26551a353f9dba4",
+      "bytes": 2989
+    },
+    {
+      "path": "lib/features/sources/application/source_metadata.dart",
+      "sha256": "5af5d8f9e7ccb2d77cd7455aa153f523d5b8c4943930b31cc58aab1a67209c2d",
+      "bytes": 2694
+    },
+    {
+      "path": "lib/features/sources/application/source_probe.dart",
+      "sha256": "274d0d0cf1ffea60499f329e7b1d97d7069c571cde27bd382d0e00089ecf7232",
+      "bytes": 6971
+    },
+    {
+      "path": "lib/features/sources/application/subscription_service.dart",
+      "sha256": "ed36a63913940ffa11bbabe00812834fd19ddff2a30d547b61bb635cfe3e6e13",
+      "bytes": 9668
+    },
+    {
+      "path": "lib/features/sources/data/awesome_zhuiju_index.dart",
+      "sha256": "9f886072a438d64aad0a3f410833f255a79b1f26d7b9541f083adc8dd9fb8e86",
+      "bytes": 6513
+    },
+    {
+      "path": "lib/features/sources/data/catalog_document.dart",
+      "sha256": "43fc71d1a59a8cc79861bc33b08393ca8c2e4ecdfb437874b9bd70d99ee5496a",
+      "bytes": 2212
+    },
+    {
+      "path": "lib/features/sources/data/catalog_parser.dart",
+      "sha256": "3a243a37ee3f71efc40c151636928d9ea7a346844399345224af63398ee747bf",
+      "bytes": 5614
+    },
+    {
+      "path": "lib/features/sources/data/catalog_url.dart",
+      "sha256": "7f6fd8d2ecabb46a1f841a773997a274dcc2c0bddb6569f7283c56b64ee2d779",
+      "bytes": 3072
+    },
+    {
+      "path": "lib/features/sources/data/jsonc_decoder.dart",
+      "sha256": "9a6936ef4b2ba9b745bc0a4341ce8bcfab66bd916b22760743ee2c314aa1dafb",
+      "bytes": 4057
+    },
+    {
+      "path": "lib/features/sources/data/live_catalog_parser.dart",
+      "sha256": "a2d47a1371f8d356077c14b331ffc9fbb2e58b9dd4df4805a11435de603a0aa4",
+      "bytes": 3597
+    },
+    {
+      "path": "lib/features/sources/data/source_diagnostics_store.dart",
+      "sha256": "545eee7771a2bdd12abbffb1eaa2fad27ce22d165eb74da28159fb6d3e3f2728",
+      "bytes": 1352
+    },
+    {
+      "path": "lib/features/sources/data/source_duplicate_store.dart",
+      "sha256": "97c151cdfbc0356fc5b164175ff4867ccd7fc45ec82eaa0f03b3009a8f5dffac",
+      "bytes": 2625
+    },
+    {
+      "path": "lib/features/sources/data/source_identity_store.dart",
+      "sha256": "f202048095d495c1a585c551a27ecc780ab7a55f6f326e3b00dd6ccba69e69d6",
+      "bytes": 2758
+    },
+    {
+      "path": "lib/features/sources/data/source_preferences.dart",
+      "sha256": "e3f7ce473450d1a190d3e0b343c9080ff16f9791d82949b368c6a2f4041fad8b",
+      "bytes": 1166
+    },
+    {
+      "path": "lib/features/sources/data/source_repository.dart",
+      "sha256": "9c26819683baca8922ec4a7facd830d5e94c2818a22ad3c62198b13fc7800ab1",
+      "bytes": 12056
+    },
+    {
+      "path": "lib/features/sources/data/source_share_service.dart",
+      "sha256": "87e0b3b58bc16ca7c64418e0142428ac48e9e62f3858aa597f879155fb07498a",
+      "bytes": 1890
+    },
+    {
+      "path": "lib/features/sources/domain/source_catalog.dart",
+      "sha256": "5e0b47784214e42e6c7f8ac310a4eeafbcf76e3418d954bede95470434548aa2",
+      "bytes": 1647
+    },
+    {
+      "path": "lib/features/sources/domain/source_diagnostics.dart",
+      "sha256": "b700ff6be86517a5b70a2c7d9649989cb5b6a93fbb378ccd8ed971facc744474",
+      "bytes": 1916
+    },
+    {
+      "path": "lib/features/sources/domain/source_duplicates.dart",
+      "sha256": "de4a9fbb87af251ee71863f1dd587616ed4f21e220a7e669d9b646082a88f6d0",
+      "bytes": 2074
+    },
+    {
+      "path": "lib/features/sources/domain/source_identity.dart",
+      "sha256": "9662aa074d38f1e092512d2730caad289e16ab1239eba33b95ea77aeb814cd53",
+      "bytes": 930
+    },
+    {
+      "path": "lib/features/sources/domain/source_name.dart",
+      "sha256": "d3293f836ab57a67d01197fe36c738f9c5332689f197e39092d0472909dddedc",
+      "bytes": 199
+    },
+    {
+      "path": "lib/features/sources/domain/source_order.dart",
+      "sha256": "2710416524fac1fd95b5493bf24e259230ce2b0dba68e55f6cfd5c37626ff95b",
+      "bytes": 1234
+    },
+    {
+      "path": "lib/features/sources/domain/source_probe_result.dart",
+      "sha256": "bf6b5a662204b019165d71e618c1d0ba2bc7e73ccbbcb3e15dcd0480878319a7",
+      "bytes": 561
+    },
+    {
+      "path": "lib/features/sources/domain/video_source.dart",
+      "sha256": "575b05fb7a1e8df23115c202e729ab985db80e7ea592c777c00bdcc85b368daa",
+      "bytes": 3402
+    },
+    {
+      "path": "lib/features/sources/presentation/awesome_zhuiju_dialog.dart",
+      "sha256": "07b1781cad82f3fd130b75df29c2dea18c99be94ceb4c2e463dfcc1979f6d8cc",
+      "bytes": 4187
+    },
+    {
+      "path": "lib/features/sources/presentation/block_source_button.dart",
+      "sha256": "e2b504e47fc968c874c61c2c3aed00dee207e2e1ef6fefdf72557b739e5bb5f0",
+      "bytes": 1235
+    },
+    {
+      "path": "lib/features/sources/presentation/catalog_import.dart",
+      "sha256": "15a51d261ec163988f8509826b4ac5d460342c284f8481e86357e4ffb96ef775",
+      "bytes": 9987
+    },
+    {
+      "path": "lib/features/sources/presentation/channel_favorite_action.dart",
+      "sha256": "fe70f0735e8e5bd18a5e83e918489fe55eaba09fba1efa9dd2fe30c0164cb0f0",
+      "bytes": 2341
+    },
+    {
+      "path": "lib/features/sources/presentation/source_actions.dart",
+      "sha256": "f8bbd9c836e7126eb42ac0e6f1b6b6b9c3f5ebb54568cdfb4068f518ef62657d",
+      "bytes": 4675
+    },
+    {
+      "path": "lib/features/sources/presentation/source_batch_bar.dart",
+      "sha256": "7aa5fdea6f4bdc77e1e34834ea780467c97499081ed292d3840a89f23b92a685",
+      "bytes": 4399
+    },
+    {
+      "path": "lib/features/sources/presentation/source_card.dart",
+      "sha256": "5bac91d65a05fde98a99bd8456f01ea1ff49870e849d03229e485d5b504698f5",
+      "bytes": 5702
+    },
+    {
+      "path": "lib/features/sources/presentation/source_details_dialog.dart",
+      "sha256": "bff0f071c2343bb1acb734af2a8bd14d6a0e0c3d5498a130e021819bb78d636b",
+      "bytes": 7060
+    },
+    {
+      "path": "lib/features/sources/presentation/source_favorite_button.dart",
+      "sha256": "8ec688d4bd08e60eae85b2a29edb6d5a6996c8dc2cf874ccd32c6634a3d84bf7",
+      "bytes": 786
+    },
+    {
+      "path": "lib/features/sources/presentation/source_menu_label.dart",
+      "sha256": "56252b7832ab67e28029ffccc37272736f5fa73ec8713f41f3b70a879147cfc9",
+      "bytes": 1011
+    },
+    {
+      "path": "lib/features/sources/presentation/source_probe_dialog.dart",
+      "sha256": "b6a02de0a053a34694db2e408e862d88420579c904f9c2e3c0505e36b1be4609",
+      "bytes": 2458
+    },
+    {
+      "path": "lib/features/sources/presentation/sources_page.dart",
+      "sha256": "825835141c5da36604a8646c713e40b2a101a94c03f9fa9ee5c28abefa0988f2",
+      "bytes": 11632
+    },
+    {
+      "path": "lib/features/supervision/application/content_policy.dart",
+      "sha256": "5d680e2e04837c959277154efb77ade75e391a61ec46b2c027387931fd5669d3",
+      "bytes": 7031
+    },
+    {
+      "path": "lib/features/supervision/application/installation_access.dart",
+      "sha256": "fb958f040e6cca7f0086c2bde94b8bd45aed3e82f63314c8644ff83c821f5d0d",
+      "bytes": 6105
+    },
+    {
+      "path": "lib/features/supervision/application/supervision_controller.dart",
+      "sha256": "2cc70a0772d8e38ade8a26729c839b98272320b242f52facef148a77719c3fe8",
+      "bytes": 10766
+    },
+    {
+      "path": "lib/features/supervision/data/content_records.dart",
+      "sha256": "f297ba3476950029ac8c4c36e08c1757cc21de8a7bd7cc535b2f1ed8f8dcd280",
+      "bytes": 1881
+    },
+    {
+      "path": "lib/features/supervision/data/filtering_vod_provider.dart",
+      "sha256": "a1cde57c2b9b3830911e2e479678a49c5745620915808d569453b17089657faa",
+      "bytes": 3460
+    },
+    {
+      "path": "lib/features/supervision/data/password_hasher.dart",
+      "sha256": "41ce4beaf3f51e3be0a89154ba28f4d48c1295e3c67b440301255e37318b8f7a",
+      "bytes": 2205
+    },
+    {
+      "path": "lib/features/supervision/domain/adult_source_evidence.dart",
+      "sha256": "7dd20620b923e14687f8a7c58aafa923ece02172cd38aa260ac9bfe107795206",
+      "bytes": 1339
+    },
+    {
+      "path": "lib/features/supervision/domain/content_classification.dart",
+      "sha256": "2a4afe9cde0ce809761a8db794932838c5ebfba324d80698d31610626826e074",
+      "bytes": 3722
+    },
+    {
+      "path": "lib/features/supervision/domain/supervision_rules.dart",
+      "sha256": "4c7c2107c3c94d85554252d91e177f4f9203dea54490e184257789ee60887b41",
+      "bytes": 2415
+    },
+    {
+      "path": "lib/features/supervision/presentation/adult_access_dialog.dart",
+      "sha256": "19112c2cc7b39c120bfdda0024b09c1ea986eff444af5d5bb418065d766dcf14",
+      "bytes": 3455
+    },
+    {
+      "path": "lib/features/supervision/presentation/blocked_channel_picker.dart",
+      "sha256": "48adb17ff3171f601a0a0201a0cf14dc4578c059024431add9ae32a48c94939a",
+      "bytes": 3623
+    },
+    {
+      "path": "lib/features/supervision/presentation/content_blocked_dialog.dart",
+      "sha256": "df6d7d2f85bc9e4fd42dc84f556c1ec6469eb628fc92013e81cc46f42eb1d576",
+      "bytes": 710
+    },
+    {
+      "path": "lib/features/supervision/presentation/credential_dialogs.dart",
+      "sha256": "8b3d5df34c7570573fe6cd8c82484a00b48553237879aea8d70ce635a3a3b19c",
+      "bytes": 4144
+    },
+    {
+      "path": "lib/features/supervision/presentation/sensitive_action.dart",
+      "sha256": "22967b6663bbec2ff725ac652566c1f6fca71f0cfbdac5363daa57fe1fe9f6d5",
+      "bytes": 2849
+    },
+    {
+      "path": "lib/features/supervision/presentation/supervision_page.dart",
+      "sha256": "4b26ec732be7977a70c24ca01c9f9fa9ee09d11cf646b5e8ae41c912cd3d4985",
+      "bytes": 8268
+    },
+    {
+      "path": "lib/main.dart",
+      "sha256": "fb9b5878c63b4ba82a552416669f50dadf8b62e6fa6482d4a494c6a3dfbb82fb",
+      "bytes": 1429
+    },
+    {
+      "path": "lib/media/cache/resource_identity.dart",
+      "sha256": "53bed29442440bbbbaf03805a56bf68627f8503e35c97dcc4f24cf24a6f94a70",
+      "bytes": 654
+    },
+    {
+      "path": "lib/media/cache/segment_fetcher.dart",
+      "sha256": "4eba31882ea45ba8aa19c7cf682ec919b9e6588d48c888d8e4f29503a09b79a1",
+      "bytes": 2197
+    },
+    {
+      "path": "lib/media/cache/segment_index.dart",
+      "sha256": "835f75dd289b37e238b7e8f2996882c3cd3d7a3983784c40dc301caae66a966a",
+      "bytes": 3444
+    },
+    {
+      "path": "lib/media/cache/segment_metadata.dart",
+      "sha256": "8cf74e795dda11238cc47fce5fee63c0f677adb381ab6dc93ce8af9cf7b35331",
+      "bytes": 440
+    },
+    {
+      "path": "lib/media/cache/segment_prefetcher.dart",
+      "sha256": "5aeb76168c3e807e3b0b8180fb66c1495e311c9c9aa3bfb5550a8d61a57525ce",
+      "bytes": 3672
+    },
+    {
+      "path": "lib/media/cache/segment_store.dart",
+      "sha256": "66c583e108793a68563d91b6bbcaacc95fc6e11f30741d738e28ad9041ca27f4",
+      "bytes": 10605
+    },
+    {
+      "path": "lib/media/content_filter/approved_media_server.dart",
+      "sha256": "f536291ae169f19d197c473280c30181e5bf2140f18c1ade5837f425a653d0d4",
+      "bytes": 4810
+    },
+    {
+      "path": "lib/media/content_filter/approved_timeline.dart",
+      "sha256": "470cd7cb31928774607395b37252a5d51a99c5ffeae1ecde2cdc83a5e83dfccf",
+      "bytes": 1732
+    },
+    {
+      "path": "lib/media/content_filter/background_filter.dart",
+      "sha256": "d3bcee3e5146aae85d0b1225be076f17e78530d93e82d6690df0428d078e523c",
+      "bytes": 7805
+    },
+    {
+      "path": "lib/media/content_filter/content_filter_service.dart",
+      "sha256": "41bcaffde14753a4ca807af17238d364c6c896d6cc844a75725f3594eabe349f",
+      "bytes": 7396
+    },
+    {
+      "path": "lib/media/content_filter/declared_ad_sampler.dart",
+      "sha256": "363bc27c8c4d32fc29abb89a0c962cb2eacb71434faa4d3d6e846cd29b7b0256",
+      "bytes": 1818
+    },
+    {
+      "path": "lib/media/content_filter/ffmpeg_slice_sampler.dart",
+      "sha256": "ce096887cf8ac24b697f3b68a48c480559ae083187f7a13b4fd006bdd90f2b20",
+      "bytes": 7278
+    },
+    {
+      "path": "lib/media/content_filter/filter_session.dart",
+      "sha256": "35d977c0cb458307349acfe620039709e614281e8a0e2b36637e5399aee3dd9c",
+      "bytes": 11052
+    },
+    {
+      "path": "lib/media/content_filter/filter_strategy.dart",
+      "sha256": "2ad1c73fcc6b0ec1f49904ad13aa8042a54bde88ded1e171776ff501d8b3baea",
+      "bytes": 565
+    },
+    {
+      "path": "lib/media/content_filter/filter_types.dart",
+      "sha256": "2271418e046ecd4fa32666f25fdf5ce3fa4981035500fc433ff08e33b217cec5",
+      "bytes": 3233
+    },
+    {
+      "path": "lib/media/content_filter/fingerprints/anchor_extraction.dart",
+      "sha256": "f925567e0041d1e4f0fc5d1281efc45b5fbbd4383958a18ca673751f1b56aa1f",
+      "bytes": 1778
+    },
+    {
+      "path": "lib/media/content_filter/fingerprints/audio_fingerprint.dart",
+      "sha256": "1ec204500fe07fe3b5d82f07e3afef91b8b8e140c9ad08fd47ea8fe9f7f7bfae",
+      "bytes": 5189
+    },
+    {
+      "path": "lib/media/content_filter/fingerprints/feature_anchor.dart",
+      "sha256": "2dcc0b77d6af3d4fa269fa0894e53043c45b2970d0bd301892e1e2269021265a",
+      "bytes": 3042
+    },
+    {
+      "path": "lib/media/content_filter/fingerprints/feature_capture.dart",
+      "sha256": "7a990340b21aa4c6f9b5d8c7461753b9c6bd78b2329ebb39391f5d5469503809",
+      "bytes": 4676
+    },
+    {
+      "path": "lib/media/content_filter/fingerprints/feature_inspector.dart",
+      "sha256": "d2afc5354f65de6d5270d5580a9b3f5c97627e4c4a508abdf0d8f88600d6a6bb",
+      "bytes": 5111
+    },
+    {
+      "path": "lib/media/content_filter/fingerprints/feature_matcher.dart",
+      "sha256": "5c10680817e13ba55b410b6f1568fade25e55c0ec3d3c6c55945b2571e3082af",
+      "bytes": 7055
+    },
+    {
+      "path": "lib/media/content_filter/fingerprints/feature_repository.dart",
+      "sha256": "1c55d948a4e58b19531ece8ad62f6a73f0067a65682a8fd80b65b3e356f6812e",
+      "bytes": 2147
+    },
+    {
+      "path": "lib/media/content_filter/fingerprints/feature_rule.dart",
+      "sha256": "92b881574113c42c8d8b3d215c0c1380b645a86e7fea74e6c8666da1b4219b36",
+      "bytes": 7803
+    },
+    {
+      "path": "lib/media/content_filter/fingerprints/feature_sample_failure.dart",
+      "sha256": "c2322cb504506eafa6bb570224baeaf6c9cea468ada30a507f894cd8051c7250",
+      "bytes": 344
+    },
+    {
+      "path": "lib/media/content_filter/fingerprints/sample_signature.dart",
+      "sha256": "6294f939dfbf7894d3d9e133a5354aa0661a9428d685eeb0ea150b3d3b720746",
+      "bytes": 1611
+    },
+    {
+      "path": "lib/media/content_filter/fingerprints/visual_fingerprint.dart",
+      "sha256": "aa395cd24d7e9e954f9c651e5fab4d8852f7d8f8e2ba3e70d95eae58642593d1",
+      "bytes": 3155
+    },
+    {
+      "path": "lib/media/content_filter/keyword_audio_context.dart",
+      "sha256": "017a1416dc4ae6d19e198c48bda872303b65622ef7a3c4323e16e2fbd916d0e0",
+      "bytes": 1221
+    },
+    {
+      "path": "lib/media/content_filter/keyword_detector.dart",
+      "sha256": "747a66ec3a9a96335d25872ddedc0538b338f23a813729993caacc90051da4c5",
+      "bytes": 4812
+    },
+    {
+      "path": "lib/media/content_filter/keyword_models.dart",
+      "sha256": "c159d7135cb52b14a4441542426f66c5030d24967fd035d19f4f9f27b5d5e8a6",
+      "bytes": 4199
+    },
+    {
+      "path": "lib/media/content_filter/keyword_policy.dart",
+      "sha256": "4f0cc51b4885370222fb7fb3616e4e56890c484a845995ca438bfba0417a70f5",
+      "bytes": 2797
+    },
+    {
+      "path": "lib/media/content_filter/local_models.dart",
+      "sha256": "7f2a9f0ee66bb187aeb175b1ddeab54d065e18decabf92ca722efd2a8e52e9fd",
+      "bytes": 3988
+    },
+    {
+      "path": "lib/media/content_filter/local_runtime.dart",
+      "sha256": "22309a0fdc83c30cc700ad36cadfeb9737a93ac6430eea1f7915b4e42ae08e40",
+      "bytes": 3637
+    },
+    {
+      "path": "lib/media/content_filter/native_media_commands.dart",
+      "sha256": "ba63339adf315b0d410dcc346660b60a5ba960a6329e666c9fea391192fe5c92",
+      "bytes": 3698
+    },
+    {
+      "path": "lib/media/content_filter/offline_inspector.dart",
+      "sha256": "7c76ecca6b7def742b28ee632b183f9733219fe729ef1a3baca4276e39c65359",
+      "bytes": 10906
+    },
+    {
+      "path": "lib/media/content_filter/optional_resources.dart",
+      "sha256": "9181183b905d1c2b9651955f408f1ce7a08b758653d1404b6674e09ff5144abf",
+      "bytes": 2595
+    },
+    {
+      "path": "lib/media/content_filter/paddle_ocr.dart",
+      "sha256": "fc20ea782621a5c49d78efd479763aebfd4279af7b9ec6d17ffad60ea8f1296e",
+      "bytes": 7536
+    },
+    {
+      "path": "lib/media/content_filter/probe_sampler.dart",
+      "sha256": "49ad638200a6d71ce8751bb43f6a7655f8ea9555902d0e971483e1327bcc79fd",
+      "bytes": 3274
+    },
+    {
+      "path": "lib/media/content_filter/promotion_evidence.dart",
+      "sha256": "e58cd31fb922d60ee0850fb1f319866d56ca6167053f40405674ba49c490ccaf",
+      "bytes": 1414
+    },
+    {
+      "path": "lib/media/content_filter/resource_download.dart",
+      "sha256": "7371b2148441a099a51cc4aa71ee7b6d30dc8eb1dfc8faddd7248703213d4774",
+      "bytes": 1955
+    },
+    {
+      "path": "lib/media/content_filter/runtime_catalog.dart",
+      "sha256": "fa60083a82ce0d023f9f4eda19bf3b585963b8482db8fea24d5cf8bd88f95875",
+      "bytes": 2389
+    },
+    {
+      "path": "lib/media/engine/media_kit_engine.dart",
+      "sha256": "e99310b00eb0969cb820da63bfedc53377838068a2b8b58886b745caa7651db1",
+      "bytes": 9288
+    },
+    {
+      "path": "lib/media/engine/native_input_policy.dart",
+      "sha256": "814d86df07c3b6528b7846ecc0e27e85bd0f3f47e6f166512687cd04423afcb9",
+      "bytes": 461
+    },
+    {
+      "path": "lib/media/engine/player_security.dart",
+      "sha256": "64cfdf23740f11282e984869e1d6f19418d580dec8cbe0fda26bd0e95ef6738c",
+      "bytes": 1750
+    },
+    {
+      "path": "lib/media/export/ffmpeg_exporter.dart",
+      "sha256": "b592b476277a91cf6cfaf593b5b112729d681029902a1a4263ab75d29278e530",
+      "bytes": 6212
+    },
+    {
+      "path": "lib/media/export/media_exporter.dart",
+      "sha256": "58917842d9896d7bc2c6cb0eee3c41fad2cfa1dcc242fd5cacdbfb550056f4e3",
+      "bytes": 420
+    },
+    {
+      "path": "lib/media/gateway/media_gateway.dart",
+      "sha256": "a248a6b5ebbdd654d602c949d227874d05cf9a1adb6fd4902bf829adf7fc6e17",
+      "bytes": 17614
+    },
+    {
+      "path": "lib/media/gateway/offline_server.dart",
+      "sha256": "809410ec5679940db12dcbfe1f40d9ea2fbebdcc182debdde1abec81a3225dca",
+      "bytes": 8605
+    },
+    {
+      "path": "lib/media/gateway/timestamp_segments.dart",
+      "sha256": "9fe23b171b5578390cbf04b68decc0f315f02ef1e2b8fc7ef90f09e8891b2249",
+      "bytes": 3256
+    },
+    {
+      "path": "lib/media/hls/ad_filter.dart",
+      "sha256": "715a999a70b52f54e57ccbcf92fe3b4e451a3f78a89ea47e5643fbaf1215285d",
+      "bytes": 2108
+    },
+    {
+      "path": "lib/media/hls/hls_manifest.dart",
+      "sha256": "f5ef9005b6364c9f6628455187983c436e2e2b0367a3eca1b5dca8c4a467c30a",
+      "bytes": 6095
+    },
+    {
+      "path": "lib/media/hls/hls_probe_variant.dart",
+      "sha256": "7251ae839c825a7109f1bb01eb26e7fb961162e300044a526312713ae065a337",
+      "bytes": 1473
+    },
+    {
+      "path": "lib/media/hls/hls_quality.dart",
+      "sha256": "0be6ac5c40325109774c09e4becc4c25afaed8b1f6b8cd2cd62aa89767707ec7",
+      "bytes": 2181
+    },
+    {
+      "path": "lib/media/hls/hls_resource_policy.dart",
+      "sha256": "648e82504976501b645b9e35b44ca37795097457925ae84e5df6512bfda82184",
+      "bytes": 1694
+    },
+    {
+      "path": "lib/media/hls/hls_variables.dart",
+      "sha256": "0f51f05407448ef98cea6f63a9e926a3745edbcd1682caac3fc2e663dff523a5",
+      "bytes": 3260
+    },
+    {
+      "path": "lib/media/hls/offline_rewriter.dart",
+      "sha256": "2fa39af87e523f0d2890a669dfa9ac59119ac6cb4864e819dfa130f30e8e74e1",
+      "bytes": 4092
+    },
+    {
+      "path": "lib/media/hls/timeline.dart",
+      "sha256": "601fb1f2e186b67a62cede23b8b6d8458711d9c1c445dacaee0ef085b8989c04",
+      "bytes": 844
+    },
+    {
+      "path": "lib/media/hls/ts_timestamps.dart",
+      "sha256": "f1a7dc02e7a112d1a4b5544dcccf0e942cd3cb10b693c0344c4cb3caf96cad37",
+      "bytes": 4282
+    },
+    {
+      "path": "lib/media/network/media_probe.dart",
+      "sha256": "08697554eb86ec1351e2bd2387cf77ba1ad7a6316bcd2518550cebb89149b83d",
+      "bytes": 6955
+    },
+    {
+      "path": "lib/media/network/media_response_policy.dart",
+      "sha256": "ba4614ccf1d3920c28f00ddc93a0bdc2d7780396b5e5deaf3528ed76172ad413",
+      "bytes": 3242
+    },
+    {
+      "path": "lib/media/network/video_decode_check.dart",
+      "sha256": "16be8cc328ebcd9ba7e0f2278b812bfb80079e047c4e3b1f7f877705ab117c01",
+      "bytes": 2572
+    },
+    {
+      "path": "pubspec.yaml",
+      "sha256": "c158a7b7c0956a17096899bf29f6a43cdf0f8463f0cc397ac0abef73e5056e92",
+      "bytes": 5532
+    },
+    {
+      "path": "pubspec.lock",
+      "sha256": "8a00d5909eb5ab94663fa07b26606a5dd17fbd768d48641d3086ff0e93df1f79",
+      "bytes": 42200
+    },
+    {
+      "path": "android/app/build.gradle.kts",
+      "sha256": "8c319bf6b05514c7bea9078de550af46e8d5b1d62aea7210128e4398611b9744",
+      "bytes": 4080
+    },
+    {
+      "path": "android/app/src/main/AndroidManifest.xml",
+      "sha256": "9b4f94e7ced8f78710fc9b83e8cb152b133ff4651bd9d73030e79d6da4b219d6",
+      "bytes": 3082
+    },
+    {
+      "path": "windows/runner/CMakeLists.txt",
+      "sha256": "6c3658eae385aeaf2e122a6ef258a94e9cc1b11d5928d4ed71c14b2476c424fe",
+      "bytes": 1952
+    },
+    {
+      "path": "windows/runner/flutter_window.cpp",
+      "sha256": "5c185b6fe092ded11c4e008e94e16121a2c6c23b33bf97cc4f9f6cec650f24bc",
+      "bytes": 3437
+    },
+    {
+      "path": "windows/runner/main.cpp",
+      "sha256": "e66cea878c2682fc3a7b54379bf7d91715eb66d78e9be828552af70622efa360",
+      "bytes": 1666
+    },
+    {
+      "path": "windows/runner/radio_tray.cpp",
+      "sha256": "bd6ec6b1d1ca7a40233ac737d30087811855c40f1b04ef309dccb8b0221194e8",
+      "bytes": 6121
+    },
+    {
+      "path": "windows/runner/reader_fonts.cpp",
+      "sha256": "7bc036c785a116faa8e04afad020d0652afe69447732bf3e0e2298611e8486fc",
+      "bytes": 2188
+    },
+    {
+      "path": "windows/runner/utils.cpp",
+      "sha256": "a128b67b9f3c2579e2ecef5b0dde2c33f222a097cdfe5da2a3067c73d1485b39",
+      "bytes": 2237
+    },
+    {
+      "path": "windows/runner/win32_window.cpp",
+      "sha256": "4e4f4dcf8e86ea6e097562cb3476039e693449bd8045367538afee579c017511",
+      "bytes": 8822
+    },
+    {
+      "path": "windows/runner/flutter_window.h",
+      "sha256": "a6d3a9df4091c2c7213ac0e928f41c9bbc8411b87550e9d55ad1504333e8c5e7",
+      "bytes": 1103
+    },
+    {
+      "path": "windows/runner/radio_tray.h",
+      "sha256": "56e34670d842ac65ea1c43b1e1a4b32f830511128190158c7bd9c43ef2e4ccc5",
+      "bytes": 1198
+    },
+    {
+      "path": "windows/runner/reader_fonts.h",
+      "sha256": "614f7670909cbb5078a5ac83cfed306750c03ce20c63237a7e64e0304b191be6",
+      "bytes": 366
+    },
+    {
+      "path": "windows/runner/resource.h",
+      "sha256": "d0e8bf7835468b4b6b1f8f0747f2e8f25c19841f2df2ac60aaa584ddae3aa7c6",
+      "bytes": 448
+    },
+    {
+      "path": "windows/runner/utils.h",
+      "sha256": "832e246b6758253f89016fb0374b30791242e97ad950d27fc678b3d9feacfdc4",
+      "bytes": 691
+    },
+    {
+      "path": "windows/runner/win32_window.h",
+      "sha256": "d154cf89ba85f820631a9b5bedacbe64fc5815e428fe6bc5da579ce649f69841",
+      "bytes": 3624
+    },
+    {
+      "path": "android/app/src/main/kotlin/dev/zeroplayer/zero_player/ActivityRequestCodes.kt",
+      "sha256": "49cd372e697bb98aecd3c9c53fd5890b0285b14e374462a9f891b46a9427e80a",
+      "bytes": 501
+    },
+    {
+      "path": "android/app/src/main/kotlin/dev/zeroplayer/zero_player/MainActivity.kt",
+      "sha256": "a170211cedfa962d71e979e1e722fb891d0c97ab0a1ebc4e4048ae3f88278745",
+      "bytes": 9369
+    },
+    {
+      "path": "android/app/src/main/kotlin/dev/zeroplayer/zero_player/MusicLyricsOverlay.kt",
+      "sha256": "52faaf8ade513caf1278c3b41368cc5bbe1e7566c0adc003ced1608ea17e6bce",
+      "bytes": 4706
+    },
+    {
+      "path": "android/app/src/main/kotlin/dev/zeroplayer/zero_player/PlaybackDeviceDiagnostics.kt",
+      "sha256": "4b2045614f274820ff819684318b779d61feceb768109f306779a84936fcce8d",
+      "bytes": 2861
+    },
+    {
+      "path": "android/app/src/main/kotlin/dev/zeroplayer/zero_player/ProtectedBookExport.kt",
+      "sha256": "0d4a932b9d966600f7bd2c2c98bb6061d6fe80e38f5603ce4a489531e61e4894",
+      "bytes": 8613
+    },
+    {
+      "path": "android/app/src/main/kotlin/dev/zeroplayer/zero_player/ReaderFonts.kt",
+      "sha256": "294c366b8162730c0a7660e0e916eba6ef360a297f7fb37bf240c1b417a8a1ec",
+      "bytes": 1449
+    },
+    {
+      "path": "android/app/src/main/kotlin/dev/zeroplayer/zero_player/VideoDirectoryBridge.kt",
+      "sha256": "558088201529489ce3d899fde2993519e10a6570fa55d04de621c4bd90c1b828",
+      "bytes": 7581
+    },
+    {
+      "path": "android/app/src/main/kotlin/dev/zeroplayer/zero_player/VideoFilePicker.kt",
+      "sha256": "9d5f67a6754ccc3be7f76a2c65e1be1cc105c3b41de4c56e1cb36832cadebee8",
+      "bytes": 7854
+    }
+  ],
+  "source_fingerprint": "d939cef6ea4b94d021ba3042f884f4dee73c56a2017df6b85f1174367692bf7a",
+  "assets_total_bytes": 71017881,
+  "largest_assets": [
+    {
+      "path": "assets/fonts/NotoSerifSC.ttf",
+      "bytes": 25125512
+    },
+    {
+      "path": "assets/fonts/Xiaolai-Regular.ttf",
+      "bytes": 22220806
+    },
+    {
+      "path": "assets/fonts/NotoSansSC.ttf",
+      "bytes": 17772300
+    },
+    {
+      "path": "assets/catalogs/books/legado/catalog.json.bz2",
+      "bytes": 2618338
+    },
+    {
+      "path": "assets/live_channel_audit.json",
+      "bytes": 2407513
+    },
+    {
+      "path": "assets/catalogs/radio/cn.snapshot.json",
+      "bytes": 340784
+    },
+    {
+      "path": "assets/brand/logo.jpg",
+      "bytes": 216861
+    },
+    {
+      "path": "assets/source_audit.json",
+      "bytes": 168663
+    },
+    {
+      "path": "assets/catalogs/live/builtin.snapshots.json",
+      "bytes": 34322
+    },
+    {
+      "path": "assets/catalogs/books/verified.json",
+      "bytes": 21637
+    },
+    {
+      "path": "assets/source_precheck.json",
+      "bytes": 20088
+    },
+    {
+      "path": "assets/licenses/RapidOCR-LICENSE.txt",
+      "bytes": 11625
+    },
+    {
+      "path": "assets/catalogs/music/lx-native-catalog.json",
+      "bytes": 6529
+    },
+    {
+      "path": "assets/catalogs/maccms/R18.json",
+      "bytes": 6444
+    },
+    {
+      "path": "assets/licenses/FunASR-MODEL-LICENSE.txt",
+      "bytes": 5413
+    },
+    {
+      "path": "assets/live_candidates.json",
+      "bytes": 5180
+    },
+    {
+      "path": "assets/live_precheck.json",
+      "bytes": 5110
+    },
+    {
+      "path": "assets/fonts/OFL.txt",
+      "bytes": 4432
+    }
+  ],
+  "packages": [
+    {
+      "path": "artifacts/device-test/0.7.4-20261118-072629/zero-player-0.7.4-android-arm64-devtest.apk",
+      "bytes": 78099150,
+      "sha256": "e6d23bd50ce9cb3a6adb13042bf86425f2a9bda28585db4259f53f7ce171cb40",
+      "raw_bytes": 142197734,
+      "largest_entries": [
+        {
+          "path": "assets/flutter_assets/assets/fonts/NotoSerifSC.ttf",
+          "raw_bytes": 25125512,
+          "compressed_bytes": 15477554
+        },
+        {
+          "path": "assets/flutter_assets/assets/fonts/Xiaolai-Regular.ttf",
+          "raw_bytes": 22220806,
+          "compressed_bytes": 14739526
+        },
+        {
+          "path": "assets/flutter_assets/assets/fonts/NotoSansSC.ttf",
+          "raw_bytes": 17772300,
+          "compressed_bytes": 11296728
+        },
+        {
+          "path": "lib/arm64-v8a/libapp.so",
+          "raw_bytes": 17433488,
+          "compressed_bytes": 7359117
+        },
+        {
+          "path": "lib/arm64-v8a/libmpv.so",
+          "raw_bytes": 12369680,
+          "compressed_bytes": 5597496
+        },
+        {
+          "path": "lib/arm64-v8a/libflutter.so",
+          "raw_bytes": 11579920,
+          "compressed_bytes": 5407798
+        },
+        {
+          "path": "lib/arm64-v8a/libavcodec.so",
+          "raw_bytes": 8790584,
+          "compressed_bytes": 4783094
+        },
+        {
+          "path": "assets/flutter_assets/assets/catalogs/books/legado/catalog.json.bz2",
+          "raw_bytes": 2618338,
+          "compressed_bytes": 2611710
+        },
+        {
+          "path": "lib/arm64-v8a/libpdfium.so",
+          "raw_bytes": 4977432,
+          "compressed_bytes": 2587562
+        },
+        {
+          "path": "assets/flutter_assets/packages/pdfrx/assets/pdfium.wasm",
+          "raw_bytes": 3982871,
+          "compressed_bytes": 1977532
+        },
+        {
+          "path": "lib/arm64-v8a/libavfilter.so",
+          "raw_bytes": 2888432,
+          "compressed_bytes": 1189114
+        },
+        {
+          "path": "lib/arm64-v8a/libavformat.so",
+          "raw_bytes": 2186464,
+          "compressed_bytes": 1084057
+        },
+        {
+          "path": "lib/arm64-v8a/libsqlite3.so",
+          "raw_bytes": 1732360,
+          "compressed_bytes": 863795
+        },
+        {
+          "path": "lib/arm64-v8a/libflutter_qjs_next.so",
+          "raw_bytes": 1337776,
+          "compressed_bytes": 574113
+        },
+        {
+          "path": "assets/flutter_assets/assets/live_channel_audit.json",
+          "raw_bytes": 2407513,
+          "compressed_bytes": 460228
+        },
+        {
+          "path": "classes.dex",
+          "raw_bytes": 678624,
+          "compressed_bytes": 301195
+        },
+        {
+          "path": "lib/arm64-v8a/libavutil.so",
+          "raw_bytes": 554840,
+          "compressed_bytes": 238084
+        },
+        {
+          "path": "lib/arm64-v8a/libswscale.so",
+          "raw_bytes": 535968,
+          "compressed_bytes": 231392
+        }
+      ]
+    },
+    {
+      "path": "artifacts/device-test/0.7.4-20261118-072629/zero-player-0.7.4-windows-x64-portable.zip",
+      "bytes": 103321399,
+      "sha256": "4d3a329ac7b407c56f3b102889f3ba9d1355198011bda2717dbda01a545a624e",
+      "raw_bytes": 205605016,
+      "largest_entries": [
+        {
+          "path": "data/flutter_assets/assets/fonts/NotoSerifSC.ttf",
+          "raw_bytes": 25125512,
+          "compressed_bytes": 15550220
+        },
+        {
+          "path": "data/flutter_assets/assets/fonts/Xiaolai-Regular.ttf",
+          "raw_bytes": 22220806,
+          "compressed_bytes": 14691427
+        },
+        {
+          "path": "libmpv-2.dll",
+          "raw_bytes": 29764622,
+          "compressed_bytes": 12877042
+        },
+        {
+          "path": "data/flutter_assets/assets/fonts/NotoSansSC.ttf",
+          "raw_bytes": 17772300,
+          "compressed_bytes": 11333827
+        },
+        {
+          "path": "flutter_windows.dll",
+          "raw_bytes": 21284352,
+          "compressed_bytes": 9114179
+        },
+        {
+          "path": "data/app.so",
+          "raw_bytes": 19202960,
+          "compressed_bytes": 7910646
+        },
+        {
+          "path": "avcodec-62.dll",
+          "raw_bytes": 10573312,
+          "compressed_bytes": 4984054
+        },
+        {
+          "path": "pdfium.dll",
+          "raw_bytes": 5790208,
+          "compressed_bytes": 2995016
+        },
+        {
+          "path": "libGLESv2.dll",
+          "raw_bytes": 7414088,
+          "compressed_bytes": 2882440
+        },
+        {
+          "path": "data/flutter_assets/assets/catalogs/books/legado/catalog.json.bz2",
+          "raw_bytes": 2618338,
+          "compressed_bytes": 2611510
+        },
+        {
+          "path": "d3dcompiler_47.dll",
+          "raw_bytes": 4891080,
+          "compressed_bytes": 2186677
+        },
+        {
+          "path": "data/flutter_assets/packages/pdfrx/assets/pdfium.wasm",
+          "raw_bytes": 3982871,
+          "compressed_bytes": 1998903
+        },
+        {
+          "path": "vk_swiftshader.dll",
+          "raw_bytes": 4808008,
+          "compressed_bytes": 1952382
+        },
+        {
+          "path": "avfilter-11.dll",
+          "raw_bytes": 3303424,
+          "compressed_bytes": 1371340
+        },
+        {
+          "path": "avformat-62.dll",
+          "raw_bytes": 2193920,
+          "compressed_bytes": 1102002
+        },
+        {
+          "path": "libstdc++-6.dll",
+          "raw_bytes": 2667040,
+          "compressed_bytes": 983280
+        },
+        {
+          "path": "sqlite3.dll",
+          "raw_bytes": 1709056,
+          "compressed_bytes": 961459
+        },
+        {
+          "path": "libiconv-2.dll",
+          "raw_bytes": 1136529,
+          "compressed_bytes": 772390
+        }
+      ]
+    },
+    {
+      "path": "artifacts/device-test/0.7.4-20261118-072629/zero-player-0.7.4-windows-x64-setup.exe",
+      "bytes": 79216145,
+      "sha256": "1854c0889999a95f5d7e5f0852ddffb3663966ed310d611dd989dd7d44c254fa"
+    }
+  ],
+  "verification": {
+    "targeted_flutter_tests": {
+      "passed": 42,
+      "exit_code": 0,
+      "log": "build/performance-review-20261118/targeted-tests.log"
+    },
+    "flutter_analyze": {
+      "result": "No issues found",
+      "exit_code": 0,
+      "seconds": 9.1,
+      "log": "build/performance-review-20261118/analyze.log"
+    },
+    "module_boundaries": {
+      "files": 513,
+      "existing_composition_dependencies": 2,
+      "exit_code": 0
+    },
+    "source_size": {
+      "exit_code": 1,
+      "existing_violations": 104,
+      "test": 75,
+      "tool": 28,
+      "integration_test": 1,
+      "lib": 0,
+      "log": "build/performance-review-20261118/source-size.log"
+    },
+    "android_devices": [],
+    "device_performance_measured": false,
+    "rebuilt_packages": false,
+    "business_source_unchanged_against_manifest": true
+  }
+}

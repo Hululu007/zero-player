@@ -1,26 +1,45 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:developer' as developer;
 
-import '../../media/cache/segment_metadata.dart';
-import '../../media/cache/segment_store.dart';
-import 'app_database.dart';
+import 'segment_metadata.dart';
+import 'segment_store.dart';
+import '../../core/persistence/app_database.dart';
 
 final class SegmentIndex implements SegmentMetadata {
   const SegmentIndex(this.db);
   final AppDatabase db;
   @override
-  Future<Map<String, StoredResource>> entries() async => {
+  Future<Map<String, StoredResource>> entries() async {
+    final entries = <String, StoredResource>{};
     for (final row in await db.rows(
       'SELECT * FROM segment_index ORDER BY used_at',
-    ))
-      row['cache_key'] as String: StoredResource(
-        file: File(row['path'] as String),
-        length: row['bytes'] as int,
-        digest: row['digest'] as String,
-        statusCode: row['status_code'] as int,
-        headers: Map<String, String>.from(jsonDecode(row['headers'] as String)),
-      ),
-  };
+    )) {
+      try {
+        entries[row['cache_key'] as String] = StoredResource(
+          file: File(row['path'] as String),
+          length: row['bytes'] as int,
+          digest: row['digest'] as String,
+          statusCode: row['status_code'] as int,
+          headers: Map<String, String>.from(
+            jsonDecode(row['headers'] as String),
+          ),
+        );
+      } on FormatException {
+        _reportDamagedEntry();
+      } on TypeError {
+        _reportDamagedEntry();
+      }
+    }
+    return entries;
+  }
+
+  void _reportDamagedEntry() {
+    // Keep the row, file and download pins for recovery; never expose corrupt
+    // headers to playback or remove unrelated offline data to restore startup.
+    developer.log('已隔离损坏的缓存索引；保留文件和离线引用，请重新下载。', name: 'segment_index');
+  }
+
   @override
   Future<void> put(String key, StoredResource value) => db.customStatement(
     '''INSERT INTO segment_index

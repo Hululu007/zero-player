@@ -103,6 +103,8 @@ final class BookSource {
           bookLabel(row['author']),
           resolve(endpoint, row['url'] as String),
           description: bookLabel(row['description'], 600),
+          latestChapter: bookLabel(row['latestChapter']),
+          updatedLabel: bookLabel(row['updatedLabel']),
         ),
     ]);
     if (name.isEmpty ||

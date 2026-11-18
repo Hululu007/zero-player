@@ -1,3 +1,4 @@
+import '../../../core/platform/foreground_workload.dart';
 import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
@@ -14,6 +15,7 @@ import 'reader_style.dart';
 import 'reader_automation.dart';
 import 'reader_pagination.dart' show ReaderTapZones;
 import 'reader_system_ui.dart';
+import 'reader_safe_area.dart';
 import 'vertical_book_text.dart';
 import 'package:fwfh_svg/fwfh_svg.dart';
 
@@ -56,6 +58,7 @@ class _RichReaderState extends State<RichReaderPage>
   bool _controls = false, _auto = false;
   bool _configuring = false;
   Timer? _saveTimer;
+  late final _releaseReading = ForegroundWorkload.instance.beginReading();
   late final _automation = ReaderAutomation(this, _advanceAutomatically);
   double? _resumeOffset;
   double _lastScrollOffset = 0, _scrollFraction = 0;
@@ -69,6 +72,7 @@ class _RichReaderState extends State<RichReaderPage>
   @override
   void initState() {
     super.initState();
+    _releaseReading;
     WidgetsBinding.instance.addObserver(this);
     widget.repository.policy.addListener(_onPolicyChanged);
     _scroll.addListener(_scrolled);
@@ -83,7 +87,8 @@ class _RichReaderState extends State<RichReaderPage>
   void _advanceAutomatically(double? seconds) {
     if (!_ready ||
         _controls ||
-        (!_configuring && ModalRoute.of(context)?.isCurrent != true)) {
+        _configuring ||
+        ModalRoute.of(context)?.isCurrent != true) {
       return;
     }
     if (seconds == null || !_continuous) {
@@ -157,10 +162,15 @@ class _RichReaderState extends State<RichReaderPage>
                   ? storedIndex
                   : chapters.indexWhere((chapter) => chapter.id == saved?.last))
               .clamp(0, chapters.length - 1);
+      var style = data is Map ? ReaderPreferences.fromJson(data) : _style;
+      if (!await repository.readerFonts.ensure(style.family)) {
+        style = style.copyWith(family: 'NotoSerifSC');
+      }
+      if (!mounted || _error != null) return;
       setState(() {
         _validated = true;
         _chapters = chapters;
-        if (data is Map) _style = ReaderPreferences.fromJson(data);
+        _style = style;
         _sections = sections;
         _index = index;
         if (stored is Map) {
@@ -248,8 +258,10 @@ class _RichReaderState extends State<RichReaderPage>
     _scrollFraction = position.maxScrollExtent > 0
         ? _lastScrollOffset / position.maxScrollExtent
         : 0;
-    _saveTimer?.cancel();
-    _saveTimer = Timer(const Duration(milliseconds: 550), _save);
+    _saveTimer ??= Timer(const Duration(seconds: 3), () {
+      _saveTimer = null;
+      _save();
+    });
   }
 
   void _save() {
@@ -415,6 +427,7 @@ class _RichReaderState extends State<RichReaderPage>
 
   @override
   void dispose() {
+    _releaseReading();
     _automation.dispose();
     _saveTimer?.cancel();
     _save();
@@ -444,9 +457,9 @@ class _RichReaderState extends State<RichReaderPage>
         autofocus: true,
         child: Scaffold(
           backgroundColor: _isPdf ? null : palette.paper,
-          body: SafeArea(
-            top: !_style.immersive || !_ready,
-            bottom: !_style.immersive || !_ready,
+          body: ReaderSafeArea(
+            preferences: _style,
+            forceTop: !_ready,
             child: Stack(
               fit: StackFit.expand,
               children: [
@@ -599,10 +612,13 @@ class _RichReaderState extends State<RichReaderPage>
   );
 
   Future<void> _settings() async {
+    final wasRunning = _auto;
+    final wasEnabled = _style.autoEnabled;
     _configuring = true;
+    _stop();
     await showReaderSettings(
       context,
-      _style.copyWith(autoEnabled: _auto),
+      _style,
       (settings) {
         if (!mounted || !_ready) return;
         if (settings.immersive != _style.immersive) {
@@ -615,14 +631,16 @@ class _RichReaderState extends State<RichReaderPage>
         } else if (!_auto ||
             previous.mode != settings.mode ||
             previous.autoSeconds != settings.autoSeconds) {
-          _startAutomation();
+          if (!_configuring) _startAutomation();
         }
       },
+      fontStore: widget.repository.readerFonts,
       rich: true,
       pdf: _isPdf,
     );
     _configuring = false;
     if (mounted && _ready) {
+      if (_style.autoEnabled && (wasRunning || !wasEnabled)) _startAutomation();
       try {
         await widget.repository.store.write(
           'books_reader_preferences',

@@ -5,7 +5,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:zero_player/app/app_services.dart';
 import 'package:zero_player/core/persistence/app_database.dart';
-import 'package:zero_player/features/playback/application/local_video.dart';
 import 'package:zero_player/features/playback/application/playback_controller.dart';
 import 'package:zero_player/features/playback/presentation/local_video_page.dart';
 
@@ -33,7 +32,7 @@ void _historySelectionTest(bool missing) {
         await services.supervision.load();
         final old = await File('${root.path}/old.mp4').writeAsBytes([1]);
         replacement = await File('${root.path}/new.mp4').writeAsBytes([2]);
-        final request = await LocalVideo.open(services, old.path);
+        final request = await services.localVideo.open(old.path);
         oldId = request.item.id;
         await services.history.save(
           request.item,

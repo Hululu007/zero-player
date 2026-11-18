@@ -125,8 +125,12 @@ final class MusicLibrary extends ChangeNotifier {
     'INSERT OR REPLACE INTO app_meta VALUES(?,?)',
     ['music_playlist:${list.id}', jsonEncode(list.toJson())],
   );
+  MusicPlaylist _playlist(String id) => playlists.firstWhere(
+    (p) => p.id == id,
+    orElse: () => throw const FormatException('歌单已删除，请刷新后重试'),
+  );
   Future<void> rename(String id, String name) => _write(() async {
-    final list = playlists.firstWhere((p) => p.id == id);
+    final list = _playlist(id);
     await _save(
       MusicPlaylist.fromJson({...list.toJson(), 'name': name.trim()}),
     );
@@ -135,13 +139,13 @@ final class MusicLibrary extends ChangeNotifier {
     () => db.write('DELETE FROM app_meta WHERE key=?', ['music_playlist:$id']),
   );
   Future<void> add(String id, MusicTrack track) => _write(() async {
-    final list = playlists.firstWhere((p) => p.id == id);
+    final list = _playlist(id);
     if (list.tracks.any((t) => t.key == track.key)) return;
     if (list.tracks.length >= 500) throw const FormatException('每个歌单最多 500 首');
     await _save(MusicPlaylist(id, list.name, [...list.tracks, track]));
   });
   Future<void> remove(String id, String key) => _write(() async {
-    final list = playlists.firstWhere((p) => p.id == id);
+    final list = _playlist(id);
     await _save(
       MusicPlaylist(
         id,
@@ -151,7 +155,7 @@ final class MusicLibrary extends ChangeNotifier {
     );
   });
   Future<void> move(String id, String key, int delta) => _write(() async {
-    final list = playlists.firstWhere((p) => p.id == id);
+    final list = _playlist(id);
     final tracks = list.tracks.toList();
     final from = tracks.indexWhere((t) => t.key == key);
     if (from < 0) return;

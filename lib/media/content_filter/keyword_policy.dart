@@ -67,6 +67,7 @@ final class KeywordPolicy {
         .replaceAll('賭城', '赌城')
         .replaceAll('娛樂', '娱乐')
         .replaceAll('現金', '现金')
+        .replaceAll('網', '网')
         .replaceAll('百家樂', '百家乐')
         .replaceAll('開戶', '开户')
         .replaceAll('線上', '在线')

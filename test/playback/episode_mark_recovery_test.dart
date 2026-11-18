@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:async';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:zero_player/app/app_services.dart';
 import 'package:zero_player/core/persistence/app_database.dart';
@@ -33,6 +34,7 @@ void _lifecycle() {
 
 void main() {
   _lifecycle();
+  _markRaceTests();
   test(
     'interval skips without samples, persists, undoes and repeats',
     () async {
@@ -122,6 +124,43 @@ void main() {
     expect(await services.skips.list(player.workKey), isEmpty);
     expect(services.settings.value.skip, isFalse);
   });
+}
+
+void _markRaceTests() {
+  test(
+    'switching while mark awaits a transaction leaves no stale mark',
+    () async {
+      final key = player.workKey;
+      await player.mark();
+      await player.seek(const Duration(seconds: 12));
+      await _tick();
+      final entered = Completer<void>(), release = Completer<void>();
+      final blocker = services.db.atomic(() async {
+        entered.complete();
+        await release.future;
+      }, tables: {});
+      await entered.future;
+      final marking = expectLater(player.mark(), throwsFormatException);
+      final switching = player.open(_request('other-channel'));
+      release.complete();
+      await blocker;
+      await marking;
+      await switching;
+      expect(await services.skips.list(key), isEmpty);
+      expect(player.markStart, isNull);
+    },
+  );
+  test(
+    'invalid second endpoint clears the unfinished mark for a retry',
+    () async {
+      await player.mark();
+      await expectLater(player.mark(), throwsFormatException);
+      expect(player.markStart, isNull);
+      expect(await services.skips.list(player.workKey), isEmpty);
+      await player.mark();
+      expect(player.markStart, const Duration(seconds: 8));
+    },
+  );
 }
 
 Future<void> _tick() => Future<void>.delayed(const Duration(milliseconds: 15));

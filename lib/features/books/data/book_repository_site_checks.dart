@@ -399,14 +399,14 @@ final class BookSiteChecks {
           if (!_configurationCurrent(configurationSnapshot) ||
               !_sameSource(current, entry, enabledOnly) ||
               revision != siteRevision ||
-              !books._sourceEntryAllowed(current!) ||
+              !books.sourceEntryAllowed(current!) ||
               blocked.containsKey(entry.source.id)) {
             throw const _StaleSiteCheck();
           }
         }
 
         await requireCurrent();
-        assessment = await books._addSourceAssessment(
+        assessment = await books.riskStore.addEvidence(
           entry.source,
           adult: inspection.adultRisk,
           quarantine: inspection.gamblingRisk,
@@ -428,7 +428,7 @@ final class BookSiteChecks {
     } finally {
       // Publish before the mutation-complete notification, even if a caller
       // cancels immediately after the transaction has committed.
-      books._rememberAssessment(assessment!);
+      books._sourceAccess.rememberAssessment(assessment!);
       books.policy.refresh();
     }
     return true;

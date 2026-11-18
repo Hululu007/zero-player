@@ -1,11 +1,32 @@
 import 'dart:convert';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:zero_player/app/app_fonts.dart';
+import 'package:zero_player/features/settings/domain/app_fonts.dart';
 import 'package:zero_player/core/persistence/app_database.dart';
 import 'package:zero_player/features/settings/application/settings_controller.dart';
 import 'package:zero_player/features/settings/data/backup_service.dart';
 
 void main() {
+  test(
+    'theme defaults to system and preserves an explicitly saved theme',
+    () async {
+      final db = AppDatabase.memory();
+      final settings = SettingsController(db);
+      addTearDown(() async {
+        settings.dispose();
+        await db.close();
+      });
+      expect(const UserSettings().theme, 'system');
+      expect(UserSettings.fromMap({'theme': 'invalid'}).theme, 'system');
+      await settings.load();
+      expect(settings.value.theme, 'system');
+      for (final theme in ['cinema', 'dark', 'light', 'system']) {
+        await settings.update({'theme': theme});
+        await settings.load();
+        expect(settings.value.theme, theme);
+      }
+    },
+  );
+
   test(
     'font, manual count and startup fullscreen survive backup and reload',
     () async {

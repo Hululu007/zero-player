@@ -15,9 +15,11 @@ final class MusicChartBrowser extends StatefulWidget {
     super.key,
     required this.services,
     required this.onSearch,
+    this.leading,
   });
   final AppServices services;
   final ValueChanged<String> onSearch;
+  final Widget? leading;
 
   @override
   State<MusicChartBrowser> createState() => _MusicChartBrowserState();
@@ -36,12 +38,56 @@ final class _MusicChartBrowserState extends State<MusicChartBrowser> {
 
   @override
   Widget build(BuildContext context) => ListenableBuilder(
-    listenable: Listenable.merge([
-      _feed,
-      widget.services.contentPolicy,
-    ]),
-    builder: (context, _) => _body(context),
+    listenable: Listenable.merge([_feed, widget.services.contentPolicy]),
+    builder: (context, _) => LayoutBuilder(
+      builder: (context, constraints) =>
+          constraints.maxWidth < 720 ? _phoneBody(context) : _body(context),
+    ),
   );
+
+  Widget _phoneBody(BuildContext context) {
+    final feed = _feed;
+    final leading = <Widget>[
+      if (widget.leading != null) SliverToBoxAdapter(child: widget.leading),
+      SliverToBoxAdapter(child: _platformBar(context, feed)),
+      if (feed.chartDirectoryLoading)
+        const SliverToBoxAdapter(child: LinearProgressIndicator()),
+      if (feed.chartDirectoryError case final error?)
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(error),
+                TextButton(
+                  onPressed: () => feed.selectChartPlatform(
+                    feed.chartPlatform,
+                    refresh: true,
+                  ),
+                  child: const Text('重试榜单目录'),
+                ),
+              ],
+            ),
+          ),
+        ),
+      if (feed.chart != 'wfu' && feed.charts.isNotEmpty)
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+            child: MusicChartNav(
+              options: feed.charts,
+              selected: feed.selectedChart?.id,
+              onSelected: feed.selectChart,
+              compact: true,
+            ),
+          ),
+        ),
+    ];
+    return feed.chart == 'wfu'
+        ? _wfuList(feed, leading: leading)
+        : _songList(feed, leading: leading);
+  }
 
   Widget _body(BuildContext context) {
     final feed = _feed;
@@ -84,37 +130,42 @@ final class _MusicChartBrowserState extends State<MusicChartBrowser> {
   Widget _platformBar(BuildContext context, MusicRecommendations feed) {
     final uri = feed.chartUri;
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
-      child: Wrap(
-        spacing: 8,
-        runSpacing: 8,
-        crossAxisAlignment: WrapCrossAlignment.center,
-        children: [
-          for (final entry in musicCatalogPlatforms.entries)
+      padding: const EdgeInsets.fromLTRB(12, 2, 12, 2),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          spacing: 6,
+          children: [
+            for (final entry in musicCatalogPlatforms.entries)
+              ChoiceChip(
+                label: Text(entry.value),
+                selected:
+                    feed.chart != 'wfu' && feed.chartPlatform == entry.key,
+                onSelected: (value) {
+                  if (value) feed.selectChartPlatform(entry.key);
+                },
+              ),
             ChoiceChip(
-              label: Text(entry.value),
-              selected: feed.chart != 'wfu' && feed.chartPlatform == entry.key,
-              onSelected: (value) {
-                if (value) feed.selectChartPlatform(entry.key);
-              },
+              label: const Text('WFU 音乐精选'),
+              selected: feed.chart == 'wfu',
+              onSelected: (_) => feed.load('wfu'),
             ),
-          ChoiceChip(
-            label: const Text('WFU 音乐精选'),
-            selected: feed.chart == 'wfu',
-            onSelected: (_) => feed.load('wfu'),
-          ),
-          if (uri != null)
-            MusicCatalogCopyButton(uri: uri, label: '复制榜单网页链接'),
-          IconButton(
-            tooltip: '刷新榜单曲目',
-            onPressed: feed.loading
-                ? null
-                : () => feed.chart == 'wfu'
-                ? feed.load('wfu', refresh: true)
-                : feed.selectChartPlatform(feed.chartPlatform, refresh: true),
-            icon: const Icon(Icons.refresh),
-          ),
-        ],
+            if (uri != null)
+              MusicCatalogCopyButton(uri: uri, label: '复制榜单网页链接'),
+            IconButton(
+              tooltip: '刷新榜单曲目',
+              onPressed: feed.loading
+                  ? null
+                  : () => feed.chart == 'wfu'
+                        ? feed.load('wfu', refresh: true)
+                        : feed.selectChartPlatform(
+                            feed.chartPlatform,
+                            refresh: true,
+                          ),
+              icon: const Icon(Icons.refresh),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -158,11 +209,17 @@ final class _MusicChartBrowserState extends State<MusicChartBrowser> {
         },
       );
 
-  Widget _wfuList(MusicRecommendations feed) {
+  Widget _wfuList(
+    MusicRecommendations feed, {
+    List<Widget> leading = const [],
+  }) {
     final items = _visibleItems(feed);
     return CustomScrollView(
       key: const PageStorageKey('music-discovery'),
+      controller: _scroll,
+      keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
       slivers: [
+        ...leading,
         SliverToBoxAdapter(child: _header(feed)),
         MusicSongSliver(items: items, onSearch: widget.onSearch),
         if (feed.loading)
@@ -176,7 +233,10 @@ final class _MusicChartBrowserState extends State<MusicChartBrowser> {
     );
   }
 
-  Widget _songList(MusicRecommendations feed) {
+  Widget _songList(
+    MusicRecommendations feed, {
+    List<Widget> leading = const [],
+  }) {
     final items = _visibleItems(feed);
     return NotificationListener<ScrollUpdateNotification>(
       onNotification: (notification) {
@@ -192,7 +252,9 @@ final class _MusicChartBrowserState extends State<MusicChartBrowser> {
       child: CustomScrollView(
         key: const PageStorageKey('music-discovery'),
         controller: _scroll,
+        keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
         slivers: [
+          ...leading,
           SliverToBoxAdapter(child: _header(feed)),
           SliverPadding(
             padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -259,9 +321,7 @@ final class _MusicChartBrowserState extends State<MusicChartBrowser> {
             Padding(
               padding: const EdgeInsets.only(top: 6),
               child: Text(
-                !feed.visible
-                    ? '当前栏目已被过滤'
-                    : (feed.pageError ?? feed.notice)!,
+                !feed.visible ? '当前栏目已被过滤' : (feed.pageError ?? feed.notice)!,
               ),
             ),
           if (feed.visible)
@@ -288,9 +348,7 @@ final class _MusicChartBrowserState extends State<MusicChartBrowser> {
       return Center(
         child: TextButton(
           onPressed: feed.loadMore,
-          child: Text(
-            feed.pageError == null ? '加载更多曲目' : '重试下一页曲目',
-          ),
+          child: Text(feed.pageError == null ? '加载更多曲目' : '重试下一页曲目'),
         ),
       );
     }
@@ -310,11 +368,7 @@ final class _MusicChartBrowserState extends State<MusicChartBrowser> {
 }
 
 final class _ChartRow extends StatelessWidget {
-  const _ChartRow({
-    super.key,
-    required this.item,
-    required this.onSearch,
-  });
+  const _ChartRow({super.key, required this.item, required this.onSearch});
   final MusicRecommendation item;
   final ValueChanged<String> onSearch;
 
@@ -446,9 +500,9 @@ final class _Trend extends StatelessWidget {
                 label,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                  color: color,
-                ),
+                style: Theme.of(
+                  context,
+                ).textTheme.labelSmall?.copyWith(color: color),
               ),
             ),
         ],

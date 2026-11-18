@@ -12,6 +12,7 @@ import 'package:zero_player/features/books/presentation/book_image_chapter.dart'
 import 'package:zero_player/features/books/presentation/book_reader_page.dart';
 
 import '../../test_support/book_fixture_source.dart';
+import '../../test_support/comic_source_authorization.dart';
 
 void main() {
   testWidgets('offline comic opens a decoded image in the reader', (
@@ -27,10 +28,13 @@ void main() {
         await root.delete(recursive: true);
       });
     });
-    await services.settings.load();
-    await services.supervision.load();
     final source = bookFixtureSource('fixture.test', kind: BookKind.comic);
-    await services.books.importSources([source]);
+    await tester.runAsync(() async {
+      await services.settings.load();
+      await services.supervision.load();
+      await authorizeComicFixture(services, source);
+      await services.books.importSources([source]);
+    });
     final book = Book(
       source.id,
       BookKind.comic,

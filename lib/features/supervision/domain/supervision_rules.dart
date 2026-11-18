@@ -70,6 +70,6 @@ final class SupervisionRules {
   );
 }
 
-final class ContentBlocked extends FormatException {
+class ContentBlocked extends FormatException {
   const ContentBlocked([super.message = '内容已被成人过滤或监管规则屏蔽']);
 }

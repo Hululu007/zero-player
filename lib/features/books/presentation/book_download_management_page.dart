@@ -9,11 +9,16 @@ import '../domain/book.dart';
 import '../domain/book_download_plan.dart';
 import 'book_detail_page.dart';
 import 'book_page_route.dart';
+import 'book_text_policy_dialog.dart';
+import 'book_blocked_chapters_dialog.dart';
+import '../data/book_chapter_policy.dart';
+import '../../../core/network/cancellation_token.dart';
 
 typedef _DownloadItem = ({
   BookShelfEntry entry,
   BookDownloadPlan? plan,
   Set<String> saved,
+  Map<String, String> blocked,
 });
 
 enum _DownloadFilter { all, running, pending, saved }
@@ -104,7 +109,12 @@ final class _BookDownloadManagementPageState
         final active = _manager.active(book);
         final saved = await _saved(book);
         if (plan != null || active != null || saved.isNotEmpty) {
-          items.add((entry: entry, plan: plan, saved: saved));
+          items.add((
+            entry: entry,
+            plan: plan,
+            saved: saved,
+            blocked: await _blocked(book),
+          ));
           seen.add(book.id);
         }
       }
@@ -118,6 +128,7 @@ final class _BookDownloadManagementPageState
           entry: BookShelfEntry(book, task.chapters, null, 0, false, 0),
           plan: plans[book.id],
           saved: await _saved(book),
+          blocked: await _blocked(book),
         ));
       }
       if (!mounted || sequence != _sequence) return;
@@ -134,6 +145,55 @@ final class _BookDownloadManagementPageState
           _error = '无法读取下载记录';
         });
       }
+    }
+  }
+
+  Future<Map<String, String>> _blocked(Book book) async {
+    final raw = await widget.services.books.store.read(
+      'books_download_blocked:${book.id}',
+    );
+    if (raw is! Map) return {};
+    return {
+      for (final key in raw.keys.whereType<String>())
+        key: raw[key] == '监管关键词命中' ? '监管关键词命中' : '成人正文规则命中',
+    };
+  }
+
+  Future<void> _blockedReport(_DownloadItem item) => showBlockedChaptersDialog(
+    context,
+    chapters: [
+      for (final (index, chapter) in item.entry.chapters.indexed)
+        if (item.blocked[chapter.id] case final reason?)
+          (
+            position: index + 1,
+            reason: reason,
+            review: () => _reviewChapter(item.entry.book, chapter),
+          ),
+    ],
+    replacements: () =>
+        showBookTextReplacements(context, widget.services.books),
+  );
+
+  Future<void> _reviewChapter(Book book, BookChapter chapter) async {
+    final books = widget.services.books;
+    final token = CancellationToken();
+    try {
+      await books.readText(book, chapter, token);
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('此章当前已可读取，可继续下载重试')));
+      }
+    } on ChapterContentBlocked catch (block) {
+      if (mounted) await reviewBlockedChapter(context, books, block);
+    } on Exception {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('章节无法复核，请检查来源或网络')));
+      }
+    } finally {
+      token.cancel();
     }
   }
 
@@ -333,6 +393,8 @@ final class _BookDownloadManagementPageState
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(status, maxLines: 1, overflow: TextOverflow.ellipsis),
+          if (item.blocked.isNotEmpty)
+            Text('过滤跳过 ${item.blocked.length} 章，可在管理菜单复核'),
           if (task != null && task.total > 0)
             LinearProgressIndicator(value: task.finished / task.total),
         ],
@@ -343,6 +405,8 @@ final class _BookDownloadManagementPageState
         enabled: !busy,
         onSelected: (action) {
           switch (action) {
+            case 'blocked':
+              unawaited(_blockedReport(item));
             case 'pause':
               task?.pause();
             case 'resume':
@@ -356,6 +420,8 @@ final class _BookDownloadManagementPageState
           }
         },
         itemBuilder: (_) => [
+          if (item.blocked.isNotEmpty)
+            const PopupMenuItem(value: 'blocked', child: Text('过滤原因与章节复核')),
           if (task != null)
             const PopupMenuItem(value: 'pause', child: Text('暂停')),
           if (task == null &&

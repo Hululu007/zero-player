@@ -238,9 +238,9 @@ final class MediaGateway {
           )) {
         return;
       } else if (!session.cacheEnabled ||
-          !(await session.prefetch.prepare()) ||
           session._streaming.contains(uri) ||
-          uri.path.toLowerCase().endsWith('.flv')) {
+          uri.path.toLowerCase().endsWith('.flv') ||
+          !(await session.prefetch.prepare())) {
         await _passthrough(request, session, uri, range);
       } else {
         final key = resourceIdentity(
@@ -253,27 +253,16 @@ final class MediaGateway {
             key,
             () => _fetch(session, uri, range, key),
           );
-        } on FileSystemException {
+        } on Exception catch (error) {
+          if (error is! FileSystemException && error is! _RangeNotSupported) {
+            rethrow;
+          }
           await _passthrough(request, session, uri, range);
           return;
         }
         final resource = lease.resource;
-        validateMediaType(resource.headers[HttpHeaders.contentTypeHeader]);
         session.prefetch.observe(uri, resource.length, range: range);
-        request.response.statusCode = resource.statusCode;
-        resource.headers.forEach(request.response.headers.set);
-        request.response.contentLength = resource.length;
-        if (request.method != 'HEAD') {
-          await request.response.addStream(
-            guardMediaBody(
-              resource.file.openRead(),
-              inspectPrefix: startsMediaEntity(
-                resource.headers[HttpHeaders.contentRangeHeader],
-                requestedRange: range,
-              ),
-            ),
-          );
-        }
+        await _serveCachedResource(request, resource, range);
       }
     } catch (_) {
       failures++;
@@ -293,6 +282,28 @@ final class MediaGateway {
       } catch (_) {
         /* Disconnected. */
       }
+    }
+  }
+
+  Future<void> _serveCachedResource(
+    HttpRequest request,
+    StoredResource resource,
+    String? range,
+  ) async {
+    validateMediaType(resource.headers[HttpHeaders.contentTypeHeader]);
+    request.response.statusCode = resource.statusCode;
+    resource.headers.forEach(request.response.headers.set);
+    request.response.contentLength = resource.length;
+    if (request.method != 'HEAD') {
+      await request.response.addStream(
+        guardMediaBody(
+          resource.file.openRead(),
+          inspectPrefix: startsMediaEntity(
+            resource.headers[HttpHeaders.contentRangeHeader],
+            requestedRange: range,
+          ),
+        ),
+      );
     }
   }
 
@@ -451,6 +462,10 @@ final class MediaGateway {
       throw const HttpException('Media unavailable');
     }
     // A Range request is never relabelled 206 if the server ignores it.
+    if (range != null && response.statusCode != HttpStatus.partialContent) {
+      await payload.body.take(0).drain<void>();
+      throw const _RangeNotSupported();
+    }
     final headers = <String, String>{};
     for (final name in [
       HttpHeaders.contentTypeHeader,
@@ -496,4 +511,8 @@ final class MediaGateway {
     await _server?.close(force: true);
     _server = null;
   }
+}
+
+final class _RangeNotSupported implements Exception {
+  const _RangeNotSupported();
 }

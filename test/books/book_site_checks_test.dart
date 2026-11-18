@@ -1197,6 +1197,44 @@ void _riskRetentionTests() {
 }
 
 void _monitorLifecycleTests() {
+  test(
+    'independent auto-check switch and management leases suspend sampling',
+    () async {
+      final fixture = await _Fixture.create();
+      addTearDown(fixture.close);
+      await fixture.add([_source('one', 'management-pause.example')]);
+      var inspected = 0;
+      final checks = BookSiteChecks(
+        fixture.services.books,
+        inspect: (_, _) async {
+          inspected++;
+          return const BookSiteInspection(BookSiteFinding.sampled);
+        },
+      );
+      final monitor = BookSiteMonitor(
+        checks,
+        fixture.services.settings,
+        startDelay: const Duration(hours: 1),
+      );
+      addTearDown(monitor.close);
+      monitor.start();
+      await fixture.services.settings.update({'bookSiteAutoCheck': false});
+      await monitor.check();
+      expect(inspected, 0);
+      await fixture.services.settings.update({'bookSiteAutoCheck': true});
+      final releaseFirst = monitor.pauseForManagement();
+      final releaseSecond = monitor.pauseForManagement();
+      await monitor.check();
+      releaseFirst();
+      releaseFirst();
+      await monitor.check();
+      expect(inspected, 0);
+      releaseSecond();
+      await monitor.check();
+    expect(inspected, greaterThan(0));
+    },
+  );
+
   test('monitor close cancels and waits for manual work', () async {
     final fixture = await _Fixture.create();
     addTearDown(fixture.close);

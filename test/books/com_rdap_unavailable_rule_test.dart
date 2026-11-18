@@ -323,10 +323,10 @@ void main() {
         expect(restored.enabled, isFalse);
         expect(restored.favorite, isTrue);
         expect(restored.group, '珍藏');
-        expect(services.books.bookAllowed(book), isTrue);
+        expect(services.books.bookAllowed(book), old.kind != BookKind.comic);
         await services.books.store.deleteSource(revised);
         await services.books.refreshSourceRisks();
-        expect(services.books.bookAllowed(book), isTrue);
+        expect(services.books.bookAllowed(book), old.kind != BookKind.comic);
       }
     },
   );

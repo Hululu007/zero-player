@@ -31,8 +31,11 @@ void main() {
           return null;
         },
       );
+      tester.view.devicePixelRatio = 1;
+      tester.view.physicalSize = const Size(800, 600);
       tester.view.padding = const FakeViewPadding(top: 28, bottom: 24);
-      addTearDown(tester.view.resetPadding);
+      tester.view.viewPadding = const FakeViewPadding(top: 28, bottom: 24);
+      addTearDown(tester.view.reset);
       final root = (await tester.runAsync(
         () => Directory.systemTemp.createTemp('reader-session-'),
       ))!;
@@ -112,10 +115,10 @@ void main() {
 
 void _expectImmersive(WidgetTester tester, List<MethodCall> calls) {
   final viewport = tester.getRect(find.byType(ReaderViewport));
-  expect(viewport.top, 0);
+  expect(viewport.top, 28);
   expect(
     viewport.bottom,
-    tester.view.physicalSize.height / tester.view.devicePixelRatio,
+    tester.view.physicalSize.height / tester.view.devicePixelRatio - 24,
   );
   expect(
     calls.any(

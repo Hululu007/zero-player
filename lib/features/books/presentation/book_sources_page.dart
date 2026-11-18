@@ -48,7 +48,7 @@ final class BookSourcesPage extends StatefulWidget {
 final class _BookSourcesPageState extends State<BookSourcesPage> {
   List<BookSourceEntry> _entries = [];
   bool _busy = false, _favorites = false, _dynamicRules = false;
-  bool _historicalAmsi = false, _pageScriptClues = false, _saleClues = false;
+  bool _historicalAmsi = false, _pageScriptClues = false;
   bool? _enabled;
   String _query = '';
   bool _selecting = false;
@@ -61,6 +61,7 @@ final class _BookSourcesPageState extends State<BookSourcesPage> {
   String? _siteProgress;
   late final StreamSubscription<void> _sourceChanges;
   Timer? _sourceRefresh;
+  late final VoidCallback _releaseMonitor;
   int _sourceRevision = 0;
   AppServices get _services => widget.services;
 
@@ -68,6 +69,7 @@ final class _BookSourcesPageState extends State<BookSourcesPage> {
   void initState() {
     super.initState();
     _siteChecks = _services.bookSiteChecks;
+    _releaseMonitor = _services.bookSiteMonitor.pauseForManagement();
     _sitePolicySnapshot = bookSitePolicySnapshot(_services.contentPolicy);
     _services.contentPolicy.addListener(_policyChanged);
     _services.books.sourceRiskChanges.addListener(_policyChanged);
@@ -81,6 +83,7 @@ final class _BookSourcesPageState extends State<BookSourcesPage> {
   void dispose() {
     _token?.cancel();
     _sourceRefresh?.cancel();
+    _releaseMonitor();
     unawaited(_sourceChanges.cancel());
     _services.contentPolicy.removeListener(_policyChanged);
     _services.books.sourceRiskChanges.removeListener(_policyChanged);
@@ -91,12 +94,18 @@ final class _BookSourcesPageState extends State<BookSourcesPage> {
     _sourceRevision++;
     final next = bookSitePolicySnapshot(_services.contentPolicy);
     if (next != _sitePolicySnapshot) _token?.cancel();
+    final policyChanged = next != _sitePolicySnapshot;
     _sitePolicySnapshot = next;
     setState(() {
-      _entries = [];
-      _siteResults = {};
-      _siteResultsUnavailable = false;
-      _selected.clear();
+      // Revoke restricted rows immediately, preserving unaffected selection
+      // and scroll while metadata is refreshed silently.
+      _entries.removeWhere(
+        (entry) => !_services.books.sourceEntryAllowed(entry),
+      );
+      if (policyChanged) {
+        _siteResults = {};
+        _selected.retainAll(_entries.map((entry) => entry.source.id));
+      }
     });
     if (!_busy) _queueRefresh();
   }
@@ -110,7 +119,7 @@ final class _BookSourcesPageState extends State<BookSourcesPage> {
     if (_sourceRefresh != null) return;
     _sourceRefresh = Timer(const Duration(milliseconds: 100), () {
       _sourceRefresh = null;
-      if (mounted && !_busy) _run(() async {});
+      if (mounted && !_busy) unawaited(_reloadSources());
     });
   }
 
@@ -836,15 +845,35 @@ final class _BookSourcesPageState extends State<BookSourcesPage> {
           ),
         ],
       ),
-      const Padding(
-        padding: EdgeInsets.symmetric(horizontal: 16),
-        child: Text(
-          '启用后台检测时，每 30 分钟抽查最多 20 个已启用源；'
-          '完整样本 7 天复查；未确认结果的重试间隔从 30 分钟递增至 24 小时（含文字、响应或样式可见性未确认），排队可能更久。'
-          '监管期间仅检查策略允许的可信内置文字源，不检查外部书源。'
-          '只查首页部分静态文字、跳转和内联脚本写法，不执行网页脚本，也不验证解析、木马或安全性。'
-          '网页脚本线索、来源规则“动态求值”和历史检出仅供复核，不代表恶意或安全。',
+      ListenableBuilder(
+        listenable: _services.settings,
+        builder: (context, _) => SwitchListTile(
+          dense: true,
+          title: const Text('书源自动网页抽查'),
+          subtitle: const Text('管理页面打开时暂停，关闭页面后恢复'),
+          value: _services.settings.value.bookSiteAutoCheck,
+          onChanged: (value) => _run(() async {
+            await runSensitive(
+              context,
+              _services.supervision,
+              SensitiveOperation.settings,
+              () => _services.settings.update({'bookSiteAutoCheck': value}),
+            );
+          }),
         ),
+      ),
+      const ExpansionTile(
+        dense: true,
+        title: Text('自动检测说明'),
+        leading: Icon(Icons.help_outline),
+        childrenPadding: EdgeInsets.fromLTRB(16, 0, 16, 8),
+        children: [
+          Text(
+            '开启后，应用会定期抽查已启用书源的首页，提示需要复核的内容或疑似网页脚本。'
+            '管理页面打开时暂停自动抽查，离开后恢复；也可手动发起网页抽查。'
+            '抽查不执行网页脚本，结果仅供参考。',
+          ),
+        ],
       ),
     ],
   );
@@ -862,8 +891,6 @@ final class _BookSourcesPageState extends State<BookSourcesPage> {
                               ?.pendingScriptClues
                               .isNotEmpty ==
                           true) &&
-                  (!_saleClues ||
-                      _siteResults[entry.source.id]?.pendingSaleClue != null) &&
                   (!_historicalAmsi ||
                       bookSourceHasHistoricalAmsiClue(entry.source)) &&
                   (_enabled == null || entry.enabled == _enabled) &&
@@ -962,8 +989,7 @@ final class _BookSourcesPageState extends State<BookSourcesPage> {
             child: list.isEmpty
                 ? Center(
                     child: Text(
-                      _siteResultsUnavailable &&
-                              (_pageScriptClues || _saleClues)
+                      _siteResultsUnavailable && _pageScriptClues
                           ? '网页抽查记录读取失败，无法筛选，请重试'
                           : '没有符合条件的来源',
                     ),
@@ -1017,14 +1043,9 @@ final class _BookSourcesPageState extends State<BookSourcesPage> {
               onSelected: (value) => setState(() => _dynamicRules = value),
             ),
             FilterChip(
-              label: const Text('网页脚本线索'),
+              label: const Text('疑似网页脚本'),
               selected: _pageScriptClues,
               onSelected: (value) => setState(() => _pageScriptClues = value),
-            ),
-            FilterChip(
-              label: const Text('域名出售线索'),
-              selected: _saleClues,
-              onSelected: (value) => setState(() => _saleClues = value),
             ),
             FilterChip(
               label: const Text('历史检出'),
@@ -1044,6 +1065,19 @@ final class _BookSourcesPageState extends State<BookSourcesPage> {
       enabled: !_busy,
       onSelected: (value) async {
         switch (value) {
+          case 'comicAuthorize':
+            await _run(() async {
+              if (!_services.supervision.configured) {
+                throw const FormatException('请先在监管模式中设置密码');
+              }
+              await runSensitive(
+                context,
+                _services.supervision,
+                SensitiveOperation.supervision,
+                () => _services.books.comicAccess.approve(source),
+                explanation: '授权当前漫画渠道规则；订阅规则变化后需要重新验证。来源风险和内容过滤继续生效。',
+              );
+            });
           case 'copy':
             await copyBookLink(context, source.endpoint);
           case 'probe':
@@ -1073,6 +1107,12 @@ final class _BookSourcesPageState extends State<BookSourcesPage> {
         }
       },
       itemBuilder: (_) => [
+        if (source.kind == BookKind.comic &&
+            !_services.books.comicAccess.allowed(source))
+          const PopupMenuItem(
+            value: 'comicAuthorize',
+            child: Text('验证监管密码授权漫画渠道'),
+          ),
         const PopupMenuItem(value: 'copy', child: Text('复制渠道链接')),
         const PopupMenuItem(value: 'probe', child: Text('解析检测（执行来源规则）')),
         const PopupMenuItem(value: 'group', child: Text('修改分组')),
@@ -1119,6 +1159,9 @@ final class _BookSourcesPageState extends State<BookSourcesPage> {
       title: Text(source.name),
       subtitle: Text(
         [
+          if (source.kind == BookKind.comic &&
+              !_services.books.comicAccess.allowed(source))
+            '强制停用：需验证监管密码授权',
           if (source.builtin) '内置',
           if (entry.fromCatalog) 'aoaostar/legado',
           if (source.legado != null) 'Legado',
@@ -1134,8 +1177,6 @@ final class _BookSourcesPageState extends State<BookSourcesPage> {
           if (siteCheck != null)
             for (final clue in siteCheck.historicalScriptClues.entries)
               '历史网页脚本待复核：${_scriptClueLabel(clue.key)}（上次发现 ${_siteTime(clue.value)}）',
-          if (siteCheck?.historicalSaleClue case final observed?)
-            '历史域名出售线索，待复核（上次发现 ${_siteTime(observed)}）',
         ].join(' · '),
       ),
       trailing: Row(

@@ -74,7 +74,6 @@ final class MusicOpenApi extends ChangeNotifier {
     }
     _server = server;
     player.addListener(_changed);
-    _heartbeat = Timer.periodic(const Duration(seconds: 20), (_) => _changed());
     server.listen((request) => unawaited(_handle(request)));
     notifyListeners();
   }
@@ -136,6 +135,10 @@ final class MusicOpenApi extends ChangeNotifier {
         response.bufferOutput = false;
         response.write(': connected\n\n');
         _clients[response] = _fields(request);
+        _heartbeat ??= Timer.periodic(
+          const Duration(seconds: 20),
+          (_) => _changed(),
+        );
         streaming = true;
         unawaited(
           response.done.then(
@@ -165,6 +168,10 @@ final class MusicOpenApi extends ChangeNotifier {
   void _forget(HttpResponse response) {
     _clients.remove(response);
     _busy.remove(response);
+    if (_clients.isEmpty) {
+      _heartbeat?.cancel();
+      _heartbeat = null;
+    }
   }
 
   void _changed() {

@@ -13,6 +13,7 @@ import 'package:zero_player/features/books/presentation/book_image_chapter.dart'
 import 'package:zero_player/features/books/presentation/reader_style.dart';
 
 import '../test_support/book_fixture_source.dart';
+import '../test_support/comic_source_authorization.dart';
 
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
@@ -51,6 +52,12 @@ void main() {
         expect(page.controller!.page, 1);
         await tester.tapAt(rect.center);
         await tester.pumpAndSettle();
+        expect(find.byTooltip('阅读样式'), findsOneWidget);
+        expect(find.byType(InteractiveViewer), findsNothing);
+        await tester.tapAt(rect.center);
+        await tester.pumpAndSettle();
+        await tester.longPressAt(rect.center);
+        await tester.pumpAndSettle();
         expect(find.byType(InteractiveViewer), findsOneWidget);
         await tester.tap(find.byTooltip('关闭图片'));
         await tester.pumpAndSettle();
@@ -79,6 +86,7 @@ void main() {
 
 Future<(Book, BookChapter)> _seed(AppServices services) async {
   final source = bookFixtureSource('comic-native.test', kind: BookKind.comic);
+  await authorizeComicFixture(services, source);
   await services.books.importSources([source]);
   final book = Book(
     source.id,

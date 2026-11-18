@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'app_fonts.dart';
+import '../features/settings/domain/app_fonts.dart';
 
 ThemeData buildAppTheme(
   Brightness brightness,

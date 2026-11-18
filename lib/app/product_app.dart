@@ -1,5 +1,6 @@
+import '../core/platform/foreground_workload.dart';
 import '../features/playback/presentation/local_video_page.dart';
-import '../features/playback/application/local_video.dart';
+import 'local_open_startup.dart';
 import 'dart:async';
 import '../features/supervision/presentation/supervision_page.dart';
 import 'dart:ui' show AppExitResponse;
@@ -65,9 +66,9 @@ final class _ProductAppState extends ConsumerState<ProductApp>
     services.sourceMonitor.start();
     services.bookSiteMonitor.start();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted && LocalVideo.startupPath != null) {
-        final path = LocalVideo.startupPath!;
-        LocalVideo.startupPath = null;
+      if (mounted && LocalOpenStartup.path != null) {
+        final path = LocalOpenStartup.path!;
+        LocalOpenStartup.path = null;
         router.go(
           Uri(path: '/local', queryParameters: {'path': path}).toString(),
         );
@@ -248,6 +249,9 @@ final class _ProductAppState extends ConsumerState<ProductApp>
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
+    ForegroundWorkload.instance.setForeground(
+      state == AppLifecycleState.resumed,
+    );
     if (state == AppLifecycleState.detached) {
       _exiting = true;
       unawaited(services.closeSafely());

@@ -8,7 +8,9 @@ extension _BookRepositoryProbe on BooksRepository {
   ) async {
     policy.supervision.require(SensitiveOperation.channels);
     await ensureSourceRiskLoaded();
-    if (!sourceAllowed(source) || await _blocked(source.id)) {
+    if (!sourceAllowed(source) ||
+        !comicAccess.allowed(source) ||
+        await _blocked(source.id)) {
       throw const ContentBlocked();
     }
     final lease = _DiscoveryLease(
@@ -18,7 +20,7 @@ extension _BookRepositoryProbe on BooksRepository {
       allowDisabled: true,
     );
     final token = lease.token;
-    Book? observedBook;
+    BookPolicyObservation? observation;
     try {
       lease.check();
       final watch = Stopwatch()..start();
@@ -34,25 +36,20 @@ extension _BookRepositoryProbe on BooksRepository {
         );
         final book = books.where(bookAllowed).firstOrNull;
         if (book == null) throw const FormatException('没有匹配作品，试试该源中已知的书名');
-        final observation = _startBookObservation(book);
-        observedBook = book;
+        final activeObservation = _bookPolicy.startObservation(book.id);
+        observation = activeObservation;
         void authorizeObservation() {
           lease.check();
-          _requireBookObservation(book, observation);
+          activeObservation.check();
         }
 
         stage = '详情';
-        final details = await _withBookRequestGuard(
+        final details = await _probeDetails(
           source,
           book,
           token,
-          (active, guard) =>
-              client.details(source, book, active, requestGuard: guard),
-          allowDisabled: true,
+          authorizeObservation,
         );
-        authorizeObservation();
-        await _rememberBookMetadata(book, details, authorizeObservation);
-        authorizeObservation();
         if (!bookAllowed(details)) throw const ContentBlocked();
         stage = '目录';
         final chapters = await _withBookRequestGuard(
@@ -96,9 +93,35 @@ extension _BookRepositoryProbe on BooksRepository {
       }, validate: lease.check);
       lease.check();
     } finally {
-      if (observedBook != null) _finishBookObservation(observedBook);
+      observation?.close();
       lease.dispose();
     }
+  }
+
+  Future<Book> _probeDetails(
+    BookSource source,
+    Book book,
+    CancellationToken token,
+    void Function() authorize,
+  ) async {
+    final details = await _withBookRequestGuard(
+      source,
+      book,
+      token,
+      (active, guard) =>
+          client.details(source, book, active, requestGuard: guard),
+      allowDisabled: true,
+    );
+    authorize();
+    await _bookPolicy.rememberMetadata(
+      book,
+      details,
+      bookAllowed: bookAllowed,
+      authorize: authorize,
+      afterCommit: afterBookPolicyCommitForTesting,
+    );
+    authorize();
+    return details;
   }
 
   Future<void> _probeChapter(

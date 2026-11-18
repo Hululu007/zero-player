@@ -100,7 +100,7 @@ final class DocumentClient {
           uri: {...headers, 'Content-Type': contentType},
         }),
         cancellation: token,
-        priority: RequestPriority.interactive,
+        priority: currentRequestPriority,
         onActivity: budget.activity,
       );
       if (response.response.statusCode != 200) {
@@ -130,7 +130,7 @@ final class DocumentClient {
     Map<String, String> headers = const {},
     int maxBytes = 2 * 1024 * 1024,
     CancellationToken? cancellation,
-    RequestPriority priority = RequestPriority.interactive,
+    RequestPriority? priority,
     bool gzip = false,
     void Function(bool active)? onActivity,
     Duration networkTimeout = const Duration(seconds: 25),
@@ -148,7 +148,7 @@ final class DocumentClient {
             headers: headers,
             maxBytes: maxBytes,
             cancellation: token,
-            priority: priority,
+            priority: priority ?? currentRequestPriority,
             gzip: gzip,
             onActivity: budget.activity,
             validateTarget: validateTarget,

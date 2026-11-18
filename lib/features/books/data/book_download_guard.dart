@@ -13,7 +13,7 @@ final class BookDownloadGuard {
     required this.store,
     required this.risks,
     required this.policy,
-    required this.sources,
+    required this.sourceEntry,
     required this.verified,
     required this.epochs,
     required this.ready,
@@ -29,7 +29,7 @@ final class BookDownloadGuard {
   final BookStore store;
   final BookSourceRiskStore risks;
   final ContentPolicy policy;
-  final Map<String, BookSourceEntry> sources;
+  final BookSourceEntry? Function(String) sourceEntry;
   final Map<String, BookSource> verified;
   final Map<String, int> epochs;
   final bool Function() ready;
@@ -73,7 +73,7 @@ final class BookDownloadGuard {
     String fingerprint,
     int epoch,
   ) {
-    final entry = sources[book.sourceId];
+    final entry = sourceEntry(book.sourceId);
     return entry != null &&
         entry.source.kind == book.kind &&
         epochs[book.sourceId] == epoch &&
@@ -145,7 +145,7 @@ final class BookDownloadGuard {
   }) async {
     await ensureReady();
     final current = expected ?? lease();
-    await store.db.atomic(() => _validatePersistent(evidence, current));
+    await store.db.transaction(() => _validatePersistent(evidence, current));
     _requireLease(current);
     if (!allowed(evidence)) throw const ContentBlocked();
   }

@@ -285,6 +285,11 @@ final class SensitiveSession {
   SensitiveSession._(this._owner, this._grant);
   final SupervisionController _owner;
   final _OperationGrant _grant;
+  bool get valid =>
+      _grant.active &&
+      !_owner._closed &&
+      !_owner.corrupted &&
+      _owner._revision == _grant.revision;
 
   Future<T> run<T>(Future<T> Function() action) async {
     if (!_grant.active) throw const FormatException('管理会话已关闭，请重新进入');

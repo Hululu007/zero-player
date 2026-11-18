@@ -11,6 +11,7 @@ import 'book_download_evidence.dart';
 import 'book_site_revision.dart';
 import 'book_image_payload.dart';
 import 'book_resource_limits.dart';
+import 'book_catalog_window.dart';
 
 final class ProvenBookText {
   const ProvenBookText(this.body, this.evidence, this.segments);
@@ -106,6 +107,7 @@ final class BookShelfEntry {
     this.textOffset,
     this.following = false,
     this.newChapters = 0,
+    this.catalogOmitted = 0,
     this.chapterUpdatedAt,
   });
   final Book book;
@@ -115,6 +117,7 @@ final class BookShelfEntry {
   final int? textOffset;
   final bool following;
   final int newChapters;
+  final int catalogOmitted;
   final DateTime? chapterUpdatedAt;
   final bool favorite;
   final int updated;
@@ -516,6 +519,9 @@ final class BookStore {
     textOffset: raw['textOffset'] is int ? raw['textOffset'] as int : null,
     following: raw['following'] == true,
     newChapters: raw['newChapters'] as int? ?? 0,
+    catalogOmitted: raw['catalogOmitted'] is int
+        ? (raw['catalogOmitted'] as int).clamp(0, 1 << 30)
+        : 0,
     chapterUpdatedAt: switch (raw['chapterUpdatedAt']) {
       final int timestamp => DateTime.fromMillisecondsSinceEpoch(timestamp),
       _ => null,
@@ -531,19 +537,31 @@ final class BookStore {
     bool? favorite,
     bool? following,
     bool clearUpdates = false,
+    bool preserveCatalog = false,
   }) async {
     final key = 'books_shelf:${book.id}';
     await db.atomic(() async {
       final old = await read(key);
+      final window = chapters == null
+          ? null
+          : await _chapterWindow(
+              book,
+              chapters,
+              old,
+              preserve:
+                  preserveCatalog ||
+                  (following ?? (old is Map && old['following'] == true)),
+              last: last,
+            );
       await write(key, {
         if (old is Map) ...old,
         'book': book.toJson(),
-        if (chapters != null)
-          'chapters': _chapterRecords(
-            chapters,
-            old,
-            preserve: following ?? (old is Map && old['following'] == true),
-          ),
+        if (window != null)
+          'chapters': window.chapters.map((c) => c.toJson()).toList(),
+        if (window != null)
+          'catalogOmitted': preserveCatalog && window.omitted == 0 && old is Map
+              ? old['catalogOmitted'] ?? 0
+              : window.omitted,
         if (last != null) 'last': last.id,
         'position': ?position,
         if (position != null ||
@@ -556,6 +574,40 @@ final class BookStore {
       });
     }, tables: {'app_meta'});
   }
+
+  /// Progress updates avoid decoding/re-encoding a potentially large catalog in
+  /// Dart. SQLite preserves all other shelf fields, including follow state.
+  Future<void> saveReadingPosition(
+    Book book,
+    BookChapter chapter,
+    double fraction,
+    int? textOffset,
+  ) => db.atomic(() async {
+    final key = 'books_shelf:${book.id}';
+    final existing = await db.rows('SELECT key FROM app_meta WHERE key=?', [
+      key,
+    ]);
+    if (existing.isEmpty) {
+      await saveBook(
+        book,
+        last: chapter,
+        position: fraction,
+        textOffset: textOffset,
+      );
+      return;
+    }
+    await db.customStatement(
+      "UPDATE app_meta SET value=json_set(value, '\$.last', ?, "
+      "'\$.position', ?, '\$.textOffset', ?, '\$.updated', ?) WHERE key=?",
+      [
+        chapter.id,
+        fraction,
+        textOffset,
+        DateTime.now().millisecondsSinceEpoch,
+        key,
+      ],
+    );
+  }, tables: {'app_meta'});
 
   /// Clear resume state while retaining shelf membership and offline content.
   Future<void> clearHistory(Iterable<Book> books) => db.atomic(() async {
@@ -597,14 +649,14 @@ final class BookStore {
   Future<void> updateFollowedChapters(Book book, List<BookChapter> fresh) =>
       updateShelfChapters(book, fresh, followedOnly: true);
 
-  Future<void> updateShelfChapters(
+  Future<BookCatalogWindow?> updateShelfChapters(
     Book book,
     List<BookChapter> fresh, {
     bool followedOnly = false,
   }) => db.atomic(() async {
     final key = 'books_shelf:${book.id}';
     final raw = await read(key);
-    if (raw is! Map || (followedOnly && raw['following'] != true)) return;
+    if (raw is! Map || (followedOnly && raw['following'] != true)) return null;
     final previous = _entry(raw);
     final tail = previous.chapters.lastOrNull;
     final boundary = fresh.indexWhere((chapter) => chapter.id == tail?.id);
@@ -615,36 +667,55 @@ final class BookStore {
               .skip(boundary + 1)
               .where((chapter) => !known.contains(chapter.id))
               .length;
-    // Keep cached chapters with local progress or downloads when a feed rotates.
-    final merged = {
-      for (final chapter in previous.chapters) chapter.id: chapter,
-    };
-    for (final chapter in fresh) {
-      merged[chapter.id] = chapter;
-    }
-    if (merged.length > 4000) return;
+    final window = await _chapterWindow(book, fresh, raw, preserve: true);
     await write(key, {
       ...raw,
-      'chapters': merged.values.map((chapter) => chapter.toJson()).toList(),
+      'chapters': window.chapters.map((chapter) => chapter.toJson()).toList(),
+      'catalogOmitted': window.omitted == 0
+          ? previous.catalogOmitted
+          : window.omitted,
       'newChapters': previous.newChapters + added,
       if (added > 0) 'chapterUpdatedAt': DateTime.now().millisecondsSinceEpoch,
     });
+    return window;
   }, tables: {'app_meta'});
 
-  List<Object?> _chapterRecords(
+  Future<BookCatalogWindow> _chapterWindow(
+    Book book,
     List<BookChapter> chapters,
     Object? raw, {
     required bool preserve,
-  }) {
-    if (!preserve || raw is! Map || raw['chapters'] is! List) {
-      return chapters.map((chapter) => chapter.toJson()).toList();
-    }
-    final old = _entry(raw).chapters;
-    final newer = {for (final chapter in old) chapter.id: chapter};
-    for (final chapter in chapters) {
-      newer[chapter.id] = chapter;
-    }
-    return newer.values.take(4000).map((chapter) => chapter.toJson()).toList();
+    BookChapter? last,
+  }) async {
+    final old = raw is Map ? _entry(raw).chapters : <BookChapter>[];
+    final lastId = last?.id ?? (raw is Map ? raw['last'] as String? : null);
+    final plan = BookDownloadPlan.fromJson(
+      await read('books_download:${book.id}'),
+    );
+    final pending =
+        plan?.chapterIds ??
+        (plan == null
+            ? <String>[]
+            : old
+                  .skip(plan.first - 1)
+                  .take(plan.last - plan.first + 1)
+                  .map((c) => c.id)
+                  .toList());
+    final protected = {
+      ...await savedText(book),
+      ...await savedImages(book),
+      ...await provenChapters('audio', book),
+      ...pending,
+      ?lastId,
+    };
+    return BookCatalogWindow(
+      preserve ? old : old.where((c) => protected.contains(c.id)).toList(),
+      chapters,
+      last:
+          last ??
+          [...chapters, ...old].where((c) => c.id == lastId).firstOrNull,
+      protectedIds: protected,
+    );
   }
 
   String _provenPointer(String type, Book book, BookChapter chapter) =>
@@ -930,7 +1001,7 @@ final class BookStore {
           BookImageSegment image => {'image': image.address.toString()},
         },
     ]);
-    if (value.length > 512 * 1024) return;
+    if (utf8.encode(value).length > 512 * 1024) return;
     await db.atomic(() async {
       validate?.call();
       await db.customStatement(

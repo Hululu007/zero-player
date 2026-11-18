@@ -24,7 +24,7 @@ final class HistoryRepository {
   final ContentPolicy? policy;
   final AppDatabase db;
   Stream<void> get changes =>
-      db.changesFor(const {'watch_history', 'local_videos'});
+      db.changesFor(const {'watch_history', 'local_videos', 'content_records'});
   Future<List<WatchEntry>> recentWorks() async => (await db.rows(
     'SELECT * FROM (SELECT h.*, m.value AS content_record, ROW_NUMBER() OVER '
     '(PARTITION BY source_id,remote_id ORDER BY updated_at DESC) AS recent '
@@ -41,6 +41,20 @@ final class HistoryRepository {
     return rows.isEmpty ? null : WatchEntry(rows.first);
   }
 
+  Future<WatchEntry?> episodeEntry(
+    String sourceId,
+    String remoteId,
+    String line,
+    String episode,
+  ) async {
+    final rows = await db.rows(
+      'SELECT * FROM watch_history WHERE source_id=? AND remote_id=? '
+      'AND line_name=? AND episode_label=? LIMIT 1',
+      [sourceId, remoteId, line, episode],
+    );
+    return rows.isEmpty ? null : WatchEntry(rows.single);
+  }
+
   Future<void> save(
     CatalogItem item,
     PlayLine line,
@@ -48,7 +62,10 @@ final class HistoryRepository {
     Duration position,
     Duration duration,
   ) async {
-    if (duration <= Duration.zero) return;
+    if (duration < Duration.zero ||
+        (duration == Duration.zero && position <= Duration.zero)) {
+      return;
+    }
     policy?.requireItem(item);
     await rememberContent(db, item);
     final id = stableId(

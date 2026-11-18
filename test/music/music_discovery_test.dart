@@ -7,10 +7,52 @@ import 'package:zero_player/app/app_services.dart';
 import 'package:zero_player/core/persistence/app_database.dart';
 import 'package:zero_player/features/music/data/music_recommendations.dart';
 import 'package:zero_player/features/music/presentation/music_discovery.dart';
+import 'package:zero_player/features/music/presentation/music_catalog_controls.dart';
 import 'package:zero_player/features/music/presentation/music_source_selector.dart';
 import '../../test_support/fake_player_engine.dart';
 
 void main() {
+  testWidgets('compact chart navigation scrolls categories horizontally', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(320, 740);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    var selected = '';
+    final options = [
+      for (final (index, group) in ['华语', '欧美', '日韩', '民谣', '港台', '古典'].indexed)
+        (id: 'chart-$index', name: '榜单$index', group: group),
+    ];
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: Align(
+            alignment: Alignment.topLeft,
+            child: SizedBox(
+              height: 108,
+              child: MusicChartNav(
+                options: options,
+                selected: options.first.id,
+                compact: true,
+                onSelected: (option) => selected = option.id,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    expect(tester.getTopLeft(find.text('榜单0')).dy, lessThan(100));
+    await tester.ensureVisible(find.text('日韩'));
+    await tester.tap(find.text('日韩'));
+    await tester.pumpAndSettle();
+    expect(find.text('榜单2'), findsOneWidget);
+    await tester.ensureVisible(find.text('榜单2'));
+    await tester.tap(find.text('榜单2'));
+    expect(selected, 'chart-2');
+    expect(tester.takeException(), isNull);
+  });
+
   for (final size in [
     const Size(320, 850),
     const Size(390, 850),

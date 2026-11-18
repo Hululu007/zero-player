@@ -1,4 +1,4 @@
-import '../../../app/app_fonts.dart';
+import 'app_fonts.dart';
 import '../../music/domain/music_match.dart';
 
 void validateSetting(String key, Object? value) {
@@ -63,6 +63,7 @@ void validateSetting(String key, Object? value) {
     }
   } else if ({
     'backgroundProbe',
+    'bookSiteAutoCheck',
     'startFullscreen',
     'navigationGuideSeen',
     'autoDownloadFallback',

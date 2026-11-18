@@ -95,7 +95,6 @@ final class PlatformServices {
     return queryMeteredConnection();
   }
 
-  @visibleForTesting
   static Future<bool> queryMeteredConnection({
     Duration timeout = const Duration(seconds: 3),
   }) async {

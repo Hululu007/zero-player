@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:crypto/crypto.dart';
 
 import '../../../core/persistence/app_database.dart';
+import '../domain/book.dart';
 
 /// An assessed root page belongs to this exact host, independently of a
 /// particular source ID or book type. A record also survives source removal.
@@ -118,6 +119,40 @@ final class BookSourceRiskStore {
   }
 
   Future<BookSourceAssessment?> get(String id) => getRecord(id);
+
+  /// Merge evidence for one exact host without discarding another host's record.
+  /// Nested calls participate in the caller's transaction; publication belongs
+  /// to that caller and must wait until its outer transaction has committed.
+  Future<BookSourceAssessment> addEvidence(
+    BookSource source, {
+    required bool adult,
+    required bool quarantine,
+    required bool rootPageEvidence,
+  }) => db.atomic(() async {
+    final host = source.endpoint.host.toLowerCase();
+    final primary = await get(source.id);
+    final key = primary == null || primary.host == host
+        ? source.id
+        : hostKey(source.id, host);
+    final previous = key == source.id ? primary : await getRecord(key);
+    if (previous != null && previous.host != host) {
+      throw const FormatException('风险记录损坏，请先人工复核');
+    }
+    final assessment = BookSourceAssessment(
+      sourceId: source.id,
+      name: source.name,
+      host: host,
+      adult: adult || previous?.adult == true,
+      quarantined: quarantine || previous?.quarantined == true,
+      adultHost: (adult && rootPageEvidence) || previous?.adultHost == true,
+      quarantinedHost:
+          (quarantine && rootPageEvidence) || previous?.quarantinedHost == true,
+      version: (previous?.version ?? 0) + 1,
+      recordKey: key,
+    );
+    await write(assessment);
+    return assessment;
+  }, tables: {'app_meta'});
 
   Future<BookSourceAssessment?> getRecord(String key) async {
     final rows = await db.rows('SELECT value FROM app_meta WHERE key=?', [

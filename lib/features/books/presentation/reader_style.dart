@@ -1,6 +1,8 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import '../data/reader_fonts.dart';
+import 'reader_font_picker.dart';
 
 enum ReaderTurnMode {
   slide('横向滑动', '左右滑动或点按两侧翻页'),
@@ -83,6 +85,10 @@ final class ReaderPreferences {
     this.automatic = true,
     this.status = true,
     this.immersive = true,
+    this.protectCutout = true,
+    this.topInset = 0,
+    this.preloadChapters = 2,
+    this.preloadUnmeteredOnly = true,
     this.autoEnabled = false,
     this.autoSeconds = 10,
     this.scrollSpeed = 30,
@@ -99,7 +105,7 @@ final class ReaderPreferences {
             .where((paper) => paper.name == data['paper'])
             .firstOrNull ??
         ReaderPaper.system,
-    family: _fonts.containsKey(data['family'])
+    family: validReaderFontFamily(data['family'])
         ? data['family'] as String
         : 'NotoSerifSC',
     fontSize: _number(data['font'], 21, 12, 44),
@@ -113,6 +119,10 @@ final class ReaderPreferences {
     automatic: data['automatic'] != false,
     status: data['status'] != false,
     immersive: data['immersive'] != false,
+    protectCutout: data['protectCutout'] != false,
+    topInset: _number(data['topInset'], 0, 0, 80),
+    preloadChapters: _number(data['preloadChapters'], 2, 0, 5).round(),
+    preloadUnmeteredOnly: data['preloadUnmeteredOnly'] != false,
     autoEnabled: data['autoEnabled'] == true,
     autoSeconds: _number(data['autoSeconds'], 10, 2, 120),
     scrollSpeed: _number(data['scrollSpeed'], 30, 5, 150),
@@ -123,13 +133,15 @@ final class ReaderPreferences {
   final String family;
   final double fontSize, lineHeight, letterSpacing, margin;
   final bool texture, animate, automatic, status, immersive, autoEnabled;
-  final bool bold, justify;
+  final bool bold, justify, protectCutout, preloadUnmeteredOnly;
+  final double topInset;
+  final int preloadChapters;
   final double autoSeconds, scrollSpeed;
 
   /// Body text style for this preference set. Headings add their own weight in
   /// the pagination layer, so bold here only lifts the reading weight.
   TextStyle get bodyStyle => TextStyle(
-    fontFamily: family,
+    fontFamily: readerFontFamily(family),
     fontSize: fontSize,
     height: lineHeight,
     letterSpacing: letterSpacing,
@@ -151,6 +163,10 @@ final class ReaderPreferences {
     bool? automatic,
     bool? status,
     bool? immersive,
+    bool? protectCutout,
+    double? topInset,
+    int? preloadChapters,
+    bool? preloadUnmeteredOnly,
     bool? autoEnabled,
     double? autoSeconds,
     double? scrollSpeed,
@@ -169,6 +185,10 @@ final class ReaderPreferences {
     automatic: automatic ?? this.automatic,
     status: status ?? this.status,
     immersive: immersive ?? this.immersive,
+    protectCutout: protectCutout ?? this.protectCutout,
+    topInset: topInset ?? this.topInset,
+    preloadChapters: preloadChapters ?? this.preloadChapters,
+    preloadUnmeteredOnly: preloadUnmeteredOnly ?? this.preloadUnmeteredOnly,
     autoEnabled: autoEnabled ?? this.autoEnabled,
     autoSeconds: autoSeconds ?? this.autoSeconds,
     scrollSpeed: scrollSpeed ?? this.scrollSpeed,
@@ -189,13 +209,17 @@ final class ReaderPreferences {
     'automatic': automatic,
     'status': status,
     'immersive': immersive,
+    'protectCutout': protectCutout,
+    'topInset': topInset,
+    'preloadChapters': preloadChapters,
+    'preloadUnmeteredOnly': preloadUnmeteredOnly,
     'autoEnabled': autoEnabled,
     'autoSeconds': autoSeconds,
     'scrollSpeed': scrollSpeed,
   };
 }
 
-const _fonts = {'NotoSerifSC': '宋体', 'NotoSansSC': '黑体', 'Xiaolai': '手写'};
+const _fonts = readerBundledFonts;
 
 double _number(Object? value, double fallback, double min, double max) =>
     value is num && value.isFinite
@@ -275,6 +299,9 @@ Future<void> showReaderSettings(
   ValueChanged<ReaderPreferences> onChange, {
   bool rich = false,
   bool pdf = false,
+  ReaderFontStore? fontStore,
+  VoidCallback? onCleanupRules,
+  VoidCallback? onClearCache,
 }) => showModalBottomSheet<void>(
   context: context,
   isScrollControlled: true,
@@ -300,7 +327,7 @@ Future<void> showReaderSettings(
                 ..._automationSettings(settings, change, pdf: pdf),
                 const SizedBox(height: 16),
                 if (!pdf) ..._paperSettings(context, settings, change),
-                if (!pdf) ..._typography(settings, change),
+                if (!pdf) ..._typography(context, settings, change, fontStore),
                 if (!rich)
                   SwitchListTile(
                     contentPadding: EdgeInsets.zero,
@@ -324,6 +351,22 @@ Future<void> showReaderSettings(
                     value: settings.automatic,
                     onChanged: (value) =>
                         change(settings.copyWith(automatic: value)),
+                  ),
+                ..._insetSettings(settings, change),
+                if (!rich) ..._loadingSettings(settings, change),
+                if (onCleanupRules != null)
+                  ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: const Text('阅读净化规则'),
+                    trailing: const Icon(Icons.chevron_right),
+                    onTap: onCleanupRules,
+                  ),
+                if (onClearCache != null)
+                  ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: const Text('清除本书临时阅读缓存'),
+                    subtitle: const Text('保留已下载的离线章节'),
+                    onTap: onClearCache,
                   ),
               ],
             ),
@@ -484,21 +527,49 @@ Widget _turnModeSettings(
 );
 
 List<Widget> _typography(
+  BuildContext context,
   ReaderPreferences settings,
   ValueChanged<ReaderPreferences> change,
+  ReaderFontStore? fontStore,
 ) => [
   DropdownButtonFormField<String>(
+    key: ValueKey(settings.family),
     initialValue: settings.family,
     decoration: const InputDecoration(labelText: '字体'),
     items: [
+      if (!_fonts.containsKey(settings.family))
+        DropdownMenuItem(
+          value: settings.family,
+          child: Text(readerFontLabel(settings.family)),
+        ),
       for (final entry in _fonts.entries)
         DropdownMenuItem(
           value: entry.key,
-          child: Text(entry.value, style: TextStyle(fontFamily: entry.key)),
+          child: Text(
+            entry.value,
+            style: TextStyle(fontFamily: readerFontFamily(entry.key)),
+          ),
         ),
     ],
     onChanged: (value) => change(settings.copyWith(family: value)),
   ),
+  if (fontStore != null)
+    ListTile(
+      contentPadding: EdgeInsets.zero,
+      title: const Text('更多字体：系统与开源下载'),
+      subtitle: Text(readerFontLabel(settings.family)),
+      trailing: const Icon(Icons.font_download_outlined),
+      onTap: () async {
+        final family = await showReaderFontPicker(
+          context,
+          fontStore,
+          settings.family,
+        );
+        if (context.mounted && family != null) {
+          change(settings.copyWith(family: family));
+        }
+      },
+    ),
   const SizedBox(height: 10),
   Wrap(
     spacing: 6,
@@ -701,4 +772,48 @@ List<Widget> _automationSettings(
       divisions: 29,
       onChanged: (v) => change(settings.copyWith(scrollSpeed: v)),
     ),
+];
+
+List<Widget> _loadingSettings(
+  ReaderPreferences settings,
+  ValueChanged<ReaderPreferences> change,
+) => [
+  const Divider(),
+  const Text('在线加载与缓存'),
+  _StyleSlider(
+    label: '预加载章数',
+    value: settings.preloadChapters.toDouble(),
+    min: 0,
+    max: 5,
+    divisions: 5,
+    onChanged: (v) => change(settings.copyWith(preloadChapters: v.round())),
+  ),
+  SwitchListTile(
+    contentPadding: EdgeInsets.zero,
+    title: const Text('仅在非计费网络预加载'),
+    value: settings.preloadUnmeteredOnly,
+    onChanged: (v) => change(settings.copyWith(preloadUnmeteredOnly: v)),
+  ),
+  const Text('离线下载优先，其次阅读缓存，最后联网获取。阅读缓存最多 24 MiB，超限自动淘汰；预加载串行进行，切章或退到后台时取消。'),
+];
+
+List<Widget> _insetSettings(
+  ReaderPreferences settings,
+  ValueChanged<ReaderPreferences> change,
+) => [
+  SwitchListTile(
+    contentPadding: EdgeInsets.zero,
+    title: const Text('避让刘海与摄像头'),
+    subtitle: const Text('沉浸阅读时保留系统安全区域'),
+    value: settings.protectCutout,
+    onChanged: (v) => change(settings.copyWith(protectCutout: v)),
+  ),
+  _StyleSlider(
+    label: '顶部额外留白',
+    value: settings.topInset,
+    min: 0,
+    max: 80,
+    divisions: 40,
+    onChanged: (v) => change(settings.copyWith(topInset: v)),
+  ),
 ];

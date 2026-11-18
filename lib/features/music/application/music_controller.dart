@@ -413,7 +413,11 @@ final class MusicController extends ChangeNotifier
       return Future.value();
     }
     final chosen = tracks[selectedIndex];
-    if (!repository.allowed(chosen)) return Future.value();
+    if (!repository.allowed(chosen)) {
+      error = '歌曲已被过滤';
+      notifyListeners();
+      return Future.value();
+    }
     final filtered = _filteredQueue(tracks);
     if (replacement == null) _attemptedSources.clear();
     if (!identical(tracks, queue)) {

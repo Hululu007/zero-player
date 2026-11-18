@@ -106,7 +106,7 @@ final class DownloadRepository {
   ) async {
     policy?.requireItem(location.item);
     await db.write(
-      "UPDATE downloads SET source_id=?,remote_id=?,line_name=?,url=?,headers=?,directory=?,completed=0,total=0,bytes=0,local_path=NULL,status='queued',error=? WHERE id=?",
+      "UPDATE downloads SET source_id=?,remote_id=?,line_name=?,url=?,headers=?,directory=?,completed=0,total=0,bytes=0,local_path=NULL,status='queued',error=?,work_json=? WHERE id=?",
       [
         location.item.sourceId,
         location.item.id,
@@ -115,13 +115,10 @@ final class DownloadRepository {
         jsonEncode(location.headers),
         directory,
         '已自动换源，正在重新下载整集',
+        jsonEncode(contentRecord(location.item)),
         id,
       ],
     );
-    await db.write('UPDATE downloads SET work_json=? WHERE id=?', [
-      jsonEncode(contentRecord(location.item)),
-      id,
-    ]);
   }
 
   Future<void> status(String id, DownloadStatus status, {String? error}) =>
@@ -159,7 +156,7 @@ final class DownloadRepository {
 
   Future<void> recover() => db.atomic(() async {
     await db.customStatement(
-      "UPDATE downloads SET status='paused',error='任务已恢复，可继续下载' WHERE status IN ('running','queued') AND local_path IS NULL",
+      "UPDATE downloads SET status='paused',error='任务已恢复，可继续下载' WHERE status='running' AND local_path IS NULL",
     );
     await db.customStatement(
       "UPDATE downloads SET status='pendingSave',error='缓存已完成，等待保存' WHERE local_path IS NOT NULL AND status IN ('running','queued','saving','complete') AND EXISTS(SELECT 1 FROM app_meta WHERE key='download_output:'||downloads.id) AND NOT EXISTS(SELECT 1 FROM app_meta WHERE key='download_saved:'||downloads.id)",
@@ -168,14 +165,14 @@ final class DownloadRepository {
       "UPDATE downloads SET status='complete',error=NULL WHERE local_path IS NOT NULL AND status IN ('running','queued','saving') AND (NOT EXISTS(SELECT 1 FROM app_meta WHERE key='download_output:'||downloads.id) OR EXISTS(SELECT 1 FROM app_meta WHERE key='download_saved:'||downloads.id))",
     );
   }, tables: const {'downloads'});
-  Future<void> remove(String id) async {
+  Future<void> remove(String id) => db.atomic(() async {
     await db.write('DELETE FROM downloads WHERE id=?', [id]);
     await db.write('DELETE FROM app_meta WHERE key IN (?,?,?)', [
       'download_output:$id',
       'download_saved:$id',
       'download_publish:$id',
     ]);
-  }
+  }, tables: const {'downloads', 'app_meta'});
 
   Future<void> relocate(String id, Uri uri, Map<String, String> headers) =>
       db.write('UPDATE downloads SET url=?,headers=? WHERE id=?', [

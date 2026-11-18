@@ -95,12 +95,6 @@ final class BookSiteInspection {
             BookSiteFinding.sourceChanged => '来源或检查记录需重新确认，待重新抽查',
           };
     final parts = [signal];
-    if (saleReview.suspected) {
-      parts.add('疑似域名出售静态结构（可见性未确认），待复核');
-    }
-    if (saleReview.coverage == BookPageSaleCoverage.partial) {
-      parts.add('域名出售静态结构检查不完整');
-    }
     if (finding == BookSiteFinding.gamblingAndAdultClues) {
       if (gamblingRisk && !adultRisk) {
         parts.add('疑似成人文字线索，待复核');
@@ -430,25 +424,26 @@ final class _SiteVisibility {
   bool get visible => !displayHidden && !visibilityHidden && !unknown;
 }
 
+const _visibleSiteDisplays = {
+  'block',
+  'inline',
+  'inline-block',
+  'flex',
+  'inline-flex',
+  'grid',
+  'inline-grid',
+  'contents',
+  'table',
+  'table-row',
+  'table-cell',
+  'list-item',
+  'flow-root',
+};
+
 /// Only simple literal inline declarations are interpreted. Contradictory or
 /// dynamic declarations are unknown; no stylesheet is loaded or executed.
 Map<dom.Element, _SiteVisibility> _siteVisibility(dom.Document document) {
   final states = <dom.Element, _SiteVisibility>{};
-  const visibleDisplays = {
-    'block',
-    'inline',
-    'inline-block',
-    'flex',
-    'inline-flex',
-    'grid',
-    'inline-grid',
-    'contents',
-    'table',
-    'table-row',
-    'table-cell',
-    'list-item',
-    'flow-root',
-  };
   final important = RegExp(r'\s*!\s*important\s*$', caseSensitive: false);
   final visibilityName = RegExp(
     r'\b(?:display|visibility)\b',
@@ -503,7 +498,7 @@ Map<dom.Element, _SiteVisibility> _siteVisibility(dom.Document document) {
       final value = displays.single;
       if (value == 'none') {
         displayHidden = true;
-      } else if (!visibleDisplays.contains(value)) {
+      } else if (!_visibleSiteDisplays.contains(value)) {
         unknown = true;
       }
     }
@@ -702,54 +697,8 @@ bool _gateHasLocalLabel(
   Map<dom.Element, _SiteVisibility> visibility,
 ) {
   final elements = document.querySelectorAll('*');
-  final selfAd = <dom.Element, bool>{};
-  final subtreeAd = <dom.Element, bool>{};
-  final blockDescendant = <dom.Element, bool>{};
-  const blockTags = {
-    'div',
-    'p',
-    'h1',
-    'h2',
-    'h3',
-    'h4',
-    'h5',
-    'h6',
-    'section',
-    'article',
-    'nav',
-    'header',
-    'footer',
-    'form',
-    'ul',
-    'ol',
-    'li',
-    'table',
-    'aside',
-  };
-  // Each edge is visited once, rather than re-querying nested subtrees.
-  for (final element in elements.reversed) {
-    final ad = selfAd[element] = _advertisingElement(element);
-    var adBelow = ad && visibility[element]?.visible != false;
-    var blockBelow = false;
-    for (final child in element.children) {
-      adBelow = adBelow || subtreeAd[child] == true;
-      blockBelow =
-          blockBelow ||
-          blockTags.contains(child.localName) ||
-          blockDescendant[child] == true;
-    }
-    subtreeAd[element] = adBelow;
-    blockDescendant[element] = blockBelow;
-  }
-  final adAncestor = <dom.Element, bool>{};
-  final longFormAncestor = <dom.Element, bool>{};
-  for (final element in elements) {
-    adAncestor[element] =
-        selfAd[element] == true || adAncestor[element.parent] == true;
-    longFormAncestor[element] =
-        _longFormElement(element) || longFormAncestor[element.parent] == true;
-  }
-
+  final (subtreeAd, blockDescendant, adAncestor, longFormAncestor) =
+      _adultGateAncestry(elements, visibility);
   final budget = _AdultGateBudget(visibility, longFormAncestor);
   final labels = <dom.Element, bool>{};
   final containerTexts = <dom.Element, String>{};
@@ -827,6 +776,67 @@ bool _gateHasLocalLabel(
     return (found: false, complete: false);
   }
   return (found: false, complete: true);
+}
+
+(
+  Map<dom.Element, bool>,
+  Map<dom.Element, bool>,
+  Map<dom.Element, bool>,
+  Map<dom.Element, bool>,
+)
+_adultGateAncestry(
+  List<dom.Element> elements,
+  Map<dom.Element, _SiteVisibility> visibility,
+) {
+  final selfAd = <dom.Element, bool>{};
+  final subtreeAd = <dom.Element, bool>{};
+  final blockDescendant = <dom.Element, bool>{};
+  const blockTags = {
+    'div',
+    'p',
+    'h1',
+    'h2',
+    'h3',
+    'h4',
+    'h5',
+    'h6',
+    'section',
+    'article',
+    'nav',
+    'header',
+    'footer',
+    'form',
+    'ul',
+    'ol',
+    'li',
+    'table',
+    'aside',
+  };
+  // Each edge is visited once, rather than re-querying nested subtrees.
+  for (final element in elements.reversed) {
+    final ad = selfAd[element] = _advertisingElement(element);
+    var adBelow = ad && visibility[element]?.visible != false;
+    var blockBelow = false;
+    for (final child in element.children) {
+      adBelow = adBelow || subtreeAd[child] == true;
+      blockBelow =
+          blockBelow ||
+          blockTags.contains(child.localName) ||
+          blockDescendant[child] == true;
+    }
+    subtreeAd[element] = adBelow;
+    blockDescendant[element] = blockBelow;
+  }
+  final adAncestor = <dom.Element, bool>{};
+  final longFormAncestor = <dom.Element, bool>{};
+  for (final element in elements) {
+    adAncestor[element] =
+        selfAd[element] == true || adAncestor[element.parent] == true;
+    longFormAncestor[element] =
+        _longFormElement(element) || longFormAncestor[element.parent] == true;
+  }
+
+  return (subtreeAd, blockDescendant, adAncestor, longFormAncestor);
 }
 
 /// A warning applies only to a nearby signal in the same clause. A later
@@ -940,24 +950,108 @@ _SiteTextSample _sampleSiteText(
   dom.Document document,
   Map<dom.Element, _SiteVisibility> visibility,
 ) {
-  final all = StringBuffer(), shallow = StringBuffer();
+  final buffers = _SiteTextBuffers();
   final stack = <_SiteTextFrame>[_SiteTextFrame(document, 0, false)];
   var visited = 0;
-  var withinBudget = true, visibilityComplete = true, deepGamblingRisk = false;
-  const blocks = {
-    'p',
-    'div',
-    'section',
-    'article',
-    'li',
-    'blockquote',
-    'br',
-    'h1',
-    'h2',
-    'h3',
-    'pre',
-  };
+  var visibilityComplete = true, deepGamblingRisk = false;
+  while (stack.isNotEmpty && buffers.withinBudget) {
+    final frame = stack.last;
+    final node = frame.node;
+    final includeShallow = frame.depth <= 80;
+    final state = node is dom.Element
+        ? visibility[node]
+        : node is dom.Text
+        ? visibility[node.parent]
+        : null;
+    final block =
+        node is dom.Element &&
+        state?.visible != false &&
+        _siteTextBlocks.contains(node.localName);
+    if (!frame.entered) {
+      if (++visited > _maxSiteTextNodes) {
+        buffers.withinBudget = false;
+        break;
+      }
+      frame.entered = true;
+      if (node is dom.Element && state?.displayHidden == true) {
+        stack.removeLast();
+        continue;
+      }
+      if (node is dom.Text) {
+        if (state?.visible == false) {
+          if (state!.unknown &&
+              !state.visibilityHidden &&
+              node.data.trim().isNotEmpty) {
+            visibilityComplete = false;
+            // Unknown visibility remains an advisory clue, never a basis for
+            // automatic isolation or a definitive visible-page statement.
+            buffers.append(node.data, false);
+          }
+          stack.removeLast();
+          continue;
+        }
+        final accepted = buffers.append(
+          node.data,
+          includeShallow && !frame.longForm,
+        );
+        if (!includeShallow &&
+            !frame.longForm &&
+            !deepGamblingRisk &&
+            _gamblingBusiness.hasMatch(accepted) &&
+            _gamblingPromotion.hasMatch(accepted)) {
+          for (final line in _cleanAdultGateText(accepted).split('\n')) {
+            if (_hasGamblingSignalOutsideWarning(line, _gamblingBusiness) &&
+                _hasGamblingSignalOutsideWarning(line, _gamblingPromotion)) {
+              deepGamblingRisk = true;
+              break;
+            }
+          }
+        }
+        stack.removeLast();
+        continue;
+      }
+      if (block) buffers.blockBreak(includeShallow);
+    }
+    if (frame.nextChild < node.nodes.length) {
+      final child = node.nodes[frame.nextChild++];
+      stack.add(
+        _SiteTextFrame(
+          child,
+          frame.depth + 1,
+          frame.longForm || (child is dom.Element && _longFormElement(child)),
+        ),
+      );
+    } else {
+      if (block) buffers.blockBreak(includeShallow);
+      stack.removeLast();
+    }
+  }
+  return _SiteTextSample(
+    text: _cleanAdultGateText(buffers.all.toString()),
+    shallowText: _cleanAdultGateText(buffers.shallow.toString()),
+    deepGamblingRisk: deepGamblingRisk,
+    complete: buffers.withinBudget,
+    visibilityComplete: visibilityComplete,
+  );
+}
 
+const _siteTextBlocks = {
+  'p',
+  'div',
+  'section',
+  'article',
+  'li',
+  'blockquote',
+  'br',
+  'h1',
+  'h2',
+  'h3',
+  'pre',
+};
+
+final class _SiteTextBuffers {
+  final all = StringBuffer(), shallow = StringBuffer();
+  bool withinBudget = true;
   String append(String value, bool includeShallow) {
     final remaining = BookSiteInspector.maxBytes - all.length;
     final accepted = value.length <= remaining
@@ -980,83 +1074,6 @@ _SiteTextSample _sampleSiteText(
     }
     if (includeShallow && shallow.isNotEmpty) shallow.write('\n');
   }
-
-  while (stack.isNotEmpty && withinBudget) {
-    final frame = stack.last;
-    final node = frame.node;
-    final includeShallow = frame.depth <= 80;
-    final state = node is dom.Element
-        ? visibility[node]
-        : node is dom.Text
-        ? visibility[node.parent]
-        : null;
-    final block =
-        node is dom.Element &&
-        state?.visible != false &&
-        blocks.contains(node.localName);
-    if (!frame.entered) {
-      if (++visited > _maxSiteTextNodes) {
-        withinBudget = false;
-        break;
-      }
-      frame.entered = true;
-      if (node is dom.Element && state?.displayHidden == true) {
-        stack.removeLast();
-        continue;
-      }
-      if (node is dom.Text) {
-        if (state?.visible == false) {
-          if (state!.unknown &&
-              !state.visibilityHidden &&
-              node.data.trim().isNotEmpty) {
-            visibilityComplete = false;
-            // Unknown visibility remains an advisory clue, never a basis for
-            // automatic isolation or a definitive visible-page statement.
-            append(node.data, false);
-          }
-          stack.removeLast();
-          continue;
-        }
-        final accepted = append(node.data, includeShallow && !frame.longForm);
-        if (!includeShallow &&
-            !frame.longForm &&
-            !deepGamblingRisk &&
-            _gamblingBusiness.hasMatch(accepted) &&
-            _gamblingPromotion.hasMatch(accepted)) {
-          for (final line in _cleanAdultGateText(accepted).split('\n')) {
-            if (_hasGamblingSignalOutsideWarning(line, _gamblingBusiness) &&
-                _hasGamblingSignalOutsideWarning(line, _gamblingPromotion)) {
-              deepGamblingRisk = true;
-              break;
-            }
-          }
-        }
-        stack.removeLast();
-        continue;
-      }
-      if (block) blockBreak(includeShallow);
-    }
-    if (frame.nextChild < node.nodes.length) {
-      final child = node.nodes[frame.nextChild++];
-      stack.add(
-        _SiteTextFrame(
-          child,
-          frame.depth + 1,
-          frame.longForm || (child is dom.Element && _longFormElement(child)),
-        ),
-      );
-    } else {
-      if (block) blockBreak(includeShallow);
-      stack.removeLast();
-    }
-  }
-  return _SiteTextSample(
-    text: _cleanAdultGateText(all.toString()),
-    shallowText: _cleanAdultGateText(shallow.toString()),
-    deepGamblingRisk: deepGamblingRisk,
-    complete: withinBudget,
-    visibilityComplete: visibilityComplete,
-  );
 }
 
 const _maxSiteDomDepth = 512;
@@ -1156,53 +1173,9 @@ BookSiteInspection inspectBookSiteHtml(
     return _incompleteSiteDom(target, document, truncated: truncated);
   }
   final stylesheetUnknown = _hasUnverifiedSiteStyles(document);
-  BookPageSaleReview saleReview;
-  try {
-    saleReview = inspectBookPageSale(
-      document,
-      target,
-      input,
-      truncated: truncated,
-    );
-  } catch (_) {
-    // A malformed sample cannot clear earlier observations.
-    saleReview = const BookPageSaleReview();
-  }
-  BookPageScriptReview scriptReview;
-  try {
-    scriptReview = inspectBookPageScripts(
-      document,
-      target,
-      truncated: truncated,
-    );
-  } catch (_) {
-    // A malformed sample must not discard the independent adult/betting scan.
-    // No exception detail or page text is retained.
-    scriptReview = const BookPageScriptReview(
-      coverage: BookPageScriptCoverage.partial,
-    );
-  }
-  var refresh = false;
-  var externalRefresh = false;
-  for (final meta in document.querySelectorAll('meta[http-equiv]')) {
-    if (meta.attributes['http-equiv']?.toLowerCase().trim() != 'refresh') {
-      continue;
-    }
-    refresh = true;
-    final match = RegExp(
-      r'''url\s*=\s*['"]?\s*([^'"\s;]+)''',
-      caseSensitive: false,
-    ).firstMatch(meta.attributes['content'] ?? '');
-    final redirect = match == null ? null : Uri.tryParse(match[1]!);
-    if (redirect == null) {
-      externalRefresh = true;
-      continue;
-    }
-    final resolved = target.resolveUri(redirect);
-    if (HeaderPolicy.origin(target) != HeaderPolicy.origin(resolved)) {
-      externalRefresh = true;
-    }
-  }
+  final saleReview = _inspectSale(document, target, input, truncated);
+  final scriptReview = _inspectScripts(document, target, truncated);
+  final (refresh, externalRefresh) = _siteRefresh(document, target);
   for (final node in document.querySelectorAll(
     'script, style, iframe, object, embed, template, noscript, svg, [hidden]',
   )) {
@@ -1237,36 +1210,7 @@ BookSiteInspection inspectBookSiteHtml(
                   (part) => _exactSiteSignal(_gamblingPromotion, part),
                 ))
       : strongBetting(shallowText) || sample.deepGamblingRisk;
-  final titleNamesAdultSite =
-      !_adultSiteWarning.hasMatch(title) &&
-      title
-          .split(_adultClauseBoundary)
-          .any(
-            (part) =>
-                _unscopedAdultClause(part) &&
-                (_adultPurposeOutsideAwareness(part, _adultBusiness) ||
-                    _adultPurposeOutsideAwareness(part, _adultSiteTitle)),
-          );
-  final sitePurpose = descriptions.any(
-    (description) =>
-        !_adultSiteWarning.hasMatch(description) &&
-        (titleNamesAdultSite && _adultSiteNameAndReading(description) ||
-            description
-                .split(_adultClauseBoundary)
-                .any(
-                  (part) =>
-                      _unscopedAdultClause(part) &&
-                      (titleNamesAdultSite &&
-                              _adultPurposeOutsideAwareness(
-                                part,
-                                _adultSiteDescription,
-                              ) ||
-                          _adultPurposeOutsideAwareness(
-                            part,
-                            _exclusiveAdultDescription,
-                          )),
-                )),
-  );
+  final sitePurpose = _adultSitePurpose(title, descriptions);
   final adultBusiness = adult && _hasAdultBusinessOutsideWarning(text);
   final gate = adultBusiness && !sitePurpose && !stylesheetUnknown
       ? _hasWholeSiteAdultEntryGate(document, visibility)
@@ -1298,4 +1242,90 @@ BookSiteInspection inspectBookSiteHtml(
         ? BookSiteRedirect.external
         : BookSiteRedirect.sameSite,
   );
+}
+
+(bool, bool) _siteRefresh(dom.Document document, Uri target) {
+  var refresh = false;
+  var externalRefresh = false;
+  for (final meta in document.querySelectorAll('meta[http-equiv]')) {
+    if (meta.attributes['http-equiv']?.toLowerCase().trim() != 'refresh') {
+      continue;
+    }
+    refresh = true;
+    final match = RegExp(
+      r'''url\s*=\s*['"]?\s*([^'"\s;]+)''',
+      caseSensitive: false,
+    ).firstMatch(meta.attributes['content'] ?? '');
+    final redirect = match == null ? null : Uri.tryParse(match[1]!);
+    if (redirect == null) {
+      externalRefresh = true;
+      continue;
+    }
+    final resolved = target.resolveUri(redirect);
+    if (HeaderPolicy.origin(target) != HeaderPolicy.origin(resolved)) {
+      externalRefresh = true;
+    }
+  }
+  return (refresh, externalRefresh);
+}
+
+bool _adultSitePurpose(String title, Iterable<String> descriptions) {
+  final titleNamesAdultSite =
+      !_adultSiteWarning.hasMatch(title) &&
+      title
+          .split(_adultClauseBoundary)
+          .any(
+            (part) =>
+                _unscopedAdultClause(part) &&
+                (_adultPurposeOutsideAwareness(part, _adultBusiness) ||
+                    _adultPurposeOutsideAwareness(part, _adultSiteTitle)),
+          );
+  return descriptions.any(
+    (description) =>
+        !_adultSiteWarning.hasMatch(description) &&
+        (titleNamesAdultSite && _adultSiteNameAndReading(description) ||
+            description
+                .split(_adultClauseBoundary)
+                .any(
+                  (part) =>
+                      _unscopedAdultClause(part) &&
+                      (titleNamesAdultSite &&
+                              _adultPurposeOutsideAwareness(
+                                part,
+                                _adultSiteDescription,
+                              ) ||
+                          _adultPurposeOutsideAwareness(
+                            part,
+                            _exclusiveAdultDescription,
+                          )),
+                )),
+  );
+}
+
+BookPageSaleReview _inspectSale(
+  dom.Document document,
+  Uri target,
+  String input,
+  bool truncated,
+) {
+  try {
+    return inspectBookPageSale(document, target, input, truncated: truncated);
+  } catch (_) {
+    // A malformed sample cannot clear earlier observations.
+    return const BookPageSaleReview();
+  }
+}
+
+BookPageScriptReview _inspectScripts(
+  dom.Document document,
+  Uri target,
+  bool truncated,
+) {
+  try {
+    return inspectBookPageScripts(document, target, truncated: truncated);
+  } catch (_) {
+    // A malformed sample must not discard the independent adult/betting scan.
+    // No exception detail or page text is retained.
+    return const BookPageScriptReview(coverage: BookPageScriptCoverage.partial);
+  }
 }

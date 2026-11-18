@@ -11,7 +11,6 @@ import 'package:media_kit_video/media_kit_video.dart';
 import 'package:zero_player/app/app_services.dart';
 import 'package:zero_player/core/network/cancellation_token.dart';
 import 'package:zero_player/core/persistence/app_database.dart';
-import 'package:zero_player/features/playback/application/local_video.dart';
 import 'package:zero_player/features/playback/application/playback_controller.dart';
 import 'package:zero_player/media/engine/media_kit_engine.dart';
 import 'package:zero_player/media/export/media_exporter.dart';
@@ -48,7 +47,7 @@ void main() {
             home: Video(controller: engine.video, controls: NoVideoControls),
           ),
         );
-        final request = await LocalVideo.open(services, selected.path);
+        final request = await services.localVideo.open(selected.path);
         await controller.open(request);
         await nativeWidgetUntil(
           tester,
@@ -62,7 +61,7 @@ void main() {
         );
         await engine.pause();
         await controller.save();
-        final reopened = await LocalVideo.open(services, selected.path);
+        final reopened = await services.localVideo.open(selected.path);
         expect(
           reopened.position,
           greaterThanOrEqualTo(const Duration(seconds: 4)),
@@ -77,7 +76,7 @@ void main() {
         );
         await services.exporter.validate(File(output), CancellationToken());
         expect(await File(output).length(), greaterThan(0));
-        final saved = await LocalVideo.open(services, output);
+        final saved = await services.localVideo.open(output);
         await controller.open(saved);
         await nativeWidgetUntil(
           tester,

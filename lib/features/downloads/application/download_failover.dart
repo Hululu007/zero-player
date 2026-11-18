@@ -27,15 +27,25 @@ final class DownloadFailover {
     remarks: row['remarks'] as String? ?? '',
   );
 
+  CatalogItem? _taskIdentity(DownloadTask task) {
+    final raw = task.row['work_json'];
+    if (raw is! String) return null;
+    try {
+      return _identity(jsonDecode(raw) as Map);
+    } on FormatException {
+      return null;
+    } on TypeError {
+      return null;
+    }
+  }
+
   Future<DownloadLocation?> find(
     DownloadTask task,
     CancellationToken parent,
     Set<String> excluded,
   ) async {
-    final identity = task.row['work_json'] as String?;
-    if (identity == null) return null;
-    final row = jsonDecode(identity) as Map;
-    final original = _identity(row);
+    final original = _taskIdentity(task);
+    if (original == null) return null;
     final candidates =
         (await sources.all())
             .where(

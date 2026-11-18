@@ -36,22 +36,46 @@ final class MusicDiscovery extends StatelessWidget {
     },
   );
 
-  Widget _charts(BuildContext context, MusicRecommendations feed) => Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      Padding(
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-        child: controls,
-      ),
-      Padding(
-        padding: const EdgeInsets.fromLTRB(20, 12, 20, 8),
-        child: _categoryChips(feed),
-      ),
-      Expanded(
-        child: MusicChartBrowser(services: services, onSearch: onSearch),
-      ),
-    ],
-  );
+  Widget _charts(BuildContext context, MusicRecommendations feed) =>
+      LayoutBuilder(
+        builder: (context, constraints) {
+          final compact = constraints.maxWidth < 720;
+          final header = Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(12, 4, 12, 0),
+                child: controls,
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(12, 2, 12, 2),
+                child: LayoutBuilder(
+                  builder: (context, constraints) =>
+                      _categoryChips(feed, compact: constraints.maxWidth < 620),
+                ),
+              ),
+            ],
+          );
+          if (compact) {
+            return MusicChartBrowser(
+              services: services,
+              onSearch: onSearch,
+              leading: header,
+            );
+          }
+          return Column(
+            children: [
+              header,
+              Expanded(
+                child: MusicChartBrowser(
+                  services: services,
+                  onSearch: onSearch,
+                ),
+              ),
+            ],
+          );
+        },
+      );
 
   Widget _recommendations(BuildContext context, MusicRecommendations feed) {
     final visible = feed.visible;
@@ -138,10 +162,8 @@ final class MusicDiscovery extends StatelessWidget {
     ),
   );
 
-  Widget _categoryChips(MusicRecommendations feed) => Wrap(
-    spacing: 8,
-    runSpacing: 8,
-    children: [
+  Widget _categoryChips(MusicRecommendations feed, {bool compact = false}) {
+    final chips = [
       for (final category in musicCategories)
         ChoiceChip(
           label: Text(category),
@@ -169,8 +191,15 @@ final class MusicDiscovery extends StatelessWidget {
             label: Text(section),
             onPressed: () => onPlaylists!('neteasePlaylist', section),
           ),
-    ],
-  );
+    ];
+    if (compact) {
+      return SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(spacing: 6, children: chips),
+      );
+    }
+    return Wrap(spacing: 8, runSpacing: 8, children: chips);
+  }
 
   Widget _recommendationControls(MusicRecommendations feed) => Wrap(
     spacing: 8,

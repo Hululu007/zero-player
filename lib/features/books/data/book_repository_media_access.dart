@@ -19,7 +19,7 @@ extension _BookRepositoryMediaAccess on BooksRepository {
         throw const ContentBlocked();
       }
       final current =
-          _riskSourceEntries[book.sourceId]?.source ??
+          _sourceAccess.entry(book.sourceId)?.source ??
           _verifiedSources[book.sourceId];
       if (current != null &&
           offline.any((uri) => _restrictedBookTarget(current, uri, null))) {
@@ -67,7 +67,7 @@ extension _BookRepositoryMediaAccess on BooksRepository {
     }
     if (chapter != null) requireBook(book, chapter);
     final current =
-        _riskSourceEntries[book.sourceId]?.source ??
+        _sourceAccess.entry(book.sourceId)?.source ??
         _verifiedSources[book.sourceId];
     if (current != null && _restrictedBookTarget(current, image, null)) {
       throw const ContentBlocked();
@@ -156,7 +156,7 @@ extension _BookRepositoryMediaAccess on BooksRepository {
       throw const ContentBlocked();
     }
     final latest =
-        _riskSourceEntries[book.sourceId]?.source ??
+        _sourceAccess.entry(book.sourceId)?.source ??
         _verifiedSources[book.sourceId];
     if (latest != null && _restrictedBookTarget(latest, image, null)) {
       throw const ContentBlocked();

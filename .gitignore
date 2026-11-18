@@ -46,10 +46,13 @@ migrate_working_dir/
 *.env
 /PROJECT_PLAN.md
 /docs/*
+!/docs/code-review-2026-11-17.md
+!/docs/code-review-2026-11-18.md
 !/docs/implementation/
 /docs/implementation/*
 !/docs/implementation/BUILD.md
 !/docs/implementation/STATUS.md
+!/docs/implementation/MODULE-BOUNDARIES.md
 !/docs/implementation/COMIC_SOURCE_AUDIT.md
 !/docs/implementation/BOOK_SOURCE_AUDIT.md
 !/docs/implementation/BOOKS-CODE-REVIEW-2026-11-16.md
@@ -135,6 +138,9 @@ migrate_working_dir/
 !/docs/implementation/legado-eval-normalized-20261115.json
 !/docs/implementation/LIVE_SOURCES.md
 !/docs/implementation/USER-GUIDE.md
+!/docs/implementation/READER-PERFORMANCE-2026-11-17.md
+!/docs/implementation/PERFORMANCE-OPTIMIZATION-2026-11-18.md
+!/docs/implementation/PERFORMANCE-EVIDENCE-2026-11-18.json
 !/docs/implementation/RELEASE-0.0.1.md
 !/docs/implementation/RELEASE-0.0.6.md
 !/docs/implementation/CHANNEL-RADIO-2026-10-28.md

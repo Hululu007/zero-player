@@ -1,4 +1,5 @@
 import 'dart:isolate';
+import '../../../core/text/display_text.dart';
 import 'package:xml/xml_events.dart';
 import '../domain/live_channel.dart';
 
@@ -138,7 +139,14 @@ final class _EpgReader {
       return;
     }
     programs.add(
-      EpgProgram(channel, _title?.toString() ?? '未命名节目', start, end),
+      EpgProgram(
+        channel,
+        String.fromCharCodes(
+          displayText(_title?.toString() ?? '未命名节目').runes.take(200),
+        ),
+        start,
+        end,
+      ),
     );
   }
 }

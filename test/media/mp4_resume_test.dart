@@ -12,6 +12,65 @@ void main() {
   _completionTests();
   _restartTests();
   _checkpointFailureTest();
+  _validationFailureTests();
+}
+
+void _validationFailureTests() {
+  test(
+    'cancellation during validation retains the checkpoint for resume',
+    () async {
+      final fixture = await _Fixture.create((request) {
+        request.response.statusCode = 416;
+        request.response.headers.set('content-range', 'bytes */4');
+        request.response.headers.set('etag', 'version-a');
+      });
+      await fixture.seed([1, 2, 3, 4]);
+      fixture.validator = (_, token) async {
+        token.cancel();
+        token.check();
+      };
+      await expectLater(fixture.run(), throwsA(isA<RequestCancelled>()));
+      expect(
+        await File('${fixture.directory.path}/video.mp4.part').readAsBytes(),
+        [1, 2, 3, 4],
+      );
+      expect(
+        await File('${fixture.directory.path}/mp4-state.json').exists(),
+        isTrue,
+      );
+    },
+  );
+  test(
+    'rejected complete checkpoint is cleared and retries from byte zero',
+    () async {
+      final fixture = await _Fixture.create((request) {
+        request.response.headers.set('etag', 'version-a');
+        if (request.headers.value('range') != null) {
+          request.response.statusCode = 416;
+          request.response.headers.set('content-range', 'bytes */4');
+        } else {
+          request.response.add([5, 6, 7, 8]);
+        }
+      });
+      await fixture.seed([1, 2, 3, 4]);
+      fixture.validator = (_, _) async {
+        throw const FormatException('bad container');
+      };
+      await expectLater(fixture.run(), throwsFormatException);
+      expect(
+        await File('${fixture.directory.path}/video.mp4.part').exists(),
+        isFalse,
+      );
+      expect(
+        await File('${fixture.directory.path}/mp4-state.json').exists(),
+        isFalse,
+      );
+      fixture.validator = null;
+      await fixture.run();
+      expect(await fixture.output.readAsBytes(), [5, 6, 7, 8]);
+      expect(fixture.server.calls['/video.mp4'], 2);
+    },
+  );
 }
 
 void _checkpointFailureTest() {
@@ -119,6 +178,7 @@ final class _Fixture {
   final HttpTestServer server;
   final http = MediaHttpClient(allowPrivateNetworks: true);
   var validated = 0;
+  Future<void> Function(File, CancellationToken)? validator;
   List<int>? progress;
   File get output => File('${directory.path}/video.mp4');
   Uri get uri => server.baseUri.resolve('video.mp4');
@@ -154,6 +214,7 @@ final class _Fixture {
     },
     validate: (file, token) async {
       validated++;
+      await validator?.call(file, token);
       expect(await file.length(), greaterThan(0));
     },
   );

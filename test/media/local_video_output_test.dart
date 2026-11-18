@@ -11,7 +11,6 @@ import 'package:zero_player/core/persistence/app_database.dart';
 import 'package:zero_player/features/catalog/domain/catalog_item.dart';
 import 'package:zero_player/features/downloads/application/download_scheduler.dart';
 import 'package:zero_player/features/downloads/domain/download_task.dart';
-import 'package:zero_player/features/playback/application/local_video.dart';
 import 'package:zero_player/media/export/media_exporter.dart';
 
 late Directory root;
@@ -37,7 +36,7 @@ void main() {
         '${root.path}/本地 视频.MKV',
       ).writeAsBytes([0, 1, 2, 3, 4]);
       await File('${root.path}/private.txt').writeAsString('private');
-      final request = await LocalVideo.open(services, video.path);
+      final request = await services.localVideo.open(video.path);
       final session = request.offline!;
       final client = HttpClient();
       addTearDown(() => client.close(force: true));
@@ -66,11 +65,11 @@ void main() {
         '${root.path}/unsafe.m3u8',
       ).writeAsString('#EXTM3U');
       await expectLater(
-        LocalVideo.open(services, playlist.path),
+        services.localVideo.open(playlist.path),
         throwsFormatException,
       );
       await expectLater(
-        LocalVideo.open(services, '${root.path}/missing.mp4'),
+        services.localVideo.open('${root.path}/missing.mp4'),
         throwsA(isA<FileSystemException>()),
       );
     },
@@ -78,7 +77,7 @@ void main() {
 
   test('local video restores progress and obeys title filtering', () async {
     final file = await File('${root.path}/movie.mp4').writeAsBytes([1, 2]);
-    final first = await LocalVideo.open(services, file.path);
+    final first = await services.localVideo.open(file.path);
     await services.history.save(
       first.item,
       first.item.lines.single,
@@ -87,12 +86,12 @@ void main() {
       const Duration(seconds: 40),
     );
     first.offline!.close();
-    final reopened = await LocalVideo.open(services, file.path);
+    final reopened = await services.localVideo.open(file.path);
     expect(reopened.position, const Duration(seconds: 8));
     reopened.offline!.close();
     final blocked = await File('${root.path}/成人色情.mp4').writeAsBytes([1]);
     await expectLater(
-      LocalVideo.open(services, blocked.path),
+      services.localVideo.open(blocked.path),
       throwsA(isA<ContentBlocked>()),
     );
   });
@@ -239,7 +238,7 @@ void _legacyRecoveryTest() {
 void _localReselectTest() {
   test('reselected local file retains history identity and position', () async {
     final old = await File('${root.path}/old.mp4').writeAsBytes([1]);
-    final first = await LocalVideo.open(services, old.path);
+    final first = await services.localVideo.open(old.path);
     await services.history.save(
       first.item,
       first.item.lines.single,
@@ -251,8 +250,7 @@ void _localReselectTest() {
     final replacement = await File(
       '${root.path}/replacement.mp4',
     ).writeAsBytes([2]);
-    final reopened = await LocalVideo.open(
-      services,
+    final reopened = await services.localVideo.open(
       replacement.path,
       previousId: first.item.id,
     );

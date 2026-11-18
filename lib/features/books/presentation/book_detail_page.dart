@@ -19,6 +19,8 @@ import 'book_links.dart';
 import 'audiobook_player_page.dart';
 import 'book_download_dialog.dart';
 import 'book_source_favorite.dart';
+import 'book_text_policy_dialog.dart';
+import 'book_blocked_chapters_dialog.dart';
 import '../data/book_store.dart';
 
 final class BookDetailPage extends StatefulWidget {
@@ -52,6 +54,7 @@ final class _BookDetailPageState extends State<BookDetailPage> {
   bool _policyReloadPending = false, _policyReloadScheduled = false;
   bool _reverse = false, _expanded = false, _following = false;
   double _position = 0;
+  int _catalogOmitted = 0;
   DateTime? _chapterUpdatedAt;
   BookDownloadPlan? _plan;
   BookSourceEntry? _channel;
@@ -137,7 +140,10 @@ final class _BookDetailPageState extends State<BookDetailPage> {
     final task = _downloadTask;
     if (task == null || !mounted) return;
     if (task.status == BookDownloadStatus.running) {
-      setState(() => _saved.addAll(task.savedChapterIds));
+      setState(() {
+        _saved.addAll(task.savedChapterIds);
+        _chapters = List.of(task.chapters);
+      });
       return;
     }
     _attachDownloadTask(null);
@@ -157,6 +163,7 @@ final class _BookDetailPageState extends State<BookDetailPage> {
       if (!mounted || _book.id != task.book.id) return;
       setState(() {
         _saved = saved;
+        _chapters = List.of(task.chapters);
         _plan = plan;
       });
     } on Exception {
@@ -167,7 +174,24 @@ final class _BookDetailPageState extends State<BookDetailPage> {
     }
     switch (task.status) {
       case BookDownloadStatus.completed:
-        _toast('已完成 ${task.total - task.failures} 章，失败 ${task.failures} 章');
+        _toast(
+          '已完成 ${task.total - task.failures} 章，过滤跳过 ${task.blockedChapters.length} 章，其他失败 ${task.failures - task.blockedChapters.length} 章',
+        );
+        if (task.blockedChapters.isNotEmpty && mounted) {
+          await showBlockedChaptersDialog(
+            context,
+            chapters: [
+              for (final (index, chapter) in task.chapters.indexed)
+                if (task.blockedChapters[chapter.id] case final block?)
+                  (
+                    position: index + 1,
+                    reason: block.supervised ? '监管关键词命中' : '成人正文规则命中',
+                    review: () => reviewBlockedChapter(context, _books, block),
+                  ),
+            ],
+            replacements: () => showBookTextReplacements(context, _books),
+          );
+        }
       case BookDownloadStatus.paused:
         _toast(task.error ?? '下载已暂停');
       case BookDownloadStatus.failed:
@@ -255,6 +279,7 @@ final class _BookDetailPageState extends State<BookDetailPage> {
       _following = existing?.following ?? false;
       _position = existing?.position ?? 0;
       _chapterUpdatedAt = existing?.chapterUpdatedAt;
+      _catalogOmitted = existing?.catalogOmitted ?? 0;
       _plan = plan;
       _sourceUnavailable =
           !_local && (chapters.isEmpty || channel?.enabled != true);
@@ -265,7 +290,11 @@ final class _BookDetailPageState extends State<BookDetailPage> {
       if (existing.following) {
         await _books.store.updateFollowedChapters(_book, chapters);
       } else {
-        await _books.store.saveBook(_book, chapters: chapters);
+        await _books.store.updateShelfChapters(_book, chapters);
+      }
+      final savedCatalog = await _books.store.entry(_book);
+      if (mounted && !token.isCancelled) {
+        setState(() => _catalogOmitted = savedCatalog?.catalogOmitted ?? 0);
       }
     }
     if (catalogError case final Object error) throw error;
@@ -411,10 +440,11 @@ final class _BookDetailPageState extends State<BookDetailPage> {
       if (!_saved.contains(chapter.id)) continue;
       _requirePageBook(_book, chapter);
       final saved = await _books.offlineText(_book, chapter, token);
-      final body = saved.body;
-      if (body == null || !_books.policy.textAllowed(body)) continue;
+      final original = saved.body;
+      if (original == null) continue;
+      final body = _books.chapterPolicy.prepare(_book, chapter, original);
       buffer.write('${chapter.title}\n\n$body\n\n');
-      included.add((chapter, body));
+      included.add((chapter, original));
       validateOrigins.add(() => _books.requireDownloadEvidence(saved.evidence));
       exported++;
     }
@@ -423,9 +453,9 @@ final class _BookDetailPageState extends State<BookDetailPage> {
     void validate() {
       token.check();
       if (!_pageBookAllowed) throw const ContentBlocked();
-      for (final (chapter, body) in included) {
+      for (final (chapter, original) in included) {
         _requirePageBook(_book, chapter);
-        if (!_books.policy.textAllowed(body)) throw const ContentBlocked();
+        _books.chapterPolicy.prepare(_book, chapter, original);
       }
       for (final validateOrigin in validateOrigins) {
         validateOrigin();
@@ -565,6 +595,7 @@ final class _BookDetailPageState extends State<BookDetailPage> {
       await _books.store.saveBook(
         candidate,
         chapters: chosen.chapters,
+        preserveCatalog: true,
         favorite: _favorite ? true : null,
         last: next,
         position: next != null && !_audio ? previous?.position : null,
@@ -597,7 +628,11 @@ final class _BookDetailPageState extends State<BookDetailPage> {
   Future<void> _chooseDownload() async {
     if (!_pageBookAllowed) return;
     final book = _book;
-    final plan = await showBookDownloadDialog(context, _chapters.length);
+    final plan = await showBookDownloadDialog(
+      context,
+      _chapters.length,
+      allowAggregateLatest: !_audio && !_comic,
+    );
     if (mounted && identical(_book, book) && _pageBookAllowed && plan != null) {
       await _download(plan);
     }
@@ -638,6 +673,7 @@ final class _BookDetailPageState extends State<BookDetailPage> {
       _book,
       chapters: _chapters,
       following: !_following,
+      preserveCatalog: true,
     );
     if (mounted) setState(() => _following = !_following);
   });
@@ -892,6 +928,8 @@ final class _BookDetailPageState extends State<BookDetailPage> {
             ),
           ],
         ),
+        if (_catalogOmitted > 0)
+          const Text('本地仅保留部分目录。可刷新目录重新加载；离线下载覆盖当前目录中的章节。'),
         if (_chapters.length > 10)
           TextField(
             controller: _filter,
@@ -967,6 +1005,7 @@ final class _BookDetailPageState extends State<BookDetailPage> {
                             ? null
                             : _chapters,
                         favorite: !_favorite,
+                        preserveCatalog: true,
                       );
                       if (mounted) {
                         setState(() => _favorite = !_favorite);

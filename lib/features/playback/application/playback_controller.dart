@@ -1,4 +1,4 @@
-import 'line_probe.dart';
+import 'playback_request.dart';
 import '../../../app/app_version.dart';
 import '../../../core/network/cancellation_token.dart';
 import '../../../media/content_filter/fingerprints/feature_capture.dart';
@@ -11,7 +11,6 @@ import 'package:flutter/foundation.dart';
 import '../../../app/app_services.dart';
 import '../../../core/network/header_policy.dart';
 import '../../../media/gateway/media_gateway.dart';
-import '../../../media/gateway/offline_server.dart';
 import '../../../media/hls/timeline.dart';
 import '../../../media/hls/hls_quality.dart';
 import '../../../media/content_filter/background_filter.dart';
@@ -30,43 +29,7 @@ import 'filter_detection_queue.dart';
 import 'playback_health.dart';
 import '../domain/video_recovery_engine.dart';
 
-enum PlaybackMediaKind { online, live, downloaded, local }
-
-final class PlaybackRequest {
-  const PlaybackRequest(
-    this.item, {
-    this.line = 0,
-    this.episode = 0,
-    this.position = Duration.zero,
-    this.live = false,
-    this.headers = const {},
-    this.headersByUri = const {},
-    this.offline,
-    this.quality,
-    this.mediaKind,
-  });
-  final CatalogItem item;
-  final int line;
-  final int episode;
-  final Duration position;
-  final bool live;
-  final Map<String, String> headers;
-  final Map<Uri, Map<String, String>> headersByUri;
-  final OfflineSession? offline;
-  final Uri? quality;
-  final PlaybackMediaKind? mediaKind;
-  PlaybackMediaKind get kind =>
-      mediaKind ??
-      (live
-          ? PlaybackMediaKind.live
-          : offline == null
-          ? PlaybackMediaKind.online
-          : item.sourceId == 'local'
-          ? PlaybackMediaKind.local
-          : PlaybackMediaKind.downloaded);
-  bool get supportsMarks =>
-      kind == PlaybackMediaKind.online && !live && offline == null;
-}
+export 'playback_request.dart';
 
 final class PlaybackController extends ChangeNotifier {
   PlaybackController(this.services, this.engine) {
@@ -284,8 +247,7 @@ final class PlaybackController extends ChangeNotifier {
         if (matches.length != 1) continue;
         checked++;
         try {
-          await probeEpisode(
-            services,
+          await services.episodeProbe.probe(
             candidate,
             episodes[matches.single],
             token,
@@ -1039,12 +1001,7 @@ final class PlaybackController extends ChangeNotifier {
   }
 
   Future<void> save() async {
-    if (blocked ||
-        request == null ||
-        isLive ||
-        (request!.offline != null &&
-            request!.kind != PlaybackMediaKind.local) ||
-        _switching) {
+    if (blocked || request == null || isLive || _switching) {
       return;
     }
     try {
@@ -1311,15 +1268,22 @@ final class PlaybackController extends ChangeNotifier {
       notifyListeners();
       return;
     }
-    await services.skips.add(
-      workKey,
-      markStart!,
-      originalPosition,
-      originalDuration,
-      '自定义片段',
-    );
-    checkMarkTarget(target);
+    final start = markStart!;
+    final end = originalPosition;
     markStart = null;
+    checkMarkTarget(target);
+    await services.db.atomic(() async {
+      checkMarkTarget(target);
+      await services.skips.add(
+        target.workKey,
+        start,
+        end,
+        target.duration,
+        '自定义片段',
+      );
+      checkMarkTarget(target);
+    }, tables: const {'skip_marks'});
+    checkMarkTarget(target);
     await refreshSkipMarks();
   }
 

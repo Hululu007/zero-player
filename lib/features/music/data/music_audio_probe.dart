@@ -47,7 +47,11 @@ Future<MusicAudioSample> probeMusicAudio(
     await payload.body.take(0).drain<void>();
     throw const FormatException('歌曲地址未返回音频');
   }
-  final bytes = await payload.body.firstWhere((chunk) => chunk.isNotEmpty);
+  final bytes = await payload.body.firstWhere(
+    (chunk) => chunk.isNotEmpty,
+    orElse: () => const <int>[],
+  );
+  if (bytes.isEmpty) throw const FormatException('歌曲地址未返回音频');
   final prefix = String.fromCharCodes(bytes.take(12));
   final lossless =
       prefix.startsWith('fLaC') ||

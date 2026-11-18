@@ -12,15 +12,8 @@ extension BookPolicyReview on BooksRepository {
     final result = <BookPolicyReviewEntry>[];
     for (final saved in shelf) {
       final book = saved.book;
-      final evidence = _bookPolicyEvidence[book.id];
-      if (book.sourceId == 'local' ||
-          evidence == null ||
-          evidence.uncertain ||
-          !evidence.adult ||
-          _bookPolicyReviewing.contains(book.id) ||
-          (_activeBookObservations[book.id] ?? 0) != 0 ||
-          (_pendingBookPolicyEvidence[book.id]?.isNotEmpty ?? false) ||
-          !bookAllowed(book)) {
+      final evidence = _bookPolicy.reviewableEvidence(book.id);
+      if (book.sourceId == 'local' || evidence == null || !bookAllowed(book)) {
         continue;
       }
       result.add(
@@ -29,8 +22,8 @@ extension BookPolicyReview on BooksRepository {
           revision: evidence.revision,
           digest: evidence.snapshotDigest,
           sourceRevision: _sourceConfigurationRevision,
-          policyRevision: _bookReviewPolicyRevision,
-          observationSequence: _bookObservationSequences[book.id] ?? 0,
+          policyRevision: _bookPolicy.policyRevision,
+          observationSequence: _bookPolicy.observationSequence(book.id),
         ),
       );
     }
@@ -42,7 +35,7 @@ extension BookPolicyReview on BooksRepository {
     try {
       _requireBookPolicyReview();
       _requireCurrentBookReview(entry);
-      return !_bookPolicyReviewing.contains(entry.book.id);
+      return !_bookPolicy.reviewing(entry.book.id);
     } on Exception {
       return false;
     }
@@ -57,17 +50,12 @@ extension BookPolicyReview on BooksRepository {
     _requireBookPolicyReview();
     _requireCurrentBookReview(entry);
     final id = entry.book.id;
-    if (!_bookPolicyReviewing.add(id)) {
-      throw const FormatException('作品正在复核，请稍后重试');
-    }
+    final review = _bookPolicy.startReview(id);
     final done = Completer<void>();
     _pendingEvidenceMutations.add(done);
     try {
-      _bookObservationGenerations[id] =
-          (_bookObservationGenerations[id] ?? 0) + 1;
       afterBookPolicyReviewRegistrationForTesting?.call();
-      _bookPolicyGeneration++;
-      _bookPolicyChanges.value++;
+      review.notifyStarted();
       void authorize() {
         _requireBookPolicyReview();
         _requireCurrentBookReview(entry);
@@ -105,14 +93,12 @@ extension BookPolicyReview on BooksRepository {
       if (after != null) await after();
       // A concurrently loaded old source snapshot must not restore the
       // pre-review adult bit after the transaction has committed.
-      _riskGeneration++;
-      _bookPolicyEvidence[id] = cleared;
+      _sourceAccess.invalidate();
+      review.publish(cleared);
     } finally {
-      _bookPolicyReviewing.remove(id);
+      review.close();
       _pendingEvidenceMutations.remove(done);
       done.complete();
-      _bookPolicyGeneration++;
-      if (!_evidenceClosing) _bookPolicyChanges.value++;
     }
   }
 
@@ -126,20 +112,11 @@ extension BookPolicyReview on BooksRepository {
   }
 
   void _requireCurrentBookReview(BookPolicyReviewEntry entry) {
-    final evidence = _bookPolicyEvidence[entry.book.id];
     if (_evidenceMutations != 0 ||
         _sourceConfigurationMutations != 0 ||
         entry.sourceRevision != _sourceConfigurationRevision ||
-        entry.policyRevision != _bookReviewPolicyRevision ||
-        (_activeBookObservations[entry.book.id] ?? 0) != 0 ||
-        entry.observationSequence !=
-            (_bookObservationSequences[entry.book.id] ?? 0) ||
-        (_pendingBookPolicyEvidence[entry.book.id]?.isNotEmpty ?? false) ||
-        evidence == null ||
-        evidence.uncertain ||
-        !evidence.adult ||
-        evidence.revision != entry.revision ||
-        evidence.snapshotDigest != entry.digest ||
+        entry.policyRevision != _bookPolicy.policyRevision ||
+        !_bookPolicy.matchesReview(entry) ||
         !bookAllowed(entry.book)) {
       throw const FormatException('作品、来源或风险证据已变化，请重新复核');
     }

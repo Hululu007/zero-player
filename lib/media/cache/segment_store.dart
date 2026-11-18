@@ -187,7 +187,11 @@ final class SegmentStore {
     Future<StoredResource> Function() load, {
     bool verify = false,
   }) async {
-    _references.update(key, (value) => value + 1, ifAbsent: () => 1);
+    // Reserve only after any in-progress eviction has finished. Otherwise a
+    // reader could acquire the old entry while its file is being deleted.
+    await _serialize(() async {
+      _references.update(key, (value) => value + 1, ifAbsent: () => 1);
+    });
     try {
       final entry = await _acquireEntry(key, load, verify);
       return ResourceLease(entry, () => _release(key));
@@ -338,8 +342,8 @@ final class SegmentStore {
   }
 
   Future<void> _makeRoom(int bytes) async {
-    // No awaits between reservation check and reference check; entries in use
-    // are never removed. Serial gateway downloads are not assumed.
+    // Reservations and eviction share the commit queue; active leases and
+    // durable downloads are never evicted. Downloads have a separate quota.
     var current = cacheBytes;
     for (final key in _entries.keys.toList()) {
       if (current + bytes <= maxBytes) return;

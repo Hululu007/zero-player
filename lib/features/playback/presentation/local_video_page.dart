@@ -6,7 +6,6 @@ import '../../../app/app_services.dart';
 import '../../../app/widgets.dart';
 import '../../../core/platform/video_files.dart';
 import '../../../core/network/cancellation_token.dart';
-import '../application/local_video.dart';
 import '../data/local_video_repository.dart';
 
 final class LocalVideoPage extends StatefulWidget {
@@ -54,8 +53,7 @@ final class _LocalVideoPageState extends State<LocalVideoPage> {
       }
       final selected = path ?? await _chooseVideo();
       if (selected == null || !mounted) return;
-      final request = await LocalVideo.open(
-        widget.services,
+      final request = await widget.services.localVideo.open(
         selected,
         previousId: initial || relocate ? widget.id : null,
         documentIdentity: _documentIdentity,
