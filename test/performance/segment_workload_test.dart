@@ -8,6 +8,7 @@ import 'package:zero_player/media/cache/segment_index.dart';
 import 'package:zero_player/media/cache/segment_store.dart';
 
 const _optimized = bool.fromEnvironment('EXPECT_OPTIMIZED_SEGMENTS');
+const _constantCapacity = true;
 
 void main() {
   setUp(() {
@@ -97,7 +98,7 @@ void _capacityWorkloads() {
       expect(store.sizeBytes, count + 1);
       expect(
         counts['cache.capacity.visited'] ?? 0,
-        _optimized ? 0 : count * 21,
+        _constantCapacity ? 0 : count * 21,
       );
       _report('capacity-$count', counts);
     });

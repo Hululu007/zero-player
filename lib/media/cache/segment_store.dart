@@ -55,17 +55,9 @@ final class SegmentStore {
   Future<void> _commits = Future.value();
   int hits = 0;
   int writes = 0;
-  int get sizeBytes {
-    PerformanceCounters.add('cache.capacity.visited', _entries.length);
-    return _entries.values.fold(0, (sum, e) => sum + e.length);
-  }
-
-  int get cacheBytes {
-    PerformanceCounters.add('cache.capacity.visited', _entries.length);
-    return _entries.entries
-        .where((e) => !_protected.contains(e.key))
-        .fold(0, (sum, e) => sum + e.value.length);
-  }
+  int _sizeBytes = 0, _cacheBytes = 0;
+  int get sizeBytes => _sizeBytes;
+  int get cacheBytes => _cacheBytes;
 
   StoredResource? find(String key) => _entries[key];
 
@@ -98,12 +90,15 @@ final class SegmentStore {
       if (p.isWithin(directory.absolute.path, entry.value.file.absolute.path) &&
           await entry.value.file.exists() &&
           await entry.value.file.length() == entry.value.length) {
-        _entries[entry.key] = entry.value;
+        _setEntry(entry.key, entry.value);
       } else {
         await metadata?.remove(entry.key);
       }
     }
-    _protected.addAll(await metadata?.protectedKeys() ?? {});
+    _setProtected({
+      ..._protected,
+      ...await metadata?.protectedKeys() ?? <String>{},
+    });
     await for (final file in directory.list()) {
       if (file is File &&
           RegExp(r'^[a-f0-9]{64}\.part$').hasMatch(p.basename(file.path))) {
@@ -116,7 +111,7 @@ final class SegmentStore {
     if (!_entries.containsKey(key)) throw StateError('Segment not committed');
     await metadata?.pin(owner, key);
     if (metadata == null) _localPins.putIfAbsent(owner, () => {}).add(key);
-    _protected.add(key);
+    if (_protected.add(key)) _cacheBytes -= _entries[key]!.length;
   });
 
   Future<void> unpin(String owner) => _serialize(() async {
@@ -129,9 +124,27 @@ final class SegmentStore {
     final keys =
         await metadata?.protectedKeys() ??
         _localPins.values.expand((keys) => keys).toSet();
+    _setProtected(keys);
+  }
+
+  void _setProtected(Set<String> keys) {
+    for (final key in _protected.difference(keys)) {
+      _cacheBytes += _entries[key]?.length ?? 0;
+    }
+    for (final key in keys.difference(_protected)) {
+      _cacheBytes -= _entries[key]?.length ?? 0;
+    }
     _protected
       ..clear()
       ..addAll(keys);
+  }
+
+  void _setEntry(String key, StoredResource value) {
+    final previous = _entries[key];
+    final delta = value.length - (previous?.length ?? 0);
+    _entries[key] = value;
+    _sizeBytes += delta;
+    if (!_protected.contains(key)) _cacheBytes += delta;
   }
 
   Future<void> verify(String key) async {
@@ -196,6 +209,8 @@ final class SegmentStore {
     if (await entry.file.exists()) await entry.file.delete();
     await metadata?.remove(key);
     _entries.remove(key);
+    _sizeBytes -= entry.length;
+    if (!_protected.contains(key)) _cacheBytes -= entry.length;
     _invalid.remove(key);
     _protected.remove(key);
     for (final pins in _localPins.values) {
@@ -268,7 +283,7 @@ final class SegmentStore {
     Future<StoredResource> Function() load,
   ) async {
     final result = await load();
-    _entries[key] = result;
+    _setEntry(key, result);
     writes++;
     return result;
   }
@@ -347,7 +362,7 @@ final class SegmentStore {
       headers: Map.unmodifiable(headers),
     );
     await metadata?.put(key, result);
-    _entries[key] = result;
+    _setEntry(key, result);
     PerformanceCounters.add('cache.commits');
     PerformanceCounters.add('cache.committed_bytes', bytes);
     return result;
