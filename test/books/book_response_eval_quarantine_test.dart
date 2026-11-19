@@ -22,7 +22,7 @@ void main() {
       final evidence =
           jsonDecode(
                 await File(
-                  'docs/implementation/legado-response-eval-normalized-20261115.json',
+                  'test_support/book_source_audit/legado-response-eval-normalized-20261115.json',
                 ).readAsString(),
               )
               as Map;

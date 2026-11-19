@@ -106,7 +106,7 @@ Future<void> _verifyCatalog(AppServices services) async {
   final ledger =
       jsonDecode(
             await File(
-              'docs/implementation/legado-source-ledger-20261115.json',
+              'test_support/book_source_audit/legado-source-ledger-20261115.json',
             ).readAsString(),
           )
           as Map;

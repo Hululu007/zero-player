@@ -28,7 +28,7 @@ void main() {
       final evidence =
           jsonDecode(
                 await File(
-                  'docs/implementation/legado-woo15-home-review-20261116.json',
+                  'test_support/book_source_audit/legado-woo15-home-review-20261116.json',
                 ).readAsString(),
               )
               as Map;

@@ -14,7 +14,7 @@ void main() {
       final evidence =
           jsonDecode(
                 await File(
-                  'docs/implementation/legado-adult-label-evidence-20261115.json',
+                  'test_support/book_source_audit/legado-adult-label-evidence-20261115.json',
                 ).readAsString(),
               )
               as Map;

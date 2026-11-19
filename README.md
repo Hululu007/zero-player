@@ -4,54 +4,30 @@
 
 面向 **Windows 桌面和 Android 手机 / TV** 的本地在线视频聚合播放器。支持频道浏览、聚合搜索、点播、直播、续播、离线下载与导出，无需单独部署业务后端。
 
-**v0.8.0 阶段预发行** · [下载 Windows 新版](https://github.com/yixunfei/zero-player/releases/tag/v0.8.0) · [Android v0.8.0 开发测试包](https://github.com/yixunfei/zero-player/releases/download/v0.8.0/zero-player-0.8.0-android-arm64-devtest.apk) · [Windows v0.0.11 稳定版](https://github.com/yixunfei/zero-player/releases/tag/v0.0.11) · [Android v0.0.7 正式版](https://github.com/yixunfei/zero-player/releases/tag/v0.0.7) · [使用指南](docs/implementation/USER-GUIDE.md) · [构建说明](docs/implementation/BUILD.md) · [版本说明](docs/implementation/RELEASE-0.8.0.md)
+**v0.8.0 阶段预发行** · [下载 Windows 新版](https://github.com/yixunfei/zero-player/releases/tag/v0.8.0) · [Android v0.8.0 开发测试包](https://github.com/yixunfei/zero-player/releases/download/v0.8.0/zero-player-0.8.0-android-arm64-devtest.apk) · [Windows v0.0.11 稳定版](https://github.com/yixunfei/zero-player/releases/tag/v0.0.11) · [Android v0.0.7 正式版](https://github.com/yixunfei/zero-player/releases/tag/v0.0.7)
 
 ## v0.8.0
 
-源码版本 **0.8.0+80**。整合性能优化、书架移除与私密书架、阅读下载与续播修复、书源新域和 GitHub 影视渠道更新，并修复 12 项审计问题。专业图书独立模块仍处于规划阶段。详见[版本说明](docs/implementation/RELEASE-0.8.0.md)。
+源码版本 **0.8.0+80**。整合性能优化、书架移除与私密书架、阅读下载与续播修复、书源新域和 GitHub 影视渠道更新，并修复 12 项审计问题。专业图书独立模块仍处于规划阶段。详见[发行说明](https://github.com/yixunfei/zero-player/releases/tag/v0.8.0)。
 
-## v0.7.4
+Android 开发测试版使用独立包名 `dev.zeroplayer.zero_player.devtest` 和已有测试签名，可与正式版并存；Android 最新正式版仍为 v0.0.7。Windows 安装器未做商业代码签名。Android/TV 真机、长期播放及后台生命周期仍待验收，来源可用性以实际网络为准。
 
-源码版本 **0.7.4+74**。网络阅读新增后台章节下载与统一管理、书架状态及类型筛选、封面缓存与清理，并调整手机阅读界面。详见[版本说明](docs/implementation/RELEASE-0.7.4.md)。
-
-## v0.7.3
-
-源码版本 **0.7.3+73**。修复直播换台时共享地址的请求头覆盖与测活结果保存异常，改进直播搜索、窄屏操作和测活列表。包含 v0.7.2 发布后更新的直播精选及体育分组。
-
-## v0.7.2
-
-该版源码版本 **0.7.2+72**，包含网易云歌单补齐、全屏同步歌词和 Windows 在线音乐闪退的应用侧缓解。详见[版本说明](docs/implementation/RELEASE-0.7.2.md)。
-
-## v0.0.14 源码版本
-
-源码版本 **0.0.14+14** 新增在线同步歌词、风格歌单、队列预检及按延迟和音质选源。详见[版本说明](docs/implementation/RELEASE-0.0.14.md)。
-
-## v0.0.13 预发行
-
-源码版本 **0.0.13+13**：新增音乐随机播放结果、自动／手动换源、歌手与主题搜索，整合直连音乐渠道、同步歌词、歌单导入及发现页滚动稳定性修复。详见[版本说明](docs/implementation/RELEASE-0.0.13.md)。提供 Windows x64 安装器／便携包和 Android ARM64 开发测试包。下文 v0.0.12 段落保留历史说明。
-
-## v0.0.12 预发行变更
-
-该预发行版本为 **0.0.12+12**，修复原生警告误触发重播、异常清零后丢失进度、短资源续播归零、动态 HLS 旧缓存和旧媒体列表引用累积；纳入播放触摸、锁定与换集状态修复。新增手机横屏／自动旋转、软件解码恢复画面，以及重启后可导出的本机播放与内存诊断。沿用既有监管、内容过滤与网络访问策略。
-
-本次为预发行，提供 Windows x64 和 Android ARM64 开发测试包。Android 名称「Zero Player 测试」，独立包名 `dev.zeroplayer.zero_player.devtest`，采用 Release 编译和已有本机测试签名，可覆盖同签名测试版并与正式版并存。原 Android 正式签名文件当前不可用，Android 最新正式版保持 v0.0.7。手机长时播放尚未验收；模拟器视频 EGL 与 Windows HLS 特征采样仍有未闭环项，不能宣称三个随机故障已全部消失。验收范围见[实施状态](docs/implementation/STATUS.md)。
-
-全新安装提供可跳过的监管设置提示；首次在非监管状态关闭成人过滤需完成本机访问密码验证。新增默认关闭的“内容过滤设置需要监管验证”，修改该开关本身始终验证监管密码。监管开启期间仍禁止关闭成人过滤。已有安装升级免新增首次流程，普通备份不传递本机验证记录。详情见使用指南。
+全新安装提供可跳过的监管设置提示；首次在非监管状态关闭成人过滤需完成本机访问密码验证。监管开启期间禁止关闭成人过滤，普通备份不传递本机验证记录。
 
 ## 功能
 
 - 影院与明亮主题，首页频道和搜索同栏展示，支持单类浏览、分类聚合、分页与继续观看。
 - 可配置视频源与聚合搜索，标题纯文本清理、来源检查和失败提示。
 - 点播、直播、播放快捷键、Windows 沉浸全屏和窗口恢复。
-- 直播单击选中、双击播放，随包预检通过目录、更新复检后恢复，4/8/16 路测活、健康优先排序、同台别名合并、备用线路与可配置 XMLTV 节目表。 参见[内置直播源清单与维护](docs/implementation/LIVE_SOURCES.md)。
+- 直播单击选中、双击播放，随包预检通过目录、更新复检后恢复，4/8/16 路测活、健康优先排序、同台别名合并、备用线路与可配置 XMLTV 节目表。
 - 搜索默认查询全渠道，优先当前浏览来源；发现页推荐无当前来源，支持手动仅当前来源、失败重试与逐源进度。
 - 统一成人过滤，监管模式覆盖点播、直播和广播；支持频道/关键词屏蔽，每次敏感操作验证密码，恢复码由用户自行保管。
 - **在线广播（实验阶段）**：电台分组/搜索、收藏、广播与电视伴听分类、健康筛选/测活、失败换线、迷你播放器；离开页面继续播放，Windows 支持托盘收听与退出。
-- **在线音乐**：默认浏览 QQ 音乐热歌，可选择网易云新歌和 Apple Music 中国区热门歌曲。Flutter 客户端直接请求各播放渠道，无需部署音乐服务器。首次搜索默认聚合 MY FREE MP3、网易云公开音频、Audius、酷狗公开音频和酷我试听，优先查询收藏渠道。可在“我的歌单”导入网易云公开歌单，在播放器查看网易云歌曲的同步歌词和可用译文。另有播放队列、历史续播、离线下载、迷你播放器和 Windows 托盘控制。渠道限制与实验性 LX 适配见[使用指南](docs/implementation/USER-GUIDE.md#在线音乐当前源码新增)。
-- **听书**：中文书音FM、博看有声、喜马拉雅免费有声、Lit2Go 与 Gutenberg 公版朗读及两路文化播客；提供搜索、分类、书架、离线章节、续播、连续播放、定时暂停和离页后台播放。三个中文渠道和 Lit2Go 已完成 Windows 原生样本验证，其他渠道和设备范围见[听书渠道核对](docs/implementation/AUDIOBOOK_SOURCES.md)。
+- **在线音乐**：默认浏览 QQ 音乐热歌，可选择网易云新歌和 Apple Music 中国区热门歌曲。Flutter 客户端直接请求各播放渠道，无需部署音乐服务器。首次搜索默认聚合 MY FREE MP3、网易云公开音频、Audius、酷狗公开音频和酷我试听，优先查询收藏渠道。可在“我的歌单”导入网易云公开歌单，在播放器查看网易云歌曲的同步歌词和可用译文。另有播放队列、历史续播、离线下载、迷你播放器和 Windows 托盘控制。实验性 LX 渠道的可用性受上游协议及地区限制。
+- **听书**：中文书音FM、博看有声、喜马拉雅免费有声、Lit2Go 与 Gutenberg 公版朗读及两路文化播客；提供搜索、分类、书架、离线章节、续播、连续播放、定时暂停和离页后台播放。部分渠道已完成 Windows 原生样本验证，设备可用性仍需实际检查。
 - 渠道按实际诊断自动启停并持续复检，频道选择显示 TCP Ping；收藏和重复接口整理保持独立。
 - 受控媒体网关、私网访问拦截、HLS 引用校验、原生脚本/协议限制与有界退出清理。
-- 播放中特征跳过（默认关闭）：原画质直接播放，后台优先检测音频；没有规则、资源缺失或检测失败时继续播放。支持频道/全剧声画样本、保守/积极/提示策略、离线关键词检测。关键词始终先确认，默认跳过时长 20 秒，可调整并撤销。轻量关键词、OCR / ASR 资源在设置中手动下载，不随基础包安装。Android 实机性能待设备验收。详见 [实施记录](docs/implementation/VIDEO-CONTENT-FILTER-PLAN.md)。
+- 播放中特征跳过（默认关闭）：原画质直接播放，后台优先检测音频；没有规则、资源缺失或检测失败时继续播放。支持频道/全剧声画样本、保守/积极/提示策略、离线关键词检测。关键词始终先确认，默认跳过时长 20 秒，可调整并撤销。轻量关键词、OCR / ASR 资源在设置中手动下载，不随基础包安装。Android 实机性能待设备验收。
 - 下载、续传、指定目录自动保存、离线播放与 TS/MP4 导出；本地视频播放、续播、内嵌音轨/字幕选择及 Windows 可选文件关联（v0.0.8）。设置、历史记录及用户数据保存在本机。
 - 一次性导航引导、版权说明与开源许可证入口。
 
@@ -64,16 +40,16 @@
 | Windows 10/11 x64 安装 | windows-x64-setup.exe |
 | Windows x64 便携运行 | windows-x64-portable.zip（完整解压后运行 zero_player.exe） |
 | Android 8.0+ ARM64 手机/平板/TV | v0.0.7 的 android-arm64.apk |
-| Android 8.0+ ARM64 开发测试 | v0.0.12 的 android-arm64-devtest.apk（测试签名，独立包名） |
+| Android 8.0+ ARM64 开发测试 | v0.8.0 的 android-arm64-devtest.apk（测试签名，独立包名） |
 | 审查/重新构建 | source.zip、third-party-notices.zip 与原生构建来源材料 |
 
-本次 v0.0.12 提供 `zero-player-0.0.12-windows-x64-setup.exe` 和 `zero-player-0.0.12-windows-x64-portable.zip`，另附源码、第三方声明、原生来源及 `SHA256SUMS.txt`。Android 开发测试附件为 `zero-player-0.0.12-android-arm64-devtest.apk`，附测试说明；最新正式 Android 包仍为 v0.0.7。Windows 二进制未做商业代码签名；本轮未重新验收安装卸载或 Android/TV 实机。
+本次 v0.8.0 提供 `zero-player-0.8.0-windows-x64-setup.exe` 和 `zero-player-0.8.0-windows-x64-portable.zip`，另附源码、第三方声明、原生来源及 `SHA256SUMS.txt`。Android 开发测试附件为 `zero-player-0.8.0-android-arm64-devtest.apk`，附测试说明；最新正式 Android 包仍为 v0.0.7。Windows 二进制未做商业代码签名；本轮未重新验收安装卸载或 Android/TV 实机。
 
 不支持 32 位 ARM/x86 Android、Windows ARM64 原生版、macOS 或 iOS。便携包必须完整解压，不能仅复制 EXE。
 
 ## 开发
 
-当前实现、重装后的验证与待验收项统一见 [实施状态](docs/implementation/STATUS.md)；开发和原生测试命令见 [构建说明](docs/implementation/BUILD.md)。
+开发与测试使用下列命令；发行范围和已知限制见对应 GitHub Release。
 
 使用 Flutter 3.44.1 / Dart 3.12.1，锁定依赖见 pubspec.lock。Android 构建需要 JDK 21 和 Android SDK；Windows 构建需要 Visual Studio C++ 桌面工具链。
 
@@ -85,9 +61,9 @@ dart run tool/check_source_size.dart
 flutter test
 ~~~
 
-lib/features 按业务划分；lib/media 包含播放、HLS、回环网关、缓存与导出；lib/core 提供网络、数据库和平台边界；lib/app 负责依赖组合、路由与布局。当前模块职责、依赖约束与扩展步骤见[模块边界](docs/implementation/MODULE-BOUNDARIES.md)；边界检查也随 `flutter test` 执行。平台测试和 Flutter 构建应串行执行，避免共享插件注册文件冲突。图标由 assets/brand/logo.jpg 通过 tool/generate_brand.py 生成。
+lib/features 按业务划分；lib/media 包含播放、HLS、回环网关、缓存与导出；lib/core 提供网络、数据库和平台边界；lib/app 负责依赖组合、路由与布局。模块依赖约束由 `tool/architecture/module_boundaries.dart` 定义，边界检查也随 `flutter test` 执行。平台测试和 Flutter 构建应串行执行，避免共享插件注册文件冲突。图标由 assets/brand/logo.jpg 通过 tool/generate_brand.py 生成。
 
-仓库仅提交代码、测试、必要素材、依赖锁文件和构建/使用说明。密钥、本地配置、下载工具链、测试产物、缓存和发行二进制均不进入 Git；发行文件通过 Releases 提供。
+仓库仅提交代码、测试、必要素材、依赖锁文件及 README/许可证。密钥、本地配置、下载工具链、测试产物、缓存和发行二进制均不进入 Git；发行文件通过 Releases 提供。
 
 ## 开源致谢
 
@@ -120,3 +96,9 @@ lib/features 按业务划分；lib/media 包含播放、HLS、回环网关、缓
 应用不执行远程 Spider/JAR/JavaScript/Python，不绕过 DRM 或付费访问控制。默认无遥测和跨设备同步；联网加载频道、封面及播放资源会访问相关第三方服务。
 
 项目代码采用 [AGPL-3.0-or-later](LICENSE)。测试通过不等于不存在所有缺陷；设备与源站差异仍可能影响体验。广播当前明确处于实验阶段。
+
+## 构建与测试补充
+
+Windows 普通 Release：先设置 `FFMPEGKIT_LOCAL_DIR` 指向已校验的 FFmpegKit 目录，再运行 `flutter build windows --release`。Android ARM64 开发测试包：设置 `ORG_GRADLE_PROJECT_ZERO_PLAYER_DEVICE_TEST=true`，运行 `flutter build apk --release --target-platform android-arm64`；使用已有测试证书和独立包名。正式 Android 构建需要本地签名配置，密钥不入库。原生依赖摘要以 `tool/native_sources.json`、`tool/pdfium_checksums.json` 和平台构建配置为准。
+
+历史书源审计工具依赖固定路径与字节摘要。其必要 JSON 测试数据位于 `test_support/book_source_audit/`；运行历史审计工具前执行 `python tool/prepare_book_audit_workspace.py`，将数据复制到已忽略的本地审计目录。该步骤不联网，也不覆盖已有的不同内容。常规 `flutter test` 直接读取测试数据，不依赖本地工作文档。
