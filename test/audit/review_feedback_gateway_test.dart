@@ -10,6 +10,7 @@ import '../../test_support/http_test_server.dart';
 
 void main() {
   _rollingManifestTest();
+  _repeatedManifestTest();
   _offlineLeaseTest();
 }
 
@@ -130,6 +131,69 @@ void _offlineLeaseTest() {
       );
       await store.clearUnused();
       expect(store.find(key), isNull);
+    },
+  );
+}
+
+void _repeatedManifestTest() {
+  test(
+    'identical live polls retain the previous distinct resource generation',
+    () async {
+      final root = await Directory.systemTemp.createTemp('repeat-manifest-');
+      var generation = 0;
+      final server = await HttpTestServer.start((request) {
+        request.response.write(
+          '#EXTM3U\n#EXT-X-TARGETDURATION:4\n'
+          '#EXT-X-MEDIA-SEQUENCE:$generation\n'
+          '#EXT-X-KEY:METHOD=AES-128,URI="key$generation.bin"\n'
+          '#EXT-X-MAP:URI="init$generation.mp4"\n'
+          '#EXTINF:4,\nsegment$generation.ts\n',
+        );
+      });
+      final gateway = MediaGateway(
+        SegmentStore(root),
+        allowPrivateNetworks: true,
+      );
+      final client = HttpClient();
+      addTearDown(() async {
+        client.close(force: true);
+        await gateway.close();
+        await server.close();
+        await root.delete(recursive: true);
+      });
+      await gateway.start();
+      final session = gateway.createSession(HeaderPolicy({}));
+      final playlist = session.register(
+        server.baseUri.resolve('live.m3u8'),
+        playlist: true,
+      );
+      Future<List<Uri>> poll() async {
+        final response = await (await client.getUrl(playlist)).close();
+        final body = await utf8.decoder.bind(response).join();
+        expect(response.statusCode, 200, reason: body);
+        return RegExp(
+          r'http://[^"\s]+',
+        ).allMatches(body).map((match) => Uri.parse(match[0]!)).toList();
+      }
+
+      final first = await poll();
+      expect(first, hasLength(3));
+      generation++;
+      final second = await poll();
+      for (var i = 0; i < 3; i++) {
+        await poll();
+        for (final uri in [...first, ...second]) {
+          expect(gateway.isRegisteredResource(uri), isTrue, reason: '$uri');
+        }
+      }
+      generation++;
+      await poll();
+      for (final uri in first) {
+        expect(gateway.isRegisteredResource(uri), isFalse);
+      }
+      for (final uri in second) {
+        expect(gateway.isRegisteredResource(uri), isTrue);
+      }
     },
   );
 }

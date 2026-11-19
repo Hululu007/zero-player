@@ -19,6 +19,7 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   _riskDuringResumePreparationTests();
   _privateAudioLockTests();
+  _privateChapterTransitionLockTests();
   _blacklistDuringOpenTests();
   _blacklistDuringResumeTests();
   _quarantinedChapterSheetTests();
@@ -92,6 +93,74 @@ void _privateAudioLockTests() {
       expect(player.progressNotice, isNull);
       expect((await store.entry(book))!.position, 17000);
       expect(player.active, isFalse);
+    },
+  );
+}
+
+void _privateChapterTransitionLockTests() {
+  test(
+    'locking during chapter transition keeps the actual playing chapter progress',
+    () async {
+      final root = await Directory.systemTemp.createTemp(
+        'audio-transition-lock-',
+      );
+      final services = AppServices.scoped(root, AppDatabase.memory());
+      addTearDown(() async {
+        await services.close();
+        await root.delete(recursive: true);
+      });
+      await services.settings.load();
+      await services.supervision.load();
+      final source = bookFixtureSource(
+        'transition-lock.test',
+        kind: BookKind.audio,
+      );
+      await services.books.importSources([source]);
+      final book = Book(
+        source.id,
+        BookKind.audio,
+        '作品',
+        '',
+        source.endpoint.resolve('/book'),
+      );
+      final first = BookChapter('第一章', source.endpoint.resolve('/1'));
+      final second = BookChapter('第二章', source.endpoint.resolve('/2'));
+      await _cacheAudio(services, book, first);
+      await _cacheAudio(services, book, second);
+      final store = services.books.store;
+      await store.saveBook(book, chapters: [first, second]);
+      await store.vault.create('secret-123');
+      await store.moveToVault(book);
+      final engine = FakePlayerEngine();
+      final player = AudiobookController(
+        services.books,
+        () => engine,
+        () async {},
+      );
+      addTearDown(player.close);
+      final ready = Completer<void>();
+      player.addListener(() {
+        if (!player.loading && player.playing && !ready.isCompleted) {
+          ready.complete();
+        }
+      });
+      player.start(book, [first, second], first);
+      await ready.future.timeout(const Duration(seconds: 5));
+      engine.change(position: const Duration(seconds: 17));
+      player.choose(second);
+      store.vault.lock();
+      for (var i = 0; i < 100 && player.loading; i++) {
+        await Future<void>.delayed(const Duration(milliseconds: 10));
+      }
+      expect(player.active, isFalse);
+      expect(await store.vault.unlock('secret-123'), isTrue);
+      for (var i = 0; i < 200 && player.progressNotice != null; i++) {
+        await Future<void>.delayed(const Duration(milliseconds: 10));
+      }
+      expect(player.progressNotice, isNull);
+      final entry = (await store.entry(book))!;
+      expect(entry.last, first.id);
+      expect(entry.position, 17000);
     },
   );
 }

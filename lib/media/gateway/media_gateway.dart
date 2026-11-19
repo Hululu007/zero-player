@@ -47,6 +47,11 @@ final class GatewaySession {
       },
     );
     final old = _manifestWindows[owner];
+    if (old != null &&
+        old.$1.length == current.length &&
+        old.$1.containsAll(current)) {
+      return;
+    }
     _manifestWindows[owner] = (current, old?.$1 ?? {});
     if (old == null) return;
     final retained = <({Uri uri, bool key})>{

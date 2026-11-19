@@ -40,6 +40,7 @@ final class AudiobookController extends ChangeNotifier
   String? error;
   String? progressNotice;
   ({String bookId, String chapterId, double position})? _lockedProgress;
+  ({String bookId, String chapterId, double position})? _lastProgress;
   Future<void>? _progressSaving;
   bool autoNext = true;
   double rate = 1;
@@ -240,20 +241,27 @@ final class AudiobookController extends ChangeNotifier
     );
   }
 
-  void save() {
+  ({String bookId, String chapterId, double position})? _currentProgress() {
     if (_session == null ||
         _engine == null ||
         book == null ||
         chapter == null) {
-      return;
+      return null;
     }
+    return (
+      bookId: book!.id,
+      chapterId: chapter!.id,
+      position: _engine!.snapshot.position.inMilliseconds.toDouble(),
+    );
+  }
+
+  void save() {
+    final progress = _currentProgress();
+    if (progress == null) return;
+    _lastProgress = progress;
     unawaited(
       books.store
-          .saveBook(
-            book!,
-            last: chapter!,
-            position: _engine!.snapshot.position.inMilliseconds.toDouble(),
-          )
+          .saveBook(book!, last: chapter!, position: progress.position)
           .onError((Object failure, StackTrace stack) {
             progressNotice = failure is VaultLockedException
                 ? '私密书架已锁定，最后进度将在本次解锁后补存'
@@ -370,14 +378,13 @@ final class AudiobookController extends ChangeNotifier
         books.store.vault.unlocked) {
       return;
     }
-    if (chapter != null && _session != null && _engine != null) {
-      _lockedProgress = (
-        bookId: work.id,
-        chapterId: chapter!.id,
-        position: _engine!.snapshot.position.inMilliseconds.toDouble(),
-      );
+    // A chapter being prepared does not yet own the engine's last position.
+    final progress = loading ? _lastProgress : _currentProgress();
+    if (progress != null && books.store.vault.isPrivate(progress.bookId)) {
+      _lockedProgress = progress;
       progressNotice = '私密听书随锁库停止；最后进度将在本次解锁后补存';
     }
+    _lastProgress = null;
     _pending = null;
     _token?.cancel();
     _session?.close();
@@ -433,6 +440,7 @@ final class AudiobookController extends ChangeNotifier
     await stop();
     await _progressSaving;
     _lockedProgress = null;
+    _lastProgress = null;
     await _states?.cancel();
     await _errors?.cancel();
     await _engine?.dispose();
