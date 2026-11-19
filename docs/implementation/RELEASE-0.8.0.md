@@ -10,4 +10,6 @@
 
 Android 使用独立包名 `dev.zeroplayer.zero_player.devtest` 和已有测试证书，不能覆盖正式 Android 应用。Windows 安装器没有商业 Authenticode 签名。测试包不包含私有签名材料或用户数据库。
 
-本机发布验证及历史功能证据见 [实施状态](STATUS.md)。Android/TV 真机、系统保存与后台生命周期、长期播放、真实媒体/来源可用性仍需设备验收；洛雪TV实时 API 直连超时、看看鸭人机验证等限制仍存在。既有源码规模债务不因阶段发布视为解决。保留 v0.0.11 Windows 稳定发行和既有正式 Android 发行。
+本轮全量 Flutter 1668 项通过、12 项按原配置跳过，静态分析与模块边界通过，Windows 原生视频/音乐 3 项业务回归通过。Windows 普通 Release 与 Android 离线续包成功；APK 为 49.10 MiB，版本、ABI、字体、固定原生依赖及原测试证书 v2 签名通过。在线 Android 打包因本机代理失败的尝试保留，不计作成功。
+
+本机发布验证及历史功能证据见 [实施状态](STATUS.md)。Android/TV 真机、系统保存与后台生命周期、长期播放、真实媒体/来源可用性仍需设备验收；洛雪TV实时 API 直连超时、看看鸭人机验证等限制仍存在。104 条既有源码规模债务仍保留。保留 v0.0.11 Windows 稳定发行和既有正式 Android 发行。

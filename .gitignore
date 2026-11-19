@@ -37,6 +37,7 @@ migrate_working_dir/
 /artifacts/
 /.workbuddy/
 /tmp/
+/android/.kotlin/
 /log.jpg
 /.signing/
 **/*.jks
