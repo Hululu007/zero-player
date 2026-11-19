@@ -11,7 +11,7 @@ final class LrclibLyrics {
   final DocumentClient network;
   final Uri endpoint;
   static const _headers = {
-    'User-Agent': 'ZeroPlayer/0.7.4 (https://github.com/yixunfei/zero-player)',
+    'User-Agent': 'ZeroPlayer/0.8.0 (https://github.com/yixunfei/zero-player)',
   };
 
   Future<MusicLyrics> find(MusicTrack track, CancellationToken token) async {

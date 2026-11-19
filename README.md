@@ -4,7 +4,11 @@
 
 面向 **Windows 桌面和 Android 手机 / TV** 的本地在线视频聚合播放器。支持频道浏览、聚合搜索、点播、直播、续播、离线下载与导出，无需单独部署业务后端。
 
-**v0.7.4 预发行** · [下载 Windows 新版](https://github.com/yixunfei/zero-player/releases/tag/v0.7.4) · [Android v0.7.4 开发测试包](https://github.com/yixunfei/zero-player/releases/download/v0.7.4/zero-player-0.7.4-android-arm64-devtest.apk) · [Windows v0.0.11 稳定版](https://github.com/yixunfei/zero-player/releases/tag/v0.0.11) · [Android v0.0.7 正式版](https://github.com/yixunfei/zero-player/releases/tag/v0.0.7) · [使用指南](docs/implementation/USER-GUIDE.md) · [构建说明](docs/implementation/BUILD.md) · [版本说明](docs/implementation/RELEASE-0.7.4.md)
+**v0.8.0 阶段预发行** · [下载 Windows 新版](https://github.com/yixunfei/zero-player/releases/tag/v0.8.0) · [Android v0.8.0 开发测试包](https://github.com/yixunfei/zero-player/releases/download/v0.8.0/zero-player-0.8.0-android-arm64-devtest.apk) · [Windows v0.0.11 稳定版](https://github.com/yixunfei/zero-player/releases/tag/v0.0.11) · [Android v0.0.7 正式版](https://github.com/yixunfei/zero-player/releases/tag/v0.0.7) · [使用指南](docs/implementation/USER-GUIDE.md) · [构建说明](docs/implementation/BUILD.md) · [版本说明](docs/implementation/RELEASE-0.8.0.md)
+
+## v0.8.0
+
+源码版本 **0.8.0+80**。整合性能优化、书架移除与私密书架、阅读下载与续播修复、书源新域和 GitHub 影视渠道更新，并修复 12 项审计问题。专业图书独立模块仍处于规划阶段。详见[版本说明](docs/implementation/RELEASE-0.8.0.md)。
 
 ## v0.7.4
 

@@ -2,6 +2,14 @@
 
 当前进度见 [实施状态](STATUS.md)。下文各功能章节的测试数量属于当时快照，不代表重装后重新执行。
 
+## v0.8.0 阶段发布
+
+版本 `0.8.0+80`，沿用普通 Windows x64 Release 和独立包名 Android ARM64 devtest Release 串行构建。运行全量 Flutter 测试、analyze、模块边界、版本回归，核验既有原生依赖摘要；Android 使用既有测试证书并通过 `verify_apk.py --abis arm64-v8a --max-mib 70 --compressed-native --version 0.8.0 --build-number 80 --application-id dev.zeroplayer.zero_player.devtest` 和 apksigner 验证。
+
+运行 `collect_native_sources.py`、`collect_notices.py`，从已审阅 Git 索引执行 `package_source.py`，再执行 `package_release.ps1 -WindowsOnly`。将通过验证的 APK 以 `zero-player-0.8.0-android-arm64-devtest.apk` 放入 `artifacts/release/0.8.0/`，补齐测试说明、构建信息及全部附件 SHA-256。源码 ZIP 必须逐文件匹配版本提交的 Git blob；发布附件逐个核对远端大小与摘要后再公开。
+
+新版本发布并校验后，清理本地历史安装器、APK、便携 ZIP 及旧 Windows staging；保留当前 0.8.0、历史源码/声明/校验记录、原生依赖、签名、用户数据和备份，不删除远端历史发行。清理清单保存在本轮发布证据目录。
+
 ## 2026-11-19 审计修复回归
 
 逐项状态见 CODE-AUDIT-2026-11-19 第 5 节，当前结论见 STATUS。所有 Flutter 平台测试与构建串行执行：
