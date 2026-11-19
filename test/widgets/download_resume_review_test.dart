@@ -26,6 +26,41 @@ final item = CatalogItem(
 );
 
 void main() {
+  testWidgets(
+    'unverifiable legacy task remains deletable without exposing content',
+    (tester) async {
+      final f = (await tester.runAsync(_Fixture.create))!;
+      try {
+        await tester.runAsync(
+          () => f.services.db.write(
+            'UPDATE downloads SET work_json=NULL WHERE id=?',
+            [f.id],
+          ),
+        );
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Scaffold(body: DownloadsPage(services: f.services)),
+          ),
+        );
+        await _settle(tester);
+        expect(find.text('受限或无法校验的离线任务'), findsOneWidget);
+        expect(find.textContaining('Movie'), findsNothing);
+        expect(find.text('离线播放'), findsNothing);
+        expect(find.text('导出 MP4'), findsNothing);
+        await tester.tap(find.text('删除'));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('确认'));
+        await _settle(tester);
+        expect(
+          await tester.runAsync(() => f.services.downloads.find(f.id)),
+          isNull,
+        );
+      } finally {
+        await tester.pumpWidget(const SizedBox());
+        await tester.runAsync(f.close);
+      }
+    },
+  );
   _resumeTest();
   _progressTest();
 }

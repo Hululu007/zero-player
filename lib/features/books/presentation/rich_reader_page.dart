@@ -457,8 +457,15 @@ class _RichReaderState extends State<RichReaderPage>
     final toolbar = _controls || !_ready;
     return CallbackShortcuts(
       bindings: {
-        const SingleActivator(LogicalKeyboardKey.pageUp): () => _manualTurn(-1),
-        const SingleActivator(LogicalKeyboardKey.pageDown): () =>
+        const SingleActivator(
+          LogicalKeyboardKey.pageUp,
+          includeRepeats: false,
+        ): () =>
+            _manualTurn(-1),
+        const SingleActivator(
+          LogicalKeyboardKey.pageDown,
+          includeRepeats: false,
+        ): () =>
             _manualTurn(1),
         const SingleActivator(LogicalKeyboardKey.keyF, control: true): () {
           if (_ready && !_controls) _toggleControls();

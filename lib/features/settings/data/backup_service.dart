@@ -2,6 +2,7 @@ import 'dart:convert';
 import '../../../core/persistence/app_database.dart';
 import 'backup_validation.dart';
 import '../../music/data/music_library.dart';
+import '../../sources/domain/source_identity.dart';
 
 final class BackupPreview {
   const BackupPreview(this.tables);
@@ -138,6 +139,15 @@ final class BackupService {
     if (preview.disablesAdultFilter) {
       authorizeAdultDisable?.call();
     }
+    final adult = await db.rows(
+      "SELECT id,kind,endpoint FROM sources WHERE classification='adult'",
+    );
+    final adultIds = adult.map((row) => row['id']).toSet();
+    String identity(Map<String, Object?> row) => sourceIdentity(
+      row['kind'] as String,
+      Uri.parse(row['endpoint'] as String),
+    );
+    final adultEndpoints = adult.map(identity).toSet();
     for (final table in tables.reversed) {
       await db.customStatement(
         'DELETE FROM $table${table == 'app_meta' ? '$_backupMetadata$_musicMetadata' : ''}',
@@ -145,11 +155,17 @@ final class BackupService {
     }
     for (final table in tables) {
       for (final row in preview.tables[table]!) {
-        final fields = row.keys.toList();
+        final restored =
+            table == 'sources' &&
+                (adultIds.contains(row['id']) ||
+                    adultEndpoints.contains(identity(row)))
+            ? {...row, 'classification': 'adult'}
+            : row;
+        final fields = restored.keys.toList();
         await db.customStatement(
           'INSERT INTO $table (${fields.join(',')}) VALUES '
           '(${List.filled(fields.length, '?').join(',')})',
-          fields.map((key) => row[key]).toList(),
+          fields.map((key) => restored[key]).toList(),
         );
       }
     }

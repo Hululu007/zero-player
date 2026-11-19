@@ -166,7 +166,7 @@ extension BookStoreImages on BookStore {
                   "FROM app_meta WHERE key GLOB 'books_vault_data:*'",
                 )).single['bytes']
                 as int;
-        if (used > BookResourceLimits.offlineImageBytes) {
+        if (used > BookResourceLimits.privateVaultBytes) {
           throw const FormatException('私密离线图片空间已满');
         }
         await validate();

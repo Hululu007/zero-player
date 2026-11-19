@@ -617,11 +617,24 @@ final class BookStore {
     },
   );
 
+  Future<void> _requirePrivateCapacity() async {
+    final used =
+        (await db.rows(
+              "SELECT COALESCE(SUM(length(CAST(value AS BLOB))),0) AS bytes "
+              "FROM app_meta WHERE key GLOB 'books_vault_data:*'",
+            )).single['bytes']
+            as int;
+    if (used > BookResourceLimits.privateVaultBytes) {
+      throw const FormatException('私密书架存储空间已满');
+    }
+  }
+
   Future<void> saveBook(
     Book book, {
     List<BookChapter>? chapters,
     BookChapter? last,
     double? position,
+    bool clearPosition = false,
     int? textOffset,
     bool? favorite,
     bool? following,
@@ -668,6 +681,10 @@ final class BookStore {
           if (clearUpdates || following == false) 'newChapters': 0,
           'updated': DateTime.now().millisecondsSinceEpoch,
         };
+        if (clearPosition) {
+          next.remove('position');
+          next.remove('textOffset');
+        }
         if (private) {
           await vault.write(key, next);
         } else {
@@ -944,21 +961,11 @@ final class BookStore {
         if (type == 'text') {
           final key = _provenRecord(type, book, chapter, hash);
           if (private) {
-            if (await vault.read(key) == null) {
-              final used =
-                  (await db.rows(
-                        "SELECT COALESCE(SUM(length(CAST(value AS BLOB))),0) AS bytes "
-                        "FROM app_meta WHERE key GLOB 'books_vault_data:*'",
-                      )).single['bytes']
-                      as int;
-              if (used + utf8.encode(encoded).length > 96 * 1024 * 1024) {
-                throw const FormatException('私密书架存储空间已满');
-              }
-            }
             await vault.write(key, value);
             await vault.write(_provenPointer(type, book, chapter), {
               'hash': hash,
             });
+            await _requirePrivateCapacity();
           } else {
             final existing = await db.rows(
               'SELECT 1 FROM app_meta WHERE key=?',
@@ -988,6 +995,7 @@ final class BookStore {
             await vault.write(_provenPointer(type, book, chapter), {
               'hash': hash,
             });
+            await _requirePrivateCapacity();
           } else {
             await db.write(
               'INSERT OR IGNORE INTO app_meta(key,value) VALUES(?,?)',

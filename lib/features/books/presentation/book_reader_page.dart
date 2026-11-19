@@ -554,10 +554,10 @@ final class _BookReaderPageState extends State<BookReaderPage>
   }
 
   KeyEventResult _readingKey(FocusNode node, KeyEvent event) {
-    if (_controls || event is KeyUpEvent) return KeyEventResult.ignored;
+    if (_controls || event is! KeyDownEvent) return KeyEventResult.ignored;
     final key = event.logicalKey;
     if (key == LogicalKeyboardKey.select || key == LogicalKeyboardKey.enter) {
-      if (event is KeyDownEvent) _toggleControls();
+      _toggleControls();
       return KeyEventResult.handled;
     }
     if (HardwareKeyboard.instance.isAltPressed ||
@@ -743,11 +743,27 @@ final class _BookReaderPageState extends State<BookReaderPage>
       data: readerTheme,
       child: CallbackShortcuts(
         bindings: {
-          const SingleActivator(LogicalKeyboardKey.pageDown): () => _page(1),
-          const SingleActivator(LogicalKeyboardKey.pageUp): () => _page(-1),
-          const SingleActivator(LogicalKeyboardKey.arrowLeft, alt: true): () =>
+          const SingleActivator(
+            LogicalKeyboardKey.pageDown,
+            includeRepeats: false,
+          ): () =>
+              _page(1),
+          const SingleActivator(
+            LogicalKeyboardKey.pageUp,
+            includeRepeats: false,
+          ): () =>
+              _page(-1),
+          const SingleActivator(
+            LogicalKeyboardKey.arrowLeft,
+            alt: true,
+            includeRepeats: false,
+          ): () =>
               _skipChapter(-1),
-          const SingleActivator(LogicalKeyboardKey.arrowRight, alt: true): () =>
+          const SingleActivator(
+            LogicalKeyboardKey.arrowRight,
+            alt: true,
+            includeRepeats: false,
+          ): () =>
               _skipChapter(1),
           const SingleActivator(LogicalKeyboardKey.keyF, control: true):
               _showFind,

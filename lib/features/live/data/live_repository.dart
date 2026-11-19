@@ -485,8 +485,9 @@ final class LiveRepository {
         final uri = queue[cursor++];
         try {
           await refreshEpg(uri, cancellation: cancellation);
+          final programs = await schedule(channel);
           successes++;
-          found = (await schedule(channel)).isNotEmpty;
+          if (programs.isNotEmpty) found = true;
         } catch (error) {
           cancellation?.check();
           errors.add(error);
@@ -496,6 +497,7 @@ final class LiveRepository {
 
     await Future.wait(List.generate(queue.length.clamp(0, 2), (_) => worker()));
     if (successes == 0 && errors.isNotEmpty) throw errors.first;
+    if (!found) throw const FormatException('没有获取到节目单，请检查指南地址');
   }
 
   Future<List<EpgProgram>> _scheduleEntry(LiveChannel channel) async {

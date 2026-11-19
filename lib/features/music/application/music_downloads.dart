@@ -362,12 +362,12 @@ final class MusicDownloads extends ChangeNotifier {
         .firstOrNull;
     if (item == null) return null;
     if (!repository.allowed(track)) throw const FormatException('歌曲已被过滤');
+    final entry = item.entry;
+    if (entry == null || entry.isEmpty) {
+      throw const FormatException('下载记录不完整，请重新下载');
+    }
     try {
-      return await offline.open(
-        'music:${id(track)}',
-        directory(track),
-        item.entry!,
-      );
+      return await offline.open('music:${id(track)}', directory(track), entry);
     } catch (_) {
       await _save(
         track,

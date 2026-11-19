@@ -15,6 +15,7 @@ final class _FilterPlaybackOverlayState extends State<FilterPlaybackOverlay> {
   String? _status;
   Object? _request;
   bool _expired = false;
+  int? _revision;
 
   @override
   void initState() {
@@ -30,6 +31,7 @@ final class _FilterPlaybackOverlayState extends State<FilterPlaybackOverlay> {
       oldWidget.controller.removeListener(_changed);
       widget.controller.addListener(_changed);
       _status = null;
+      _revision = null;
     }
     _sync();
   }
@@ -40,7 +42,9 @@ final class _FilterPlaybackOverlayState extends State<FilterPlaybackOverlay> {
 
   void _sync() {
     final player = widget.controller;
-    if (_status != player.filterStatus || _request != player.request) {
+    if (_revision != player.filterNoticeRevision ||
+        _request != player.request) {
+      _revision = player.filterNoticeRevision;
       _timer?.cancel();
       _timer = null;
       _expired = false;

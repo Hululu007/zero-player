@@ -42,6 +42,7 @@ final class DownloadScheduler {
   final OfflineServer offline;
   final SettingsController settings;
   final _tokens = <String, CancellationToken>{};
+  final _activeTasks = <String, DownloadTask>{};
   final _jobs = <String, Future<void>>{};
   final _controls = <String, Future<void>>{};
   final _activeSources = <String, String>{};
@@ -53,10 +54,11 @@ final class DownloadScheduler {
   final _lifecyclePaused = <String>{};
 
   void _policyChanged() {
-    // Cancel immediately; no transfer may continue under an obsolete policy.
-    for (final token in _tokens.values) {
-      token.cancel();
+    for (final entry in _tokens.entries) {
+      final task = _activeTasks[entry.key];
+      if (task == null || !repository.allowed(task)) entry.value.cancel();
     }
+    kick();
   }
 
   Future<void> initialize() async {
@@ -190,6 +192,7 @@ final class DownloadScheduler {
   }
 
   Future<void> _run(DownloadTask task) async {
+    _activeTasks[task.id] = task;
     final token = CancellationToken();
     _tokens[task.id] = token;
     final sourceId = task.row['source_id'] as String? ?? '';
@@ -262,10 +265,15 @@ final class DownloadScheduler {
       await repository.status(
         task.id,
         token.isCancelled ? DownloadStatus.paused : DownloadStatus.failed,
-        error: token.isCancelled ? null : message,
+        error: !repository.allowed(_activeTasks[task.id] ?? task)
+            ? '内容策略已限制此任务，可删除以释放空间'
+            : token.isCancelled
+            ? null
+            : message,
       );
     } finally {
       _tokens.remove(task.id);
+      _activeTasks.remove(task.id);
       _activeSources.remove(task.id);
     }
   }
@@ -276,6 +284,7 @@ final class DownloadScheduler {
       tried.add(task.row['source_id'] as String? ?? '');
       try {
         if (attempt == 0 && resolve != null) task = await resolve!(task, token);
+        _activeTasks[task.id] = task;
         token.check();
         repository.requireAllowed(task);
         await repository.status(task.id, DownloadStatus.running);
@@ -347,7 +356,10 @@ final class DownloadScheduler {
     // Each source owns an independent attempt directory; no cross-source append.
     await fetcher.store.unpin(task.id);
     await _cleanupDirectory(Directory(task.directory));
-    return (await repository.find(task.id))!;
+    final switched = (await repository.find(task.id))!;
+    _activeTasks[task.id] = switched;
+    repository.requireAllowed(switched);
+    return switched;
   }
 
   Future<void> _cleanupDirectory(Directory directory) async {

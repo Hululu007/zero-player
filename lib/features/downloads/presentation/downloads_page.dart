@@ -43,9 +43,7 @@ final class _DownloadsPageState extends State<DownloadsPage> {
   }
 
   void _load() {
-    future = widget.services.downloads.all().then(
-      (items) => items.where(widget.services.downloads.allowed).toList(),
-    );
+    future = widget.services.downloads.all();
   }
 
   @override
@@ -72,106 +70,110 @@ final class _DownloadsPageState extends State<DownloadsPage> {
             ],
           ),
   );
-  Widget _task(DownloadTask task) => Card(
-    key: ValueKey(task.id),
-    child: Padding(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Text(task.title, style: Theme.of(context).textTheme.titleMedium),
-          const SizedBox(height: 8),
-          Text(
-            '${_status(task.status)} · ${(task.bytes / 1048576).toStringAsFixed(1)} MiB · ${task.completed}${task.total > 0 ? ' / ${task.total}' : ''} 项',
-          ),
-          _outputLocation(task),
-          if (task.error != null) Text(task.error!),
-          if (task.status == DownloadStatus.running ||
-              task.status == DownloadStatus.saving)
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 8),
-              child: LinearProgressIndicator(
-                value: task.status == DownloadStatus.running && task.total > 0
-                    ? (task.completed / task.total).clamp(0.0, 1.0)
-                    : null,
-              ),
+  Widget _task(DownloadTask task) {
+    final allowed = widget.services.downloads.allowed(task);
+    return Card(
+      key: ValueKey(task.id),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              allowed ? task.title : '受限或无法校验的离线任务',
+              style: Theme.of(context).textTheme.titleMedium,
             ),
-          Wrap(
-            spacing: 8,
-            children: [
-              if (task.localPath != null) ...[
-                FilledButton.icon(
-                  onPressed: () => _play(task),
-                  icon: const Icon(Icons.play_arrow),
-                  label: const Text('离线播放'),
+            const SizedBox(height: 8),
+            Text(
+              '${_status(task.status)} · ${(task.bytes / 1048576).toStringAsFixed(1)} MiB · ${task.completed}${task.total > 0 ? ' / ${task.total}' : ''} 项',
+            ),
+            if (allowed) _outputLocation(task),
+            if (!allowed) const Text('内容策略限制访问此任务，可删除以释放缓存空间。'),
+            if (allowed && task.error != null) Text(task.error!),
+            if (task.status == DownloadStatus.running ||
+                task.status == DownloadStatus.saving)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                child: LinearProgressIndicator(
+                  value: task.status == DownloadStatus.running && task.total > 0
+                      ? (task.completed / task.total).clamp(0.0, 1.0)
+                      : null,
                 ),
-                OutlinedButton(
-                  onPressed: () => _export(task, ExportFormat.mp4),
-                  child: const Text('导出 MP4'),
-                ),
-                OutlinedButton(
-                  onPressed: () => _export(task, ExportFormat.ts),
-                  child: const Text('导出 TS'),
-                ),
-              ],
-              if (task.status == DownloadStatus.running ||
-                  task.status == DownloadStatus.queued ||
-                  task.status == DownloadStatus.pendingSave ||
-                  task.status == DownloadStatus.saving)
-                OutlinedButton(
-                  onPressed: () => perform(
-                    context,
-                    () => widget.services.downloadScheduler.pause(task.id),
-                  ),
-                  child: const Text('暂停'),
-                )
-              else if (task.status != DownloadStatus.complete)
-                OutlinedButton(
-                  onPressed: () => perform(
-                    context,
-                    () => widget.services.downloadScheduler.resume(task.id),
-                  ),
-                  child: const Text('继续 / 重试'),
-                ),
-              if (task.status != DownloadStatus.running &&
-                  task.status != DownloadStatus.queued &&
-                  task.status != DownloadStatus.pendingSave &&
-                  task.status != DownloadStatus.saving)
-                OutlinedButton.icon(
-                  icon: const Icon(Icons.folder_open),
-                  label: const Text('保存到指定目录'),
-                  onPressed: () => perform(context, () async {
-                    final destination = await VideoFiles.chooseDirectory();
-                    if (destination == null) return;
-                    await widget.services.downloads.setOutput(
-                      task.id,
-                      destination,
-                    );
-                    await widget.services.downloadScheduler.resume(task.id);
-                  }),
-                ),
-              TextButton(
-                onPressed: () async {
-                  if (await confirm(
-                        context,
-                        '删除离线任务',
-                        '删除此任务及应用缓存？已保存到所选目录的视频会保留。',
-                      ) &&
-                      mounted) {
-                    await perform(
-                      context,
-                      () => widget.services.downloadScheduler.remove(task.id),
-                    );
-                  }
-                },
-                child: const Text('删除'),
               ),
-            ],
-          ),
-        ],
+            _taskActions(task, allowed),
+          ],
+        ),
       ),
-    ),
+    );
+  }
+
+  Widget _taskActions(DownloadTask task, bool allowed) => Wrap(
+    spacing: 8,
+    children: [
+      if (allowed && task.localPath != null) ...[
+        FilledButton.icon(
+          onPressed: () => _play(task),
+          icon: const Icon(Icons.play_arrow),
+          label: const Text('离线播放'),
+        ),
+        OutlinedButton(
+          onPressed: () => _export(task, ExportFormat.mp4),
+          child: const Text('导出 MP4'),
+        ),
+        OutlinedButton(
+          onPressed: () => _export(task, ExportFormat.ts),
+          child: const Text('导出 TS'),
+        ),
+      ],
+      if (task.status == DownloadStatus.running ||
+          task.status == DownloadStatus.queued ||
+          task.status == DownloadStatus.pendingSave ||
+          task.status == DownloadStatus.saving)
+        OutlinedButton(
+          onPressed: () => perform(
+            context,
+            () => widget.services.downloadScheduler.pause(task.id),
+          ),
+          child: const Text('暂停'),
+        )
+      else if (allowed && task.status != DownloadStatus.complete)
+        OutlinedButton(
+          onPressed: () => perform(
+            context,
+            () => widget.services.downloadScheduler.resume(task.id),
+          ),
+          child: const Text('继续 / 重试'),
+        ),
+      if (allowed &&
+          task.status != DownloadStatus.running &&
+          task.status != DownloadStatus.queued &&
+          task.status != DownloadStatus.pendingSave &&
+          task.status != DownloadStatus.saving)
+        OutlinedButton.icon(
+          icon: const Icon(Icons.folder_open),
+          label: const Text('保存到指定目录'),
+          onPressed: () => perform(context, () async {
+            final destination = await VideoFiles.chooseDirectory();
+            if (destination == null) return;
+            await widget.services.downloads.setOutput(task.id, destination);
+            await widget.services.downloadScheduler.resume(task.id);
+          }),
+        ),
+      TextButton(
+        onPressed: () async {
+          if (await confirm(context, '删除离线任务', '删除此任务及应用缓存？已保存到所选目录的视频会保留。') &&
+              mounted) {
+            await perform(
+              context,
+              () => widget.services.downloadScheduler.remove(task.id),
+            );
+          }
+        },
+        child: const Text('删除'),
+      ),
+    ],
   );
+
   Widget _outputLocation(DownloadTask task) => FutureBuilder<String?>(
     future: widget.services.downloads.output(task.id, saved: true),
     builder: (_, snapshot) => FutureBuilder<String?>(

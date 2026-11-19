@@ -31,6 +31,8 @@ import '../domain/video_recovery_engine.dart';
 
 export 'playback_request.dart';
 
+part 'playback_manual_skips.dart';
+
 final class PlaybackController extends ChangeNotifier {
   PlaybackController(this.services, this.engine) {
     _health = PlaybackHealth(onStalled: _stalled, onProgress: _progressed);
@@ -149,7 +151,14 @@ final class PlaybackController extends ChangeNotifier {
   bool _filterSeeking = false;
   int _filterEpoch = 0;
   Uri? _playbackInput;
-  String? filterStatus;
+  String? _filterStatus;
+  int filterNoticeRevision = 0;
+  String? get filterStatus => _filterStatus;
+  set filterStatus(String? value) {
+    _filterStatus = value;
+    filterNoticeRevision++;
+  }
+
   String? filterDiagnostic;
   final diagnostics = PlaybackDiagnostics();
   final runtimeDiagnostics = <String, Object?>{};
@@ -699,42 +708,6 @@ final class PlaybackController extends ChangeNotifier {
     if (_closed || openingGeneration != _generation || error != null) return;
     await engine.setRate(rate);
     if (_userPaused) await engine.pause();
-  }
-
-  void _applySkip() {
-    if (_filterSeeking || _expectedSeek != null) return;
-    for (final mark in marks) {
-      final difference = (mark.duration - originalDuration).inSeconds.abs();
-      if (!mark.enabled || difference > 2 || _skipped.contains(mark.id)) {
-        continue;
-      }
-      if (originalPosition >= mark.start && originalPosition < mark.end) {
-        _skipped.add(mark.id);
-        _undoPosition = originalPosition;
-        notice = '已跳过 ${mark.label}，可撤销';
-        _filterSeeking = true;
-        final generation = _generation;
-        unawaited(
-          seek(mark.end, rearmSkips: false)
-              .catchError((Object _) {
-                if (!_closed && generation == _generation) {
-                  _skipped.remove(mark.id);
-                  notice = '跳过失败，可手动拖动后重试';
-                }
-              })
-              .whenComplete(() {
-                if (generation == _generation) _filterSeeking = false;
-              }),
-        );
-        break;
-      }
-    }
-  }
-
-  void _rearmSkips() {
-    _skipped.clear();
-    _detected.clear();
-    pendingFeature = null;
   }
 
   Duration? _expectedSeek;

@@ -26,6 +26,7 @@ final class OfflineServer {
   int _generation = 0;
   final _sessions = <String, Map<String, File>>{};
   final _revocations = <String, CancellationToken>{};
+  final _leases = <String, List<ResourceLease>>{};
   final _tasks = <String, String>{};
   final _localFiles = <String, String>{};
   Iterable<String> get activeLocalFiles => _localFiles.values.toList();
@@ -81,6 +82,46 @@ final class OfflineServer {
     final generation = _generation;
     await _ensureStarted();
     final files = <String, File>{};
+    final leases = <ResourceLease>[];
+    try {
+      await _readOfflineFiles(directory, entry, files, leases);
+      if (generation != _generation || _server == null) {
+        throw StateError('离线服务器已关闭，请重新打开');
+      }
+      final random = Random.secure();
+      final token = base64Url.encode(
+        List.generate(24, (_) => random.nextInt(256)),
+      );
+      _sessions[token] = files;
+      _leases[token] = leases;
+      final cancellation = _revocations[token] = CancellationToken();
+      _tasks[token] = taskId;
+      return OfflineSession(
+        Uri.parse('http://127.0.0.1:${_server!.port}/$token/$entry'),
+        () {
+          cancellation.cancel();
+          _revocations.remove(token);
+          _sessions.remove(token);
+          _tasks.remove(token);
+          for (final lease in _leases.remove(token) ?? <ResourceLease>[]) {
+            lease.release();
+          }
+        },
+      );
+    } catch (_) {
+      for (final lease in leases) {
+        lease.release();
+      }
+      rethrow;
+    }
+  }
+
+  Future<void> _readOfflineFiles(
+    Directory directory,
+    String entry,
+    Map<String, File> files,
+    List<ResourceLease> leases,
+  ) async {
     final descriptor = File(p.join(directory.path, 'resources.json'));
     if (RegExp(r'\.(mp4|mp3|m4a|aac|flac|ogg|wav)$').hasMatch(entry)) {
       files[entry] = File(p.join(directory.path, entry));
@@ -104,8 +145,11 @@ final class OfflineServer {
         final value = record.value as Map;
         if (value['key'] != null) {
           final key = value['key'] as String;
-          await store.verify(key);
-          files[name] = store.find(key)!.file;
+          final lease = await store.acquire(key, () async {
+            throw const FileSystemException('离线分片缺失或损坏，请重新下载');
+          }, verify: true);
+          leases.add(lease);
+          files[name] = lease.resource.file;
         } else {
           if (value['local'] != name) throw const FormatException('无效的离线映射');
           files[name] = File(p.join(directory.path, name));
@@ -120,25 +164,6 @@ final class OfflineServer {
       }
     }
     if (!files.containsKey(entry)) throw const FormatException('离线入口不存在');
-    if (generation != _generation || _server == null) {
-      throw StateError('离线服务器已关闭，请重新打开');
-    }
-    final random = Random.secure();
-    final token = base64Url.encode(
-      List.generate(24, (_) => random.nextInt(256)),
-    );
-    _sessions[token] = files;
-    final cancellation = _revocations[token] = CancellationToken();
-    _tasks[token] = taskId;
-    return OfflineSession(
-      Uri.parse('http://127.0.0.1:${_server!.port}/$token/$entry'),
-      () {
-        cancellation.cancel();
-        _revocations.remove(token);
-        _sessions.remove(token);
-        _tasks.remove(token);
-      },
-    );
   }
 
   /// Expose only the selected file; adjacent files and playlists stay inaccessible.
@@ -245,6 +270,12 @@ final class OfflineServer {
       cancellation.cancel();
     }
     _revocations.clear();
+    for (final leases in _leases.values) {
+      for (final lease in leases) {
+        lease.release();
+      }
+    }
+    _leases.clear();
     _sessions.clear();
     _tasks.clear();
     _localFiles.clear();

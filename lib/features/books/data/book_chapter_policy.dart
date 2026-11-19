@@ -76,7 +76,10 @@ final class BookChapterPolicy {
   bool get hasRules => _rules.isNotEmpty;
   bool get hasOverrides => _rules.isNotEmpty || _exceptions.isNotEmpty;
 
-  Future<void> load() => _loading ??= _load();
+  Future<void> load() => _loading ??= _load().catchError((Object error) {
+    _loading = null;
+    throw error;
+  });
   Future<void> _load() async {
     final raw = await store.read(_key);
     if (raw == null) return;
@@ -87,11 +90,16 @@ final class BookChapterPolicy {
         (raw['exceptions'] as List).length > 1000) {
       throw const FormatException('章节复核配置损坏，请在设置中重新保存规则');
     }
-    _rules = [
-      for (final rule in raw['rules'] as List)
-        BookTextReplacement.fromJson(rule as Map),
-    ];
-    _exceptions = Set<String>.from(raw['exceptions'] as List);
+    final rules = <BookTextReplacement>[];
+    for (final rule in raw['rules'] as List) {
+      if (rule is! Map) throw const FormatException('章节复核配置损坏，请重新保存规则');
+      rules.add(BookTextReplacement.fromJson(rule));
+    }
+    if ((raw['exceptions'] as List).any((value) => value is! String)) {
+      throw const FormatException('章节复核记录损坏，请重新保存规则');
+    }
+    _rules = rules;
+    _exceptions = (raw['exceptions'] as List).cast<String>().toSet();
   }
 
   void requireReview() {
@@ -160,8 +168,14 @@ final class BookChapterPolicy {
   }
 
   Future<void> saveRules(List<BookTextReplacement> rules) async {
-    await load();
     requireReview();
+    try {
+      await load();
+    } on FormatException {
+      // Explicit, password-authorized replacement repairs corrupt records.
+      // Never skip a broken filtering rule during ordinary reads.
+      _exceptions = {};
+    }
     if (rules.length > 100) throw const FormatException('最多 100 条替换规则');
     final checked = [
       for (final rule in rules) BookTextReplacement.fromJson(rule.toJson()),
@@ -197,6 +211,7 @@ final class BookChapterPolicy {
     }, tables: {'app_meta'});
     _rules = List.of(rules);
     _exceptions = Set.of(exceptions);
+    _loading = Future<void>.value();
     policy.refresh();
   }
 }

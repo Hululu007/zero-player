@@ -56,7 +56,32 @@ Future<void> showBookTextReplacements(
   BuildContext context,
   BooksRepository books,
 ) => _verified(context, books, () async {
-  await books.chapterPolicy.load();
+  try {
+    await books.chapterPolicy.load();
+  } on FormatException {
+    if (!context.mounted ||
+        !await _guardedDialog<bool>(
+          context,
+          books,
+          builder: (context) => AlertDialog(
+            title: const Text('章节复核配置损坏'),
+            content: const Text('原记录保持不变。是否验证并用空规则替换损坏配置？章节仍受成人和监管过滤。'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text('取消'),
+              ),
+              FilledButton(
+                onPressed: () => Navigator.pop(context, true),
+                child: const Text('重新保存规则'),
+              ),
+            ],
+          ),
+        ).then((value) => value ?? false)) {
+      return;
+    }
+    await books.chapterPolicy.saveRules([]);
+  }
   final rules = books.chapterPolicy.rulesForReview().toList();
   if (!context.mounted) return;
   final editingSession = books.policy.supervision.createSession(

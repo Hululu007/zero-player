@@ -669,6 +669,7 @@ final class _BookDetailPageState extends State<_BookDetailContent> {
         favorite: _favorite ? true : null,
         last: next,
         position: next != null && !_audio ? previous?.position : null,
+        clearPosition: next != null && _audio,
       );
     }
     if (!mounted || token.isCancelled) return;

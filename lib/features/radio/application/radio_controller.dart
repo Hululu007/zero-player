@@ -43,6 +43,7 @@ final class RadioController extends ChangeNotifier
   bool _closed = false;
   Completer<void>? _selectionInterrupt;
   bool _needsOpen = false;
+  bool _userPaused = false;
   @override
   bool loading = false;
   @override
@@ -61,9 +62,13 @@ final class RadioController extends ChangeNotifier
     if (_engine case final engine?) return engine;
     final engine = _engine = createEngine();
     _states = engine.states.listen((state) {
-      if (_closed || !identical(_engine, engine) || error != null) return;
+      if (_closed || !identical(_engine, engine)) return;
       playing = state.playing;
       buffering = state.buffering;
+      if (state.playing && !_userPaused) {
+        error = null;
+        _needsOpen = false;
+      }
       notifyListeners();
     });
     _errors = engine.errors.listen((_) {
@@ -76,7 +81,8 @@ final class RadioController extends ChangeNotifier
         notifyListeners();
         return;
       }
-      if (!loading &&
+      if (!_userPaused &&
+          !loading &&
           selected != null &&
           line + 1 < selected!.playbackUrls.length) {
         unawaited(select(selected!, lineIndex: line + 1));
@@ -122,6 +128,7 @@ final class RadioController extends ChangeNotifier
     _interruptSelection();
     final interrupt = _selectionInterrupt = Completer<void>();
     selected = station;
+    _userPaused = false;
     line = lineIndex.clamp(0, station.playbackUrls.length - 1);
     final uri = station.playbackUrls[line];
     loading = true;
@@ -187,6 +194,7 @@ final class RadioController extends ChangeNotifier
     }
     final generation = _generation;
     final resume = !playing;
+    _userPaused = !resume;
     Future<void> command() => _command((engine) async {
       if (_closed || generation != _generation) return;
       if (selected == null ||
@@ -209,6 +217,7 @@ final class RadioController extends ChangeNotifier
   Future<void> _suspend({required bool clear}) {
     if (_closed) return Future<void>.value();
     final retire = loading;
+    _userPaused = true;
     ++_generation;
     _interruptSelection();
     loading = false;

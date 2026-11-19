@@ -8,6 +8,30 @@ import '../../test_support/http_test_server.dart';
 
 void main() {
   test(
+    'an empty fetched guide is reported as a failed schedule refresh',
+    () async {
+      final db = AppDatabase.memory();
+      final http = MediaHttpClient(allowPrivateNetworks: true);
+      final server = await HttpTestServer.start(
+        (request) => request.response.write('<tv></tv>'),
+      );
+      addTearDown(() async {
+        http.close();
+        await server.close();
+        await db.close();
+      });
+      final live = LiveRepository(db, DocumentClient(http));
+      await live.importText(
+        'TV',
+        Uri.parse('https://list.test/a'),
+        '#EXTM3U x-tvg-url="${server.baseUri}epg.xml"\n#EXTINF:-1 tvg-id="one",频道一\nhttps://media.test/a.ts',
+      );
+      final channel = (await live.channels()).single;
+      await expectLater(live.refreshSchedule(channel), throwsFormatException);
+      expect(await live.schedule(channel), isEmpty);
+    },
+  );
+  test(
     'EPG refresh sanitizes titles and notifies both changed tables once',
     () async {
       final db = AppDatabase.memory();

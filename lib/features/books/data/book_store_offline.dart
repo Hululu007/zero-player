@@ -24,35 +24,10 @@ extension BookStoreOffline on BookStore {
     final private = await isPrivateBook(book.id);
     if (private) {
       if (!vault.unlocked) throw const VaultLockedException();
-      final prefix = '${BookVault.dataPrefix}books_text:${book.id}:';
-      final used =
-          (await db.rows(
-                "SELECT COALESCE(SUM(length(CAST(value AS BLOB))),0) AS bytes "
-                "FROM app_meta WHERE key GLOB 'books_vault_data:*'",
-              )).single['bytes']
-              as int;
-      final current = await db.rows(
-        'SELECT key,length(CAST(value AS BLOB)) AS bytes FROM app_meta '
-        'WHERE key GLOB ?',
-        ['$prefix*'],
-      );
-      final replaced = current
-          .where(
-            (row) => data.keys.any(
-              (key) => (row['key'] as String) == '${BookVault.dataPrefix}$key',
-            ),
-          )
-          .fold<int>(0, (sum, row) => sum + (row['bytes'] as int));
-      final bytes = data.values.fold<int>(
-        0,
-        (sum, value) => sum + utf8.encode(value).length * 4 ~/ 3 + 64,
-      );
-      if (used - replaced + bytes > 96 * 1024 * 1024) {
-        throw const FormatException('私密书架存储空间已满');
-      }
       for (final entry in contents.entries) {
         await vault.write(_textKey(book, entry.key), entry.value);
       }
+      await _requirePrivateCapacity();
       return;
     }
     await db.atomic(() async {

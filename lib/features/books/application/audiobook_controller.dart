@@ -9,6 +9,7 @@ import '../../../media/gateway/offline_server.dart';
 import '../../playback/domain/player_engine.dart';
 import '../data/books_repository.dart';
 import '../data/book_download_evidence.dart';
+import '../data/book_vault.dart';
 import '../domain/book.dart';
 
 /// Owns audiobook playback for the application lifetime, including page exits.
@@ -37,6 +38,9 @@ final class AudiobookController extends ChangeNotifier
   ({Book book, BookChapter chapter, bool resume})? _pending;
   PlaybackSnapshot snapshot = const PlaybackSnapshot();
   String? error;
+  String? progressNotice;
+  ({String bookId, String chapterId, double position})? _lockedProgress;
+  Future<void>? _progressSaving;
   bool autoNext = true;
   double rate = 1;
   DateTime? sleepUntil;
@@ -140,6 +144,7 @@ final class AudiobookController extends ChangeNotifier
       _session = null;
       _evidence = null;
       authorize();
+      await _progressSaving;
       final old = await books.store.entry(work);
       final openedAudio = await books.openOfflineAudio(work, next, token);
       _session = openedAudio.session;
@@ -249,8 +254,38 @@ final class AudiobookController extends ChangeNotifier
             last: chapter!,
             position: _engine!.snapshot.position.inMilliseconds.toDouble(),
           )
-          .onError((_, _) {}),
+          .onError((Object failure, StackTrace stack) {
+            progressNotice = failure is VaultLockedException
+                ? '私密书架已锁定，最后进度将在本次解锁后补存'
+                : '听书进度未能保存，请重试';
+            if (_closing == null) notifyListeners();
+          }),
     );
+  }
+
+  Future<void> _flushLockedProgress() async {
+    final pending = _lockedProgress;
+    if (pending == null) return;
+    try {
+      final vault = books.store.vault;
+      await books.store.db.atomic(() async {
+        final key = 'books_shelf:${pending.bookId}';
+        final raw = await vault.readStrict(key);
+        if (raw is! Map) throw const FormatException('私密阅读记录缺失');
+        await vault.write(key, {
+          ...raw,
+          'last': pending.chapterId,
+          'position': pending.position,
+          'textOffset': null,
+          'updated': DateTime.now().millisecondsSinceEpoch,
+        });
+      }, tables: {'app_meta'});
+      if (_lockedProgress == pending) _lockedProgress = null;
+      progressNotice = null;
+    } on Object {
+      progressNotice = '最后进度尚未补存，请重新解锁私密书架后重试';
+    }
+    if (_closing == null) notifyListeners();
   }
 
   Future<void> pause() async {
@@ -320,11 +355,28 @@ final class AudiobookController extends ChangeNotifier
   }
 
   void _vaultChanged() {
+    if (books.store.vault.unlocked) {
+      if (_lockedProgress != null) {
+        final saving = _progressSaving;
+        _progressSaving = saving == null
+            ? _flushLockedProgress()
+            : saving.then((_) => _flushLockedProgress());
+      }
+      return;
+    }
     final work = book;
     if (work == null ||
         !books.store.vault.isPrivate(work.id) ||
         books.store.vault.unlocked) {
       return;
+    }
+    if (chapter != null && _session != null && _engine != null) {
+      _lockedProgress = (
+        bookId: work.id,
+        chapterId: chapter!.id,
+        position: _engine!.snapshot.position.inMilliseconds.toDouble(),
+      );
+      progressNotice = '私密听书随锁库停止；最后进度将在本次解锁后补存';
     }
     _pending = null;
     _token?.cancel();
@@ -379,6 +431,8 @@ final class AudiobookController extends ChangeNotifier
   Future<void> close() => _closing ??= _close();
   Future<void> _close() async {
     await stop();
+    await _progressSaving;
+    _lockedProgress = null;
     await _states?.cancel();
     await _errors?.cancel();
     await _engine?.dispose();

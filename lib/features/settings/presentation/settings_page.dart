@@ -392,28 +392,32 @@ final class SettingsPage extends StatelessWidget {
     bool numeric = false,
   }) => Padding(
     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-    child: DropdownButtonFormField<String>(
-      key: ValueKey('$key/$value'),
-      initialValue: value,
-      isExpanded: true,
+    child: InputDecorator(
       decoration: InputDecoration(labelText: title),
-      items: [
-        for (final entry in values.entries)
-          DropdownMenuItem(
-            value: entry.key,
-            child: Text(entry.value, overflow: TextOverflow.ellipsis),
-          ),
-      ],
-      onChanged: (next) {
-        if (next != null) {
-          perform(
-            context,
-            () => services.settings.update({
-              key: numeric ? int.parse(next) : next,
-            }),
-          );
-        }
-      },
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<String>(
+          key: ValueKey('$key/$value'),
+          value: value,
+          isExpanded: true,
+          items: [
+            for (final entry in values.entries)
+              DropdownMenuItem(
+                value: entry.key,
+                child: Text(entry.value, overflow: TextOverflow.ellipsis),
+              ),
+          ],
+          onChanged: (next) {
+            if (next != null) {
+              perform(
+                context,
+                () => services.settings.update({
+                  key: numeric ? int.parse(next) : next,
+                }),
+              );
+            }
+          },
+        ),
+      ),
     ),
   );
   Widget _toggle(

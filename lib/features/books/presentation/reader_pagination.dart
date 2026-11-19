@@ -108,7 +108,9 @@ final class _ReaderLayout {
                   .first
                   .length;
         }
-        final visibleEnd = text.codeUnitAt(end - 1) == 10 ? end - 1 : end;
+        final visibleEnd = text.codeUnitAt(end - 1) == 10 && end - 1 > start
+            ? end - 1
+            : end;
         painter.text = span(start, visibleEnd);
         painter.layout(maxWidth: size.width);
         slices.add(
@@ -118,7 +120,7 @@ final class _ReaderLayout {
             visibleEnd,
             top,
             painter.height,
-            painter.computeLineMetrics().length,
+            math.max(1, painter.computeLineMetrics().length),
           ),
         );
         top += painter.height;

@@ -30,6 +30,41 @@ final class GatewaySession {
   final _streaming = <Uri>{};
   final _keyIds = <Uri, String>{};
   final _keys = <String>{};
+  int _nextResourceId = 0;
+  final _manifestWindows =
+      <Uri, (Set<({Uri uri, bool key})>, Set<({Uri uri, bool key})>)>{};
+
+  void _rollManifest(Uri owner, HlsManifest manifest) {
+    final current = <({Uri uri, bool key})>{};
+    manifest.rewrite(
+      (uri) {
+        current.add((uri: uri, key: false));
+        return uri;
+      },
+      mapKey: (uri) {
+        current.add((uri: uri, key: true));
+        return uri;
+      },
+    );
+    final old = _manifestWindows[owner];
+    _manifestWindows[owner] = (current, old?.$1 ?? {});
+    if (old == null) return;
+    final retained = <({Uri uri, bool key})>{
+      for (final window in _manifestWindows.values) ...window.$1,
+      for (final window in _manifestWindows.values) ...window.$2,
+    };
+    for (final reference in old.$2.difference(retained)) {
+      final uri = reference.uri;
+      // Root capabilities and playlist variables remain valid for this session.
+      if (_playlists.contains(uri) || _streaming.contains(uri)) continue;
+      final id = (reference.key ? _keyIds : _ids).remove(uri);
+      if (id != null) {
+        _resources.remove(id);
+        _keys.remove(id);
+      }
+    }
+  }
+
   Uri? selectedQuality;
   List<HlsQuality> qualities = [];
   bool filterAds = false;
@@ -89,7 +124,10 @@ final class GatewaySession {
     if (_resources.length >= 20000 && !ids.containsKey(uri)) {
       throw const FormatException('Playlist resource limit exceeded');
     }
-    final id = ids.putIfAbsent(uri, () => '${key ? 'key-' : ''}${ids.length}');
+    final id = ids.putIfAbsent(
+      uri,
+      () => '${key ? 'key-' : ''}${_nextResourceId++}',
+    );
     if (key) _keys.add(id);
     if (!key && (playlist || uri.path.toLowerCase().endsWith('.m3u8'))) {
       _playlists.add(uri);
@@ -115,6 +153,7 @@ final class GatewaySession {
         _keys.clear();
         _keyIds.clear();
         _variables.clear();
+        _manifestWindows.clear();
         _timestamps.clear();
         _gateway._sessions.remove(token);
       }
@@ -476,6 +515,7 @@ final class MediaGateway {
       session._variables[child] = manifest.variables;
     }
     session.prefetch.setManifest(manifest);
+    session._rollManifest(uri, manifest);
     final output = utf8.encode(
       manifest.rewrite(
         (uri) => session.register(uri, playlist: playlists.contains(uri)),

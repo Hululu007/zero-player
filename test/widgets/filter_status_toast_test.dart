@@ -53,6 +53,14 @@ void main() {
         await show(playing: false);
         await show(playing: true);
         expect(find.byKey(const ValueKey('filter-status-toast')), findsNothing);
+        player.filterStatus = '后台检测已启用 · 播放流畅优先';
+        await show(playing: true);
+        expect(
+          find.byKey(const ValueKey('filter-status-toast')),
+          findsOneWidget,
+        );
+        await tester.pump(const Duration(seconds: 3));
+        expect(find.byKey(const ValueKey('filter-status-toast')), findsNothing);
         player.filterStatus = '后台检测已恢复 · 播放流畅优先';
         await show(playing: true);
         expect(

@@ -71,6 +71,7 @@ void _privateAudioLockTests() {
       });
       player.start(book, [chapter], chapter);
       await ready.future.timeout(const Duration(seconds: 5));
+      engine.change(position: const Duration(seconds: 17));
       store.vault.lock();
       expect(player.active, isFalse);
       expect(player.title, isEmpty);
@@ -78,6 +79,18 @@ void _privateAudioLockTests() {
       await Future<void>.delayed(Duration.zero);
       expect(engine.snapshot.playing, isFalse);
       player.start(book, [chapter], chapter);
+      expect(player.active, isFalse);
+      expect(player.progressNotice, contains('补存'));
+      final unencrypted = await services.db.rows(
+        "SELECT key FROM app_meta WHERE key GLOB 'books_shelf:*'",
+      );
+      expect(unencrypted, isEmpty);
+      expect(await store.vault.unlock('secret-123'), isTrue);
+      for (var i = 0; i < 200 && player.progressNotice != null; i++) {
+        await Future<void>.delayed(const Duration(milliseconds: 10));
+      }
+      expect(player.progressNotice, isNull);
+      expect((await store.entry(book))!.position, 17000);
       expect(player.active, isFalse);
     },
   );

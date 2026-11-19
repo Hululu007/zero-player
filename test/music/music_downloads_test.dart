@@ -18,6 +18,31 @@ import 'package:zero_player/media/gateway/offline_server.dart';
 import '../../test_support/http_test_server.dart';
 
 void main() {
+  test('missing completed entry preserves metadata and intact file', () async {
+    final f = await _Fixture.create();
+    addTearDown(f.close);
+    await f.downloads.download(f.track);
+    await f.downloads.idle;
+    final path = f.downloads.directory(f.track);
+    final before = await path.list().map((file) => file.path).toList();
+    final rows = await f.db.rows(
+      "SELECT key,value FROM app_meta WHERE key GLOB 'music_download:*'",
+    );
+    final record = jsonDecode(rows.single['value'] as String) as Map;
+    record.remove('entry');
+    await f.db.write('UPDATE app_meta SET value=? WHERE key=?', [
+      jsonEncode(record),
+      rows.single['key'],
+    ]);
+    await f.downloads.close();
+    f.downloads = f.createDownloads();
+    await expectLater(f.downloads.open(f.track), throwsFormatException);
+    expect(f.downloads.items.single.status, 'complete');
+    expect(
+      await path.list().map((file) => file.path).toList(),
+      unorderedEquals(before),
+    );
+  });
   test(
     'local search indexes complete downloads across restart and removes stale entries',
     () async {

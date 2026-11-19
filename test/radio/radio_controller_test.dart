@@ -12,6 +12,7 @@ LiveChannel station(String name) => LiveChannel(
 );
 
 void main() {
+  _runtimeRecoveryTests();
   test('failed connection can be reopened by mini player toggle', () async {
     final failed = FakePlayerEngine(
       onVolume: (_) async => throw StateError('native failure'),
@@ -96,4 +97,43 @@ void main() {
       expect(created, isFalse);
     },
   );
+}
+
+void _runtimeRecoveryTests() {
+  test('runtime radio failure recovers state without reopening', () async {
+    final engine = FakePlayerEngine();
+    final controller = RadioController(() => engine);
+    addTearDown(controller.close);
+    await controller.select(station('recover'));
+    engine.failures.add('temporary failure');
+    await pumpEventQueue();
+    expect(controller.error, isNotNull);
+    engine.change(playing: true);
+    await pumpEventQueue();
+    expect(controller.playing, isTrue);
+    expect(controller.error, isNull);
+    expect(engine.opens, 1);
+  });
+  test('paused radio does not fail over or restart on stream error', () async {
+    final engine = FakePlayerEngine();
+    final controller = RadioController(() => engine);
+    addTearDown(controller.close);
+    await controller.select(
+      LiveChannel(
+        id: 'two',
+        listId: 'radio',
+        name: 'radio',
+        urls: [
+          Uri.parse('https://example.com/one.mp3'),
+          Uri.parse('https://example.com/two.mp3'),
+        ],
+      ),
+    );
+    await controller.pause();
+    engine.failures.add('paused disconnect');
+    await pumpEventQueue();
+    expect(controller.playing, isFalse);
+    expect(controller.line, 0);
+    expect(engine.opens, 1);
+  });
 }

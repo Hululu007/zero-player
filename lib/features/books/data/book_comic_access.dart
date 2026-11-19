@@ -12,10 +12,19 @@ final class BookComicAccess {
   final Map<String, String> _approved = {};
   Future<void>? _loading;
   bool loaded = false;
-  Future<void> load() => _loading ??= _load();
+  Future<void> load() => _loading ??= _load().catchError((Object error) {
+    _loading = null;
+    throw error;
+  });
   Future<void> _load() async {
     final raw = await store.read('books_comic_approvals:v1');
-    if (raw is Map) _approved.addAll(Map<String, String>.from(raw));
+    if (raw is Map) {
+      for (final entry in raw.entries) {
+        if (entry.key is String && entry.value is String) {
+          _approved[entry.key as String] = entry.value as String;
+        }
+      }
+    }
     loaded = true;
   }
 

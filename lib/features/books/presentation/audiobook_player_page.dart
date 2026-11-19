@@ -139,6 +139,7 @@ final class _AudiobookPlayerPageState extends State<AudiobookPlayerPage> {
                 color: theme.colorScheme.primary,
               ),
               const SizedBox(height: 24),
+              ..._privacyNotices(),
               Text(
                 chapter?.title ?? '播放已停止',
                 textAlign: TextAlign.center,
@@ -211,6 +212,13 @@ final class _AudiobookPlayerPageState extends State<AudiobookPlayerPage> {
       ),
     );
   }
+
+  List<Widget> _privacyNotices() => [
+    if (widget.services.books.store.vault.isPrivate(widget.book.id))
+      const Text('私密听书在应用退到后台或书架锁定时停止。请解锁后继续；未补存的最后进度仅在本次运行中保留。'),
+    if (player.progressNotice != null)
+      Text(player.progressNotice!, textAlign: TextAlign.center),
+  ];
 
   List<Widget> _progress(PlaybackSnapshot state, bool active) {
     final duration = state.duration.inMilliseconds;
