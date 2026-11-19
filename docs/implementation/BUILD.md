@@ -2,6 +2,24 @@
 
 当前进度见 [实施状态](STATUS.md)。下文各功能章节的测试数量属于当时快照，不代表重装后重新执行。
 
+## GitHub 渠道目录更新回归（2026-11-19）
+
+本轮状态与实网边界见 STATUS 的「GitHub 影视目录更新与默认收藏」。Flutter 测试与 Windows 构建串行执行：
+
+~~~powershell
+flutter test --no-pub test/sources test/data/live_audit_defaults_test.dart test/data/live_consistency_test.dart test/data/live_review_recovery_test.dart test/data/live_sports_test.dart --reporter expanded
+flutter test --no-pub --reporter expanded
+flutter analyze --no-pub
+dart run tool/check_module_boundaries.dart
+dart run tool/check_source_size.dart
+$env:FFMPEGKIT_LOCAL_DIR = (Resolve-Path .tools/ffmpegkit/unpacked).Path
+flutter build windows --release --no-pub
+~~~
+
+验证覆盖 WebHome 原生 JSON 适配、官方链接到同名同年份直连采集线路、不同子渠道相同编号、拒绝外部解析/验证码响应、默认收藏幂等与用户偏好保留、签名/时间戳及隔离入口的 query 变体。全量 1633 通过/12 跳过；最终定向 80 通过/2 跳过。规模检查仍退出 1、104 条已有超限，无新增项。
+
+本机完整证据为 `build/awesome-zhuiju-20261119/`，含上游文件、点播及两轮直播解码、最终新增 14 台截帧、包内资产和固定原生依赖校验。洛雪TV实时 API 本机直连超时；经系统代理采集 JSON 回放和真实媒体解码通过，不表示设备实时访问通过。看看鸭人机验证尚不能自动读取。目录文件更新只更新渠道数据，程序功能继续通过本项目发行版本更新。
+
 ## 性能专项首轮回归
 
 固定音乐夹具为20个歌单×100首、200条历史、20次保存；计数关闭/开启均断言功能结果，开启时输出一份JSON聚合计数。播放器回归挂载真实`PlayerPage`和原生视频，用30次受控业务通知检查视频widget身份、局部构建、立即屏蔽、错误、比例、全屏及返回。所有Flutter测试、原生回归与构建串行执行：

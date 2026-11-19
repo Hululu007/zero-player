@@ -146,7 +146,7 @@ final class _SourcesPageState extends State<SourcesPage> {
   Widget _awesomeSubscriptionButton() => OutlinedButton.icon(
     onPressed: () => showAwesomeZhuijuSync(context, widget.services),
     icon: const Icon(Icons.sync),
-    label: const Text('追剧资源同步'),
+    label: const Text('GitHub 渠道更新'),
   );
 
   Future<void> _restoreBuiltins() => perform(context, () async {

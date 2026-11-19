@@ -52,6 +52,34 @@ void main() {
     );
     expect(index.skipped, 3);
     expect(
+      AwesomeZhuijuIndex.durable(
+        Uri.parse(
+          'https://media.test/live.m3u8?timestamp=1794883444&SecurityKey=abc',
+        ),
+      ),
+      isFalse,
+    );
+    expect(
+      AwesomeZhuijuIndex.quarantineIdentity(
+        Uri.parse('http://124.71.19.220/live/1/0?v=1794883444'),
+      ),
+      AwesomeZhuijuIndex.quarantineIdentity(
+        Uri.parse('http://124.71.19.220/live/1/0?v=1794247117'),
+      ),
+    );
+    expect(
+      AwesomeZhuijuIndex.videoIdentity(
+        'cms',
+        Uri.parse('https://ys.cxkjg.cn/api/provide/vod?source=1470828922'),
+      ),
+      isNot(
+        AwesomeZhuijuIndex.videoIdentity(
+          'cms',
+          Uri.parse('https://ys.cxkjg.cn/api/provide/vod'),
+        ),
+      ),
+    );
+    expect(
       AwesomeZhuijuIndex.videoIdentity(
         'cms',
         Uri.parse(
@@ -166,6 +194,14 @@ Future<HttpTestServer> _server() => HttpTestServer.start((request) async {
           ],
           'lives': [
             {'name': 'Fixture', 'url': '$origin/playlist'},
+            {
+              'name': 'quarantined variant',
+              'url': 'http://124.71.19.220/live/1/0?v=999',
+            },
+            {
+              'name': 'expiring media',
+              'url': '$origin/expired?timestamp=1794883444',
+            },
           ],
         }),
       );

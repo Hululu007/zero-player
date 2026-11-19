@@ -135,7 +135,7 @@ final class SourceRepository {
         endpoint.userInfo.isNotEmpty) {
       throw const FormatException('请输入 HTTP(S) 接口地址');
     }
-    if (!{'cms', 'kanju', 'macCmsHtml'}.contains(kind)) {
+    if (!{'cms', 'kanju', 'macCmsHtml', 'webHome'}.contains(kind)) {
       throw const FormatException('不支持的来源类型');
     }
     return db.atomic(() async {

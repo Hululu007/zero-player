@@ -10,6 +10,15 @@ import '../data/source_repository.dart';
 import '../domain/source_catalog.dart';
 import 'subscription_service.dart';
 
+typedef _KnownSources = ({
+  Set<String> roots,
+  Set<String> videos,
+  Set<String> hosts,
+  Set<String> lives,
+  Set<String> discoveredLists,
+  Set<String> quarantined,
+});
+
 final class AwesomeZhuijuCandidates {
   final videos = <SourceCandidate>[];
   final playlists = <LiveCatalogEntry>[];
@@ -29,10 +38,18 @@ final class AwesomeZhuijuDiscovery {
   ) async {
     final result = AwesomeZhuijuCandidates();
     final known = await _known();
+    final quarantinedIndex = AwesomeZhuijuIndex(
+      index.checkedAt,
+      index.candidates,
+      {...index.blocked, ...known.quarantined},
+      index.skipped,
+    );
     final seen = <String>{};
     final pending = <(AwesomeResource, int)>[];
     for (final entry in index.candidates) {
-      if (!_claim(entry.uri, known.roots, seen, index, result)) continue;
+      if (!_claim(entry.uri, known.roots, seen, quarantinedIndex, result)) {
+        continue;
+      }
       if (entry.kind == AwesomeResourceKind.catalog) {
         pending.add((entry, 0));
       } else if (known.hosts.add(entry.uri.host)) {
@@ -40,7 +57,9 @@ final class AwesomeZhuijuDiscovery {
           SourceCandidate(
             name: entry.name,
             endpoint: entry.uri,
-            kind: SourceKind.macCmsHtml,
+            kind: entry.uri.host == 'tv.lxyy.club'
+                ? SourceKind.webHome
+                : SourceKind.macCmsHtml,
             requestedEnabled: true,
           ),
         );
@@ -49,6 +68,18 @@ final class AwesomeZhuijuDiscovery {
       }
     }
 
+    await _expand(pending, known, seen, quarantinedIndex, result, token);
+    return result;
+  }
+
+  Future<void> _expand(
+    List<(AwesomeResource, int)> pending,
+    _KnownSources known,
+    Set<String> seen,
+    AwesomeZhuijuIndex quarantinedIndex,
+    AwesomeZhuijuCandidates result,
+    CancellationToken token,
+  ) async {
     // Breadth first gives every listed catalog a chance before expanding children.
     for (var cursor = 0; cursor < pending.length && cursor < 50;) {
       token.check();
@@ -70,7 +101,7 @@ final class AwesomeZhuijuDiscovery {
         for (final source in preview.catalog.sources) {
           if (source.classification == 'adult' ||
               !_public(source.endpoint) ||
-              index.blocked.contains(
+              quarantinedIndex.blocked.contains(
                 AwesomeZhuijuIndex.identity(source.endpoint),
               )) {
             continue;
@@ -88,7 +119,7 @@ final class AwesomeZhuijuDiscovery {
             playlist.url,
             known.lives,
             known.discoveredLists,
-            index,
+            quarantinedIndex,
             result,
           )) {
             result.playlists.add(
@@ -104,7 +135,7 @@ final class AwesomeZhuijuDiscovery {
         if (depth == 2) continue;
         for (final child in preview.catalog.references) {
           if (pending.length >= 50) break;
-          if (_claim(child.uri, known.roots, seen, index, result)) {
+          if (_claim(child.uri, known.roots, seen, quarantinedIndex, result)) {
             pending.add((
               AwesomeResource(label, child.uri, AwesomeResourceKind.catalog),
               depth + 1,
@@ -113,7 +144,6 @@ final class AwesomeZhuijuDiscovery {
         }
       }
     }
-    return result;
   }
 
   Future<CatalogPreview?> _preview(Uri uri, CancellationToken token) async {
@@ -134,6 +164,7 @@ final class AwesomeZhuijuDiscovery {
   ) {
     final key = AwesomeZhuijuIndex.identity(uri);
     if (index.blocked.contains(key) ||
+        index.blocked.contains(AwesomeZhuijuIndex.quarantineIdentity(uri)) ||
         !_public(uri) ||
         !AwesomeZhuijuIndex.durable(uri)) {
       return false;
@@ -143,16 +174,7 @@ final class AwesomeZhuijuDiscovery {
     return false;
   }
 
-  Future<
-    ({
-      Set<String> roots,
-      Set<String> videos,
-      Set<String> hosts,
-      Set<String> lives,
-      Set<String> discoveredLists,
-    })
-  >
-  _known() async {
+  Future<_KnownSources> _known() async {
     final providers = await sources.all(includeSuppressed: true);
     final lists = await live.lists();
     final subscriptions = await sources.subscriptions();
@@ -164,6 +186,13 @@ final class AwesomeZhuijuDiscovery {
         AwesomeZhuijuIndex.identity(Uri.parse(row['url'] as String)),
     };
     return (
+      quarantined: {
+        for (final entry
+            in (builtins['quarantined'] as List? ?? []).whereType<Map>())
+          AwesomeZhuijuIndex.quarantineIdentity(
+            Uri.parse(entry['url'] as String),
+          ),
+      },
       roots: {
         ...lives,
         for (final row in subscriptions)

@@ -30,7 +30,7 @@ final class AwesomeZhuijuVerification {
     final unlink = caller.listen(token.cancel);
     final deadline = Timer(const Duration(minutes: 2), token.cancel);
     final source = VideoSource(
-      id: stableId('\${item.kind.name}|\${item.endpoint}'),
+      id: stableId('${item.kind.name}|${item.endpoint}'),
       name: item.name,
       endpoint: item.endpoint,
       kind: item.kind.name,
@@ -105,7 +105,7 @@ final class AwesomeZhuijuVerification {
       maxBytes: 8 * 1024 * 1024,
       networkTimeout: const Duration(seconds: 10),
     );
-    final id = stableId('\${entry.url}');
+    final id = stableId('${entry.url}');
     final channels = preparePlaylistChannels(
       parseLivePlaylist(document.text, document.uri, id),
       const [],

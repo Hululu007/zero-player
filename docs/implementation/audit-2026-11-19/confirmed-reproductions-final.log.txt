@@ -1,0 +1,176 @@
+Flutter assets will be downloaded from https://storage.flutter-io.cn. Make sure you trust this source!
+00:00 +0: loading K:/zero-player/build/code-audit-20261119/audit_regressions_test.dart
+00:00 +0: K:/zero-player/build/code-audit-20261119/audit_regressions_test.dart: AUD-01 HLS preserves AUDIO and SUBTITLES sharing group id
+00:00 +0 -1: K:/zero-player/build/code-audit-20261119/audit_regressions_test.dart: AUD-01 HLS preserves AUDIO and SUBTITLES sharing group id [E]
+  Expected: an object with length of <2>
+    Actual: WhereIterable<String>:[
+              '#EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID="main",NAME="Audio",DEFAULT=YES,URI="audio.m3u8"'
+            ]
+     Which: has length of <1>
+  
+  package:matcher                                             expect
+  package:flutter_test/src/widget_tester.dart 473:18          expect
+  build\code-audit-20261119\audit_regressions_test.dart 51:5  main.<fn>
+  
+00:00 +0 -1: K:/zero-player/build/code-audit-20261119/audit_regressions_test.dart: AUD-02 HLS rejects a mismatched Content-Range
+00:00 +0 -2: K:/zero-player/build/code-audit-20261119/audit_regressions_test.dart: AUD-02 HLS rejects a mismatched Content-Range [E]
+  Expected: throws <Instance of 'HttpException'>
+    Actual: <Instance of 'Future<ResourceLease>'>
+     Which: emitted <Instance of 'ResourceLease'>
+  
+  package:matcher                                              expectLater
+  package:flutter_test/src/widget_tester.dart 507:8            expectLater
+  build\code-audit-20261119\audit_regressions_test.dart 77:11  main.<fn>
+  ===== asynchronous gap ===========================
+  dart:async                                                   _CustomZone.registerUnaryCallback
+  build\code-audit-20261119\audit_regressions_test.dart 55:18  main.<fn>
+  
+00:00 +0 -2: K:/zero-player/build/code-audit-20261119/audit_regressions_test.dart: AUD-03 comic reuse excludes an address index with missing image data
+00:00 +0 -3: K:/zero-player/build/code-audit-20261119/audit_regressions_test.dart: AUD-03 comic reuse excludes an address index with missing image data [E]
+  Expected: empty
+    Actual: Set:['4d17bd0c9dd01b7d6df391a642c908db22220cabdca4387e476324a5a712caec']
+  
+  package:matcher                                             expect
+  package:flutter_test/src/widget_tester.dart 473:18          expect
+  build\code-audit-20261119\audit_regressions_test.dart 95:5  main.<fn>
+  
+00:00 +0 -3: K:/zero-player/build/code-audit-20261119/audit_regressions_test.dart: AUD-04 queued audiobook start restores saved position
+00:00 +0 -4: K:/zero-player/build/code-audit-20261119/audit_regressions_test.dart: AUD-04 queued audiobook start restores saved position [E]
+  Expected: contains Duration:<0:00:10.000000>
+    Actual: []
+     Which: does not contain Duration:<0:00:10.000000>
+  
+  package:matcher                                              expect
+  package:flutter_test/src/widget_tester.dart 473:18           expect
+  build\code-audit-20261119\audit_regressions_test.dart 131:5  main.<fn>
+  
+00:00 +0 -4: K:/zero-player/build/code-audit-20261119/audit_regressions_test.dart: AUD-05 imported EPUB appears under EPUB type filter
+══╡ EXCEPTION CAUGHT BY FLUTTER TEST FRAMEWORK ╞════════════════════════════════════════════════════
+The following TestFailure was thrown running a test:
+Expected: contains 'EPUB'
+  Actual: ['', '', 'TXT']
+   Which: does not contain 'EPUB'
+
+When the exception was thrown, this was the stack:
+#4      main.<anonymous closure> (file:///K:/zero-player/build/code-audit-20261119/audit_regressions_test.dart:160:5)
+<asynchronous suspension>
+#5      testWidgets.<anonymous closure>.<anonymous closure> (package:flutter_test/src/widget_tester.dart:192:15)
+<asynchronous suspension>
+#6      TestWidgetsFlutterBinding._runTestBody (package:flutter_test/src/binding.dart:1952:5)
+<asynchronous suspension>
+<asynchronous suspension>
+(elided one frame from package:stack_trace)
+
+This was caught by the test expectation on the following line:
+  file:///K:/zero-player/build/code-audit-20261119/audit_regressions_test.dart line 160
+The test description was:
+  AUD-05 imported EPUB appears under EPUB type filter
+════════════════════════════════════════════════════════════════════════════════════════════════════
+00:00 +0 -5: K:/zero-player/build/code-audit-20261119/audit_regressions_test.dart: AUD-05 imported EPUB appears under EPUB type filter [E]
+  Test failed. See exception logs above.
+  The test description was: AUD-05 imported EPUB appears under EPUB type filter
+  
+00:04 +0 -5: K:/zero-player/build/code-audit-20261119/audit_regressions_test.dart: AUD-06 playlist lookup still plays an exact completed local download
+00:04 +0 -6: K:/zero-player/build/code-audit-20261119/audit_regressions_test.dart: AUD-06 playlist lookup still plays an exact completed local download [E]
+  Expected: null
+    Actual: '未匹配到可播放的同名同歌手歌曲'
+  
+  package:matcher                                              expect
+  package:flutter_test/src/widget_tester.dart 473:18           expect
+  build\code-audit-20261119\audit_regressions_test.dart 192:5  main.<fn>
+  
+00:04 +0 -6: K:/zero-player/build/code-audit-20261119/audit_regressions_test.dart: AUD-07 simultaneous music and radio resume completes without timeout
+00:05 +0 -7: K:/zero-player/build/code-audit-20261119/audit_regressions_test.dart: AUD-07 simultaneous music and radio resume completes without timeout [E]
+  Expected: null
+    Actual: '播放操作失败，请重试。'
+  
+  package:matcher                                              expect
+  package:flutter_test/src/widget_tester.dart 473:18           expect
+  build\code-audit-20261119\audit_regressions_test.dart 228:5  main.<fn>
+  
+00:05 +0 -7: K:/zero-player/build/code-audit-20261119/audit_regressions_test.dart: AUD-08 changing a resource query must not concatenate unrelated MP4 bodies
+00:05 +0 -8: K:/zero-player/build/code-audit-20261119/audit_regressions_test.dart: AUD-08 changing a resource query must not concatenate unrelated MP4 bodies [E]
+  Expected: [5, 6, 7, 8]
+    Actual: [1, 2, 7, 8]
+     Which: at location [0] is <1> instead of <5>
+  
+  package:matcher                                              expect
+  package:flutter_test/src/widget_tester.dart 473:18           expect
+  build\code-audit-20261119\audit_regressions_test.dart 256:5  main.<fn>
+  
+00:05 +0 -8: K:/zero-player/build/code-audit-20261119/audit_regressions_test.dart: AUD-09 replacing identical private comic images does not increase quota
+00:05 +0 -9: K:/zero-player/build/code-audit-20261119/audit_regressions_test.dart: AUD-09 replacing identical private comic images does not increase quota [E]
+  FormatException: 私密离线图片空间已满
+  package:zero_player/features/books/data/book_store_images.dart 162:11  BookStoreImages.saveOfflineImages.<fn>
+  
+00:05 +0 -9: loading K:/zero-player/build/code-audit-20261119/export_audit_test.dart
+00:06 +0 -9: K:/zero-player/build/code-audit-20261119/export_audit_test.dart: (setUpAll)
+00:06 +0 -9: K:/zero-player/build/code-audit-20261119/export_audit_test.dart: AUD-10 cancellation during probe prevents exporter publication
+Loading ffmpeg-kit-flutter.
+Loaded ffmpeg-kit-flutter-windows-min-x86_64-8.0.0.
+00:06 +0 -10: K:/zero-player/build/code-audit-20261119/export_audit_test.dart: AUD-10 cancellation during probe prevents exporter publication [E]
+  Expected: throws <Instance of 'RequestCancelled'>
+    Actual: <Instance of 'Future<ExportResult>'>
+     Which: emitted <Instance of 'ExportResult'>
+  
+  package:matcher                                         expectLater
+  package:flutter_test/src/widget_tester.dart 507:8       expectLater
+  build\code-audit-20261119\export_audit_test.dart 65:11  main.<fn>
+  ===== asynchronous gap ===========================
+  dart:async                                              _CustomZone.registerUnaryCallback
+  build\code-audit-20261119\export_audit_test.dart 58:18  main.<fn>
+  
+00:06 +0 -10: K:/zero-player/build/code-audit-20261119/export_audit_test.dart: AUD-12 exporter publication cannot replace a file created after existence check
+00:06 +0 -11: K:/zero-player/build/code-audit-20261119/export_audit_test.dart: AUD-12 exporter publication cannot replace a file created after existence check [E]
+  Expected: 'COMPETING EXISTING FILE'
+    Actual: '\v\x16!,'
+     Which: is different.
+            Expected: COMPETING  ...
+              Actual: \v\x16!,
+                      ^
+             Differ at offset 0
+  
+  package:matcher                                        expect
+  package:flutter_test/src/widget_tester.dart 473:18     expect
+  build\code-audit-20261119\export_audit_test.dart 79:5  main.<fn>
+  
+00:06 +0 -11: K:/zero-player/build/code-audit-20261119/export_audit_test.dart: AUD-11 policy revocation during export save picker prevents writing
+══╡ EXCEPTION CAUGHT BY FLUTTER TEST FRAMEWORK ╞════════════════════════════════════════════════════
+The following TestFailure was thrown running a test:
+Expected: false
+  Actual: <true>
+
+When the exception was thrown, this was the stack:
+#4      main.<anonymous closure> (file:///K:/zero-player/build/code-audit-20261119/export_audit_test.dart:130:5)
+<asynchronous suspension>
+#5      testWidgets.<anonymous closure>.<anonymous closure> (package:flutter_test/src/widget_tester.dart:192:15)
+<asynchronous suspension>
+#6      TestWidgetsFlutterBinding._runTestBody (package:flutter_test/src/binding.dart:1952:5)
+<asynchronous suspension>
+<asynchronous suspension>
+(elided one frame from package:stack_trace)
+
+This was caught by the test expectation on the following line:
+  file:///K:/zero-player/build/code-audit-20261119/export_audit_test.dart line 130
+The test description was:
+  AUD-11 policy revocation during export save picker prevents writing
+════════════════════════════════════════════════════════════════════════════════════════════════════
+00:07 +0 -12: K:/zero-player/build/code-audit-20261119/export_audit_test.dart: AUD-11 policy revocation during export save picker prevents writing [E]
+  Test failed. See exception logs above.
+  The test description was: AUD-11 policy revocation during export save picker prevents writing
+  
+
+Warning: At least one test in this suite creates an HttpClient. When running a test suite that uses
+TestWidgetsFlutterBinding, all HTTP requests will return status code 400, and no network request
+will actually be made. Any test expecting a real network connection and status code will fail.
+To test code that needs an HttpClient, provide your own HttpClient implementation to the code under
+test, so that your test can consistently provide a testable response to the code under test.
+00:11 +0 -12: K:/zero-player/build/code-audit-20261119/export_audit_test.dart: (tearDownAll)
+00:11 +0 -12: Some tests failed.
+
+Failing tests:
+  K:/zero-player/build/code-audit-20261119/audit_regressions_test.dart: AUD-01 HLS preserves AUDIO and SUBTITLES sharing group id
+  K:/zero-player/build/code-audit-20261119/audit_regressions_test.dart: AUD-02 HLS rejects a mismatched Content-Range
+  K:/zero-player/build/code-audit-20261119/audit_regressions_test.dart: AUD-03 comic reuse excludes an address index with missing image data
+  K:/zero-player/build/code-audit-20261119/audit_regressions_test.dart: AUD-04 queued audiobook start restores saved position
+  ... and 8 more

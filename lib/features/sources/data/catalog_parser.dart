@@ -114,7 +114,9 @@ final class JsonSourceCatalogParser implements SourceCatalogParser {
       diagnostics.add(ImportDiagnostic(name, '不是支持的直连接口'));
       return;
     }
-    final kind = !tvbox && row['kind'] == 'kanju'
+    final kind = !tvbox && row['kind'] == 'webHome'
+        ? SourceKind.webHome
+        : !tvbox && row['kind'] == 'kanju'
         ? SourceKind.kanju
         : !tvbox && row['kind'] == 'macCmsHtml'
         ? SourceKind.macCmsHtml

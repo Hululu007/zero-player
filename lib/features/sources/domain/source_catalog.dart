@@ -1,4 +1,4 @@
-enum SourceKind { cms, livePlaylist, kanju, macCmsHtml }
+enum SourceKind { cms, livePlaylist, kanju, macCmsHtml, webHome }
 
 final class SourceCandidate {
   const SourceCandidate({

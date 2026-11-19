@@ -1,6 +1,6 @@
 {
   "version": 3,
-  "checkedAt": "2026-11-11T08:16:08.492049Z",
+  "checkedAt": "2026-11-19T05:19:56.735267Z",
   "retired": [
     "https://raw.githubusercontent.com/fanmingming/live/main/tv/m3u/index.m3u",
     "https://m3u.ibert.me/cn.m3u",
@@ -94,6 +94,18 @@
       "url": "https://raw.githubusercontent.com/xmbjm/svip/refs/heads/main/FM.json",
       "name": "拾光 · 地方电视精选",
       "origin": "https://github.com/xmbjm/svip"
+    },
+    {
+      "url": "http://api.hgyx.vip/TVBox/zb.json",
+      "name": "追剧资源 · 小盒子多仓 · redirect",
+      "origin": "http://xhztv.top/dc",
+      "discoveredVia": "https://github.com/laoma528/awesome-zhuiju-free"
+    },
+    {
+      "url": "http://124.71.19.220/live/1/1?v=1794883444",
+      "name": "追剧资源 · 影仓 · Guovin",
+      "origin": "http://124.71.19.220/c/1",
+      "discoveredVia": "https://github.com/laoma528/awesome-zhuiju-free"
     }
   ],
   "quarantined": [

@@ -2,29 +2,111 @@
   "version": 1,
   "origin": "https://github.com/laoma528/awesome-zhuiju-free",
   "license": "CC-BY-4.0",
-  "checkedAt": "2026-11-11",
-  "verification": "Two different titles resolved and decoded for 20 seconds through the guarded media gateway.",
+  "checkedAt": "2026-11-19",
+  "verification": "See individual entries. Existing sources retain their prior verification date; requested favorites can be unverified.",
   "sources": [
     {
       "name": "创享影视",
       "kind": "cms",
       "url": "https://ys.cxkjg.cn/api/provide/vod",
       "origin": "https://ys.cxkjg.cn/api/provide/tvbox",
-      "classification": "general"
+      "classification": "general",
+      "checkedAt": "2026-11-19"
     },
     {
       "name": "天堂资源",
       "kind": "cms",
       "url": "http://caiji.dyttzyapi.com/api.php/provide/vod/from/dyttm3u8/at/m3u8/",
       "origin": "https://szyyds.cn/tv/x.json",
-      "classification": "general"
+      "classification": "general",
+      "checkedAt": "2026-11-11"
     },
     {
       "name": "优质资源",
       "kind": "cms",
       "url": "https://api.yyzy-tv.vip/inc/apijson.php",
       "origin": "http://xmbjm.fh4u.org/dc.txt",
-      "classification": "general"
+      "classification": "general",
+      "checkedAt": "2026-11-11"
+    },
+    {
+      "name": "创享影视 · 量子",
+      "kind": "cms",
+      "url": "https://ys.cxkjg.cn/api/provide/vod?source=1470828922",
+      "origin": "https://ys.cxkjg.cn/api/provide/tvbox",
+      "classification": "general",
+      "checkedAt": "2026-11-19",
+      "verification": "Two distinct titles decoded for 20 seconds through the guarded gateway."
+    },
+    {
+      "name": "创享影视 · 非凡",
+      "kind": "cms",
+      "url": "https://ys.cxkjg.cn/api/provide/vod?source=1840804598",
+      "origin": "https://ys.cxkjg.cn/api/provide/tvbox",
+      "classification": "general",
+      "checkedAt": "2026-11-19",
+      "verification": "Two distinct titles decoded for 20 seconds through the guarded gateway."
+    },
+    {
+      "name": "创享影视 · 闪电",
+      "kind": "cms",
+      "url": "https://ys.cxkjg.cn/api/provide/vod?source=3848762792",
+      "origin": "https://ys.cxkjg.cn/api/provide/tvbox",
+      "classification": "general",
+      "checkedAt": "2026-11-19",
+      "verification": "Two distinct titles decoded for 20 seconds through the guarded gateway."
+    },
+    {
+      "name": "天涯资源",
+      "kind": "cms",
+      "url": "http://tyyszy.com/api.php/provide/vod",
+      "origin": "https://szyyds.cn/tv/x.json",
+      "classification": "general",
+      "checkedAt": "2026-11-19",
+      "verification": "Two distinct titles decoded for 20 seconds through the guarded gateway."
+    },
+    {
+      "name": "百度资源",
+      "kind": "cms",
+      "url": "https://api.apibdzy.com/api.php/provide/vod?ac=list",
+      "origin": "https://szyyds.cn/tv/x.json",
+      "classification": "general",
+      "checkedAt": "2026-11-19",
+      "verification": "Two distinct titles decoded for 20 seconds through the guarded gateway."
+    },
+    {
+      "name": "虎牙资源",
+      "kind": "cms",
+      "url": "https://www.huyaapi.com/api.php/provide/vod/from/hym3u8",
+      "origin": "https://raw.liucn.cc/box/m.json",
+      "classification": "general",
+      "checkedAt": "2026-11-19",
+      "verification": "Two distinct titles decoded for 20 seconds through the guarded gateway."
+    },
+    {
+      "name": "洛雪TV",
+      "kind": "webHome",
+      "url": "https://tv.lxyy.club/",
+      "origin": "https://tv.lxyy.club/",
+      "classification": "general",
+      "checkedAt": "2026-11-19",
+      "verification": "Captured public home/search/detail JSON parsed by the native adapter; two distinct titles decoded for 20 seconds through the guarded gateway. Live API access times out on this host without its system proxy; Android/TV access remains unverified."
+    },
+    {
+      "name": "看看鸭",
+      "kind": "macCmsHtml",
+      "url": "https://www.kankanya.me/",
+      "origin": "https://www.kankanya.me/",
+      "classification": "unknown",
+      "checkedAt": "2026-11-19",
+      "verification": "Not playable: homepage returns a human-verification challenge. Included as an explicitly requested default favorite.",
+      "availabilityNote": "网站要求人机验证，当前无法自动读取或播放；收藏已保留"
     }
-  ]
+  ],
+  "upstream": {
+    "resources": "https://raw.githubusercontent.com/laoma528/awesome-zhuiju-free/main/resources/resources.json",
+    "availability": "https://raw.githubusercontent.com/laoma528/awesome-zhuiju-free/main/reports/availability.json",
+    "generatedAt": "2026-11-19T01:12:27.706Z",
+    "resourceCount": 128
+  }
 }

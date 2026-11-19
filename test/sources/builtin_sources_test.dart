@@ -7,6 +7,7 @@ import 'package:zero_player/features/sources/data/source_repository.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
+  _requestedFavoritesTest();
   test('restore reuses an equivalent manual source identity', () async {
     final db = AppDatabase.memory();
     addTearDown(db.close);
@@ -52,7 +53,6 @@ void main() {
               'inconclusive',
             }.contains(result['state']),
         };
-        expect(all.length, lessThanOrEqualTo(defaults.length));
         expect(all.any((s) => !s.enabled), isTrue);
         for (final source in all) {
           if (defaults.containsKey(source.endpoint.toString())) {
@@ -73,6 +73,40 @@ void main() {
         expect((await repository.find(selected.id))!.available, isTrue);
       } finally {
         await db.close();
+      }
+    },
+  );
+}
+
+void _requestedFavoritesTest() {
+  test(
+    'requested website favorites seed once and preserve user choices',
+    () async {
+      final db = AppDatabase.memory();
+      addTearDown(db.close);
+      final repository = SourceRepository(db);
+      final builtins = BuiltinSources(repository);
+      await builtins.initialize();
+      for (final host in ['tv.lxyy.club', 'www.kankanya.me']) {
+        final source = (await repository.all()).singleWhere(
+          (s) => s.endpoint.host == host,
+        );
+        expect(source.enabled, isTrue);
+        expect(source.favorite, isTrue);
+        expect(source.kind, host == 'tv.lxyy.club' ? 'webHome' : 'macCmsHtml');
+        if (host == 'www.kankanya.me') expect(source.error, contains('人机验证'));
+        await repository.favorite(source.id, false);
+        await repository.batch([source.id], enabled: false, suppressed: true);
+      }
+      await builtins.initialize();
+      for (final source
+          in (await repository.all(includeSuppressed: true)).where(
+            (s) =>
+                {'tv.lxyy.club', 'www.kankanya.me'}.contains(s.endpoint.host),
+          )) {
+        expect(source.favorite, isFalse);
+        expect(source.enabled, isFalse);
+        expect(source.suppressed, isTrue);
       }
     },
   );

@@ -82,6 +82,17 @@ final class BuiltinSources {
         deduplicateSources: false,
       );
     }
+    final entries = (jsonDecode(text) as Map)['sources'] as List;
+    for (final entry in entries.whereType<Map>()) {
+      if (entry['availabilityNote'] is! String) continue;
+      final sourceId = await SourceIdentityStore(
+        repository.db,
+      ).resolve(entry['kind'] as String, Uri.parse(entry['url'] as String));
+      await repository.db.write(
+        'INSERT OR IGNORE INTO source_health(source_id,failures,last_error) VALUES(?,0,?)',
+        [sourceId, entry['availabilityNote']],
+      );
+    }
   }
 
   Future<void> _initializeOriginal({bool restore = false}) async {

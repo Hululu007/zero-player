@@ -8,6 +8,10 @@ import 'catalog_url.dart';
 
 const awesomeZhuijuRepository =
     'https://github.com/laoma528/awesome-zhuiju-free';
+const awesomeZhuijuResourceFile =
+    'https://raw.githubusercontent.com/laoma528/awesome-zhuiju-free/main/resources/resources.json';
+const awesomeZhuijuAvailabilityFile =
+    'https://raw.githubusercontent.com/laoma528/awesome-zhuiju-free/main/reports/availability.json';
 const awesomeZhuijuSubscription = '$awesomeZhuijuRepository#zero-player-manual';
 const awesomeZhuijuBuiltin = '$awesomeZhuijuRepository#zero-player-builtin';
 
@@ -45,10 +49,6 @@ final class AwesomeZhuijuIndex {
     for (final key in ['ac', 'pg', 'wd', 'ids', 't']) {
       query.remove(key);
     }
-    // The root Creative Video API already covers its source selector variants.
-    if (host == 'ys.cxkjg.cn' && path == '/api/provide/vod') {
-      query.remove('source');
-    }
     return sourceIdentity(
       kind,
       uri.replace(
@@ -62,8 +62,14 @@ final class AwesomeZhuijuIndex {
   }
 
   static bool durable(Uri uri) => !uri.queryParameters.keys.any(
-    RegExp(r'token|sign|auth|expire|deadline', caseSensitive: false).hasMatch,
+    RegExp(
+      r'token|sign|auth|expire|deadline|timestamp|securitykey|pudata|ddcalcu|wstime|wssession',
+      caseSensitive: false,
+    ).hasMatch,
   );
+
+  static String quarantineIdentity(Uri uri) =>
+      identity(uri.replace(query: '', fragment: ''));
 
   static Future<AwesomeZhuijuIndex> download(
     DocumentClient network,
@@ -72,6 +78,21 @@ final class AwesomeZhuijuIndex {
     const api =
         'https://api.github.com/repos/laoma528/awesome-zhuiju-free/contents';
     Future<Object?> read(String path) async {
+      try {
+        final document = await network.get(
+          Uri.parse(
+            'https://raw.githubusercontent.com/laoma528/awesome-zhuiju-free/main/$path',
+          ),
+          headers: const {'User-Agent': 'Zero-Player'},
+          maxBytes: 1024 * 1024,
+          cancellation: token,
+          networkTimeout: const Duration(seconds: 12),
+        );
+        return document.json;
+      } catch (_) {
+        token.check();
+        // Contents API is an alternate transport for the same public files.
+      }
       final document = await network.get(
         Uri.parse('$api/$path?ref=main'),
         headers: const {

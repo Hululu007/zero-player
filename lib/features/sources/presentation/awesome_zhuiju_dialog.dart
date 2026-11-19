@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../../app/app_services.dart';
 import '../../../core/network/cancellation_token.dart';
+import '../data/awesome_zhuiju_index.dart';
 import '../../supervision/presentation/sensitive_action.dart';
 
 Future<void> showAwesomeZhuijuSync(
@@ -70,7 +72,7 @@ final class _AwesomeZhuijuDialogState extends State<_AwesomeZhuijuDialog> {
 
   @override
   Widget build(BuildContext context) => AlertDialog(
-    title: const Text('awesome-zhuiju-free'),
+    title: const Text('GitHub 渠道订阅更新'),
     scrollable: true,
     content: SizedBox(
       width: 460,
@@ -78,7 +80,16 @@ final class _AwesomeZhuijuDialogState extends State<_AwesomeZhuijuDialog> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('手动获取上游目录。跳过重复和未标记可用的入口，通过实际解码验证后新增来源。'),
+          const Text('从 awesome-zhuiju-free 的开源资源文件获取最新点播和直播渠道，检查可用性后加入本地来源。'),
+          const SizedBox(height: 8),
+          const Text('已有启停、移除和收藏选择会保留。此订阅更新渠道目录；应用功能版本通过项目发布页更新。'),
+          TextButton.icon(
+            onPressed: () => Clipboard.setData(
+              const ClipboardData(text: awesomeZhuijuResourceFile),
+            ),
+            icon: const Icon(Icons.copy),
+            label: const Text('复制 GitHub 订阅地址'),
+          ),
           const SizedBox(height: 12),
           FutureBuilder<Map?>(
             future: _last,
@@ -118,7 +129,7 @@ final class _AwesomeZhuijuDialogState extends State<_AwesomeZhuijuDialog> {
       ),
       FilledButton(
         onPressed: _token == null ? _sync : null,
-        child: const Text('检查并同步'),
+        child: const Text('获取最新渠道'),
       ),
     ],
   );

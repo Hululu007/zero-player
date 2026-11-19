@@ -16,12 +16,16 @@ final class SourcePreferences {
         'kanju3.com',
         'wu5mv.com',
         '360zy.com',
+        'tv.lxyy.club',
+        'www.kankanya.me',
       }.contains(source.endpoint.host)) {
         continue;
       }
       final name = switch (source.endpoint.host) {
         'kanju3.com' => '看剧AI',
         'wu5mv.com' => '555电影',
+        'tv.lxyy.club' => '洛雪TV',
+        'www.kankanya.me' => '看看鸭',
         _ => '360资源站',
       };
       await db.customStatement(

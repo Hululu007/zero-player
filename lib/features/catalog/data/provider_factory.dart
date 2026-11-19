@@ -7,6 +7,7 @@ import 'cms_provider.dart';
 import 'kanju_provider.dart';
 import 'mac_cms_html_provider.dart';
 import 'website_transport.dart';
+import 'web_home_provider.dart';
 import '../../supervision/application/content_policy.dart';
 import '../../supervision/data/filtering_vod_provider.dart';
 
@@ -28,6 +29,7 @@ VodProvider createVodProvider(
   final provider = switch (source.kind) {
     'kanju' => KanjuProvider(transport),
     'macCmsHtml' => MacCmsHtmlProvider(transport),
+    'webHome' => WebHomeProvider(transport),
     'cms' => CmsProvider(
       source,
       network,
