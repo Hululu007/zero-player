@@ -7,7 +7,7 @@ import 'package:path/path.dart' as p;
 import '../../../app/app_services.dart';
 import '../../../app/widgets.dart';
 import '../../../core/network/cancellation_token.dart';
-import '../../../core/platform/file_transfer.dart';
+import '../../../core/platform/protected_book_export.dart';
 import '../../../media/export/media_exporter.dart';
 import '../../catalog/domain/catalog_item.dart';
 import '../../playback/application/playback_controller.dart';
@@ -309,10 +309,12 @@ final class _DownloadsPageState extends State<DownloadsPage> {
       token.check();
       widget.services.downloads.requireAllowed(task);
       closeDialog();
-      await FileTransfer.saveFile(
+      await ProtectedBookExport().saveFile(
         file,
         '${task.title.replaceAll(RegExp(r'[<>:"/\\|?*]'), '_')}.${format.name}',
         format == ExportFormat.mp4 ? 'video/mp4' : 'video/mp2t',
+        cancellation: token,
+        validate: () => widget.services.downloads.requireAllowed(task),
       );
     } on RequestCancelled {
       if (mounted) message(context, '导出已取消');

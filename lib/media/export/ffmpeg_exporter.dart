@@ -9,10 +9,14 @@ import 'package:ffmpeg_kit_flutter_new_min/return_code.dart';
 
 import '../../core/network/cancellation_token.dart';
 import 'media_exporter.dart';
+import '../../core/platform/publish_file.dart';
 
 /// No shell execution or transcoding. Inputs are completed local resources or
 /// capability URLs from our own loopback transport. Publishing is atomic.
 final class FfmpegExporter implements MediaExporter {
+  FfmpegExporter({this.probeTimeout = const Duration(seconds: 30)});
+
+  final Duration probeTimeout;
   final _active = <String>{};
 
   Future<void> validateAudiobook(
@@ -22,7 +26,7 @@ final class FfmpegExporter implements MediaExporter {
   ) async {
     if (extension == 'm4a') {
       token.check();
-      final probe = await _inspectLocal(file.path);
+      final probe = await _inspectLocal(file.path, token);
       token.check();
       final streams = probe.getMediaInformation()?.getStreams() ?? [];
       if (!streams.any((stream) => stream.getType() == 'audio') ||
@@ -84,7 +88,7 @@ final class FfmpegExporter implements MediaExporter {
     if (!ReturnCode.isSuccess(await session.getReturnCode())) {
       throw const FormatException('文件未通过媒体完整性检查');
     }
-    final probe = await _inspectLocal(file.path);
+    final probe = await _inspectLocal(file.path, token);
     final info = probe.getMediaInformation();
     token.check();
     if ((double.tryParse(info?.getDuration() ?? '') ?? 0) <= 0) {
@@ -144,7 +148,8 @@ final class FfmpegExporter implements MediaExporter {
         throw const FormatException('此媒体无法重封装，原始下载已保留');
       }
       cancellation?.check();
-      final probe = await _inspectLocal(temporary.path);
+      final probe = await _inspectLocal(temporary.path, cancellation);
+      cancellation?.check();
       final info = probe.getMediaInformation();
       final seconds = double.tryParse(info?.getDuration() ?? '') ?? 0;
       if (seconds <= 0 ||
@@ -152,7 +157,8 @@ final class FfmpegExporter implements MediaExporter {
         throw const FormatException('导出文件校验失败');
       }
       if (await target.exists()) throw const FileSystemException('目标文件已存在');
-      await temporary.rename(target.path);
+      cancellation?.check();
+      await publishFile(temporary, target);
       return ExportResult(
         target.path,
         await target.length(),
@@ -166,22 +172,53 @@ final class FfmpegExporter implements MediaExporter {
     }
   }
 
-  Future<MediaInformationSession> _inspectLocal(String path) =>
-      FFprobeKit.getMediaInformationFromCommandArguments([
-        '-v',
-        'error',
-        '-hide_banner',
-        '-protocol_whitelist',
-        'file',
-        '-format_whitelist',
-        'mov,mpegts',
-        '-print_format',
-        'json',
-        '-show_format',
-        '-show_streams',
-        '-i',
-        path,
-      ]);
+  Future<MediaInformationSession> _inspectLocal(
+    String path,
+    CancellationToken? token,
+  ) async {
+    token?.check();
+    final done = Completer<MediaInformationSession>();
+    final session =
+        await FFprobeKit.getMediaInformationFromCommandArgumentsAsync(
+          [
+            '-v',
+            'error',
+            '-hide_banner',
+            '-protocol_whitelist',
+            'file',
+            '-format_whitelist',
+            'mov,mpegts',
+            '-print_format',
+            'json',
+            '-show_format',
+            '-show_streams',
+            '-i',
+            path,
+          ],
+          (session) {
+            if (!done.isCompleted) done.complete(session);
+          },
+        );
+    Future<void>? stopping;
+    void stop() {
+      stopping ??= FFmpegKit.cancel(session.getSessionId());
+    }
+
+    final remove = token?.listen(stop);
+    try {
+      final result = await done.future.timeout(probeTimeout);
+      token?.check();
+      return result;
+    } on TimeoutException {
+      stop();
+      await stopping;
+      await done.future;
+      rethrow;
+    } finally {
+      remove?.call();
+      if (stopping != null) await stopping;
+    }
+  }
 
   Future<FFmpegSession> _execute(
     List<String> arguments,

@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:flutter/foundation.dart';
 import '../../../core/network/cancellation_token.dart';
 import '../../../core/platform/background_audio_session.dart';
+import '../../../core/platform/audio_playback_coordinator.dart';
 import '../../settings/application/settings_controller.dart';
 import '../../playback/domain/player_engine.dart';
 import '../data/music_audio_probe.dart';
@@ -20,13 +21,15 @@ final class MusicController extends ChangeNotifier
     this.repository,
     this.createEngine, {
     this.beforePlay,
+    AudioPlaybackCoordinator? playbackCoordinator,
     this.libraryFactory,
     this.downloadsFactory,
     this.settings,
     MusicProbe? probe,
     this.stallTimeout = const Duration(seconds: 12),
     this.operationTimeout = const Duration(seconds: 25),
-  }) : _preflight = MusicPreflight(repository, probe: probe) {
+  }) : _playbackCoordinator = playbackCoordinator ?? AudioPlaybackCoordinator(),
+       _preflight = MusicPreflight(repository, probe: probe) {
     _lastAutoPolicy = autoSwitchSource;
     repository.policy?.addListener(_policyChanged);
     settings?.addListener(_settingsChanged);
@@ -34,6 +37,7 @@ final class MusicController extends ChangeNotifier
   final MusicRepository repository;
   final PlayerEngine Function() createEngine;
   final Future<void> Function()? beforePlay;
+  final AudioPlaybackCoordinator _playbackCoordinator;
   final Duration operationTimeout;
   final Duration stallTimeout;
   final SettingsController? settings;
@@ -372,6 +376,22 @@ final class MusicController extends ChangeNotifier
     return next;
   }
 
+  Future<void> _handoff(int generation, Future<void> Function() action) =>
+      _playbackCoordinator.run(() async {
+        if (_closed || generation != _generation) return;
+        try {
+          await _bounded(beforePlay?.call() ?? Future.value());
+          if (_closed || generation != _generation) return;
+          await action();
+        } catch (_) {
+          if (!_closed && generation == _generation) {
+            loading = false;
+            _playbackFailed('播放操作失败，请重试。');
+            notifyListeners();
+          }
+        }
+      });
+
   void _cancelSelection() {
     _stall?.cancel();
     _request?.cancel();
@@ -449,37 +469,40 @@ final class MusicController extends ChangeNotifier
     if (_ranked(chosen)) prepareAddedTrack(chosen);
     _prepareUpcoming();
     notifyListeners();
-    return _enqueue(() async {
-      if (_closed || generation != _generation) return;
-      try {
-        await _discardEngine();
-        await _bounded(
-          _openTrack(
-            chosen,
-            request,
-            generation,
-            replacement: replacement,
-            refresh: refresh,
-            start: start,
-          ),
-          interrupt: interrupt.future,
-        );
-      } catch (failure) {
-        if (!_closed && generation == _generation) {
-          _playbackFailed(
-            failure is FormatException
-                ? failure.message
-                : '歌曲暂时无法播放，请重试或选择其他歌曲。',
-          );
+    return _handoff(
+      generation,
+      () => _enqueue(() async {
+        if (_closed || generation != _generation) return;
+        try {
           await _discardEngine();
+          await _bounded(
+            _openTrack(
+              chosen,
+              request,
+              generation,
+              replacement: replacement,
+              refresh: refresh,
+              start: start,
+            ),
+            interrupt: interrupt.future,
+          );
+        } catch (failure) {
+          if (!_closed && generation == _generation) {
+            _playbackFailed(
+              failure is FormatException
+                  ? failure.message
+                  : '歌曲暂时无法播放，请重试或选择其他歌曲。',
+            );
+            await _discardEngine();
+          }
+        } finally {
+          if (!_closed && generation == _generation) {
+            loading = false;
+            notifyListeners();
+          }
         }
-      } finally {
-        if (!_closed && generation == _generation) {
-          loading = false;
-          notifyListeners();
-        }
-      }
-    });
+      }),
+    );
   }
 
   Future<void> _openTrack(
@@ -491,13 +514,12 @@ final class MusicController extends ChangeNotifier
     required Duration start,
   }) async {
     bool current() => !_closed && generation == _generation;
-    await beforePlay?.call();
     if (!current()) return;
     await library?.load();
-    final localTrack = chosen.searchOnly
-        ? chosen
-        : downloads?.localFor(chosen)?.track ?? chosen;
-    final local = replacement == null && !chosen.searchOnly
+    await downloads?.load();
+    if (!current()) return;
+    final localTrack = downloads?.localFor(chosen)?.track ?? chosen;
+    final local = replacement == null
         ? await downloads?.open(localTrack)
         : null;
     if (!current()) {
@@ -759,9 +781,10 @@ final class MusicController extends ChangeNotifier
     if (_wantsPlayback) ++_advanceRevision;
     if (snapshot.completed) return select(queue, index);
     final generation = _generation;
-    return _command((engine) async {
-      final resume = !_wantsPlayback;
-      if (resume) await beforePlay?.call();
+    final revision = _advanceRevision;
+    final resume = !_wantsPlayback;
+    Future<void> command() => _command((engine) async {
+      if (revision != _advanceRevision) return;
       if (_closed || generation != _generation || selected == null) return;
       if (!repository.allowed(selected!)) return;
       _wantsPlayback = resume;
@@ -772,6 +795,7 @@ final class MusicController extends ChangeNotifier
         await engine.pause();
       }
     });
+    return resume ? _handoff(generation, command) : command();
   }
 
   Future<void> pause() => _suspend(clear: false);

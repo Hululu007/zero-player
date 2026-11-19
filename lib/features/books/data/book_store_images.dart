@@ -151,16 +151,6 @@ extension BookStoreImages on BookStore {
       final prefix = _offlineImagePartPrefix(book, chapter);
       if (vault.isPrivate(book.id)) {
         await validate();
-        final used =
-            (await db.rows(
-                  "SELECT COALESCE(SUM(length(CAST(value AS BLOB))),0) AS bytes "
-                  "FROM app_meta WHERE key GLOB 'books_vault_data:*'",
-                )).single['bytes']
-                as int;
-        if (used + bytes * 4 ~/ 3 + images.length * 64 >
-            BookResourceLimits.offlineImageBytes) {
-          throw const FormatException('私密离线图片空间已满');
-        }
         await vault.deletePrefix(prefix);
         var index = 0;
         for (final image in images.values) {
@@ -170,6 +160,15 @@ extension BookStoreImages on BookStore {
           key,
           images.keys.map((uri) => uri.toString()).toList(),
         );
+        final used =
+            (await db.rows(
+                  "SELECT COALESCE(SUM(length(CAST(value AS BLOB))),0) AS bytes "
+                  "FROM app_meta WHERE key GLOB 'books_vault_data:*'",
+                )).single['bytes']
+                as int;
+        if (used > BookResourceLimits.offlineImageBytes) {
+          throw const FormatException('私密离线图片空间已满');
+        }
         await validate();
         return;
       }

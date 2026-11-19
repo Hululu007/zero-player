@@ -34,7 +34,7 @@ final class AudiobookController extends ChangeNotifier
   StreamSubscription<String>? _errors;
   Future<void>? _loading;
   Future<void>? _closing;
-  BookChapter? _pending;
+  ({Book book, BookChapter chapter, bool resume})? _pending;
   PlaybackSnapshot snapshot = const PlaybackSnapshot();
   String? error;
   bool autoNext = true;
@@ -87,7 +87,7 @@ final class AudiobookController extends ChangeNotifier
   void _start(BookChapter next, {bool resume = false}) {
     if (_closing != null || book == null) return;
     if (_loading != null) {
-      _pending = next;
+      _pending = (book: book!, chapter: next, resume: resume);
       _token?.cancel();
       return;
     }
@@ -103,7 +103,9 @@ final class AudiobookController extends ChangeNotifier
         notifyListeners();
         final queued = _pending;
         _pending = null;
-        if (queued != null) _start(queued);
+        if (queued != null && identical(book, queued.book)) {
+          _start(queued.chapter, resume: queued.resume);
+        }
       }),
     );
   }

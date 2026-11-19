@@ -1,6 +1,68 @@
 part of 'books_repository.dart';
 
 extension _ComicDownload on BooksRepository {
+  Future<Set<String>> _reusableComicDownloads(
+    Book book,
+    Iterable<BookChapter> chapters,
+    CancellationToken token,
+  ) async {
+    token.check();
+    await ensureSourceRiskLoaded();
+    await chapterPolicy.load();
+    final private = await store.isPrivateBook(book.id);
+    final session = private ? store.vault.captureSession() : null;
+    void check() {
+      token.check();
+      if (session != null) store.vault.checkSession(session);
+    }
+
+    final result = <String>{};
+    for (final chapter in chapters) {
+      check();
+      try {
+        requireBook(book, chapter);
+        final addresses = await store.offlineImageAddresses(book, chapter);
+        check();
+        if (addresses == null ||
+            addresses.isEmpty ||
+            addresses.length > BookResourceLimits.chapterImages ||
+            addresses.toSet().length != addresses.length) {
+          continue;
+        }
+        var used = 0;
+        var complete = true;
+        for (final image in addresses) {
+          check();
+          await _authorizeOfflineImage(book, image, token, chapter);
+          final bytes = await store.offlineImageBytes(book, chapter, image);
+          check();
+          if (bytes == null ||
+              bytes.isEmpty ||
+              bytes.length > BookResourceLimits.imageBytes) {
+            complete = false;
+            break;
+          }
+          used += bytes.length;
+          if (used > BookResourceLimits.chapterImageBytes) {
+            complete = false;
+            break;
+          }
+          await validateReadableBookImage(image, bytes);
+          check();
+          await _authorizeOfflineImage(book, image, token, chapter);
+        }
+        check();
+        if (complete) result.add(chapter.id);
+      } on RequestCancelled {
+        rethrow;
+      } on Exception {
+        // Retain old data while a fresh download repairs this chapter.
+        check();
+      }
+    }
+    return result;
+  }
+
   Future<void> _downloadComic(
     Book book,
     BookChapter chapter,

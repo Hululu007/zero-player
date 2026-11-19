@@ -48,7 +48,7 @@ final class BookExportInterrupted implements Exception {
   String get message => '导出已中止；已写出的数据和文档服务商缓存无法撤回';
 }
 
-/// A separate, cancellable path for policy-sensitive book exports.
+/// Cancellable two-phase saving for policy-sensitive book and video exports.
 final class ProtectedBookExport {
   ProtectedBookExport({
     bool? android,
@@ -152,7 +152,7 @@ final class ProtectedBookExport {
       await _saveAndroid(file, name, mime, cancellation, validate);
     } else {
       if (!Platform.isWindows) {
-        throw UnsupportedError('受保护的书籍导出仅支持 Windows 和 Android');
+        throw UnsupportedError('受保护的导出仅支持 Windows 和 Android');
       }
       await _saveDesktop(file, name, cancellation, validate);
     }

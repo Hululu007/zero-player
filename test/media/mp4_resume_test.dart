@@ -32,17 +32,14 @@ void _signedUrlTest() {
     },
   );
   test(
-    'a changed signed URL resumes only with the matching strong ETag',
+    'a changed signature without trusted resource identity restarts safely',
     () async {
       final fixture = await _Fixture.create((request) {
         expect(request.uri.query, 'token=new');
-        expect(request.headers.value('range'), 'bytes=2-');
-        expect(request.headers.value('if-range'), 'version-a');
-        request.response.statusCode = 206;
-        request.response.contentLength = 2;
-        request.response.headers.set('content-range', 'bytes 2-3/4');
+        expect(request.headers.value('range'), isNull);
+        expect(request.headers.value('if-range'), isNull);
         request.response.headers.set('etag', 'version-a');
-        request.response.add([3, 4]);
+        request.response.add([1, 2, 3, 4]);
       });
       await fixture.seed([1, 2]);
       await fixture.run(uri: fixture.uri.replace(query: 'token=new'));

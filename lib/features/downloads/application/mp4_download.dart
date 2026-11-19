@@ -69,12 +69,10 @@ final class _Mp4Transfer {
     final previous = state['uri'] is String
         ? Uri.tryParse(state['uri'] as String)
         : null;
-    // Validators belong to a resource, not a global namespace. Only tolerate
-    // query-token rotation; another host/path must start with a fresh body.
+    // Validators belong to a full resource URI, including its query.
+    // No provider currently supplies a trusted identity for signature rotation.
     if (offset > 0 &&
-        (previous == null ||
-            previous.origin != uri.origin ||
-            previous.path != uri.path ||
+        (previous != uri ||
             state['etag'] is! String ||
             (state['etag'] as String).isEmpty ||
             (state['etag'] as String).startsWith('W/'))) {

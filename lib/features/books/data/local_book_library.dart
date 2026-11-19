@@ -28,6 +28,18 @@ final class LocalBookLibrary {
   File documentFile(Book book, String extension) =>
       File(p.join(documents.path, '${book.id}.$extension'));
 
+  Future<String> documentFormat(Book book) async {
+    if (book.sourceId != 'local') return '';
+    if (const {'txt', 'epub', 'pdf'}.contains(book.documentFormat)) {
+      return book.documentFormat;
+    }
+    // Legacy content URIs have no extension. Only inspect our own fixed paths.
+    for (final extension in ['epub', 'pdf']) {
+      if (await documentFile(book, extension).exists()) return extension;
+    }
+    return 'txt';
+  }
+
   void _requireImportAllowed() {
     if (policy.supervision.enabled || policy.supervision.corrupted) {
       throw const ContentBlocked();
@@ -56,6 +68,7 @@ final class LocalBookLibrary {
       parsed.title,
       parsed.author,
       Uri(scheme: 'book', path: sha256.convert(bytes).toString()),
+      documentFormat: extension.substring(1),
     );
     void authorize() {
       _requireImportAllowed();

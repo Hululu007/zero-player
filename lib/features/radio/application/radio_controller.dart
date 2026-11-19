@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import '../../../core/platform/background_audio_session.dart';
+import '../../../core/platform/audio_playback_coordinator.dart';
 import '../../live/domain/live_channel.dart';
 import '../../playback/domain/player_engine.dart';
 import '../../supervision/application/content_policy.dart';
@@ -13,11 +14,14 @@ final class RadioController extends ChangeNotifier
     this.operationTimeout = const Duration(seconds: 20),
     this.policy,
     this.beforePlay,
-  }) {
+    AudioPlaybackCoordinator? playbackCoordinator,
+  }) : _playbackCoordinator =
+           playbackCoordinator ?? AudioPlaybackCoordinator() {
     policy?.addListener(_policyChanged);
   }
   final ContentPolicy? policy;
   final Future<void> Function()? beforePlay;
+  final AudioPlaybackCoordinator _playbackCoordinator;
 
   void _policyChanged() {
     final current = selected;
@@ -90,6 +94,22 @@ final class RadioController extends ChangeNotifier
     return next;
   }
 
+  Future<void> _handoff(int generation, Future<void> Function() action) =>
+      _playbackCoordinator.run(() async {
+        if (_closed || generation != _generation) return;
+        try {
+          await _untilClosed(beforePlay?.call() ?? Future.value());
+          if (_closed || generation != _generation) return;
+          await action();
+        } catch (_) {
+          if (!_closed && generation == _generation) {
+            loading = false;
+            error = '播放操作失败，请重新选择电台。';
+            notifyListeners();
+          }
+        }
+      });
+
   Future<void> select(LiveChannel station, {int lineIndex = 0}) {
     if (_closed || station.playbackUrls.isEmpty) return Future<void>.value();
     if (!(policy?.channelAllowed(station, radio: true) ?? true)) {
@@ -109,52 +129,50 @@ final class RadioController extends ChangeNotifier
     error = null;
     _needsOpen = false;
     notifyListeners();
-    return _enqueue(() async {
-      if (_closed || generation != _generation) return;
-      try {
-        await _untilClosed(
-          beforePlay?.call() ?? Future.value(),
-          interrupted: interrupt.future,
-        );
+    return _handoff(
+      generation,
+      () => _enqueue(() async {
         if (_closed || generation != _generation) return;
-        if (retire) await _discardEngine();
-        if (_closed || generation != _generation) return;
-        final engine = _player();
-        await _untilClosed(engine.stop(), interrupted: interrupt.future);
-        if (_closed || generation != _generation) return;
-        await _untilClosed(
-          engine.setVolume(volume),
-          interrupted: interrupt.future,
-        );
-        if (_closed || generation != _generation) return;
-        policy?.requireChannel(station, radio: true);
-        await _untilClosed(
-          engine.open(uri, headers: station.headersFor(uri)),
-          interrupted: interrupt.future,
-        );
-        if (!_closed && generation == _generation) {
-          if (error != null) {
-            await _discardEngine();
-          } else {
-            _needsOpen = false;
+        try {
+          if (retire) await _discardEngine();
+          if (_closed || generation != _generation) return;
+          final engine = _player();
+          await _untilClosed(engine.stop(), interrupted: interrupt.future);
+          if (_closed || generation != _generation) return;
+          await _untilClosed(
+            engine.setVolume(volume),
+            interrupted: interrupt.future,
+          );
+          if (_closed || generation != _generation) return;
+          policy?.requireChannel(station, radio: true);
+          await _untilClosed(
+            engine.open(uri, headers: station.headersFor(uri)),
+            interrupted: interrupt.future,
+          );
+          if (!_closed && generation == _generation) {
+            if (error != null) {
+              await _discardEngine();
+            } else {
+              _needsOpen = false;
+            }
+          }
+        } on TimeoutException {
+          await _discardEngine();
+          if (!_closed && generation == _generation) error = '电台连接超时，请重试或换台。';
+        } catch (_) {
+          await _discardEngine();
+          if (!_closed && generation == _generation) error = '电台连接失败，请重试或换台。';
+        } finally {
+          if (!_closed && generation == _generation) {
+            loading = false;
+            notifyListeners();
+            if (error != null && line + 1 < station.playbackUrls.length) {
+              unawaited(select(station, lineIndex: line + 1));
+            }
           }
         }
-      } on TimeoutException {
-        await _discardEngine();
-        if (!_closed && generation == _generation) error = '电台连接超时，请重试或换台。';
-      } catch (_) {
-        await _discardEngine();
-        if (!_closed && generation == _generation) error = '电台连接失败，请重试或换台。';
-      } finally {
-        if (!_closed && generation == _generation) {
-          loading = false;
-          notifyListeners();
-          if (error != null && line + 1 < station.playbackUrls.length) {
-            unawaited(select(station, lineIndex: line + 1));
-          }
-        }
-      }
-    });
+      }),
+    );
   }
 
   @override
@@ -167,10 +185,21 @@ final class RadioController extends ChangeNotifier
     if (_needsOpen && selected != null) {
       return select(selected!, lineIndex: line);
     }
-    return _command((engine) async {
-      if (!playing) await beforePlay?.call();
-      await engine.playOrPause();
+    final generation = _generation;
+    final resume = !playing;
+    Future<void> command() => _command((engine) async {
+      if (_closed || generation != _generation) return;
+      if (selected == null ||
+          !(policy?.channelAllowed(selected!, radio: true) ?? true)) {
+        return;
+      }
+      if (resume) {
+        await engine.play();
+      } else {
+        await engine.pause();
+      }
     });
+    return resume ? _handoff(generation, command) : command();
   }
 
   Future<void> pause() => _suspend(clear: false);

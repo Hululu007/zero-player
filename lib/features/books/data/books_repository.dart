@@ -137,6 +137,8 @@ final class BooksRepository {
 
   late final LocalBookLibrary _localLibrary;
   Directory get documents => _localLibrary.documents;
+  Future<String> localDocumentFormat(Book book) =>
+      _localLibrary.documentFormat(book);
   File documentFile(Book book, String extension) =>
       _localLibrary.documentFile(book, extension);
   final BookStore store;
@@ -1056,7 +1058,9 @@ final class BooksRepository {
     Iterable<BookChapter> chapters,
     CancellationToken token,
   ) async {
-    if (book.kind == BookKind.comic) return store.savedImages(book);
+    if (book.kind == BookKind.comic) {
+      return _reusableComicDownloads(book, chapters, token);
+    }
     await chapterPolicy.load();
     final type = book.kind == BookKind.audio ? 'audio' : 'text';
     final indexed = await store.provenChapters(type, book);

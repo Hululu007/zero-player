@@ -2,6 +2,23 @@
 
 当前进度见 [实施状态](STATUS.md)。下文各功能章节的测试数量属于当时快照，不代表重装后重新执行。
 
+## 2026-11-19 审计修复回归
+
+逐项状态见 CODE-AUDIT-2026-11-19 第 5 节，当前结论见 STATUS。所有 Flutter 平台测试与构建串行执行：
+
+```powershell
+flutter test --no-pub --concurrency=1 --reporter expanded test/audit test/widgets/book_phone_layout_test.dart
+flutter test --no-pub --reporter expanded
+flutter analyze --no-pub
+dart run tool/check_module_boundaries.dart
+dart run tool/check_source_size.dart
+./tool/run_windows_native.ps1 -TestFiles @('integration_test/local_video_native_test.dart','integration_test/music_offline_native_test.dart')
+$env:FFMPEGKIT_LOCAL_DIR = (Resolve-Path .tools/ffmpegkit/unpacked).Path
+flutter build windows --release
+```
+
+原生用例只使用项目合成视频/音频和本机回环服务，所需素材位于 `test_support/generated/content_filter/long.mp4`、`test_support/generated/ts/`；不将其视为公网媒体或 Android/TV 兼容性验收。受保护保存的 Android 协议通过 `test/books/protected_book_export_test.dart` 的方法通道夹具验证；真机系统选择器仍需设备验收。规模门禁的既有 104 条债务与本轮新增项分开记录，不提高阈值。
+
 ## GitHub 渠道目录更新回归（2026-11-19）
 
 本轮状态与实网边界见 STATUS 的「GitHub 影视目录更新与默认收藏」。Flutter 测试与 Windows 构建串行执行：

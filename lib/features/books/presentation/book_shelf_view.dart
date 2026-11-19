@@ -88,6 +88,8 @@ class _BookShelfViewState extends State<BookShelfView> {
     }
   }
 
+  Map<String, String> _documentFormats = {};
+
   Future<void> _refreshOffline() async {
     final sequence = ++_offlineSequence;
     final ids = <String>{};
@@ -106,15 +108,26 @@ class _BookShelfViewState extends State<BookShelfView> {
     }
     if (mounted && sequence == _offlineSequence) {
       setState(() => _offlineIds = ids);
+      final formats = <String, String>{};
+      for (final entry in widget.entries) {
+        if (entry.book.sourceId == 'local') {
+          formats[entry.book.id] = await widget.repository.localDocumentFormat(
+            entry.book,
+          );
+        }
+      }
+      if (mounted && sequence == _offlineSequence) {
+        setState(() => _documentFormats = formats);
+      }
     }
   }
 
   String _bookType(Book book) {
     if (book.sourceId == 'local') {
-      final path = book.uri.path.toLowerCase();
-      if (path.endsWith('.epub')) return 'EPUB';
-      if (path.endsWith('.pdf')) return 'PDF';
-      return 'TXT';
+      return (book.documentFormat.isNotEmpty
+              ? book.documentFormat
+              : _documentFormats[book.id] ?? 'txt')
+          .toUpperCase();
     }
     return book.category.trim().isEmpty ? '网络作品' : book.category.trim();
   }

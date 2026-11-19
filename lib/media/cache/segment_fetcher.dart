@@ -48,6 +48,15 @@ final class SegmentFetcher {
         await payload.body.take(0).drain<void>();
         throw const HttpException('来源不支持请求的字节范围');
       }
+      int? rangeLength;
+      if (range != null) {
+        try {
+          rangeLength = _rangeLength(range, response);
+        } catch (_) {
+          await payload.body.take(0).drain<void>();
+          rethrow;
+        }
+      }
       final headers = <String, String>{};
       for (final name in ['content-type', 'content-range', 'accept-ranges']) {
         final value = response.headers.value(name);
@@ -58,10 +67,43 @@ final class SegmentFetcher {
         payload.body,
         statusCode: response.statusCode,
         headers: headers,
-        expectedLength: response.contentLength < 0
-            ? null
-            : response.contentLength,
+        expectedLength:
+            rangeLength ??
+            (response.contentLength < 0 ? null : response.contentLength),
       );
     }, verify: verify);
   }
+}
+
+int _rangeLength(String request, HttpClientResponse response) {
+  final wanted = RegExp(r'^bytes=(\d*)-(\d*)$').firstMatch(request);
+  final actual = RegExp(
+    r'^bytes (\d+)-(\d+)/(\d+)$',
+  ).firstMatch(response.headers.value('content-range') ?? '');
+  if (wanted == null ||
+      actual == null ||
+      (wanted[1]!.isEmpty && wanted[2]!.isEmpty)) {
+    throw const HttpException('来源返回无效的字节范围');
+  }
+  final start = int.parse(actual[1]!);
+  final end = int.parse(actual[2]!);
+  final total = int.parse(actual[3]!);
+  if (total <= 0) throw const HttpException('来源返回无效的字节范围');
+  final first = int.tryParse(wanted[1]!);
+  final last = int.tryParse(wanted[2]!);
+  final expectedStart = first ?? (total - last!).clamp(0, total);
+  final expectedEnd = first == null || last == null
+      ? total - 1
+      : last.clamp(0, total - 1);
+  final length = end - start + 1;
+  if (total <= 0 ||
+      start != expectedStart ||
+      end != expectedEnd ||
+      start < 0 ||
+      end < start ||
+      end >= total ||
+      (response.contentLength >= 0 && response.contentLength != length)) {
+    throw const HttpException('来源返回的字节范围与请求不一致');
+  }
+  return length;
 }

@@ -10,7 +10,7 @@ extension _BookRepositoryMediaAccess on BooksRepository {
     if (policy.supervision.enabled) throw const ContentBlocked();
     requireBook(book, chapter);
     final offline = await store.offlineImageAddresses(book, chapter);
-    if (offline != null) {
+    if (offline != null && offline.isNotEmpty) {
       token.check();
       requireBook(book, chapter);
       if (policy.supervision.enabled ||
@@ -76,12 +76,17 @@ extension _BookRepositoryMediaAccess on BooksRepository {
         ? null
         : await store.offlineImageBytes(book, chapter, image);
     if (offlineBytes != null) {
-      if (offlineBytes.length > maxBytes) {
-        throw const FormatException('章节图片超过大小限制');
-      }
-      await validateReadableBookImage(image, offlineBytes);
       await _authorizeOfflineImage(book, image, token, chapter);
-      return readableBookImageBytes(image, offlineBytes);
+      try {
+        if (offlineBytes.length > maxBytes) {
+          throw const FormatException('章节图片超过大小限制');
+        }
+        await validateReadableBookImage(image, offlineBytes);
+        await _authorizeOfflineImage(book, image, token, chapter);
+        return readableBookImageBytes(image, offlineBytes);
+      } on FormatException {
+        // Preserve damaged offline bytes until a complete replacement commits.
+      }
     }
     final source = await _active(book);
     final uri = source.requestTarget(image, media: true);

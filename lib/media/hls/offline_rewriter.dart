@@ -86,13 +86,17 @@ String? _byteRange(String? value, Uri uri, Map<Uri, int> ends) {
 HlsManifest selectOfflineVariant(HlsManifest manifest) {
   if (!manifest.isMaster) return manifest;
   final output = <String>['#EXTM3U'];
-  final groups = <String, List<String>>{};
+  final groups = <(String, String), List<String>>{};
   String? variant;
   String? address;
   for (final line in manifest.lines) {
     if (line.startsWith('#EXT-X-MEDIA:')) {
-      final group = RegExp(r'GROUP-ID="([^"]+)"').firstMatch(line)?[1];
-      if (group != null) groups.putIfAbsent(group, () => []).add(line);
+      final attributes = _attributes(line);
+      final type = attributes['TYPE'];
+      final group = attributes['GROUP-ID'];
+      if (type != null && group != null) {
+        groups.putIfAbsent((type, group), () => []).add(line);
+      }
     } else if (line.startsWith('#EXT-X-STREAM-INF:') && variant == null) {
       variant = line;
     } else if (variant != null &&
@@ -105,11 +109,12 @@ HlsManifest selectOfflineVariant(HlsManifest manifest) {
   if (variant == null || address == null) {
     throw const FormatException('主清单没有播放变体');
   }
+  final references = _attributes(variant);
   for (final group in groups.entries) {
-    if (!variant.contains('="${group.key}"')) continue;
+    if (references[group.key.$1] != group.key.$2) continue;
     output.add(
       group.value.firstWhere(
-        (line) => line.contains('DEFAULT=YES'),
+        (line) => _attributes(line)['DEFAULT'] == 'YES',
         orElse: () => group.value.first,
       ),
     );
@@ -123,3 +128,10 @@ HlsManifest selectOfflineVariant(HlsManifest manifest) {
     variables: manifest.variables,
   );
 }
+
+Map<String, String> _attributes(String line) => {
+  for (final match in RegExp(
+    r'(?:^|[:,])\s*([A-Z0-9-]+)=(?:"([^"]*)"|([^,]*))',
+  ).allMatches(line))
+    match[1]!: match[2] ?? match[3]!,
+};

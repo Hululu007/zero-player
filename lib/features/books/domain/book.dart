@@ -441,9 +441,11 @@ final class Book {
     this.latestChapter = '',
     this.updatedLabel = '',
     this.rankLabel = '',
+    this.documentFormat = '',
   });
   final String sourceId, title, author, description, request, cover, category;
   final String wordCount, latestChapter, updatedLabel, rankLabel;
+  final String documentFormat;
   final BookKind kind;
   final Uri uri;
   String get id => stableId('$sourceId:${request.isEmpty ? uri : request}');
@@ -461,6 +463,7 @@ final class Book {
     if (latestChapter.isNotEmpty) 'latestChapter': latestChapter,
     if (updatedLabel.isNotEmpty) 'updatedLabel': updatedLabel,
     if (rankLabel.isNotEmpty) 'rankLabel': rankLabel,
+    if (documentFormat.isNotEmpty) 'documentFormat': documentFormat,
     if (request.isNotEmpty) 'request': request,
   };
   factory Book.fromJson(Map data) => Book(
@@ -477,6 +480,10 @@ final class Book {
     latestChapter: bookLabel(data['latestChapter']),
     updatedLabel: bookLabel(data['updatedLabel']),
     rankLabel: bookLabel(data['rankLabel']),
+    documentFormat:
+        const {'txt', 'epub', 'pdf'}.contains(data['documentFormat'])
+        ? data['documentFormat'] as String
+        : '',
   );
 
   Book withDetails(Book details) => Book(
@@ -492,6 +499,7 @@ final class Book {
     cover: details.cover.isEmpty ? cover : details.cover,
     category: details.category.isEmpty ? category : details.category,
     rankLabel: rankLabel,
+    documentFormat: documentFormat,
     wordCount: details.wordCount.isEmpty ? wordCount : details.wordCount,
     latestChapter: details.latestChapter.isEmpty
         ? latestChapter

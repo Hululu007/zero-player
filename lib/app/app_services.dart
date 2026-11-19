@@ -1,3 +1,4 @@
+import '../core/platform/audio_playback_coordinator.dart';
 import '../media/content_filter/fingerprints/feature_repository.dart';
 import 'dart:async';
 import 'startup_failure.dart';
@@ -127,6 +128,7 @@ final class AppServices {
   MusicBrowser? _musicBrowser;
   MusicBrowser get musicBrowser =>
       _musicBrowser ??= MusicBrowser(music, db: db);
+  final _audioPlayback = AudioPlaybackCoordinator();
   MusicController? _musicPlayer;
   MusicController get musicPlayer => _musicPlayer ??= MusicController(
     music,
@@ -139,6 +141,7 @@ final class AppServices {
           isTrustedResource: offline.isRegisteredResource,
           isTrustedPlaylist: offline.isRegisteredPlaylist,
         ),
+    playbackCoordinator: _audioPlayback,
     beforePlay: () async {
       await _radioPlayer?.pause();
       await _audiobookPlayer?.pause();
@@ -152,6 +155,7 @@ final class AppServices {
   RadioController get radioPlayer => _radioPlayer ??= RadioController(
     radioEngine ?? () => MediaKitEngine(videoOutput: false, gateway: gateway),
     policy: contentPolicy,
+    playbackCoordinator: _audioPlayback,
     beforePlay: () async {
       await _musicPlayer?.pause();
       await _audiobookPlayer?.pause();
