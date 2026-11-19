@@ -18,6 +18,8 @@ import '../data/qidian_catalog.dart';
 import 'book_page_route.dart';
 import 'book_search_page.dart';
 import 'book_sources_page.dart';
+import 'book_vault_dialogs.dart';
+import 'private_shelf_page.dart';
 
 final class BooksPage extends StatefulWidget {
   const BooksPage({
@@ -243,6 +245,26 @@ final class _BooksPageState extends State<BooksPage> {
     if (mounted) await _reloadShelf();
   }
 
+  Future<void> _openPrivateShelf() async {
+    final store = _services.books.store;
+    await store.vault.ensureLoaded();
+    if (!mounted) return;
+    if (!store.vault.configured) {
+      final created = await showVaultSetupDialog(context, store);
+      if (!created || !mounted) return;
+    } else if (!store.vault.unlocked) {
+      final unlocked = await showVaultUnlockDialog(context, store);
+      if (!unlocked || !mounted) return;
+    }
+    await Navigator.of(context).push(
+      BookPageRoute<void>(
+        builder: (_) =>
+            PrivateShelfPage(services: _services, kind: widget.kind),
+      ),
+    );
+    if (mounted) await _reloadShelf();
+  }
+
   void _followChanged() {
     unawaited(
       _reloadShelf().then((_) {
@@ -426,6 +448,9 @@ final class _BooksPageState extends State<BooksPage> {
                           onRefresh: _checkFollowing,
                           onCheckUpdates: _checkShelfUpdates,
                           onFollowChanged: _followChanged,
+                          onOpenPrivate: _openPrivateShelf,
+                          cancelDownload: (book) =>
+                              _services.bookDownloads.removePlan(book),
                         ),
                       ],
                     ),
@@ -524,6 +549,11 @@ final class _BooksPageState extends State<BooksPage> {
         onPressed: _openDownloads,
         icon: const Icon(Icons.download_outlined),
       );
+      final privateButton = IconButton(
+        tooltip: '私密书架',
+        onPressed: _openPrivateShelf,
+        icon: const Icon(Icons.lock_outline),
+      );
       return Padding(
         padding: EdgeInsets.fromLTRB(
           compact ? 12 : 26,
@@ -537,6 +567,7 @@ final class _BooksPageState extends State<BooksPage> {
                   Expanded(
                     child: Align(alignment: Alignment.centerLeft, child: tabs),
                   ),
+                  privateButton,
                   downloadButton,
                   sourceButton,
                 ],
@@ -547,6 +578,7 @@ final class _BooksPageState extends State<BooksPage> {
                   const SizedBox(width: 24),
                   tabs,
                   const Spacer(),
+                  privateButton,
                   downloadButton,
                   OutlinedButton.icon(
                     onPressed: _manageSources,

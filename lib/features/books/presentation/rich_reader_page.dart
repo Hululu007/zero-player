@@ -141,7 +141,10 @@ class _RichReaderState extends State<RichReaderPage>
     try {
       final repository = widget.repository;
       final data = await repository.store.read('books_reader_preferences');
-      final stored = await repository.store.read(_positionKey);
+      final stored = await repository.store.readBookValue(
+        widget.book,
+        _positionKey,
+      );
       final saved = await repository.store.entry(widget.book);
       final chapters = saved?.chapters ?? const <BookChapter>[];
       if (chapters.isEmpty) throw const FormatException('电子书目录为空');

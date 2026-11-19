@@ -48,6 +48,7 @@ final class BookDownloadCoordinator extends ChangeNotifier {
     _policySnapshot = bookSitePolicySnapshot(repository.policy);
     repository.policy.addListener(_policyChanged);
     repository.sourceRiskChanges.addListener(_policyChanged);
+    repository.store.vault.addListener(_vaultChanged);
   }
 
   final BooksRepository repository;
@@ -107,8 +108,16 @@ final class BookDownloadCoordinator extends ChangeNotifier {
       task.pause();
       await task.done;
     }
-    await repository.store.write('books_download:${book.id}', null);
-    await repository.store.write('books_download_failures:${book.id}', null);
+    await repository.store.writeBookValue(
+      book,
+      'books_download:${book.id}',
+      null,
+    );
+    await repository.store.writeBookValue(
+      book,
+      'books_download_failures:${book.id}',
+      null,
+    );
     notifyListeners();
   }
 
@@ -152,7 +161,7 @@ final class BookDownloadCoordinator extends ChangeNotifier {
           aggregateLatest: plan.aggregateLatest,
           chapterIds: range.map((chapter) => chapter.id).toList(),
         );
-        await repository.store.write(key, savedPlan.toJson());
+        await repository.store.writeBookValue(book, key, savedPlan.toJson());
       }
       final saved = await repository.reusableDownloads(book, range, token);
       token.check();
@@ -206,16 +215,22 @@ final class BookDownloadCoordinator extends ChangeNotifier {
   ) async {
     try {
       await repository.store.db.atomic(() async {
-        await repository.store.write(
+        await repository.store.writeBookValue(
+          task.book,
           'books_download_blocked:${task.book.id}',
           blocked,
         );
-        await repository.store.write(
+        await repository.store.writeBookValue(
+          task.book,
           'books_download_failures:${task.book.id}',
           failed,
         );
         if (task.status == BookDownloadStatus.completed && keepPlan) {
-          await repository.store.write('books_download:${task.book.id}', null);
+          await repository.store.writeBookValue(
+            task.book,
+            'books_download:${task.book.id}',
+            null,
+          );
         }
       });
     } on Exception {
@@ -236,10 +251,12 @@ final class BookDownloadCoordinator extends ChangeNotifier {
     Map<String, String> blocked,
     Map<String, String> failed,
   ) async {
-    final previous = await repository.store.read(
+    final previous = await repository.store.readBookValue(
+      book,
       'books_download_blocked:${book.id}',
     );
-    final previousFailures = await repository.store.read(
+    final previousFailures = await repository.store.readBookValue(
+      book,
       'books_download_failures:${book.id}',
     );
     for (final chapter in catalog) {
@@ -381,10 +398,22 @@ final class BookDownloadCoordinator extends ChangeNotifier {
     }
   }
 
+  void _vaultChanged() {
+    if (repository.store.vault.unlocked) return;
+    for (final task in _tasks.values) {
+      if (task.status == BookDownloadStatus.running &&
+          !task.token.isCancelled &&
+          repository.store.vault.isPrivate(task.book.id)) {
+        task.pause();
+      }
+    }
+  }
+
   Future<void> close() async {
     _closed = true;
     repository.policy.removeListener(_policyChanged);
     repository.sourceRiskChanges.removeListener(_policyChanged);
+    repository.store.vault.removeListener(_vaultChanged);
     final tasks = _tasks.values.toList();
     for (final task in tasks) {
       task.pause();

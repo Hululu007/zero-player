@@ -10,6 +10,7 @@ import '../../supervision/domain/supervision_rules.dart';
 import '../data/book_comic_export.dart';
 import '../data/books_repository.dart';
 import '../data/book_download_coordinator.dart';
+import '../data/book_shelf_lists.dart';
 import '../domain/book.dart';
 import 'book_reader_page.dart';
 import 'book_page_route.dart';
@@ -22,6 +23,7 @@ import 'book_download_dialog.dart';
 import 'book_source_favorite.dart';
 import 'book_text_policy_dialog.dart';
 import 'book_blocked_chapters_dialog.dart';
+import 'book_vault_dialogs.dart';
 import '../data/book_store.dart';
 import '../data/book_site_check.dart';
 
@@ -174,7 +176,10 @@ final class _BookDetailPageState extends State<BookDetailPage> {
           ? await _books.store.savedImages(task.book)
           : await _books.store.savedText(task.book);
       final plan = BookDownloadPlan.fromJson(
-        await _books.store.read('books_download:${task.book.id}'),
+        await _books.store.readBookValue(
+          task.book,
+          'books_download:${task.book.id}',
+        ),
       );
       if (!mounted ||
           _book.id != task.book.id ||
@@ -279,7 +284,7 @@ final class _BookDetailPageState extends State<BookDetailPage> {
     });
     final existing = await _books.store.entry(_book);
     final plan = BookDownloadPlan.fromJson(
-      await _books.store.read('books_download:${_book.id}'),
+      await _books.store.readBookValue(_book, 'books_download:${_book.id}'),
     );
     Object? catalogError;
     final chapters = await _books
@@ -658,13 +663,71 @@ final class _BookDetailPageState extends State<BookDetailPage> {
   Future<void> _chooseDownload() async {
     if (!_pageBookAllowed) return;
     final book = _book;
-    final plan = await showBookDownloadDialog(
+    final privateBook = await _books.store.isPrivateBook(book.id);
+    final publicLists = await BookShelfLists(_books.store, book.kind).load();
+    final privateLists = _books.store.vault.unlocked
+        ? await BookShelfLists(_books.store, book.kind, private: true).load()
+        : const <ShelfList>[];
+    if (!mounted) return;
+    final selection = await showBookDownloadDialog(
       context,
       _chapters.length,
       allowAggregateLatest: !_audio && !_comic,
+      publicLists: publicLists,
+      privateLists: privateLists,
+      initialSpace: privateBook
+          ? BookShelfSpace.private
+          : BookShelfSpace.public,
     );
-    if (mounted && identical(_book, book) && _pageBookAllowed && plan != null) {
-      await _download(plan);
+    if (selection == null) return;
+    if (!mounted || !identical(_book, book) || !_pageBookAllowed) return;
+    if (!await _applyDownloadTarget(book, selection.target) || !mounted) return;
+    await _download(selection.plan);
+  }
+
+  Future<bool> _applyDownloadTarget(
+    Book book,
+    BookDownloadTarget target,
+  ) async {
+    final store = _books.store;
+    try {
+      if (target.isPrivate) {
+        if (!await ensureVaultAccess(context, store) || !mounted) return false;
+        if (await store.entry(book) == null) {
+          await store.saveBook(
+            book,
+            chapters: _chapters.isEmpty ? null : _chapters,
+            preserveCatalog: true,
+          );
+        }
+        await store.moveToVault(book);
+        await BookShelfLists(store, book.kind).removeBook(book.id);
+        await BookShelfLists(
+          store,
+          book.kind,
+          private: true,
+        ).assign(book, {?target.listId});
+      } else {
+        if (await store.isPrivateBook(book.id)) {
+          await store.moveOutOfVault(book);
+        }
+        if (await store.entry(book) == null) {
+          await store.saveBook(
+            book,
+            chapters: _chapters.isEmpty ? null : _chapters,
+            preserveCatalog: true,
+          );
+        }
+        await BookShelfLists(store, book.kind).assign(book, {?target.listId});
+      }
+      if (mounted) setState(() => _favorite = true);
+      return true;
+    } on FormatException catch (error) {
+      _toast(error.message);
+      return false;
+    } on Exception {
+      _toast('无法保存到所选书架，请重试');
+      return false;
     }
   }
 

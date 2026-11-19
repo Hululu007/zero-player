@@ -24,6 +24,7 @@ class MainActivity : FlutterActivity() {
     private val playbackDiagnostics by lazy { PlaybackDeviceDiagnostics(this) }
     private val musicOverlay by lazy { MusicLyricsOverlay(this) }
     private val protectedBookExport by lazy { ProtectedBookExport(this) }
+    private val vaultBiometric by lazy { VaultBiometric(this) }
     private var saveResult: MethodChannel.Result? = null
     private var savePath: String? = null
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
@@ -33,6 +34,8 @@ class MainActivity : FlutterActivity() {
                 if (call.method == "systemFamilies") result.success(ReaderFonts.systemFamilies())
                 else result.notImplemented()
             }
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, VaultBiometric.CHANNEL)
+            .setMethodCallHandler { call, result -> vaultBiometric.handle(call, result) }
         ActivityRequestCodes.validate()
         videoPicker.progress = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "zero_player/local_video_progress")
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "zero_player/platform")
@@ -150,6 +153,7 @@ class MainActivity : FlutterActivity() {
             videoDirectories.close()
             musicOverlay.hide()
             protectedBookExport.close()
+            vaultBiometric.close()
             saveResult?.let { finishSave(it) }
         } finally {
             super.onDestroy()

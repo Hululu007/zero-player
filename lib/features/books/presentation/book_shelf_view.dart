@@ -7,6 +7,7 @@ import '../data/book_store.dart';
 import '../data/books_repository.dart';
 import '../domain/book.dart';
 import 'book_cover.dart';
+import 'book_vault_dialogs.dart';
 
 const _labels = {
   ShelfListKind.group: '分组',
@@ -28,6 +29,9 @@ class BookShelfView extends StatefulWidget {
     required this.onCheckUpdates,
     required this.checking,
     this.historyMode = false,
+    this.private = false,
+    this.cancelDownload,
+    this.onOpenPrivate,
   });
   final BooksRepository repository;
   final BookKind kind;
@@ -38,6 +42,11 @@ class BookShelfView extends StatefulWidget {
   final Future<void> Function(List<BookShelfEntry>) onCheckUpdates;
   final bool checking;
   final bool historyMode;
+
+  /// The private shelf uses encrypted list storage and shows migration actions.
+  final bool private;
+  final Future<void> Function(Book)? cancelDownload;
+  final VoidCallback? onOpenPrivate;
 
   @override
   State<BookShelfView> createState() => _BookShelfViewState();
@@ -52,8 +61,11 @@ class _BookShelfViewState extends State<BookShelfView> {
   String _type = '';
   Set<String> _offlineIds = {};
   int _offlineSequence = 0;
-  BookShelfLists get _store =>
-      BookShelfLists(widget.repository.store, widget.kind);
+  BookShelfLists get _store => BookShelfLists(
+    widget.repository.store,
+    widget.kind,
+    private: widget.private,
+  );
 
   @override
   void initState() {
@@ -228,19 +240,199 @@ class _BookShelfViewState extends State<BookShelfView> {
 
   Future<void> _bookAction(BookShelfEntry entry, String action) async {
     if (!widget.repository.bookAllowed(entry.book)) return;
-    if (action == 'lists') {
-      await _assign(entry.book);
-      return;
+    switch (action) {
+      case 'lists':
+        await _assign(entry.book);
+      case 'history':
+        await _clearHistory([entry.book]);
+      case 'follow':
+        await widget.repository.store.saveBook(
+          entry.book,
+          following: !entry.following,
+        );
+        if (mounted) widget.onFollowChanged();
+      case 'private':
+        await _moveToPrivate(entry.book);
+      case 'unprivate':
+        await _moveOutOfPrivate(entry.book);
+      case 'remove':
+        await _confirmRemove(entry.book);
+      case 'delete':
+        await _confirmDelete(entry.book);
     }
-    if (action == 'history') {
-      await _clearHistory([entry.book]);
-      return;
-    }
-    await widget.repository.store.saveBook(
-      entry.book,
-      following: !entry.following,
+  }
+
+  Future<bool> _confirmRemove(Book book) async {
+    var offline = false;
+    final accepted = await showDialog<bool>(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, update) => AlertDialog(
+          title: Text('从书架移除《${book.title}》？'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('阅读进度会清除，笔记与书签保留。'),
+              CheckboxListTile(
+                contentPadding: EdgeInsets.zero,
+                title: const Text('同时删除离线文件与阅读缓存'),
+                value: offline,
+                onChanged: (value) => update(() => offline = value == true),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('取消'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('移除'),
+            ),
+          ],
+        ),
+      ),
     );
-    if (mounted) widget.onFollowChanged();
+    if (accepted != true || !mounted) return false;
+    await _removeFromShelf(book, clearOffline: offline);
+    return true;
+  }
+
+  Future<bool> _confirmDelete(Book book) async {
+    var offline = true;
+    final accepted = await showDialog<bool>(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, update) => AlertDialog(
+          title: Text('删除《${book.title}》？'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('书架记录、阅读进度、笔记与书签将被删除，此操作不可撤销。'),
+              CheckboxListTile(
+                contentPadding: EdgeInsets.zero,
+                title: const Text('同时删除缓存与离线文件'),
+                subtitle: const Text('取消勾选会保留已下载内容，便于以后重新加入'),
+                value: offline,
+                onChanged: (value) => update(() => offline = value == true),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('取消'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('删除'),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (accepted != true || !mounted) return false;
+    await _deleteBook(book, clearOffline: offline);
+    return true;
+  }
+
+  Future<void> _removeFromShelf(Book book, {bool clearOffline = false}) async {
+    try {
+      await _stopDownload(book);
+      await widget.repository.store.removeFromShelf(
+        book,
+        clearOffline: clearOffline,
+      );
+      if (clearOffline) await _removeOfflineFiles(book);
+      await _store.removeBook(book.id);
+      await _reload();
+      if (mounted) {
+        widget.onFollowChanged();
+        _toast('已从书架移除');
+      }
+    } on FormatException catch (error) {
+      if (mounted) _toast(error.message);
+    } on Exception {
+      if (mounted) _toast('操作未完成，请重试');
+    }
+  }
+
+  Future<void> _deleteBook(Book book, {bool clearOffline = true}) async {
+    try {
+      await _stopDownload(book);
+      await widget.repository.store.deleteBook(
+        book,
+        clearOffline: clearOffline,
+      );
+      if (clearOffline) await _removeOfflineFiles(book);
+      await _store.removeBook(book.id);
+      await _reload();
+      if (mounted) {
+        widget.onFollowChanged();
+        _toast(clearOffline ? '已删除作品与离线内容' : '已删除作品，离线内容已保留');
+      }
+    } on FormatException catch (error) {
+      if (mounted) _toast(error.message);
+    } on Exception {
+      if (mounted) _toast('删除未完成，请重试');
+    }
+  }
+
+  Future<void> _stopDownload(Book book) async {
+    if (widget.cancelDownload case final cancel?) await cancel(book);
+  }
+
+  Future<void> _removeOfflineFiles(Book book) async {
+    if (book.kind == BookKind.audio) {
+      await widget.repository.removeSavedAudio(book);
+    } else {
+      await widget.repository.store.clearOffline(book);
+    }
+    await widget.repository.store.clearReadingCache(book);
+  }
+
+  Future<void> _moveToPrivate(Book book) async {
+    final unlocked = await ensureVaultAccess(context, widget.repository.store);
+    if (!unlocked || !mounted) return;
+    try {
+      await widget.repository.store.moveToVault(book);
+      await BookShelfLists(
+        widget.repository.store,
+        widget.kind,
+      ).removeBook(book.id);
+      await _reload();
+      if (mounted) {
+        widget.onFollowChanged();
+        _toast('已移入私密书架，可在书架入口解锁查看');
+      }
+    } on FormatException catch (error) {
+      if (mounted) _toast(error.message);
+    } on Exception {
+      if (mounted) _toast('移入私密书架未完成，请重试');
+    }
+  }
+
+  Future<void> _moveOutOfPrivate(Book book) async {
+    try {
+      await widget.repository.store.moveOutOfVault(book);
+      await _store.removeBook(book.id);
+      await _reload();
+      if (mounted) {
+        widget.onFollowChanged();
+        _toast('已移出私密书架');
+      }
+    } on FormatException catch (error) {
+      if (mounted) _toast(error.message);
+    } on Exception {
+      if (mounted) _toast('移出私密书架未完成，请重试');
+    }
+  }
+
+  void _toast(String text) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(text)));
   }
 
   Future<void> _clearHistory(List<Book> books, {bool confirm = false}) async {
@@ -399,6 +591,8 @@ class _BookShelfViewState extends State<BookShelfView> {
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: rows);
   }
 
+  static const _privateOption = '__private__';
+
   Widget _listPicker() => DropdownButton<String>(
     isExpanded: true,
     value: _selected,
@@ -412,8 +606,26 @@ class _BookShelfViewState extends State<BookShelfView> {
             overflow: TextOverflow.ellipsis,
           ),
         ),
+      if (!widget.private && widget.onOpenPrivate != null)
+        const DropdownMenuItem(
+          value: _privateOption,
+          child: Row(
+            children: [
+              Icon(Icons.lock_outline, size: 16),
+              SizedBox(width: 6),
+              Text('私密书架'),
+            ],
+          ),
+        ),
     ],
-    onChanged: (value) => setState(() => _selected = value ?? ''),
+    onChanged: (value) {
+      if (value == _privateOption) {
+        setState(() => _selected = '');
+        widget.onOpenPrivate?.call();
+        return;
+      }
+      setState(() => _selected = value ?? '');
+    },
   );
 
   Widget _listMenu(ShelfList list) => PopupMenuButton<bool>(
@@ -549,6 +761,13 @@ class _BookShelfViewState extends State<BookShelfView> {
               value: 'follow',
               child: Text(entry.following ? '取消追更' : '加入追更'),
             ),
+          const PopupMenuDivider(),
+          if (widget.private)
+            const PopupMenuItem(value: 'unprivate', child: Text('移出私密书架'))
+          else
+            const PopupMenuItem(value: 'private', child: Text('移入私密书架')),
+          const PopupMenuItem(value: 'remove', child: Text('从书架移除')),
+          const PopupMenuItem(value: 'delete', child: Text('删除')),
         ],
       ),
     );

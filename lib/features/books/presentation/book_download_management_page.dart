@@ -96,8 +96,11 @@ final class _BookDownloadManagementPageState
     try {
       await widget.services.books.ensureSourceRiskLoaded();
       final store = widget.services.books.store;
-      final plans = await store.downloadPlans();
-      final shelf = await store.shelf();
+      final plans = {
+        ...await store.downloadPlans(),
+        ...await store.vaultDownloadPlans(),
+      };
+      final shelf = [...await store.shelf(), ...await store.vaultShelf()];
       final items = <_DownloadItem>[];
       final seen = <String>{};
       for (final entry in shelf) {
@@ -152,7 +155,8 @@ final class _BookDownloadManagementPageState
   }
 
   Future<Map<String, String>> _blocked(Book book) async {
-    final raw = await widget.services.books.store.read(
+    final raw = await widget.services.books.store.readBookValue(
+      book,
       'books_download_blocked:${book.id}',
     );
     if (raw is! Map) return {};
@@ -163,7 +167,8 @@ final class _BookDownloadManagementPageState
   }
 
   Future<Set<String>> _failed(Book book) async {
-    final raw = await widget.services.books.store.read(
+    final raw = await widget.services.books.store.readBookValue(
+      book,
       'books_download_failures:${book.id}',
     );
     return raw is Map ? raw.keys.whereType<String>().toSet() : {};

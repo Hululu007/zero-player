@@ -1,3 +1,4 @@
+import '../../../core/persistence/app_database.dart';
 import '../domain/book.dart';
 import 'book_store.dart';
 
@@ -35,13 +36,19 @@ final class ShelfList {
 }
 
 final class BookShelfLists {
-  const BookShelfLists(this.store, this.kind);
+  const BookShelfLists(this.store, this.kind, {this.private = false});
   final BookStore store;
   final BookKind kind;
+
+  /// Private lists live inside the encrypted vault and require an unlock.
+  final bool private;
+
   String get _key => 'books_shelf_lists:${kind.name}';
 
   Future<List<ShelfList>> load() async {
-    final data = await store.read(_key);
+    final data = private
+        ? await store.vault.read(_key)
+        : await store.read(_key);
     return data is List
         ? data.map(ShelfList.fromJson).whereType<ShelfList>().toList()
         : [];
@@ -76,6 +83,16 @@ final class BookShelfLists {
   Future<void> delete(String id) =>
       _edit((lists) => lists.where((list) => list.id != id).toList());
 
+  Future<void> removeBook(String bookId) => _edit((lists) {
+    if (!lists.any((list) => list.books.contains(bookId))) return lists;
+    return [
+      for (final list in lists)
+        ShelfList(list.id, list.name, list.kind, {
+          ...list.books.where((id) => id != bookId),
+        }),
+    ];
+  });
+
   Future<void> assign(Book book, Set<String> memberships) => _edit((lists) {
     if (book.kind != kind) return lists;
     final group = lists
@@ -96,9 +113,22 @@ final class BookShelfLists {
     ];
   });
 
-  Future<void> _edit(List<ShelfList> Function(List<ShelfList>) change) =>
-      store.db.atomic(() async {
+  Future<void> _edit(List<ShelfList> Function(List<ShelfList>) change) async {
+    if (private && !store.vault.unlocked) {
+      throw const FormatException('私密书架已锁定');
+    }
+    await store.db.atomic(
+      () async {
         final lists = change(await load());
-        await store.write(_key, lists.map((list) => list.toJson()).toList());
-      }, tables: {'app_meta'});
+        final data = lists.map((list) => list.toJson()).toList();
+        if (private) {
+          await store.vault.write(_key, data);
+        } else {
+          await store.write(_key, data);
+        }
+      },
+      tables: {'app_meta'},
+      metadataDomains: {MetadataDomain.books},
+    );
+  }
 }
