@@ -260,6 +260,10 @@ final class _ProductAppState extends ConsumerState<ProductApp>
     ForegroundWorkload.instance.setForeground(
       state == AppLifecycleState.resumed,
     );
+    if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.detached) {
+      services.books.store.vault.lock();
+    }
     if (state == AppLifecycleState.detached) {
       _exiting = true;
       unawaited(services.closeSafely());

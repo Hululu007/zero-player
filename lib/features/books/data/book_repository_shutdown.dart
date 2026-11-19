@@ -54,6 +54,8 @@ Future<void> _closeBooksRepository(BooksRepository books) async {
   await step(books._sourceRiskChanges.dispose);
   await step(books._http.close);
   await step(books.audioFiles.close);
+  synchronousStep(books.readingCleanup.dispose);
+  synchronousStep(books.store.vault.dispose);
   await step(books.coverCache.waitForIdle);
 
   if (firstError != null) Error.throwWithStackTrace(firstError!, firstStack!);

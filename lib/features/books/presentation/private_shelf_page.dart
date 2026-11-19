@@ -11,6 +11,8 @@ import 'book_detail_page.dart';
 import 'book_page_route.dart';
 import 'book_shelf_view.dart';
 import 'book_vault_dialogs.dart';
+import 'book_vault_gate.dart';
+import 'book_download_management_page.dart';
 
 /// Encrypted shelf page. The vault key only lives while this route is active;
 /// leaving, locking or backgrounding the page clears it.
@@ -44,6 +46,7 @@ final class _PrivateShelfPageState extends State<PrivateShelfPage>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    _vault.addListener(_vaultChanged);
     _locked = !_vault.unlocked;
     unawaited(_reload());
   }
@@ -52,17 +55,28 @@ final class _PrivateShelfPageState extends State<PrivateShelfPage>
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     _token?.cancel();
+    _vault.removeListener(_vaultChanged);
     _vault.lock();
     super.dispose();
   }
 
+  void _vaultChanged() {
+    if (!mounted || _vault.unlocked) return;
+    _sequence++;
+    _token?.cancel();
+    setState(() {
+      _entries = [];
+      _locked = true;
+      _checking = false;
+    });
+  }
+
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state != AppLifecycleState.paused || !_vault.unlocked) return;
-    // A detail or reader route above the shelf keeps the session alive until
-    // the shelf itself becomes current again.
-    if (ModalRoute.of(context)?.isCurrent != true) return;
-    unawaited(_lock(pop: false));
+    if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.detached) {
+      _vault.lock();
+    }
   }
 
   Future<void> _reload() async {
@@ -74,7 +88,7 @@ final class _PrivateShelfPageState extends State<PrivateShelfPage>
     try {
       await _services.books.ensureSourceRiskLoaded();
       final all = await _store.vaultShelf();
-      if (!mounted || sequence != _sequence) return;
+      if (!mounted || sequence != _sequence || !_vault.unlocked) return;
       setState(() {
         _entries = all
             .where(
@@ -247,6 +261,23 @@ final class _PrivateShelfPageState extends State<PrivateShelfPage>
         actions: [
           if (!_locked)
             IconButton(
+              tooltip: '私密下载管理',
+              icon: const Icon(Icons.download),
+              onPressed: () => Navigator.of(context).push(
+                BookPageRoute<void>(
+                  builder: (_) => BookVaultGate(
+                    store: _store,
+                    private: true,
+                    builder: (_) => BookDownloadManagementPage(
+                      services: _services,
+                      private: true,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          if (!_locked)
+            IconButton(
               tooltip: '锁定',
               onPressed: () => _lock(),
               icon: const Icon(Icons.lock),
@@ -328,7 +359,7 @@ final class _PrivateShelfPageState extends State<PrivateShelfPage>
               const SizedBox(width: 6),
               const Expanded(
                 child: Text(
-                  '私密空间已解锁 · 书架记录、笔记与离线正文已加密',
+                  '书架、笔记、离线文字与图片已加密；音频及 EPUB/PDF 原文件不加密',
                   style: TextStyle(fontSize: 12),
                 ),
               ),
@@ -347,6 +378,7 @@ final class _PrivateShelfPageState extends State<PrivateShelfPage>
             onRefresh: () => _checkUpdates(_entries),
             onCheckUpdates: _checkUpdates,
             onFollowChanged: () => unawaited(_reload()),
+            pauseDownload: _services.bookDownloads.pause,
             cancelDownload: (book) async {
               await _services.bookDownloads.removePlan(book);
             },

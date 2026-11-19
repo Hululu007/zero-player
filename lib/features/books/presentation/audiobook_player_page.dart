@@ -7,6 +7,7 @@ import '../application/audiobook_controller.dart';
 import '../domain/book.dart';
 import '../../playback/domain/player_engine.dart';
 import 'book_page_route.dart';
+import 'book_vault_gate.dart';
 
 final class AudiobookPlayerPage extends StatefulWidget {
   const AudiobookPlayerPage({
@@ -297,11 +298,15 @@ final class AudiobookMiniPlayer extends StatelessWidget {
     if (book == null || chapter == null) return;
     Navigator.of(context, rootNavigator: true).push(
       BookPageRoute<void>(
-        builder: (_) => AudiobookPlayerPage(
-          services: services,
-          book: book,
-          chapters: player.chapters,
-          initial: chapter,
+        builder: (_) => BookVaultGate(
+          store: services.books.store,
+          bookId: book.id,
+          builder: (_) => AudiobookPlayerPage(
+            services: services,
+            book: book,
+            chapters: player.chapters,
+            initial: chapter,
+          ),
         ),
       ),
     );

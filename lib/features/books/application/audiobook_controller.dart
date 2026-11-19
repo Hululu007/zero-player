@@ -17,6 +17,7 @@ final class AudiobookController extends ChangeNotifier
   AudiobookController(this.books, this.createEngine, this.beforePlay) {
     books.policy.addListener(_policyChanged);
     books.sourceRiskChanges.addListener(_policyChanged);
+    books.store.vault.addListener(_vaultChanged);
   }
 
   final BooksRepository books;
@@ -61,7 +62,10 @@ final class AudiobookController extends ChangeNotifier
     BookChapter initial, {
     bool resume = true,
   }) {
-    if (_closing != null) return;
+    if (_closing != null ||
+        (books.store.vault.isPrivate(work.id) && !books.store.vault.unlocked)) {
+      return;
+    }
     if (book?.id == work.id && chapter?.id == initial.id && active) return;
     if (book?.id != work.id) {
       save();
@@ -118,6 +122,9 @@ final class AudiobookController extends ChangeNotifier
     void authorize() {
       token.check();
       if (!identical(book, work) || !identical(chapter, next)) {
+        throw const RequestCancelled();
+      }
+      if (books.store.vault.isPrivate(work.id) && !books.store.vault.unlocked) {
         throw const RequestCancelled();
       }
       books.requireBook(work, next);
@@ -310,6 +317,28 @@ final class AudiobookController extends ChangeNotifier
     });
   }
 
+  void _vaultChanged() {
+    final work = book;
+    if (work == null ||
+        !books.store.vault.isPrivate(work.id) ||
+        books.store.vault.unlocked) {
+      return;
+    }
+    _pending = null;
+    _token?.cancel();
+    _session?.close();
+    _session = null;
+    _evidence = null;
+    _sleepTimer?.cancel();
+    sleepUntil = null;
+    book = null;
+    chapter = null;
+    chapters = const [];
+    snapshot = const PlaybackSnapshot();
+    unawaited(_engine?.stop());
+    notifyListeners();
+  }
+
   void _policyChanged() {
     if (book == null || chapter == null) return;
     if (books.kindAllowed(BookKind.audio) &&
@@ -353,6 +382,7 @@ final class AudiobookController extends ChangeNotifier
     await _engine?.dispose();
     books.policy.removeListener(_policyChanged);
     books.sourceRiskChanges.removeListener(_policyChanged);
+    books.store.vault.removeListener(_vaultChanged);
     super.dispose();
   }
 }

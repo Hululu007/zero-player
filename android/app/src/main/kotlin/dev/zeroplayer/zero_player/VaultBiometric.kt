@@ -36,6 +36,7 @@ class VaultBiometric(private val activity: MainActivity) {
         private const val TAG_BITS = 128
     }
 
+    private var generation = 0L
     private var pendingResult: MethodChannel.Result? = null
     private var pendingMode: String? = null
     private var pendingPayload: String? = null
@@ -69,6 +70,7 @@ class VaultBiometric(private val activity: MainActivity) {
         }
         // Registered before any Keystore work so a failure below can answer the
         // pending Dart call instead of leaving it unresolved.
+        val attempt = ++generation
         pendingResult = result
         pendingMode = call.method
         pendingPayload = payload
@@ -81,8 +83,12 @@ class VaultBiometric(private val activity: MainActivity) {
             val subtitle = if (call.method == "wrap") "验证指纹以启用快速解锁" else "验证指纹以解锁"
             val active = VaultBiometricPrompt(
                 activity,
-                onSuccess = { authenticated -> complete(authenticated) },
-                onError = { code, message -> finish(error = code, message = message) },
+                onSuccess = { authenticated ->
+                    if (attempt == generation) complete(authenticated)
+                },
+                onError = { code, message ->
+                    if (attempt == generation) finish(error = code, message = message)
+                },
             )
             prompt = active
             active.authenticate(cipher, subtitle)
@@ -184,6 +190,7 @@ class VaultBiometric(private val activity: MainActivity) {
 
     private fun finish(value: String? = null, error: String? = null, message: String? = null) {
         val result = pendingResult ?: return
+        generation++
         pendingResult = null
         pendingMode = null
         pendingPayload = null
@@ -193,8 +200,10 @@ class VaultBiometric(private val activity: MainActivity) {
     }
 
     fun close() {
-        prompt?.cancel()
+        generation++
+        val active = prompt
         prompt = null
+        active?.cancel()
         pendingResult?.error("cancelled", "指纹验证已取消", null)
         pendingResult = null
         pendingMode = null
@@ -215,7 +224,9 @@ private class VaultBiometricPrompt(
         val executor = activity.mainExecutor
         val callback = object : BiometricPrompt.AuthenticationCallback() {
             override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
-                onSuccess(result.cryptoObject?.cipher ?: cipher)
+                val authenticated = result.cryptoObject?.cipher
+                if (authenticated == null) onError("failed", "缺少指纹验证凭据")
+                else onSuccess(authenticated)
             }
 
             override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {

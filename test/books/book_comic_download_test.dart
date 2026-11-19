@@ -14,6 +14,37 @@ import '../../test_support/comic_source_authorization.dart';
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
+  test(
+    'private offline images encrypt, migrate, and delete without plaintext remnants',
+    () async {
+      final f = await _Fixture.create();
+      addTearDown(f.close);
+      final store = f.services.books.store;
+      await store.saveBook(f.book, chapters: [f.chapter]);
+      await store.vault.create('secret-123');
+      await store.moveToVault(f.book);
+      await f.seedImages();
+      expect(await store.offlineImages(f.book, f.chapter), f.images);
+      expect(await store.savedImages(f.book), {f.chapter.id});
+      expect(
+        await store.db.rows(
+          "SELECT key FROM app_meta WHERE key GLOB 'books_image_data:*'",
+        ),
+        isEmpty,
+      );
+      await store.moveOutOfVault(f.book);
+      expect(await store.offlineImages(f.book, f.chapter), f.images);
+      await store.moveToVault(f.book);
+      store.vault.lock();
+      expect(await store.offlineImages(f.book, f.chapter), isNull);
+      expect(await store.savedImages(f.book), isEmpty);
+      await store.vault.unlock('secret-123');
+      await store.clearOffline(f.book);
+      expect(await store.savedImages(f.book), isEmpty);
+      expect(await store.offlineImages(f.book, f.chapter), isNull);
+    },
+  );
+
   test('comic download preserves offline image order and bytes', () async {
     final f = await _Fixture.create();
     addTearDown(f.close);

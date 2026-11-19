@@ -5,17 +5,35 @@ import '../data/book_vault.dart';
 
 /// Ensures the private space exists and is unlocked, running setup/unlock
 /// dialogs as needed. Returns false when the user backs out.
-Future<bool> ensureVaultAccess(BuildContext context, BookStore store) async {
-  final vault = store.vault;
-  await vault.ensureLoaded();
-  if (!context.mounted) return false;
-  if (!vault.configured) {
-    final created = await showVaultSetupDialog(context, store);
-    return created && vault.unlocked;
+Future<bool> ensureVaultAccess(
+  BuildContext context,
+  BookStore store, {
+  bool reauthenticate = false,
+}) async {
+  try {
+    final vault = store.vault;
+    await vault.ensureLoaded();
+    if (!context.mounted) return false;
+    if (!vault.configured) {
+      final created = await showVaultSetupDialog(context, store);
+      return created && vault.unlocked;
+    }
+    if (reauthenticate) vault.lock();
+    if (vault.unlocked) return true;
+    final unlocked = await showVaultUnlockDialog(context, store);
+    return unlocked && vault.unlocked;
+  } on Exception catch (error) {
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            error is FormatException ? error.message : '无法访问私密书架，请保留数据后重试',
+          ),
+        ),
+      );
+    }
+    return false;
   }
-  if (vault.unlocked) return true;
-  final unlocked = await showVaultUnlockDialog(context, store);
-  return unlocked && vault.unlocked;
 }
 
 Future<bool> showVaultSetupDialog(BuildContext context, BookStore store) async {
@@ -106,7 +124,9 @@ final class _VaultSetupDialogState extends State<_VaultSetupDialog> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('私密书架独立于普通书架，进入前需要密码或设备指纹验证。书架记录、笔记和离线正文会加密保存。'),
+          const Text(
+            '私密书架独立于普通书架，进入前需要密码或设备指纹验证。书架记录、笔记、离线文字及图片会加密保存。音频和 EPUB/PDF 原文件仍由应用私有目录保存，不加密；密码提示与书籍编号也不加密。',
+          ),
           const SizedBox(height: 12),
           TextField(
             controller: _password,

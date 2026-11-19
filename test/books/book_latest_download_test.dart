@@ -17,10 +17,49 @@ import '../../test_support/book_fixture_source.dart';
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   _lifecycleTests();
+  _privateAggregateTest();
   _routingSafetyTests();
   _persistentOriginTests();
   _capacityTests();
   _observedCatalogDownloadTests();
+}
+
+void _privateAggregateTest() {
+  test(
+    'private aggregate routes remain encrypted and locked downloads do not start',
+    () async {
+      final f = await _Fixture.create();
+      addTearDown(f.close);
+      final store = f.books.store;
+      await store.saveBook(f.target, chapters: f.current);
+      await store.vault.create('secret-123');
+      await store.moveToVault(f.target);
+      final task = f.manager.start(f.target, f.current, _aggregatePlan);
+      await task.done;
+      expect(task.status, BookDownloadStatus.completed);
+      expect(task.chapters, hasLength(4));
+      expect(await store.savedText(f.target), hasLength(4));
+      expect(
+        await store.db.rows('SELECT key FROM app_meta WHERE key GLOB ?', [
+          'books_latest_origin:${f.target.id}:*',
+        ]),
+        isEmpty,
+      );
+      expect(
+        (await BookLatestAggregation(
+          store,
+          f.books.downloadGuard,
+        ).origin(f.target, task.chapters.last))?.origin.id,
+        f.origin.id,
+      );
+      final calls = f.calls.length;
+      store.vault.lock();
+      final locked = f.manager.start(f.target, task.chapters, _aggregatePlan);
+      await locked.done;
+      expect(locked.status, BookDownloadStatus.paused);
+      expect(f.calls, hasLength(calls));
+    },
+  );
 }
 
 void _observedCatalogDownloadTests() {

@@ -25,8 +25,13 @@ typedef _DownloadItem = ({
 enum _DownloadFilter { all, running, pending, saved }
 
 final class BookDownloadManagementPage extends StatefulWidget {
-  const BookDownloadManagementPage({super.key, required this.services});
+  const BookDownloadManagementPage({
+    super.key,
+    required this.services,
+    this.private = false,
+  });
   final AppServices services;
+  final bool private;
 
   @override
   State<BookDownloadManagementPage> createState() =>
@@ -50,6 +55,7 @@ final class _BookDownloadManagementPageState
   void initState() {
     super.initState();
     _manager.addListener(_tasksChanged);
+    widget.services.books.store.vault.addListener(_vaultChanged);
     widget.services.contentPolicy.addListener(_policyChanged);
     widget.services.books.sourceRiskChanges.addListener(_policyChanged);
     unawaited(_reload());
@@ -58,9 +64,20 @@ final class _BookDownloadManagementPageState
   @override
   void dispose() {
     _manager.removeListener(_tasksChanged);
+    widget.services.books.store.vault.removeListener(_vaultChanged);
     widget.services.contentPolicy.removeListener(_policyChanged);
     widget.services.books.sourceRiskChanges.removeListener(_policyChanged);
     super.dispose();
+  }
+
+  void _vaultChanged() {
+    if (!mounted) return;
+    _sequence++;
+    setState(() {
+      _items = [];
+      _activeIds = {};
+    });
+    unawaited(_reload());
   }
 
   void _policyChanged() {
@@ -96,17 +113,18 @@ final class _BookDownloadManagementPageState
     try {
       await widget.services.books.ensureSourceRiskLoaded();
       final store = widget.services.books.store;
-      final plans = {
-        ...await store.downloadPlans(),
-        ...await store.vaultDownloadPlans(),
-      };
-      final shelf = [...await store.shelf(), ...await store.vaultShelf()];
+      final plans = widget.private
+          ? await store.vaultDownloadPlans()
+          : await store.downloadPlans();
+      final shelf = [
+        ...widget.private ? await store.vaultShelf() : await store.shelf(),
+        ...await store.detachedShelf(private: widget.private),
+      ];
       final items = <_DownloadItem>[];
       final seen = <String>{};
       for (final entry in shelf) {
         final book = entry.book;
-        if (book.sourceId == 'local' ||
-            !widget.services.books.bookAllowed(book)) {
+        if (!widget.services.books.bookAllowed(book) || !seen.add(book.id)) {
           continue;
         }
         final plan = plans[book.id];
@@ -126,6 +144,8 @@ final class _BookDownloadManagementPageState
       for (final task in _manager.activeTasks) {
         final book = task.book;
         if (seen.contains(book.id) ||
+            store.vault.isPrivate(book.id) != widget.private ||
+            (widget.private && !store.vault.unlocked) ||
             !widget.services.books.bookAllowed(book)) {
           continue;
         }
@@ -322,7 +342,12 @@ final class _BookDownloadManagementPageState
   }
 
   List<_DownloadItem> get _visible => _items.where((item) {
-    if (!widget.services.books.bookAllowed(item.entry.book)) return false;
+    final vault = widget.services.books.store.vault;
+    if (vault.isPrivate(item.entry.book.id) != widget.private ||
+        (widget.private && !vault.unlocked) ||
+        !widget.services.books.bookAllowed(item.entry.book)) {
+      return false;
+    }
     if (_kind != null && item.entry.book.kind != _kind) return false;
     final running = _manager.active(item.entry.book) != null;
     return switch (_filter) {

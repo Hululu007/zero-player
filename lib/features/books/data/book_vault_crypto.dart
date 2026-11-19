@@ -139,7 +139,7 @@ final class VaultCipher {
     if (!isVaultCipherText(encoded)) return null;
     try {
       final raw = base64Decode(encoded.substring(_prefix.length));
-      if (raw.length < 12 + 16 + 1) return null;
+      if (raw.length < 12 + 16) return null;
       final nonce = raw.sublist(0, 12);
       final mac = raw.sublist(raw.length - 16);
       final cipherText = raw.sublist(12, raw.length - 16);

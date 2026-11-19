@@ -13,6 +13,11 @@ import 'book_image_payload.dart';
 import 'book_resource_limits.dart';
 import 'book_catalog_window.dart';
 import 'book_vault.dart';
+import 'book_shelf_lists.dart';
+
+part 'book_store_shelf_actions.dart';
+part 'book_store_images.dart';
+part 'book_store_offline.dart';
 
 final class ProvenBookText {
   const ProvenBookText(this.body, this.evidence, this.segments);
@@ -127,7 +132,7 @@ final class BookShelfEntry {
 final class BookStore {
   BookStore(this.db);
   final AppDatabase db;
-  late final BookVault vault = BookVault(db);
+  late final BookVault vault = BookVault(db, onUnlock: _repairVaultPlaintext);
   BookSiteRevisions get siteRevisions => BookSiteRevisions(db);
 
   Future<bool> isPrivateBook(String id) async {
@@ -144,15 +149,22 @@ final class BookStore {
   }
 
   Future<void> writeBookValue(Book book, String key, Object? value) async {
-    if (await isPrivateBook(book.id)) {
-      if (value == null) {
-        await vault.delete(key);
-      } else {
-        await vault.write(key, value);
-      }
-      return;
-    }
-    await write(key, value);
+    await vault.ensureLoaded();
+    await db.atomic(
+      () async {
+        if (vault.isPrivate(book.id)) {
+          if (value == null) {
+            await vault.delete(key);
+          } else {
+            await vault.write(key, value);
+          }
+        } else {
+          await write(key, value);
+        }
+      },
+      tables: {'app_meta'},
+      metadataDomains: {MetadataDomain.books},
+    );
   }
 
   Future<Object?> read(String key) async {
@@ -543,6 +555,11 @@ final class BookStore {
     return raw is Map ? _entry(raw) : null;
   }
 
+  Future<BookShelfEntry?> detachedEntry(Book book) async {
+    final raw = await readBookValue(book, 'books_detached:${book.id}');
+    return raw is Map ? _entry(raw) : null;
+  }
+
   /// Download plans outside the private space.
   Future<Map<String, BookDownloadPlan>> downloadPlans() async {
     await vault.ensureLoaded();
@@ -612,11 +629,14 @@ final class BookStore {
     bool preserveCatalog = false,
   }) async {
     final key = 'books_shelf:${book.id}';
-    final private = await isPrivateBook(book.id);
-    if (private && !vault.unlocked) throw const VaultLockedException();
+    await vault.ensureLoaded();
     await db.atomic(
       () async {
-        final old = private ? await vault.read(key) : await read(key);
+        final private = vault.isPrivate(book.id);
+        if (private && !vault.unlocked) throw const VaultLockedException();
+        final old =
+            (private ? await vault.readStrict(key) : await read(key)) ??
+            await readBookValue(book, 'books_detached:${book.id}');
         final window = chapters == null
             ? null
             : await _chapterWindow(
@@ -653,6 +673,13 @@ final class BookStore {
         } else {
           await write(key, next);
         }
+        if (private) {
+          await vault.delete('books_detached:${book.id}');
+        } else {
+          await db.write('DELETE FROM app_meta WHERE key=?', [
+            'books_detached:${book.id}',
+          ]);
+        }
       },
       tables: {'app_meta'},
       metadataDomains: {MetadataDomain.books},
@@ -667,10 +694,26 @@ final class BookStore {
     double fraction,
     int? textOffset,
   ) async {
+    await vault.ensureLoaded();
+    await db.atomic(
+      () async {
+        await _saveReadingPosition(book, chapter, fraction, textOffset);
+      },
+      tables: {'app_meta'},
+      metadataDomains: {MetadataDomain.books},
+    );
+  }
+
+  Future<void> _saveReadingPosition(
+    Book book,
+    BookChapter chapter,
+    double fraction,
+    int? textOffset,
+  ) async {
     final key = 'books_shelf:${book.id}';
     if (await isPrivateBook(book.id)) {
       if (!vault.unlocked) return;
-      final raw = await vault.read(key);
+      final raw = await vault.readStrict(key);
       if (raw is! Map) {
         await saveBook(
           book,
@@ -718,35 +761,34 @@ final class BookStore {
 
   /// Clear resume state while retaining shelf membership and offline content.
   Future<void> clearHistory(Iterable<Book> books) async {
+    await vault.ensureLoaded();
     for (final book in books) {
-      final key = 'books_shelf:${book.id}';
-      final private = await isPrivateBook(book.id);
-      if (private) {
-        if (!vault.unlocked) continue;
-        final raw = await vault.read(key);
-        if (raw is! Map) continue;
-        await vault.write(key, {
-          ...raw,
-          'last': null,
-          'position': 0,
-          'textOffset': null,
-        });
-        await vault.delete('rich_position_${book.id}');
-        continue;
-      }
-      await db.atomic(() async {
-        final raw = await read(key);
-        if (raw is! Map) return;
-        await write(key, {
-          ...raw,
-          'last': null,
-          'position': 0,
-          'textOffset': null,
-        });
-        await db.customStatement('DELETE FROM app_meta WHERE key=?', [
-          'rich_position_${book.id}',
-        ]);
-      }, tables: {'app_meta'});
+      await db.atomic(
+        () async {
+          final key = 'books_shelf:${book.id}';
+          final private = vault.isPrivate(book.id);
+          if (private && !vault.unlocked) return;
+          final raw = private ? await vault.readStrict(key) : await read(key);
+          if (raw is! Map) return;
+          final next = {
+            ...raw,
+            'last': null,
+            'position': 0,
+            'textOffset': null,
+          };
+          if (private) {
+            await vault.write(key, next);
+            await vault.delete('rich_position_${book.id}');
+          } else {
+            await write(key, next);
+            await db.write('DELETE FROM app_meta WHERE key=?', [
+              'rich_position_${book.id}',
+            ]);
+          }
+        },
+        tables: {'app_meta'},
+        metadataDomains: {MetadataDomain.books},
+      );
     }
   }
 
@@ -760,10 +802,11 @@ final class BookStore {
     required double fraction,
   }) async {
     if (await entry(book) == null) return;
-    final private = await isPrivateBook(book.id);
-    if (private && !vault.unlocked) return;
+    await vault.ensureLoaded();
     await db.atomic(
       () async {
+        final private = vault.isPrivate(book.id);
+        if (private && !vault.unlocked) return;
         final position = <String, Object?>{
           'index': index,
           'horizontal': horizontal,
@@ -791,11 +834,12 @@ final class BookStore {
     bool followedOnly = false,
   }) async {
     final key = 'books_shelf:${book.id}';
-    final private = await isPrivateBook(book.id);
-    if (private && !vault.unlocked) return null;
+    await vault.ensureLoaded();
     return db.atomic(
       () async {
-        final raw = private ? await vault.read(key) : await read(key);
+        final private = vault.isPrivate(book.id);
+        if (private && !vault.unlocked) return null;
+        final raw = private ? await vault.readStrict(key) : await read(key);
         if (raw is! Map || (followedOnly && raw['following'] != true)) {
           return null;
         }
@@ -891,10 +935,11 @@ final class BookStore {
   ) async {
     final encoded = jsonEncode(value);
     final hash = sha256.convert(utf8.encode(encoded)).toString();
-    final private = await isPrivateBook(book.id);
-    if (private && !vault.unlocked) throw const VaultLockedException();
+    await vault.ensureLoaded();
     await db.atomic(
       () async {
+        final private = vault.isPrivate(book.id);
+        if (private && !vault.unlocked) throw const VaultLockedException();
         await validate();
         if (type == 'text') {
           final key = _provenRecord(type, book, chapter, hash);
@@ -1158,6 +1203,7 @@ final class BookStore {
     final size = utf8.encode(value).length;
     if (size > 2 * 1024 * 1024) return;
     await db.atomic(() async {
+      if (vault.isPrivate(book.id)) return;
       validate?.call();
       final key = _readingCacheKey(book, chapter);
       await db.customStatement(
@@ -1234,6 +1280,7 @@ final class BookStore {
     ]);
     if (utf8.encode(value).length > 512 * 1024) return;
     await db.atomic(() async {
+      if (vault.isPrivate(book.id)) return;
       validate?.call();
       await db.customStatement(
         'INSERT OR REPLACE INTO app_meta(key,value) VALUES(?,?)',
@@ -1256,601 +1303,63 @@ final class BookStore {
     }, tables: {'app_meta'});
   }
 
-  String _imageCacheKey(Book book, Uri image) =>
-      'books_image_cache:${book.id}:${base64UrlEncode(utf8.encode(image.toString()))}';
-
-  Future<List<int>?> readingImage(Book book, Uri image) async {
-    if (await isPrivateBook(book.id)) return null;
-    final encoded = await read(_imageCacheKey(book, image));
-    if (encoded is! String) return null;
-    try {
-      final bytes = base64Decode(encoded);
-      await validateReadableBookImage(image, bytes);
-      return bytes;
-    } on FormatException {
-      await db.customStatement('DELETE FROM app_meta WHERE key=?', [
-        _imageCacheKey(book, image),
-      ]);
-      return null;
-    }
-  }
-
+  Future<void> removeFromShelf(Book book, {required bool clearOffline}) =>
+      BookStoreShelfActions(
+        this,
+      ).removeFromShelf(book, clearOffline: clearOffline);
+  Future<void> deleteBook(Book book, {required bool clearOffline}) =>
+      BookStoreShelfActions(this).deleteBook(book, clearOffline: clearOffline);
+  Future<List<BookShelfEntry>> detachedShelf({bool private = false}) =>
+      BookStoreShelfActions(this).detachedShelf(private: private);
+  Future<void> moveToVault(Book book) =>
+      BookStoreShelfActions(this).moveToVault(book);
+  Future<void> moveOutOfVault(Book book) =>
+      BookStoreShelfActions(this).moveOutOfVault(book);
+  Future<List<int>?> readingImage(Book book, Uri image) =>
+      BookStoreImages(this).readingImage(book, image);
   Future<void> cacheReadingImage(
     Book book,
     Uri image,
     List<int> bytes, {
     void Function()? validate,
-  }) async {
-    if (await isPrivateBook(book.id)) return;
-    if (bytes.length > BookResourceLimits.imageBytes) return;
-    await validateReadableBookImage(image, bytes);
-    await db.atomic(() async {
-      validate?.call();
-      await db.customStatement(
-        'INSERT OR REPLACE INTO app_meta(key,value) VALUES(?,?)',
-        [_imageCacheKey(book, image), jsonEncode(base64Encode(bytes))],
-      );
-      final rows = await db.rows(
-        "SELECT key,length(CAST(value AS BLOB)) AS bytes FROM app_meta "
-        "WHERE key GLOB 'books_image_cache:*' ORDER BY rowid DESC",
-      );
-      var used = 0;
-      for (final row in rows) {
-        used += row['bytes'] as int;
-        if (used > BookResourceLimits.readingBytes) {
-          await db.customStatement('DELETE FROM app_meta WHERE key=?', [
-            row['key'],
-          ]);
-        }
-      }
-      validate?.call();
-    }, tables: {'app_meta'});
-  }
-
-  String _offlineImageKey(Book book, BookChapter chapter) =>
-      'books_image_offline:${book.id}:${chapter.id}';
-
-  String _offlineImagePartPrefix(Book book, BookChapter chapter) =>
-      'books_image_data:${book.id}:${chapter.id}:';
-
-  Future<List<Uri>?> offlineImageAddresses(
-    Book book,
-    BookChapter chapter,
-  ) async {
-    final raw = await read(_offlineImageKey(book, chapter));
-    if (raw is! List) return null;
-    try {
-      return raw.cast<String>().map(Uri.parse).toList();
-    } on FormatException {
-      return null;
-    } on TypeError {
-      return null;
-    }
-  }
-
+  }) => BookStoreImages(
+    this,
+  ).cacheReadingImage(book, image, bytes, validate: validate);
+  Future<List<Uri>?> offlineImageAddresses(Book book, BookChapter chapter) =>
+      BookStoreImages(this).offlineImageAddresses(book, chapter);
   Future<List<int>?> offlineImageBytes(
     Book book,
     BookChapter chapter,
     Uri image,
-  ) async {
-    final addresses = await offlineImageAddresses(book, chapter);
-    final index = addresses?.indexOf(image) ?? -1;
-    if (index < 0) return null;
-    final raw = await read('${_offlineImagePartPrefix(book, chapter)}$index');
-    if (raw is! String) return null;
-    try {
-      return base64Decode(raw);
-    } on FormatException {
-      return null;
-    }
-  }
-
-  Future<Map<Uri, List<int>>?> offlineImages(
-    Book book,
-    BookChapter chapter,
-  ) async {
-    final addresses = await offlineImageAddresses(book, chapter);
-    if (addresses == null) return null;
-    final images = <Uri, List<int>>{};
-    for (var index = 0; index < addresses.length; index++) {
-      final raw = await read('${_offlineImagePartPrefix(book, chapter)}$index');
-      if (raw is! String) return null;
-      try {
-        images[addresses[index]] = base64Decode(raw);
-      } on FormatException {
-        return null;
-      }
-    }
-    return images;
-  }
-
+  ) => BookStoreImages(this).offlineImageBytes(book, chapter, image);
+  Future<Map<Uri, List<int>>?> offlineImages(Book book, BookChapter chapter) =>
+      BookStoreImages(this).offlineImages(book, chapter);
   Future<void> saveOfflineImages(
     Book book,
     BookChapter chapter,
     Map<Uri, List<int>> images,
     Future<void> Function() validate,
-  ) async {
-    if (images.isEmpty || images.length > BookResourceLimits.chapterImages) {
-      throw const FormatException('章节图片数量无效');
-    }
-    final rawBytes = images.values.fold<int>(
-      0,
-      (total, value) => total + value.length,
-    );
-    if (rawBytes > BookResourceLimits.chapterImageBytes ||
-        images.values.any(
-          (bytes) => bytes.length > BookResourceLimits.imageBytes,
-        )) {
-      throw const FormatException('单章图片超过离线空间限制');
-    }
-    for (final entry in images.entries) {
-      await validate();
-      await validateReadableBookImage(entry.key, entry.value);
-    }
-    // Account for base64 and JSON quotes without holding another chapter-sized
-    // collection. Encode and release only one image at a time in the transaction.
-    final bytes = images.values.fold<int>(
-      0,
-      (total, value) => total + ((value.length + 2) ~/ 3) * 4 + 2,
-    );
-    await db.atomic(() async {
-      final key = _offlineImageKey(book, chapter);
-      final prefix = _offlineImagePartPrefix(book, chapter);
-      final used =
-          (await db.rows(
-                "SELECT COALESCE(SUM(length(CAST(value AS BLOB))),0) AS bytes "
-                "FROM app_meta WHERE key GLOB 'books_image_data:*' AND key NOT GLOB ?",
-                ['$prefix*'],
-              )).single['bytes']
-              as int;
-      if (used + bytes > BookResourceLimits.offlineImageBytes) {
-        throw const FormatException('离线图片空间已满');
-      }
-      await validate();
-      await db.customStatement('DELETE FROM app_meta WHERE key GLOB ?', [
-        '$prefix*',
-      ]);
-      var index = 0;
-      for (final image in images.values) {
-        await db.customStatement(
-          'INSERT INTO app_meta(key,value) VALUES(?,?)',
-          ['$prefix${index++}', jsonEncode(base64Encode(image))],
-        );
-      }
-      await validate();
-      await db.customStatement(
-        'INSERT OR REPLACE INTO app_meta(key,value) VALUES(?,?)',
-        [key, jsonEncode(images.keys.map((uri) => uri.toString()).toList())],
-      );
-    }, tables: {'app_meta'});
-  }
-
-  Future<Set<String>> savedImages(Book book) async {
-    final prefix = 'books_image_offline:${book.id}:';
-    final rows = await db.rows('SELECT key FROM app_meta WHERE key GLOB ?', [
-      '$prefix*',
-    ]);
-    return {
-      for (final row in rows) (row['key'] as String).substring(prefix.length),
-    };
-  }
-
+  ) => BookStoreImages(this).saveOfflineImages(book, chapter, images, validate);
+  Future<Set<String>> savedImages(Book book) =>
+      BookStoreImages(this).savedImages(book);
   Future<void> deleteImages(Book book, BookChapter chapter) =>
-      db.atomic(() async {
-        await db.customStatement('DELETE FROM app_meta WHERE key=?', [
-          _offlineImageKey(book, chapter),
-        ]);
-        await db.customStatement('DELETE FROM app_meta WHERE key GLOB ?', [
-          '${_offlineImagePartPrefix(book, chapter)}*',
-        ]);
-      }, tables: {'app_meta'});
-
-  Future<void> saveText(Book book, BookChapter chapter, String text) async {
-    await saveTexts(book, {chapter: text});
-  }
-
-  Future<void> saveTexts(Book book, Map<BookChapter, String> contents) async {
-    final data = {
-      for (final entry in contents.entries)
-        _textKey(book, entry.key): jsonEncode(entry.value),
-    };
-    final private = await isPrivateBook(book.id);
-    if (private) {
-      if (!vault.unlocked) throw const VaultLockedException();
-      final prefix = '${BookVault.dataPrefix}books_text:${book.id}:';
-      final used =
-          (await db.rows(
-                "SELECT COALESCE(SUM(length(CAST(value AS BLOB))),0) AS bytes "
-                "FROM app_meta WHERE key GLOB 'books_vault_data:*'",
-              )).single['bytes']
-              as int;
-      final current = await db.rows(
-        'SELECT key,length(CAST(value AS BLOB)) AS bytes FROM app_meta '
-        'WHERE key GLOB ?',
-        ['$prefix*'],
-      );
-      final replaced = current
-          .where(
-            (row) =>
-                data.keys.any((key) => (row['key'] as String) == '$prefix$key'),
-          )
-          .fold<int>(0, (sum, row) => sum + (row['bytes'] as int));
-      final bytes = data.values.fold<int>(
-        0,
-        (sum, value) => sum + utf8.encode(value).length * 4 ~/ 3 + 64,
-      );
-      if (used - replaced + bytes > 96 * 1024 * 1024) {
-        throw const FormatException('私密书架存储空间已满');
-      }
-      for (final entry in contents.entries) {
-        await vault.write(_textKey(book, entry.key), entry.value);
-      }
-      return;
-    }
-    await db.atomic(() async {
-      final used =
-          (await db.rows(
-                "SELECT COALESCE(SUM(length(CAST(value AS BLOB))),0) AS bytes FROM app_meta "
-                "WHERE key GLOB 'books_text:*' OR key GLOB 'books_proven_text_record:*'",
-              )).single['bytes']
-              as int;
-      final current = await db.rows(
-        'SELECT key,length(CAST(value AS BLOB)) AS bytes FROM app_meta WHERE key GLOB ?',
-        ['books_text:${book.id}:*'],
-      );
-      final replaced = current
-          .where((row) => data.containsKey(row['key']))
-          .fold<int>(0, (sum, row) => sum + (row['bytes'] as int));
-      final bytes = data.values.fold<int>(
-        0,
-        (sum, value) => sum + utf8.encode(value).length,
-      );
-      if (used - replaced + bytes > 96 * 1024 * 1024) {
-        throw const FormatException('离线正文空间已满');
-      }
-      for (final entry in data.entries) {
-        await db.customStatement(
-          'INSERT OR REPLACE INTO app_meta(key,value) VALUES(?,?)',
-          [entry.key, entry.value],
-        );
-      }
-    }, tables: {'app_meta'});
-  }
-
-  Future<List<Map>> annotations(Book book) async {
-    if (await isPrivateBook(book.id)) {
-      if (!vault.unlocked) return [];
-      final raw = await vault.read('books_notes:${book.id}');
-      return raw is List ? raw.whereType<Map>().toList() : [];
-    }
-    final raw = await read('books_notes:${book.id}');
-    return raw is List ? raw.whereType<Map>().toList() : [];
-  }
-
-  Future<void> addAnnotation(Book book, Map<String, Object?> entry) async {
-    final private = await isPrivateBook(book.id);
-    await db.atomic(
-      () async {
-        final entries = await annotations(book);
-        if (entries.length >= 1000) {
-          throw const FormatException('每本书最多保存 1000 条记录');
-        }
-        final next = [entry, ...entries];
-        if (private) {
-          await vault.write('books_notes:${book.id}', next);
-        } else {
-          await write('books_notes:${book.id}', next);
-        }
-      },
-      tables: {'app_meta'},
-      metadataDomains: {MetadataDomain.books},
-    );
-  }
-
-  Future<void> deleteAnnotation(Book book, String id) async {
-    final private = await isPrivateBook(book.id);
-    await db.atomic(
-      () async {
-        final entries = await annotations(book);
-        final next = entries.where((e) => e['id'] != id).toList();
-        if (private) {
-          await vault.write('books_notes:${book.id}', next);
-        } else {
-          await write('books_notes:${book.id}', next);
-        }
-      },
-      tables: {'app_meta'},
-      metadataDomains: {MetadataDomain.books},
-    );
-  }
-
-  Future<void> removeLocal(Book book) async {
-    final private = await isPrivateBook(book.id);
-    await db.atomic(
-      () async {
-        await _deleteBookKeys(book, includeOffline: true, includeNotes: true);
-        if (private) await vault.removeBook(book.id);
-      },
-      tables: {'app_meta'},
-      metadataDomains: {MetadataDomain.books},
-    );
-  }
-
-  Future<Set<String>> savedText(Book book) async {
-    if (await isPrivateBook(book.id)) {
-      if (!vault.unlocked) return {};
-      final prefix = '${BookVault.dataPrefix}books_text:${book.id}:';
-      final rows = await db.rows('SELECT key FROM app_meta WHERE key GLOB ?', [
-        '$prefix*',
-      ]);
-      return {
-        for (final row in rows) (row['key'] as String).substring(prefix.length),
-        ...await provenChapters('text', book),
-      };
-    }
-    final prefix = 'books_text:${book.id}:';
-    final rows = await db.rows('SELECT key FROM app_meta WHERE key GLOB ?', [
-      '$prefix*',
-    ]);
-    return {
-      for (final row in rows) (row['key'] as String).substring(prefix.length),
-      ...await provenChapters('text', book),
-    };
-  }
-
-  Future<void> deleteText(Book book, BookChapter chapter) async {
-    if (await isPrivateBook(book.id)) {
-      await vault.delete(_textKey(book, chapter));
-      await vault.delete(_provenPointer('text', book, chapter));
-      await vault.deletePrefix(
-        'books_proven_text_record:${book.id}:${chapter.id}:',
-      );
-      return;
-    }
-    await db.atomic(() async {
-      await db.write('DELETE FROM app_meta WHERE key=?', [
-        _textKey(book, chapter),
-      ]);
-      await db.write('DELETE FROM app_meta WHERE key=?', [
-        _provenPointer('text', book, chapter),
-      ]);
-      await db.write('DELETE FROM app_meta WHERE key GLOB ?', [
-        'books_proven_text_record:${book.id}:${chapter.id}:*',
-      ]);
-    }, tables: {'app_meta'});
-  }
-
-  Future<void> clearOffline(Book book) async {
-    if (book.kind == BookKind.comic) {
-      await db.atomic(() async {
-        for (final pattern in [
-          'books_image_offline:${book.id}:*',
-          'books_image_data:${book.id}:*',
-        ]) {
-          await db.customStatement('DELETE FROM app_meta WHERE key GLOB ?', [
-            pattern,
-          ]);
-        }
-      }, tables: {'app_meta'});
-      return;
-    }
-    if (await isPrivateBook(book.id)) {
-      for (final prefix in [
-        'books_text:${book.id}:',
-        'books_proven_text_current:${book.id}:',
-        'books_proven_text_record:${book.id}:',
-        'books_proven_audio_current:${book.id}:',
-        'books_proven_audio_record:${book.id}:',
-      ]) {
-        await vault.deletePrefix(prefix);
-      }
-      return;
-    }
-    await db.atomic(() async {
-      for (final pattern in [
-        'books_text:${book.id}:*',
-        'books_proven_text_current:${book.id}:*',
-        'books_proven_text_record:${book.id}:*',
-      ]) {
-        await db.customStatement('DELETE FROM app_meta WHERE key GLOB ?', [
-          pattern,
-        ]);
-      }
-    }, tables: {'app_meta'});
-  }
-
-  /// Removes the shelf record but can retain downloads and notes.
-  Future<void> removeFromShelf(Book book, {required bool clearOffline}) =>
-      _deleteBookRecord(book, offline: clearOffline, notes: false);
-
-  /// Full delete of the visible record; downloads are optional.
-  Future<void> deleteBook(Book book, {required bool clearOffline}) =>
-      _deleteBookRecord(book, offline: clearOffline, notes: true);
-
-  Future<void> _deleteBookRecord(
-    Book book, {
-    required bool offline,
-    required bool notes,
-  }) async {
-    final private = await isPrivateBook(book.id);
-    if (private && !vault.unlocked) throw const VaultLockedException();
-    await db.atomic(
-      () async {
-        await _deleteBookKeys(
-          book,
-          includeOffline: offline,
-          includeNotes: notes,
-        );
-        if (private && offline) await vault.removeBook(book.id);
-      },
-      tables: {'app_meta'},
-      metadataDomains: {MetadataDomain.books},
-    );
-  }
-
-  Future<void> _deleteBookKeys(
-    Book book, {
-    required bool includeOffline,
-    required bool includeNotes,
-  }) async {
-    final private = await isPrivateBook(book.id);
-    if (private) {
-      await vault.delete('books_shelf:${book.id}');
-      await vault.delete('rich_position_${book.id}');
-      if (includeNotes) await vault.delete('books_notes:${book.id}');
-      if (includeOffline) {
-        for (final prefix in [
-          'books_text:${book.id}:',
-          'books_proven_text_current:${book.id}:',
-          'books_proven_text_record:${book.id}:',
-          'books_proven_audio_current:${book.id}:',
-          'books_proven_audio_record:${book.id}:',
-          'books_download:${book.id}',
-          'books_download_failures:${book.id}',
-          'books_download_blocked:${book.id}',
-        ]) {
-          await vault.deletePrefix(prefix);
-        }
-      }
-    } else {
-      for (final key in [
-        'books_shelf:${book.id}',
-        'rich_position_${book.id}',
-        'publication_${book.id}',
-        if (includeNotes) 'books_notes:${book.id}',
-      ]) {
-        await db.write('DELETE FROM app_meta WHERE key=?', [key]);
-      }
-      if (includeOffline) {
-        for (final pattern in [
-          'books_text:${book.id}:*',
-          'books_proven_text_current:${book.id}:*',
-          'books_proven_text_record:${book.id}:*',
-          'books_proven_audio_current:${book.id}:*',
-          'books_proven_audio_record:${book.id}:*',
-          'books_download:${book.id}',
-          'books_download_failures:${book.id}',
-          'books_download_blocked:${book.id}',
-        ]) {
-          await db.write('DELETE FROM app_meta WHERE key GLOB ?', [pattern]);
-        }
-      }
-    }
-    for (final pattern in [
-      'books_read_cache:${book.id}:*',
-      'books_image_cache:${book.id}:*',
-      'books_mixed_cache:${book.id}:*',
-      if (includeOffline) ...[
-        'books_image_offline:${book.id}:*',
-        'books_image_data:${book.id}:*',
-      ],
-    ]) {
-      await db.write('DELETE FROM app_meta WHERE key GLOB ?', [pattern]);
-    }
-  }
-
-  /// Moves every book-scoped record into the encrypted space.
-  Future<void> moveToVault(Book book) async {
-    await vault.ensureLoaded();
-    if (!vault.unlocked) throw const VaultLockedException();
-    if (vault.isPrivate(book.id)) return;
-    await db.atomic(
-      () async {
-        for (final key in await _bookScopedKeys(book.id)) {
-          final raw = await read(key);
-          if (raw == null) continue;
-          await vault.write(key, raw);
-          await db.write('DELETE FROM app_meta WHERE key=?', [key]);
-        }
-        // Plaintext reading caches are re-fetchable and must not outlive the
-        // move into the encrypted space.
-        for (final pattern in [
-          'books_read_cache:${book.id}:*',
-          'books_mixed_cache:${book.id}:*',
-          'books_image_cache:${book.id}:*',
-        ]) {
-          await db.write('DELETE FROM app_meta WHERE key GLOB ?', [pattern]);
-        }
-        await vault.addBook(book.id);
-      },
-      tables: {'app_meta'},
-      metadataDomains: {MetadataDomain.books},
-    );
-  }
-
-  /// Decrypts and restores every record to the public shelf.
-  Future<void> moveOutOfVault(Book book) async {
-    await vault.ensureLoaded();
-    if (!vault.unlocked) throw const VaultLockedException();
-    if (!vault.isPrivate(book.id)) return;
-    await db.atomic(
-      () async {
-        final keys = await _vaultBookKeys(book.id);
-        for (final key in keys) {
-          final raw = await vault.read(key);
-          if (raw != null) {
-            await write(key, raw);
-          }
-          await vault.delete(key);
-        }
-        await vault.removeBook(book.id);
-      },
-      tables: {'app_meta'},
-      metadataDomains: {MetadataDomain.books},
-    );
-  }
-
-  Future<List<String>> _bookScopedKeys(String id) async {
-    final keys = <String>{};
-    for (final key in [
-      'books_shelf:$id',
-      'books_notes:$id',
-      'rich_position_$id',
-      'books_download:$id',
-      'books_download_failures:$id',
-      'books_download_blocked:$id',
-    ]) {
-      final rows = await db.rows('SELECT key FROM app_meta WHERE key=?', [key]);
-      if (rows.isNotEmpty) keys.add(key);
-    }
-    for (final pattern in [
-      'books_text:$id:*',
-      'books_proven_text_current:$id:*',
-      'books_proven_text_record:$id:*',
-      'books_proven_audio_current:$id:*',
-      'books_proven_audio_record:$id:*',
-    ]) {
-      final rows = await db.rows('SELECT key FROM app_meta WHERE key GLOB ?', [
-        pattern,
-      ]);
-      keys.addAll(rows.map((row) => row['key'] as String));
-    }
-    return keys.toList();
-  }
-
-  Future<List<String>> _vaultBookKeys(String id) async {
-    final prefix = BookVault.dataPrefix;
-    final keys = <String>{};
-    for (final pattern in [
-      'books_shelf:$id',
-      'books_notes:$id',
-      'rich_position_$id',
-      'books_download:$id',
-      'books_download_failures:$id',
-      'books_download_blocked:$id',
-      'books_text:$id:*',
-      'books_proven_text_current:$id:*',
-      'books_proven_text_record:$id:*',
-      'books_proven_audio_current:$id:*',
-      'books_proven_audio_record:$id:*',
-    ]) {
-      final rows = await db.rows('SELECT key FROM app_meta WHERE key GLOB ?', [
-        '$prefix$pattern',
-      ]);
-      for (final row in rows) {
-        keys.add((row['key'] as String).substring(prefix.length));
-      }
-    }
-    return keys.toList();
-  }
+      BookStoreImages(this).deleteImages(book, chapter);
+  Future<void> saveText(Book book, BookChapter chapter, String text) =>
+      BookStoreOffline(this).saveText(book, chapter, text);
+  Future<void> saveTexts(Book book, Map<BookChapter, String> contents) =>
+      BookStoreOffline(this).saveTexts(book, contents);
+  Future<List<Map>> annotations(Book book) =>
+      BookStoreOffline(this).annotations(book);
+  Future<void> addAnnotation(Book book, Map<String, Object?> entry) =>
+      BookStoreOffline(this).addAnnotation(book, entry);
+  Future<void> deleteAnnotation(Book book, String id) =>
+      BookStoreOffline(this).deleteAnnotation(book, id);
+  Future<void> removeLocal(Book book) =>
+      BookStoreOffline(this).removeLocal(book);
+  Future<Set<String>> savedText(Book book) =>
+      BookStoreOffline(this).savedText(book);
+  Future<void> deleteText(Book book, BookChapter chapter) =>
+      BookStoreOffline(this).deleteText(book, chapter);
+  Future<void> clearOffline(Book book) =>
+      BookStoreOffline(this).clearOffline(book);
 }

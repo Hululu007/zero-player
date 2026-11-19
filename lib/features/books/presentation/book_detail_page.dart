@@ -24,10 +24,11 @@ import 'book_source_favorite.dart';
 import 'book_text_policy_dialog.dart';
 import 'book_blocked_chapters_dialog.dart';
 import 'book_vault_dialogs.dart';
+import 'book_vault_gate.dart';
 import '../data/book_store.dart';
 import '../data/book_site_check.dart';
 
-final class BookDetailPage extends StatefulWidget {
+final class BookDetailPage extends StatelessWidget {
   const BookDetailPage({
     super.key,
     required this.services,
@@ -43,17 +44,45 @@ final class BookDetailPage extends StatefulWidget {
   final void Function(String id, bool favorite)? onSourceFavorite;
 
   @override
-  State<BookDetailPage> createState() => _BookDetailPageState();
+  Widget build(BuildContext context) => BookVaultGate(
+    store: services.books.store,
+    bookId: initial.id,
+    builder: (_) => _BookDetailContent(
+      services: services,
+      initial: initial,
+      onSearchAuthor: onSearchAuthor,
+      onSearchTitle: onSearchTitle,
+      onSourceFavorite: onSourceFavorite,
+    ),
+  );
 }
 
-final class _BookDetailPageState extends State<BookDetailPage> {
+final class _BookDetailContent extends StatefulWidget {
+  const _BookDetailContent({
+    required this.services,
+    required this.initial,
+    this.onSearchAuthor,
+    this.onSearchTitle,
+    this.onSourceFavorite,
+  });
+  final AppServices services;
+  final Book initial;
+  final ValueChanged<String>? onSearchAuthor;
+  final ValueChanged<Book>? onSearchTitle;
+  final void Function(String id, bool favorite)? onSourceFavorite;
+
+  @override
+  State<_BookDetailContent> createState() => _BookDetailPageState();
+}
+
+final class _BookDetailPageState extends State<_BookDetailContent> {
   late Book _book = widget.initial;
   List<BookChapter> _chapters = [];
   Set<String> _saved = {};
   String? _last, _error;
   String _chapterQuery = '';
   bool _favorite = false, _busy = false, _offline = false;
-  bool _openingReader = false;
+  bool _openingReader = false, _choosingDownload = false;
   bool _checkingDetails = false, _detailsBlocked = false;
   bool _policyReloadPending = false, _policyReloadScheduled = false;
   bool _reverse = false, _expanded = false, _following = false;
@@ -420,7 +449,13 @@ final class _BookDetailPageState extends State<BookDetailPage> {
               initial: chapter,
               platform: widget.services.platform,
             );
-      final route = BookPageRoute<void>(builder: (_) => reader!);
+      final route = BookPageRoute<void>(
+        builder: (_) => BookVaultGate(
+          store: _books.store,
+          bookId: book.id,
+          builder: (_) => reader!,
+        ),
+      );
       await Navigator.of(context, rootNavigator: true).push(route);
       await route.completed;
       if (mounted) await _run(_load);
@@ -661,28 +696,44 @@ final class _BookDetailPageState extends State<BookDetailPage> {
   }
 
   Future<void> _chooseDownload() async {
-    if (!_pageBookAllowed) return;
-    final book = _book;
-    final privateBook = await _books.store.isPrivateBook(book.id);
-    final publicLists = await BookShelfLists(_books.store, book.kind).load();
-    final privateLists = _books.store.vault.unlocked
-        ? await BookShelfLists(_books.store, book.kind, private: true).load()
-        : const <ShelfList>[];
-    if (!mounted) return;
-    final selection = await showBookDownloadDialog(
-      context,
-      _chapters.length,
-      allowAggregateLatest: !_audio && !_comic,
-      publicLists: publicLists,
-      privateLists: privateLists,
-      initialSpace: privateBook
-          ? BookShelfSpace.private
-          : BookShelfSpace.public,
-    );
-    if (selection == null) return;
-    if (!mounted || !identical(_book, book) || !_pageBookAllowed) return;
-    if (!await _applyDownloadTarget(book, selection.target) || !mounted) return;
-    await _download(selection.plan);
+    if (!_pageBookAllowed || _choosingDownload) return;
+    _choosingDownload = true;
+    try {
+      final book = _book;
+      final privateBook = await _books.store.isPrivateBook(book.id);
+      final publicLists = await BookShelfLists(_books.store, book.kind).load();
+      final privateLists = _books.store.vault.unlocked
+          ? await BookShelfLists(_books.store, book.kind, private: true).load()
+          : const <ShelfList>[];
+      if (!mounted) return;
+      final selection = await showBookDownloadDialog(
+        context,
+        _chapters.length,
+        allowAggregateLatest: !_audio && !_comic,
+        publicLists: publicLists,
+        privateLists: privateLists,
+        loadPrivateLists: () async {
+          if (!await ensureVaultAccess(context, _books.store) || !mounted) {
+            return null;
+          }
+          return BookShelfLists(_books.store, book.kind, private: true).load();
+        },
+        initialSpace: privateBook
+            ? BookShelfSpace.private
+            : BookShelfSpace.public,
+      );
+      if (selection == null) return;
+      if (!mounted || !identical(_book, book) || !_pageBookAllowed) return;
+      if (!await _applyDownloadTarget(book, selection.target) || !mounted) {
+        return;
+      }
+      if (!mounted || !identical(_book, book) || !_pageBookAllowed) return;
+      await _download(selection.plan);
+    } on Exception {
+      _toast('下载设置未完成，请重试');
+    } finally {
+      _choosingDownload = false;
+    }
   }
 
   Future<bool> _applyDownloadTarget(
@@ -691,34 +742,40 @@ final class _BookDetailPageState extends State<BookDetailPage> {
   ) async {
     final store = _books.store;
     try {
+      if (target.isPrivate &&
+          (!await ensureVaultAccess(context, store) || !mounted)) {
+        return false;
+      }
+      await widget.services.bookDownloads.pause(book);
+      if (!mounted || !identical(_book, book) || !_pageBookAllowed) {
+        return false;
+      }
       if (target.isPrivate) {
-        if (!await ensureVaultAccess(context, store) || !mounted) return false;
-        if (await store.entry(book) == null) {
-          await store.saveBook(
-            book,
-            chapters: _chapters.isEmpty ? null : _chapters,
-            preserveCatalog: true,
-          );
-        }
+        // Save metadata before migration so an unshelved book is indexed too.
+        await store.saveBook(
+          book,
+          chapters: _chapters.isEmpty ? null : _chapters,
+          favorite: true,
+          preserveCatalog: true,
+        );
         await store.moveToVault(book);
-        await BookShelfLists(store, book.kind).removeBook(book.id);
-        await BookShelfLists(
-          store,
-          book.kind,
-          private: true,
-        ).assign(book, {?target.listId});
       } else {
         if (await store.isPrivateBook(book.id)) {
           await store.moveOutOfVault(book);
         }
-        if (await store.entry(book) == null) {
-          await store.saveBook(
-            book,
-            chapters: _chapters.isEmpty ? null : _chapters,
-            preserveCatalog: true,
-          );
-        }
-        await BookShelfLists(store, book.kind).assign(book, {?target.listId});
+        await store.saveBook(
+          book,
+          chapters: _chapters.isEmpty ? null : _chapters,
+          favorite: true,
+          preserveCatalog: true,
+        );
+      }
+      if (target.listId case final id?) {
+        await BookShelfLists(
+          store,
+          book.kind,
+          private: target.isPrivate,
+        ).addToList(book, id);
       }
       if (mounted) setState(() => _favorite = true);
       return true;

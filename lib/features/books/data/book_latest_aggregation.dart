@@ -95,7 +95,7 @@ final class BookLatestAggregation {
   Future<BookDownloadEvidence?> origin(Book book, BookChapter chapter) async {
     if (!isAggregated(chapter)) return null;
     final evidence = BookDownloadEvidence.fromJson(
-      await store.read(_key(book, chapter)),
+      await store.readBookValue(book, _key(book, chapter)),
     );
     if (!evidence.describes(book, chapter) ||
         !_sameWork(book, evidence.origin) ||
@@ -149,7 +149,11 @@ final class BookLatestAggregation {
         await guard.validate(proof, expected: lease);
       }
       for (final proof in proofs) {
-        await store.write(_key(book, proof.targetChapter), proof.toJson());
+        await store.writeBookValue(
+          book,
+          _key(book, proof.targetChapter),
+          proof.toJson(),
+        );
       }
       token.check();
       if (guard.lease() != lease) throw const ContentBlocked();

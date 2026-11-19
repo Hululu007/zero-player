@@ -47,7 +47,7 @@ final class BookShelfLists {
 
   Future<List<ShelfList>> load() async {
     final data = private
-        ? await store.vault.read(_key)
+        ? (store.vault.unlocked ? await store.vault.readStrict(_key) : null)
         : await store.read(_key);
     return data is List
         ? data.map(ShelfList.fromJson).whereType<ShelfList>().toList()
@@ -89,6 +89,23 @@ final class BookShelfLists {
       for (final list in lists)
         ShelfList(list.id, list.name, list.kind, {
           ...list.books.where((id) => id != bookId),
+        }),
+    ];
+  });
+
+  Future<void> addToList(Book book, String id) => _edit((lists) {
+    final selected = lists.where((list) => list.id == id).firstOrNull;
+    if (selected == null) throw const FormatException('所选书单已不存在，请重新选择');
+    return [
+      for (final list in lists)
+        ShelfList(list.id, list.name, list.kind, {
+          ...list.books.where(
+            (item) =>
+                item != book.id ||
+                selected.kind != ShelfListKind.group ||
+                list.kind != ShelfListKind.group,
+          ),
+          if (list.id == id) book.id,
         }),
     ];
   });

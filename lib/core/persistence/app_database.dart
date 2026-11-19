@@ -180,6 +180,37 @@ final class AppDatabase extends GeneratedDatabase {
     }
   }
 
+  /// Pending derived state is visible only within this transaction and its
+  /// children. It is discarded on rollback, like its corresponding SQL rows.
+  Object? transactionState(Object key) {
+    var batch = Zone.current[_notificationKey] as _ChangeBatch?;
+    while (batch != null) {
+      if (batch.state.containsKey(key)) return batch.state[key];
+      batch = batch.parent;
+    }
+    return null;
+  }
+
+  void setTransactionState(Object key, Object value) {
+    final batch = Zone.current[_notificationKey] as _ChangeBatch?;
+    if (batch == null) throw StateError('No active transaction');
+    batch.state[key] = value;
+  }
+
+  /// Runs immediately before the outer transaction commits, or after it has
+  /// committed. Nested transactions publish callbacks only with their parent.
+  void beforeCommit(void Function() check) {
+    final batch = Zone.current[_notificationKey] as _ChangeBatch?;
+    if (batch == null) throw StateError('No active transaction');
+    batch.beforeCommit.add(check);
+  }
+
+  void afterCommit(void Function() publish) {
+    final batch = Zone.current[_notificationKey] as _ChangeBatch?;
+    if (batch == null) throw StateError('No active transaction');
+    batch.afterCommit.add(publish);
+  }
+
   Future<T> atomic<T>(
     Future<T> Function() work, {
     Set<String>? tables,
@@ -199,14 +230,29 @@ final class AppDatabase extends GeneratedDatabase {
     bool requireNew = false,
   }) async {
     _checkOpen();
-    final batch = _ChangeBatch();
+    final parent = Zone.current[_notificationKey] as _ChangeBatch?;
+    final batch = _ChangeBatch(parent);
     final result = await super.transaction(
-      () => runZoned(work, zoneValues: {_notificationKey: batch}),
+      () => runZoned(() async {
+        final value = await work();
+        for (final check in batch.beforeCommit) {
+          check();
+        }
+        return value;
+      }, zoneValues: {_notificationKey: batch}),
       requireNew: requireNew,
     );
     batch.add(tables, metadataDomains);
-    final parent = Zone.current[_notificationKey] as _ChangeBatch?;
-    if (parent != null && batch.untracked) parent.untracked = true;
+    if (parent != null) {
+      if (batch.untracked) parent.untracked = true;
+      parent.state.addAll(batch.state);
+      parent.beforeCommit.addAll(batch.beforeCommit);
+      parent.afterCommit.addAll(batch.afterCommit);
+    } else {
+      for (final publish in batch.afterCommit) {
+        publish();
+      }
+    }
     changed(
       tables: batch.all ? null : batch.tables,
       metadataDomains: batch.untracked ? null : batch.metadataDomains,
@@ -229,6 +275,11 @@ final class AppDatabase extends GeneratedDatabase {
 }
 
 final class _ChangeBatch {
+  _ChangeBatch(this.parent);
+  final _ChangeBatch? parent;
+  final state = <Object, Object>{};
+  final beforeCommit = <void Function()>[];
+  final afterCommit = <void Function()>[];
   bool all = false;
   bool untracked = false;
   final tables = <String>{};

@@ -12,6 +12,7 @@ import 'book_chapter_policy.dart';
 import 'book_latest_aggregation.dart';
 import 'book_catalog_window.dart';
 import 'book_site_check.dart';
+import 'book_vault.dart';
 
 enum BookDownloadStatus { running, completed, partial, paused, failed }
 
@@ -102,6 +103,13 @@ final class BookDownloadCoordinator extends ChangeNotifier {
     return task;
   }
 
+  Future<void> pause(Book book) async {
+    final task = active(book);
+    if (task == null) return;
+    task.pause();
+    await task.done;
+  }
+
   Future<void> removePlan(Book book) async {
     final task = active(book);
     if (task != null) {
@@ -134,6 +142,10 @@ final class BookDownloadCoordinator extends ChangeNotifier {
     final failedReasons = <String, String>{};
     var reasonsLoaded = false;
     try {
+      if (await repository.store.isPrivateBook(book.id) &&
+          !repository.store.vault.unlocked) {
+        throw const VaultLockedException();
+      }
       await _loadReasons(task.book, catalog, blockedReasons, failedReasons);
       reasonsLoaded = true;
       catalog = await _extendCatalog(task, catalog, plan);
@@ -188,6 +200,9 @@ final class BookDownloadCoordinator extends ChangeNotifier {
     } on RequestCancelled {
       task.status = BookDownloadStatus.paused;
       if (task._stoppedByPolicy) task.error = '内容策略已改变，下载已暂停';
+    } on VaultLockedException {
+      task.status = BookDownloadStatus.paused;
+      task.error = '私密书架已锁定，解锁后可继续下载';
     } on ContentBlocked {
       task.status = BookDownloadStatus.paused;
       task.error = '内容策略已改变，下载已暂停';
@@ -233,6 +248,9 @@ final class BookDownloadCoordinator extends ChangeNotifier {
           );
         }
       });
+    } on VaultLockedException {
+      task.status = BookDownloadStatus.paused;
+      task.error = '私密书架已锁定，解锁后将重新核对已下载章节';
     } on Exception {
       if (task.status == BookDownloadStatus.completed ||
           task.status == BookDownloadStatus.partial) {

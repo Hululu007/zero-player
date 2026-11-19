@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/foundation.dart';
 
 import '../domain/book.dart';
@@ -50,29 +51,81 @@ final class ReadingCleanupRule {
 }
 
 final class BookReadingCleanup extends ChangeNotifier {
-  BookReadingCleanup(this.store);
+  BookReadingCleanup(this.store) {
+    store.vault.addListener(_vaultChanged);
+  }
   final BookStore store;
   static const key = 'books_reading_cleanup:v1';
+  static const privateKey = 'books_reading_cleanup:private:v1';
+  int _generation = 0;
   List<ReadingCleanupRule> _rules = const [];
+  Set<ReadingCleanupRule> _encryptedRules = {};
   Future<void>? _loading;
-  List<ReadingCleanupRule> get rules => List.unmodifiable(_rules);
+  List<ReadingCleanupRule> get rules => List.unmodifiable(
+    _rules.where(
+      (rule) =>
+          rule.bookId == null ||
+          (!store.vault.isPrivate(rule.bookId!) &&
+              !_encryptedRules.contains(rule)) ||
+          store.vault.unlocked,
+    ),
+  );
+
+  void _vaultChanged() {
+    _generation++;
+    _rules = _rules
+        .where(
+          (rule) =>
+              !_encryptedRules.contains(rule) &&
+              (rule.bookId == null || !store.vault.isPrivate(rule.bookId!)),
+        )
+        .toList();
+    _encryptedRules = {};
+    _loading = null;
+    notifyListeners();
+    if (store.vault.unlocked) unawaited(load().catchError((Object _) {}));
+  }
+
+  @override
+  void dispose() {
+    _generation++;
+    store.vault.removeListener(_vaultChanged);
+    super.dispose();
+  }
+
   Future<void> load() => _loading ??= _load().catchError((Object error) {
     _loading = null;
     throw error;
   });
 
   Future<void> _load() async {
+    final generation = _generation;
+    await store.vault.ensureLoaded();
     final raw = await store.read(key);
-    if (raw == null) return;
-    if (raw is! List || raw.length > 100) {
-      throw const FormatException('阅读净化配置损坏，请重新保存规则');
+    final encrypted = store.vault.unlocked
+        ? await store.vault.readStrict(privateKey)
+        : null;
+    if (raw != null && (raw is! List || raw.length > 100) ||
+        encrypted != null && (encrypted is! List || encrypted.length > 100)) {
+      throw const FormatException('阅读净化配置损坏，请保留数据并从备份恢复');
     }
-    _rules = [for (final item in raw) ReadingCleanupRule.fromJson(item as Map)];
+    final privateRules = [
+      for (final item in (encrypted as List? ?? const []))
+        ReadingCleanupRule.fromJson(item as Map),
+    ];
+    final loaded = [
+      for (final item in (raw as List? ?? const []))
+        ReadingCleanupRule.fromJson(item as Map),
+      ...privateRules,
+    ];
+    if (generation != _generation) return;
+    _rules = loaded;
+    _encryptedRules = privateRules.toSet();
   }
 
   String apply(Book book, String text) {
     var result = text;
-    for (final rule in _rules) {
+    for (final rule in rules) {
       if (!rule.enabled || (rule.bookId != null && rule.bookId != book.id)) {
         continue;
       }
@@ -101,8 +154,23 @@ final class BookReadingCleanup extends ChangeNotifier {
     final checked = [
       for (final rule in rules) ReadingCleanupRule.fromJson(rule.toJson()),
     ];
-    await store.write(key, checked.map((r) => r.toJson()).toList());
+    await store.vault.ensureLoaded();
+    bool private(ReadingCleanupRule rule) =>
+        rule.bookId != null && store.vault.isPrivate(rule.bookId!);
+    await store.db.atomic(() async {
+      await store.write(
+        key,
+        checked.where((rule) => !private(rule)).map((r) => r.toJson()).toList(),
+      );
+      if (store.vault.unlocked) {
+        await store.vault.write(
+          privateKey,
+          checked.where(private).map((r) => r.toJson()).toList(),
+        );
+      }
+    }, tables: {'app_meta'});
     _rules = checked;
+    _encryptedRules = checked.where(private).toSet();
     _loading = Future.value();
     notifyListeners();
   }

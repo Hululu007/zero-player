@@ -906,7 +906,7 @@ final class BooksRepository {
       throw const ContentBlocked();
     }
     token.check();
-    final saved = await store.entry(book);
+    final saved = await store.entry(book) ?? await store.detachedEntry(book);
     token.check();
     if (!bookAllowed(book) || await _blocked(book.sourceId)) {
       throw const ContentBlocked();

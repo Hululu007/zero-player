@@ -4,6 +4,7 @@ import 'package:zero_player/features/books/data/book_shelf_lists.dart';
 import 'package:zero_player/features/books/presentation/book_download_dialog.dart';
 
 void main() {
+  _privateListLoadingTest();
   testWidgets('latest aggregation belongs to full-book text downloads', (
     tester,
   ) async {
@@ -95,5 +96,40 @@ void main() {
     await tester.pumpAndSettle();
     expect(chosen!.target.isPrivate, isTrue);
     expect(chosen!.target.listName, '夜深');
+  });
+}
+
+void _privateListLoadingTest() {
+  testWidgets('switching private space loads lists after authentication', (
+    tester,
+  ) async {
+    var calls = 0;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Builder(
+          builder: (context) => TextButton(
+            onPressed: () => showBookDownloadDialog(
+              context,
+              8,
+              loadPrivateLists: () async {
+                calls++;
+                return const [
+                  ShelfList('private-list', '解锁后书单', ShelfListKind.list, {}),
+                ];
+              },
+            ),
+            child: const Text('下载'),
+          ),
+        ),
+      ),
+    );
+    await tester.tap(find.text('下载'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('私密书架'));
+    await tester.pumpAndSettle();
+    expect(calls, 1);
+    await tester.tap(find.byType(DropdownButton<String?>));
+    await tester.pumpAndSettle();
+    expect(find.text('书单 · 解锁后书单'), findsOneWidget);
   });
 }

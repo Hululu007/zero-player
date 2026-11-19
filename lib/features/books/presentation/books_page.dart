@@ -20,6 +20,7 @@ import 'book_search_page.dart';
 import 'book_sources_page.dart';
 import 'book_vault_dialogs.dart';
 import 'private_shelf_page.dart';
+import 'book_vault_gate.dart';
 
 final class BooksPage extends StatefulWidget {
   const BooksPage({
@@ -247,19 +248,18 @@ final class _BooksPageState extends State<BooksPage> {
 
   Future<void> _openPrivateShelf() async {
     final store = _services.books.store;
-    await store.vault.ensureLoaded();
-    if (!mounted) return;
-    if (!store.vault.configured) {
-      final created = await showVaultSetupDialog(context, store);
-      if (!created || !mounted) return;
-    } else if (!store.vault.unlocked) {
-      final unlocked = await showVaultUnlockDialog(context, store);
-      if (!unlocked || !mounted) return;
+    if (!await ensureVaultAccess(context, store, reauthenticate: true) ||
+        !mounted) {
+      return;
     }
     await Navigator.of(context).push(
       BookPageRoute<void>(
-        builder: (_) =>
-            PrivateShelfPage(services: _services, kind: widget.kind),
+        builder: (_) => BookVaultGate(
+          store: store,
+          private: true,
+          builder: (_) =>
+              PrivateShelfPage(services: _services, kind: widget.kind),
+        ),
       ),
     );
     if (mounted) await _reloadShelf();
@@ -449,6 +449,7 @@ final class _BooksPageState extends State<BooksPage> {
                           onCheckUpdates: _checkShelfUpdates,
                           onFollowChanged: _followChanged,
                           onOpenPrivate: _openPrivateShelf,
+                          pauseDownload: _services.bookDownloads.pause,
                           cancelDownload: (book) =>
                               _services.bookDownloads.removePlan(book),
                         ),

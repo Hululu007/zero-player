@@ -18,9 +18,69 @@ import '../../test_support/fake_player_engine.dart';
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   _riskDuringResumePreparationTests();
+  _privateAudioLockTests();
   _blacklistDuringOpenTests();
   _blacklistDuringResumeTests();
   _quarantinedChapterSheetTests();
+}
+
+void _privateAudioLockTests() {
+  test(
+    'vault lock stops background audio and clears private playback metadata',
+    () async {
+      final root = await Directory.systemTemp.createTemp(
+        'audiobook-vault-lock-',
+      );
+      final services = AppServices.scoped(root, AppDatabase.memory());
+      addTearDown(() async {
+        await services.close();
+        await root.delete(recursive: true);
+      });
+      await services.settings.load();
+      await services.supervision.load();
+      final source = bookFixtureSource(
+        'audio-vault.test',
+        kind: BookKind.audio,
+      );
+      await services.books.importSources([source]);
+      final book = Book(
+        source.id,
+        BookKind.audio,
+        '私密音频',
+        '',
+        source.endpoint.resolve('/book'),
+      );
+      final chapter = BookChapter('第一章', source.endpoint.resolve('/chapter'));
+      await _cacheAudio(services, book, chapter);
+      final store = services.books.store;
+      await store.saveBook(book, chapters: [chapter]);
+      await store.vault.create('secret-123');
+      await store.moveToVault(book);
+      final engine = FakePlayerEngine();
+      final player = AudiobookController(
+        services.books,
+        () => engine,
+        () async {},
+      );
+      addTearDown(player.close);
+      final ready = Completer<void>();
+      player.addListener(() {
+        if (!player.loading && player.playing && !ready.isCompleted) {
+          ready.complete();
+        }
+      });
+      player.start(book, [chapter], chapter);
+      await ready.future.timeout(const Duration(seconds: 5));
+      store.vault.lock();
+      expect(player.active, isFalse);
+      expect(player.title, isEmpty);
+      expect(player.book, isNull);
+      await Future<void>.delayed(Duration.zero);
+      expect(engine.snapshot.playing, isFalse);
+      player.start(book, [chapter], chapter);
+      expect(player.active, isFalse);
+    },
+  );
 }
 
 void _riskDuringResumePreparationTests() {

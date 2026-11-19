@@ -31,6 +31,7 @@ class BookShelfView extends StatefulWidget {
     this.historyMode = false,
     this.private = false,
     this.cancelDownload,
+    this.pauseDownload,
     this.onOpenPrivate,
   });
   final BooksRepository repository;
@@ -46,6 +47,7 @@ class BookShelfView extends StatefulWidget {
   /// The private shelf uses encrypted list storage and shows migration actions.
   final bool private;
   final Future<void> Function(Book)? cancelDownload;
+  final Future<void> Function(Book)? pauseDownload;
   final VoidCallback? onOpenPrivate;
 
   @override
@@ -342,11 +344,11 @@ class _BookShelfViewState extends State<BookShelfView> {
   Future<void> _removeFromShelf(Book book, {bool clearOffline = false}) async {
     try {
       await _stopDownload(book);
+      if (clearOffline) await _removeOfflineFiles(book);
       await widget.repository.store.removeFromShelf(
         book,
         clearOffline: clearOffline,
       );
-      if (clearOffline) await _removeOfflineFiles(book);
       await _store.removeBook(book.id);
       await _reload();
       if (mounted) {
@@ -363,11 +365,11 @@ class _BookShelfViewState extends State<BookShelfView> {
   Future<void> _deleteBook(Book book, {bool clearOffline = true}) async {
     try {
       await _stopDownload(book);
+      if (clearOffline) await _removeOfflineFiles(book);
       await widget.repository.store.deleteBook(
         book,
         clearOffline: clearOffline,
       );
-      if (clearOffline) await _removeOfflineFiles(book);
       await _store.removeBook(book.id);
       await _reload();
       if (mounted) {
@@ -391,6 +393,13 @@ class _BookShelfViewState extends State<BookShelfView> {
     } else {
       await widget.repository.store.clearOffline(book);
     }
+    if (book.sourceId == 'local') {
+      // Delete document files without removing metadata before the main action.
+      for (final extension in ['epub', 'pdf']) {
+        final file = widget.repository.documentFile(book, extension);
+        if (await file.exists()) await file.delete();
+      }
+    }
     await widget.repository.store.clearReadingCache(book);
   }
 
@@ -398,6 +407,7 @@ class _BookShelfViewState extends State<BookShelfView> {
     final unlocked = await ensureVaultAccess(context, widget.repository.store);
     if (!unlocked || !mounted) return;
     try {
+      if (widget.pauseDownload case final pause?) await pause(book);
       await widget.repository.store.moveToVault(book);
       await BookShelfLists(
         widget.repository.store,
@@ -417,6 +427,7 @@ class _BookShelfViewState extends State<BookShelfView> {
 
   Future<void> _moveOutOfPrivate(Book book) async {
     try {
+      if (widget.pauseDownload case final pause?) await pause(book);
       await widget.repository.store.moveOutOfVault(book);
       await _store.removeBook(book.id);
       await _reload();
