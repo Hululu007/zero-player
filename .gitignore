@@ -35,6 +35,8 @@ migrate_working_dir/
 /.tools/
 /test_support/generated/
 /artifacts/
+/.workbuddy/
+/tmp/
 /log.jpg
 /.signing/
 **/*.jks
@@ -164,6 +166,8 @@ migrate_working_dir/
 !/docs/implementation/REVIEW-20261029.md
 !/docs/implementation/FEATURE-BOUNDARIES-20261029.md
 !/docs/implementation/FEATURE-REUSE-20261029.md
+!/docs/implementation/PROFESSIONAL-BOOKS-PLAN.md
+!/docs/implementation/RELEASE-0.8.0.md
 
 # Symbolication related
 app.*.symbols
