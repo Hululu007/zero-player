@@ -13,6 +13,7 @@ String featureWorkIdentity(CatalogItem item) {
     title,
     year.isNotEmpty ? year : item.director.trim(),
     workKind(item.category),
-    workVersion(item),
+    // Feature samples already stored on disk use the original tag ordering.
+    workVersion(item, preserveTagOrder: true),
   ]);
 }

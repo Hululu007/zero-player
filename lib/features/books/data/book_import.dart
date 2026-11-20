@@ -29,6 +29,15 @@ final class BookSourceImport {
 Future<BookSourceImport> parseBookSourcesOffThread(String input) =>
     Isolate.run(() => parseBookSources(input));
 
+const _bookRulesSchema = 'zero-player/book-source-rules';
+
+String encodeBookSourceRules(Iterable<BookSource> sources) =>
+    const JsonEncoder.withIndent('  ').convert({
+      'schema': _bookRulesSchema,
+      'version': 1,
+      'sources': [for (final source in sources) source.toJson()],
+    });
+
 Future<BookSourceImport> readBookSourceFile(String path) => Isolate.run(
   () async {
     final handle = await File(path).open();
@@ -171,6 +180,11 @@ BookSourceImport parseBookSourceRecords(Iterable<Object?> records) {
 
 Iterable<Object?> _sourceRecords(Object? value, [int depth = 0]) sync* {
   if (depth > 4) throw const FormatException('来源清单嵌套过深');
+  if (value is Map &&
+      value['schema'] == _bookRulesSchema &&
+      (value['version'] != 1 || value['sources'] is! List)) {
+    throw const FormatException('不支持此解析规则版本');
+  }
   if (value is Map &&
       value.containsKey('entry_package') &&
       value.containsKey('download_url')) {

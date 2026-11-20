@@ -86,9 +86,10 @@ void main() {
       _expectImmersive(tester, calls);
       await tester.tap(find.byTooltip('阅读菜单'));
       await tester.pumpAndSettle();
-      await tester.tap(find.byTooltip('下一页'));
+      expect(find.byTooltip('下一章'), findsOneWidget);
+      await tester.sendKeyEvent(LogicalKeyboardKey.pageDown);
       await tester.pumpAndSettle();
-      expect(find.byTooltip('下一页'), findsNothing);
+      expect(find.byTooltip('下一章'), findsNothing);
       expect(find.textContaining('2 /'), findsOneWidget);
       await _enableAutomation(tester);
       expect(
@@ -104,6 +105,18 @@ void main() {
       expect(find.byTooltip('停止自动阅读'), findsNothing);
       tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
       await tester.pump();
+      await tester.tap(find.byTooltip('阅读菜单'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byTooltip('下一章'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byTooltip('阅读菜单'));
+      await tester.pumpAndSettle();
+      expect(find.text('第二章'), findsOneWidget);
+      await tester.tap(find.byTooltip('上一章'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byTooltip('阅读菜单'));
+      await tester.pumpAndSettle();
+      expect(find.text('第一章'), findsOneWidget);
       await tester.pumpWidget(const SizedBox());
       await tester.pumpAndSettle();
       expect(calls.last.method, 'setReaderImmersive');

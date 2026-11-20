@@ -8,7 +8,11 @@ import 'application_fullscreen.dart';
 import 'app_layout.dart';
 import 'mobile_bottom_navigation.dart';
 import 'navigation_guide.dart';
+import 'reading_navigation.dart';
 import 'module_sources.dart';
+import '../features/books/domain/book.dart';
+import '../features/books/presentation/book_download_management_page.dart';
+import '../features/books/presentation/book_page_route.dart';
 import '../features/radio/presentation/radio_mini_player.dart';
 import '../features/music/presentation/music_player.dart';
 import '../features/books/presentation/audiobook_player_page.dart';
@@ -18,7 +22,7 @@ const _destinations = [
   ('/live', '直播', Icons.live_tv),
   ('/radio', '广播', Icons.radio_outlined),
   ('/music', '音乐', Icons.library_music_outlined),
-  ('/reading', '网络小说', Icons.auto_stories_outlined),
+  ...readingDestinations,
   ('/history', '记录', Icons.history),
   ('/downloads', '下载', Icons.download_outlined),
   ('/local', '本地', Icons.video_file_outlined),
@@ -88,9 +92,9 @@ final class _AppShellState extends State<AppShell> {
     _scaffold.currentState?.openDrawer();
   }
 
-  void _navigate(int index) {
+  void _navigate(String path) {
     _scaffold.currentState?.closeDrawer();
-    context.go(_destinations[index].$1);
+    context.go(path);
   }
 
   @override
@@ -214,7 +218,11 @@ final class _AppShellState extends State<AppShell> {
       return false;
     }
     if (!usesCompactNavigation(context, widget.services.platform) &&
-        (widget.location == '/reading' || widget.location == '/audiobooks')) {
+        const {
+          '/reading',
+          '/audiobooks',
+          '/comics',
+        }.contains(widget.location)) {
       return false;
     }
     final delta = notification.scrollDelta ?? 0;
@@ -285,6 +293,23 @@ final class _AppShellState extends State<AppShell> {
     ),
     actions: [
       if (wide) AppFullscreenButton(platform: widget.services.platform),
+      if (isReadingDestination(widget.location))
+        IconButton(
+          tooltip: '下载任务',
+          icon: const Icon(Icons.download_outlined),
+          onPressed: () => Navigator.of(context, rootNavigator: true).push(
+            BookPageRoute<void>(
+              builder: (_) => BookDownloadManagementPage(
+                services: widget.services,
+                initialKind: switch (widget.location) {
+                  '/audiobooks' => BookKind.audio,
+                  '/comics' => BookKind.comic,
+                  _ => null,
+                },
+              ),
+            ),
+          ),
+        ),
       IconButton(
         tooltip: '渠道管理',
         onPressed: () =>
@@ -321,27 +346,40 @@ final class _AppShellState extends State<AppShell> {
               ),
             ),
             const SizedBox(height: 24),
-            for (var i = 0; i < _destinations.length; i++)
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 4),
-                child: ListTile(
-                  autofocus: i == _index,
-                  selected: i == _index,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  selectedTileColor: Theme.of(
-                    context,
-                  ).colorScheme.primaryContainer,
-                  leading: Icon(_destinations[i].$3),
-                  title: Text(_destinations[i].$2),
-                  minTileHeight: 56,
-                  onTap: () => _navigate(i),
-                ),
-              ),
+            for (final destination in _destinations)
+              if (destination == readingDestinations.first)
+                ExpansionTile(
+                  key: const PageStorageKey('reading-navigation'),
+                  initiallyExpanded: isReadingDestination(widget.location),
+                  leading: const Icon(readingIcon),
+                  title: const Text('阅读'),
+                  expandedAlignment: Alignment.centerLeft,
+                  childrenPadding: const EdgeInsets.only(left: 24),
+                  children: readingDestinations.map(_navigationTile).toList(),
+                )
+              else if (!isReadingDestination(destination.$1))
+                _navigationTile(destination),
           ],
         ),
       ),
     ),
   );
+
+  Widget _navigationTile((String, String, IconData) destination) {
+    final (path, label, icon) = destination;
+    final selected = widget.location == path;
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: ListTile(
+        autofocus: selected,
+        selected: selected,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+        selectedTileColor: Theme.of(context).colorScheme.primaryContainer,
+        leading: Icon(icon),
+        title: Text(label),
+        minTileHeight: 52,
+        onTap: () => _navigate(path),
+      ),
+    );
+  }
 }

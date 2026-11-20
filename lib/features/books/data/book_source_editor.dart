@@ -135,7 +135,7 @@ final class BookSourceEditor {
       );
       _requireAccess();
       if (enabled && eligible.any((entry) => !comicAllowed(entry.source))) {
-        throw const ContentBlocked('部分漫画渠道尚未通过监管授权，请先逐个验证');
+        throw const ContentBlocked('部分漫画渠道尚未通过监管授权');
       }
       final eligibleIds = eligible.map((entry) => entry.source.id).toSet();
       if (eligibleIds.isEmpty) return false;

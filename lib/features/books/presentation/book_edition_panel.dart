@@ -16,11 +16,13 @@ final class BookEditionPanel extends StatefulWidget {
     required this.book,
     required this.busy,
     required this.onSelected,
+    this.initialScan = false,
+    this.includeCurrent = true,
   });
 
   final BooksRepository repository;
   final Book book;
-  final bool busy;
+  final bool busy, initialScan, includeCurrent;
   final ValueChanged<BookEdition> onSelected;
 
   @override
@@ -31,7 +33,8 @@ final class _BookEditionPanelState extends State<BookEditionPanel> {
   final _updates = <String, BookEditionUpdate>{};
   CancellationToken? _token;
   int _completed = 0, _total = 0;
-  bool _running = false, _expanded = true;
+  bool _running = false, _expanded = true, _showAll = false;
+  String? _selectedSource;
   String? _error;
   late String _policy;
   BooksRepository get _books => widget.repository;
@@ -43,6 +46,11 @@ final class _BookEditionPanelState extends State<BookEditionPanel> {
     _books.policy.addListener(_policyChanged);
     _books.sourceConfigurationChanges.addListener(_invalidate);
     _books.bookPolicyChanges.addListener(_checkAllowed);
+    if (widget.initialScan) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && !_running) _scan();
+      });
+    }
   }
 
   @override
@@ -77,6 +85,7 @@ final class _BookEditionPanelState extends State<BookEditionPanel> {
     setState(() {
       _running = false;
       _updates.clear();
+      _selectedSource = null;
       _completed = _total = 0;
       _error = null;
     });
@@ -98,7 +107,7 @@ final class _BookEditionPanelState extends State<BookEditionPanel> {
         widget.book,
         token,
         refresh: true,
-        includeCurrent: true,
+        includeCurrent: widget.includeCurrent,
         onProgress: (update) {
           if (!mounted || token.isCancelled || _token != token) return;
           setState(() {
@@ -126,7 +135,10 @@ final class _BookEditionPanelState extends State<BookEditionPanel> {
       return;
     }
     _token?.cancel();
-    setState(() => _running = false);
+    setState(() {
+      _selectedSource = edition.book.sourceId;
+      _running = false;
+    });
     widget.onSelected(edition);
   }
 
@@ -144,6 +156,14 @@ final class _BookEditionPanelState extends State<BookEditionPanel> {
             ),
           );
     final best = results.firstOrNull;
+    final shown = _showAll
+        ? _updates.values
+              .where(
+                (u) => u.edition == null || _books.bookAllowed(u.edition!.book),
+              )
+              .toList()
+        : results;
+    final hidden = _updates.length - results.length;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
       child: Column(
@@ -177,21 +197,7 @@ final class _BookEditionPanelState extends State<BookEditionPanel> {
               '当前检测最新（按目录章数）：${best.source!.source.name} · '
               '${best.edition!.chapters.last.title} · ${best.edition!.chapters.length} 章',
             ),
-          if (_updates.isNotEmpty) ...[
-            TextButton(
-              onPressed: () => setState(() => _expanded = !_expanded),
-              child: Text(_expanded ? '收起渠道结果' : '展开渠道结果'),
-            ),
-            if (_expanded)
-              SizedBox(
-                height: math.min(280, _updates.length * 76).toDouble(),
-                child: ListView.builder(
-                  itemCount: _updates.length,
-                  itemBuilder: (context, index) =>
-                      _row(_updates.values.elementAt(index)),
-                ),
-              ),
-          ],
+          if (_updates.isNotEmpty) _resultList(shown, hidden),
           if (!_running &&
               _total > 0 &&
               _completed == _total &&
@@ -202,11 +208,53 @@ final class _BookEditionPanelState extends State<BookEditionPanel> {
     );
   }
 
+  Widget _resultList(List<BookEditionUpdate> shown, int hidden) => Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Wrap(
+        spacing: 6,
+        children: [
+          if (shown.isNotEmpty)
+            TextButton(
+              onPressed: () => setState(() => _expanded = !_expanded),
+              child: Text(_expanded ? '收起渠道结果' : '展开渠道结果'),
+            ),
+          if (hidden > 0)
+            TextButton(
+              onPressed: () => setState(() {
+                _showAll = !_showAll;
+                _expanded = true;
+              }),
+              child: Text(_showAll ? '仅显示有书渠道' : '显示全部渠道（另有 $hidden 个）'),
+            ),
+        ],
+      ),
+      if (_expanded && shown.isNotEmpty)
+        SizedBox(
+          height: math.min(280, shown.length * 76).toDouble(),
+          child: ListView.builder(
+            primary: false,
+            itemCount: shown.length,
+            itemBuilder: (context, index) => _row(shown[index]),
+          ),
+        ),
+    ],
+  );
+
   Widget _row(BookEditionUpdate update) {
     final edition = update.edition;
-    final current = update.source!.source.id == widget.book.sourceId;
+    final id = update.source!.source.id;
+    final current = id == widget.book.sourceId;
+    final selected = id == (_selectedSource ?? widget.book.sourceId);
     return ListTile(
-      contentPadding: EdgeInsets.zero,
+      key: ValueKey(id),
+      selected: selected,
+      selectedTileColor: Theme.of(context).colorScheme.secondaryContainer,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      onTap: edition == null || widget.busy
+          ? null
+          : () => setState(() => _selectedSource = id),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 8),
       title: Text(
         '${update.source!.source.name}${current ? '（当前）' : ''}',
         maxLines: 1,

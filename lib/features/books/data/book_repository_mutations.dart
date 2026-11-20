@@ -27,6 +27,34 @@ extension _BookRepositoryMutations on BooksRepository {
     }
   }
 
+  Future<void> _authorizeAndEnableComics(List<BookSource> selection) =>
+      _withEvidenceMutation(() async {
+        await ensureSourceRiskLoaded();
+        final ids = {for (final source in selection) source.id};
+        final fingerprints = {
+          for (final source in selection)
+            source.id: bookDownloadSourceFingerprint(source),
+        };
+        await comicAccess.approveAll(
+          selection.where((source) => !comicAccess.allowed(source)),
+          validateEnablement: () async {
+            final current = (await sources(
+              BookKind.comic,
+            )).where((entry) => ids.contains(entry.source.id)).toList();
+            if (current.length != ids.length ||
+                current.any(
+                  (entry) =>
+                      bookDownloadSourceFingerprint(entry.source) !=
+                      fingerprints[entry.source.id],
+                )) {
+              throw const FormatException('所选漫画渠道已变化，请刷新后重试');
+            }
+            return ids;
+          },
+        );
+        await _refreshChangedSources();
+      }, sourceConfiguration: true);
+
   Future<void> _refreshChangedSources() async {
     _sourceAccess.invalidate(unload: true);
     _sourceRiskChanges.value++;

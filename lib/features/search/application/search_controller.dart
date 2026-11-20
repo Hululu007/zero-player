@@ -18,23 +18,32 @@ final class SearchController extends ChangeNotifier {
     sources.policy?.addListener(_policyChanged);
   }
   void _policyChanged() {
-    cancel(notify: false);
-    items.removeWhere((item) => !(sources.policy?.itemAllowed(item) ?? true));
-    final policy = sources.policy;
-    if (policy != null) {
-      final hidden = statuses.keys
-          .where((id) => !policy.sourceIdAllowed(id))
-          .toSet();
-      for (final id in hidden) {
-        statuses.remove(id);
-        sourceNames.remove(id);
-        latencies.remove(id);
-        failedSources.remove(id);
-      }
-      if (preferredSourceId != null &&
-          !policy.sourceIdAllowed(preferredSourceId!)) {
-        preferredSourceId = null;
-      }
+    final policy = sources.policy!;
+    if (loading && !policy.textAllowed(query)) {
+      cancel(notify: false);
+      error = '搜索关键词已被过滤';
+    }
+    items.removeWhere((item) {
+      if (policy.itemAllowed(item)) return false;
+      _seen.remove('${item.sourceId}/${item.id}');
+      return true;
+    });
+    final hidden = statuses.keys
+        .where((id) => !policy.sourceIdAllowed(id))
+        .toList();
+    for (final id in hidden) {
+      _blocked.add(id);
+      _sourceTokens[id]?.cancel();
+      _running.remove(id);
+      statuses.remove(id);
+      sourceNames.remove(id);
+      sourceLabels.remove(id);
+      latencies.remove(id);
+      failedSources.remove(id);
+    }
+    if (preferredSourceId != null &&
+        !policy.sourceIdAllowed(preferredSourceId!)) {
+      preferredSourceId = null;
     }
     notifyListeners();
   }
@@ -60,6 +69,7 @@ final class SearchController extends ChangeNotifier {
   int _concurrency = 6;
   Set<String> _excluded = {};
   final _running = <String>{};
+  final _sourceTokens = <String, CancellationToken>{};
   Map<String, List<CatalogItem>>? _groupsCache;
   Timer? _notification;
   @override
@@ -211,6 +221,11 @@ final class SearchController extends ChangeNotifier {
       failedSources.clear();
       latencies.clear();
     }
+    if (sources.policy?.textAllowed(query) == false) {
+      error = '搜索关键词已被过滤';
+      notifyListeners();
+      return;
+    }
     error = null;
     loading = true;
     notifyListeners();
@@ -220,7 +235,7 @@ final class SearchController extends ChangeNotifier {
         (await sources.all())
             .where(
               (s) =>
-                  s.available &&
+                  (retainResults ? s.enabled && !s.suppressed : s.available) &&
                   (onlyIds == null || onlyIds.contains(s.id)) &&
                   !excluded.contains(s.id) &&
                   !_blocked.contains(s.id) &&
@@ -233,7 +248,7 @@ final class SearchController extends ChangeNotifier {
           );
     if (generation != _generation) return;
     if (enabled.isEmpty) {
-      error = '没有可用的已启用源，请先添加或启用来源';
+      error = retainResults ? '没有符合当前设置的失败来源可重试' : '没有可用的已启用源，请先添加或启用来源';
       loading = false;
       notifyListeners();
       return;
@@ -305,7 +320,7 @@ final class SearchController extends ChangeNotifier {
   ) async {
     final searchOptions = options;
     final pageLimit = searchOptions.maxPages.clamp(1, 10);
-    final token = CancellationToken();
+    final token = _sourceTokens[source.id] = CancellationToken();
     final remove = parent.listen(token.cancel);
     final timeout = Timer(const Duration(seconds: 10), token.cancel);
     var count = items.where((i) => i.sourceId == source.id).length;
@@ -337,7 +352,10 @@ final class SearchController extends ChangeNotifier {
           if (filterAdult && adultContent('${item.title} ${item.category}')) {
             continue;
           }
-          if (!searchOptions.accepts(item, query)) continue;
+          if (sources.policy?.itemAllowed(item) == false ||
+              !searchOptions.accepts(item, query)) {
+            continue;
+          }
           if (_seen.add('${item.sourceId}/${item.id}')) {
             items.add(item);
             count++;
@@ -347,7 +365,7 @@ final class SearchController extends ChangeNotifier {
         _notifyProgress(itemsChanged: true);
       }
       await sources.health(source.id, null, latencyMs: latencies[source.id]);
-      if (generation == _generation) {
+      if (generation == _generation && !_blocked.contains(source.id)) {
         statuses[source.id] = count == 0
             ? '无结果'
             : '$count 条结果${limited ? '（前 $pageLimit 页）' : ''}';
@@ -379,6 +397,9 @@ final class SearchController extends ChangeNotifier {
     } finally {
       timeout.cancel();
       remove();
+      if (identical(_sourceTokens[source.id], token)) {
+        _sourceTokens.remove(source.id);
+      }
       if (generation == _generation) {
         _running.remove(source.id);
         _notifyProgress();
@@ -388,6 +409,7 @@ final class SearchController extends ChangeNotifier {
 
   Future<void> blockSource(String id) async {
     _blocked.add(id);
+    _sourceTokens[id]?.cancel();
     _running.remove(id);
     items.removeWhere((item) => item.sourceId == id);
     statuses[id] = '已屏蔽';

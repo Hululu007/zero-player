@@ -114,6 +114,7 @@ final class BookShelfEntry {
     this.following = false,
     this.newChapters = 0,
     this.catalogOmitted = 0,
+    this.catalogRevision = '',
     this.chapterUpdatedAt,
   });
   final Book book;
@@ -124,6 +125,7 @@ final class BookShelfEntry {
   final bool following;
   final int newChapters;
   final int catalogOmitted;
+  final String catalogRevision;
   final DateTime? chapterUpdatedAt;
   final bool favorite;
   final int updated;
@@ -346,7 +348,7 @@ final class BookStore {
     subscriptionId: state['subscription'] is String
         ? state['subscription'] as String
         : null,
-    fromCatalog: state['catalog'] == true,
+    fromCatalog: !source.builtin && state['catalog'] == true,
   );
 
   Future<void> saveSource(
@@ -608,6 +610,9 @@ final class BookStore {
     textOffset: raw['textOffset'] is int ? raw['textOffset'] as int : null,
     following: raw['following'] == true,
     newChapters: raw['newChapters'] as int? ?? 0,
+    catalogRevision: raw['catalogRevision'] is String
+        ? raw['catalogRevision'] as String
+        : '',
     catalogOmitted: raw['catalogOmitted'] is int
         ? (raw['catalogOmitted'] as int).clamp(0, 1 << 30)
         : 0,
@@ -849,6 +854,7 @@ final class BookStore {
     Book book,
     List<BookChapter> fresh, {
     bool followedOnly = false,
+    String? catalogRevision,
   }) async {
     final key = 'books_shelf:${book.id}';
     await vault.ensureLoaded();
@@ -876,7 +882,8 @@ final class BookStore {
           'chapters': window.chapters
               .map((chapter) => chapter.toJson())
               .toList(),
-          'catalogOmitted': window.omitted == 0
+          'catalogRevision': ?catalogRevision,
+          'catalogOmitted': window.omitted == 0 && catalogRevision == null
               ? previous.catalogOmitted
               : window.omitted,
           'newChapters': previous.newChapters + added,
@@ -924,8 +931,9 @@ final class BookStore {
       ?lastId,
     };
     return BookCatalogWindow(
-      preserve ? old : old.where((c) => protected.contains(c.id)).toList(),
+      old,
       chapters,
+      preserveOld: preserve,
       last:
           last ??
           [...chapters, ...old].where((c) => c.id == lastId).firstOrNull,

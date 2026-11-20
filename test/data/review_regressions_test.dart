@@ -47,25 +47,29 @@ void main() {
 
 void _catalogTests() {
   test(
-    'rotated 4000-entry catalog retains newest, resume and offline chapters',
+    'rotated catalog at capacity retains newest, resume and offline chapters',
     () async {
       await store.saveBook(
         book,
-        chapters: List.generate(4000, chapter),
+        chapters: List.generate(bookChapterCatalogLimit, chapter),
         following: true,
         last: chapter(1),
       );
       await store.saveText(book, chapter(0), 'offline');
       final result = await store.updateShelfChapters(
         book,
-        List.generate(4000, (i) => chapter(i + 1)),
+        List.generate(bookChapterCatalogLimit, (i) => chapter(i + 1)),
       );
       final saved = (await store.entry(book))!;
       expect(result!.omitted, 1);
-      expect(saved.chapters.length, 4000);
+      expect(saved.chapters.length, bookChapterCatalogLimit);
       expect(
         saved.chapters.map((c) => c.id),
-        containsAll([chapter(0).id, chapter(1).id, chapter(4000).id]),
+        containsAll([
+          chapter(0).id,
+          chapter(1).id,
+          chapter(bookChapterCatalogLimit).id,
+        ]),
       );
       expect(saved.newChapters, 1);
       expect(await store.text(book, chapter(0)), 'offline');
@@ -75,7 +79,10 @@ void _catalogTests() {
     'following save keeps supplied last chapter inside persisted window',
     () async {
       await store.saveBook(book, chapters: [chapter(0)], following: true);
-      final fresh = List.generate(4000, (i) => chapter(i + 1));
+      final fresh = List.generate(
+        bookChapterCatalogLimit,
+        (i) => chapter(i + 1),
+      );
       await store.saveBook(
         book,
         chapters: fresh,
@@ -83,7 +90,7 @@ void _catalogTests() {
         position: 0.5,
       );
       final saved = (await store.entry(book))!;
-      expect(saved.chapters.length, 4000);
+      expect(saved.chapters.length, bookChapterCatalogLimit);
       expect(saved.last, fresh.last.id);
       expect(saved.chapters.map((c) => c.id), contains(saved.last));
     },
@@ -94,11 +101,11 @@ void _catalogTests() {
       await store.saveBook(book, chapters: [chapter(0)], last: chapter(0));
       await store.saveBook(
         book,
-        chapters: List.generate(4000, (i) => chapter(i + 1)),
+        chapters: List.generate(bookChapterCatalogLimit, (i) => chapter(i + 1)),
       );
       final saved = (await store.entry(book))!;
       expect(saved.chapters.map((c) => c.id), contains(saved.last));
-      expect(saved.chapters.last.id, chapter(4000).id);
+      expect(saved.chapters.last.id, chapter(bookChapterCatalogLimit).id);
     },
   );
 }
@@ -107,7 +114,7 @@ void _capacityTests() {
   test(
     'required download window overflow is explicit and leaves shelf unchanged',
     () async {
-      final old = List.generate(4000, chapter);
+      final old = List.generate(bookChapterCatalogLimit, chapter);
       await store.saveBook(
         book,
         chapters: old,
@@ -116,13 +123,13 @@ void _capacityTests() {
       );
       await store.write('books_download:${book.id}', {
         'first': 1,
-        'last': 4000,
+        'last': bookChapterCatalogLimit,
         'fallback': false,
         'chapterIds': old.map((c) => c.id).toList(),
       });
       final before = await store.read('books_shelf:${book.id}');
       await expectLater(
-        store.updateShelfChapters(book, [chapter(4000)]),
+        store.updateShelfChapters(book, [chapter(bookChapterCatalogLimit)]),
         throwsA(isA<BookCatalogCapacityExceeded>()),
       );
       expect(await store.read('books_shelf:${book.id}'), before);

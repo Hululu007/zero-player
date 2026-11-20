@@ -2,8 +2,26 @@ part of 'book_reader_page.dart';
 
 extension _ReaderTools on _BookReaderPageState {
   Future<void> _showChapters() async {
-    final selected = await showModalBottomSheet<BookChapter>(
-      context: context,
+    const rowHeight = 56.0;
+    _chapterQuery = '';
+    final currentIndex = _directoryChapters.indexWhere(
+      (chapter) => chapter.id == _chapter.id,
+    );
+    final scroll = ScrollController(
+      initialScrollOffset: currentIndex < 0 ? 0 : currentIndex * rowHeight,
+    );
+    void jump(double offset) {
+      if (scroll.hasClients) {
+        scroll.jumpTo(offset.clamp(0, scroll.position.maxScrollExtent));
+      }
+    }
+
+    final navigator = Navigator.of(context);
+    final route = ModalBottomSheetRoute<BookChapter>(
+      capturedThemes: InheritedTheme.capture(
+        from: context,
+        to: navigator.context,
+      ),
       isScrollControlled: true,
       showDragHandle: true,
       builder: (context) => StatefulBuilder(
@@ -13,17 +31,7 @@ extension _ReaderTools on _BookReaderPageState {
             _books.sourceRiskChanges,
           ]),
           builder: (context, _) {
-            final allowed = _books.bookAllowed(widget.book);
-            final ordered = _reverse ? _chapters.reversed : _chapters;
-            final visible = allowed
-                ? ordered
-                      .where(
-                        (chapter) =>
-                            chapter.title.contains(_chapterQuery) &&
-                            _books.policy.textAllowed(chapter.title),
-                      )
-                      .toList()
-                : <BookChapter>[];
+            final visible = _directoryChapters;
             return _readerSheet(context, [
               ListTile(
                 title: const Text('章节目录'),
@@ -32,18 +40,19 @@ extension _ReaderTools on _BookReaderPageState {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     IconButton(
-                      tooltip: '上一章',
-                      icon: const Icon(Icons.skip_previous),
-                      onPressed: _canCross(-1)
-                          ? () => Navigator.pop(context, _chapters[_index - 1])
-                          : null,
+                      tooltip: '目录回顶',
+                      icon: const Icon(Icons.vertical_align_top),
+                      onPressed: () => jump(0),
                     ),
                     IconButton(
-                      tooltip: '下一章',
-                      icon: const Icon(Icons.skip_next),
-                      onPressed: _canCross(1)
-                          ? () => Navigator.pop(context, _chapters[_index + 1])
-                          : null,
+                      tooltip: '定位当前章节',
+                      icon: const Icon(Icons.my_location),
+                      onPressed: () {
+                        final index = visible.indexWhere(
+                          (chapter) => chapter.id == _chapter.id,
+                        );
+                        if (index >= 0) jump(index * rowHeight);
+                      },
                     ),
                     IconButton(
                       tooltip: '倒序',
@@ -54,20 +63,11 @@ extension _ReaderTools on _BookReaderPageState {
                   ],
                 ),
               ),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: TextFormField(
-                  initialValue: _chapterQuery,
-                  decoration: const InputDecoration(
-                    hintText: '筛选章节',
-                    prefixIcon: Icon(Icons.search),
-                  ),
-                  onChanged: (value) =>
-                      update(() => _chapterQuery = value.trim()),
-                ),
-              ),
+              _directorySearch(context, update),
               Expanded(
                 child: ListView.builder(
+                  controller: scroll,
+                  itemExtent: rowHeight,
                   itemCount: visible.length,
                   itemBuilder: (context, index) {
                     final chapter = visible[index];
@@ -88,10 +88,56 @@ extension _ReaderTools on _BookReaderPageState {
         ),
       ),
     );
+    final selected = await navigator.push(route);
+    unawaited(route.completed.whenComplete(scroll.dispose));
     if (mounted && selected != null && selected != _chapter) {
       await _open(selected);
     }
   }
+
+  List<BookChapter> get _directoryChapters {
+    if (!_books.bookAllowed(widget.book)) return const [];
+    final ordered = _reverse ? _chapters.reversed : _chapters;
+    return ordered
+        .where(
+          (chapter) =>
+              chapter.title.contains(_chapterQuery) &&
+              _books.policy.textAllowed(chapter.title),
+        )
+        .toList();
+  }
+
+  Widget _directorySearch(BuildContext context, StateSetter update) => Padding(
+    padding: const EdgeInsets.symmetric(horizontal: 12),
+    child: Row(
+      children: [
+        Expanded(
+          child: TextFormField(
+            initialValue: _chapterQuery,
+            decoration: const InputDecoration(
+              hintText: '筛选章节',
+              prefixIcon: Icon(Icons.search),
+            ),
+            onChanged: (value) => update(() => _chapterQuery = value.trim()),
+          ),
+        ),
+        IconButton(
+          tooltip: '上一章',
+          icon: const Icon(Icons.skip_previous),
+          onPressed: _canCross(-1)
+              ? () => Navigator.pop(context, _chapters[_index - 1])
+              : null,
+        ),
+        IconButton(
+          tooltip: '下一章',
+          icon: const Icon(Icons.skip_next),
+          onPressed: _canCross(1)
+              ? () => Navigator.pop(context, _chapters[_index + 1])
+              : null,
+        ),
+      ],
+    ),
+  );
 
   Future<void> _showFind() async {
     if (!_ready || _images.isNotEmpty) return;

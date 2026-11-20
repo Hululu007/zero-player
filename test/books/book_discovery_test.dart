@@ -241,6 +241,10 @@ void _bundledPacks() {
     ].where((entry) => entry.fromCatalog).toList();
     expect(entries.length, result.changes.added);
     expect(
+      entries.where((entry) => entry.source.kind == BookKind.comic),
+      isEmpty,
+    );
+    expect(
       entries.every((entry) => !entry.enabled && !entry.source.builtin),
       isTrue,
     );

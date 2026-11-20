@@ -18,6 +18,7 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   HttpOverrides.global = null;
   _refreshRaceTest();
+  _builtinRefreshScopeTest();
   _backupHeadersTest();
   _builtinInitializationTest();
   _upgradeTest();
@@ -48,6 +49,71 @@ void main() {
         http.close();
         await db.close();
       }
+    },
+  );
+}
+
+void _builtinRefreshScopeTest() {
+  test(
+    'full refresh queued behind a missing-only refresh checks fresh lists',
+    () async {
+      final db = AppDatabase.memory();
+      final http = MediaHttpClient(allowPrivateNetworks: true);
+      final live = LiveRepository(db, DocumentClient(http));
+      final builtin = BuiltinLiveSources(live);
+      final entered = Completer<void>(), release = Completer<void>();
+      final server = await HttpTestServer.start((request) async {
+        if (request.uri.path == '/stale' && !entered.isCompleted) {
+          entered.complete();
+          await release.future;
+        }
+        request.response.write('CCTV1,https://media.test/live.m3u8');
+      });
+      const asset = 'assets/live_candidates.json';
+      final messenger =
+          TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+      final stale = server.baseUri.resolve('stale');
+      final fresh = server.baseUri.resolve('fresh');
+      rootBundle.evict(asset);
+      messenger.setMockMessageHandler('flutter/assets', (message) async {
+        expect(const StringCodec().decodeMessage(message), asset);
+        return const StringCodec().encodeMessage(
+          jsonEncode({
+            'lists': [
+              for (final uri in [stale, fresh])
+                {'name': uri.path, 'url': '$uri'},
+            ],
+          }),
+        );
+      });
+      addTearDown(() async {
+        if (!release.isCompleted) release.complete();
+        await builtin.close();
+        messenger.setMockMessageHandler('flutter/assets', null);
+        rootBundle.evict(asset);
+        http.close();
+        await server.close();
+        await db.close();
+      });
+      for (final uri in [stale, fresh]) {
+        await live.importText(
+          uri.path,
+          uri,
+          'CCTV1,https://media.test/live.m3u8',
+        );
+      }
+      await db.write('UPDATE live_lists SET updated_at=0 WHERE url=?', [
+        '$stale',
+      ]);
+      final missing = builtin.refresh(onlyMissing: true);
+      await entered.future;
+      final full = builtin.refresh();
+      expect(builtin.refresh(), same(full));
+      expect(server.calls['/fresh'], isNull);
+      release.complete();
+      await missing;
+      await full;
+      expect(server.calls, {'/stale': 2, '/fresh': 1});
     },
   );
 }

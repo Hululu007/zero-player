@@ -63,6 +63,8 @@ void main() {
       tester,
       () => find.byType(LinearProgressIndicator).evaluate().isEmpty,
     );
+    await tester.tap(find.text('渠道维护'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('作品标记复核'));
     await _waitFor(tester, () => find.text('书架复核样本').evaluate().isNotEmpty);
     await tester.tap(find.text('人工复核'));

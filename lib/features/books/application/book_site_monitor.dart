@@ -75,11 +75,23 @@ final class BookSiteMonitor {
     ForegroundWorkload.instance.addListener(_policyChanged);
     settings.addListener(_policyChanged);
     checks.books.policy.addListener(_policyChanged);
+    _updateSchedule();
+  }
+
+  void _updateSchedule() {
+    if (!settings.value.backgroundProbe || !settings.value.bookSiteAutoCheck) {
+      _initial?.cancel();
+      _periodic?.cancel();
+      _initial = _periodic = null;
+      return;
+    }
+    if (_periodic != null) return;
     _initial = Timer(startDelay, () => unawaited(check()));
     _periodic = Timer.periodic(interval, (_) => unawaited(check()));
   }
 
   void _policyChanged() {
+    _updateSchedule();
     final next = bookSitePolicySnapshot(checks.books.policy);
     if (next != _policySnapshot || !_allowed) _token?.cancel();
     _policySnapshot = next;

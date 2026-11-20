@@ -18,6 +18,7 @@ final class BookComicAccess {
   });
   Future<void> _load() async {
     final raw = await store.read('books_comic_approvals:v1');
+    _approved.clear();
     if (raw is Map) {
       for (final entry in raw.entries) {
         if (entry.key is String && entry.value is String) {
@@ -30,7 +31,8 @@ final class BookComicAccess {
 
   bool allowed(BookSource source) =>
       source.kind != BookKind.comic ||
-      (source.name.trim() == '新人漫画' &&
+      (source.builtin &&
+          source.name.trim() == '新人漫画' &&
           source.endpoint.scheme == 'https' &&
           source.endpoint.host == 'xapi.xinmanhua.net' &&
           source.mediaHosts.every(
@@ -39,7 +41,12 @@ final class BookComicAccess {
           )) ||
       _approved[source.id] == bookDownloadSourceFingerprint(source);
 
-  Future<void> approve(BookSource source) async {
+  Future<void> approve(BookSource source) => approveAll([source]);
+
+  Future<void> approveAll(
+    Iterable<BookSource> sources, {
+    Future<Set<String>> Function()? validateEnablement,
+  }) async {
     await load();
     void authorize() {
       if (!policy.supervision.configured) {
@@ -52,18 +59,23 @@ final class BookComicAccess {
     }
 
     authorize();
-    final next = {
-      ..._approved,
-      source.id: bookDownloadSourceFingerprint(source),
-    };
     await store.db.atomic(() async {
+      final ids = await validateEnablement?.call();
       authorize();
+      final raw = await store.read('books_comic_approvals:v1');
+      final next = {
+        if (raw is Map)
+          for (final entry in raw.entries)
+            if (entry.key is String && entry.value is String)
+              entry.key as String: entry.value as String,
+        for (final source in sources)
+          source.id: bookDownloadSourceFingerprint(source),
+      };
       await store.write('books_comic_approvals:v1', next);
+      if (ids != null) await store.setSourcesEnabled(ids, true);
       authorize();
     }, tables: {'app_meta'});
-    _approved
-      ..clear()
-      ..addAll(next);
+    await _load();
     policy.refresh();
   }
 }

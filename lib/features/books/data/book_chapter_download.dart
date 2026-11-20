@@ -6,13 +6,14 @@ extension _BookChapterDownload on BooksRepository {
     BookChapter chapter,
     CancellationToken token, {
     List<BookEdition> alternatives = const [],
+    List<(Book, BookChapter)> matchedAlternatives = const [],
     bool tryOriginal = true,
+    BookDownloadSourceHealth? sourceHealth,
   }) async {
     await ensureSourceRiskLoaded();
     await chapterPolicy.load();
     if (book.kind == BookKind.comic) {
-      await _downloadComic(book, chapter, token);
-      return;
+      return _downloadComic(book, chapter, token);
     }
     requireBook(book, chapter);
     if (await _blocked(book.sourceId)) throw const ContentBlocked();
@@ -25,14 +26,20 @@ extension _BookChapterDownload on BooksRepository {
       if (tryOriginal && aggregated == null) (book, chapter),
       if (tryOriginal && aggregated != null)
         (aggregated.origin, aggregated.originChapter),
+      ...matchedAlternatives,
+      for (final edition in alternatives)
+        if (matchingChapter(edition.chapters, chapter) case final match?)
+          (edition.book, match),
     ];
-    for (final edition in alternatives) {
-      final match = matchingChapter(edition.chapters, chapter);
-      if (match != null) candidates.add((edition.book, match));
-    }
     Object? last;
+    BookDownloadSourceUnavailable? refused;
     for (final (candidate, part) in candidates) {
       token.check();
+      final sourceId = candidate.sourceId;
+      if (sourceHealth?.unavailable(sourceId) case final unavailable?) {
+        refused = unavailable;
+        continue;
+      }
       try {
         final evidence = await downloadGuard.capture(
           book,
@@ -81,15 +88,18 @@ extension _BookChapterDownload on BooksRepository {
             validate,
           );
         }
+        sourceHealth?.succeeded(sourceId);
         return;
       } on ContentBlocked {
         rethrow;
       } on Exception catch (error) {
+        token.check();
+        refused = sourceHealth?.failed(sourceId, error) ?? refused;
         last = error;
       }
     }
     token.check();
-    throw last ?? const FormatException('没有可用章节');
+    throw refused ?? last ?? const FormatException('没有可用章节');
   }
 
   Future<String> _readAggregatedText(

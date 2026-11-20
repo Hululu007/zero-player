@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:isolate';
 
 import 'package:enough_convert/gbk.dart';
+import 'package:html/dom.dart' as dom show Document, Element;
 import 'package:xml/xml.dart';
 
 import '../../../core/network/cancellation_token.dart';
@@ -9,6 +10,7 @@ import '../../../core/network/document_client.dart';
 import '../../../core/network/document_encoding.dart';
 import '../../../core/network/header_policy.dart';
 import '../domain/book.dart';
+import '../domain/book_catalog_rules.dart';
 import '../domain/book_search.dart';
 import '../domain/legado_source.dart';
 import 'book_html.dart';
@@ -19,6 +21,8 @@ import 'lit2go_audio_client.dart';
 import 'legado/legado_client.dart';
 import 'shuyin_audio_client.dart';
 import 'ximalaya_audio_client.dart';
+
+part 'book_native_catalog.dart';
 
 List<Uri> parseBookImageAddresses(BookSource source, Uri base, String body) {
   if (!body.trimLeft().startsWith('[')) return const [];
@@ -164,7 +168,7 @@ final class BookClient {
       : source.format == BookFormat.bookan
       ? Future.value(BookanAudioClient.categories)
       : source.format == BookFormat.ximalaya
-      ? Future.value(XimalayaAudioClient.categories)
+      ? Future.value(XimalayaAudioClient.categories(source))
       : source.format == BookFormat.lit2go
       ? Future.value(Lit2GoAudioClient.categories)
       : Future.value(source.discoveryCategories);
@@ -242,6 +246,16 @@ final class BookClient {
         allowDiscoveryNetworkExpansion: allowDiscoveryNetworkExpansion,
       );
     }
+    if (source.format == BookFormat.featured &&
+        source.rules['catalogSearch'] == 'true') {
+      final books = await _mappedFeatured(
+        source,
+        category,
+        token,
+        allowRedirects: allowDiscoveryNetworkExpansion,
+      );
+      return (books: books, next: null);
+    }
     if (source.format != BookFormat.html) {
       return (books: await books(source, '', token), next: null);
     }
@@ -307,9 +321,18 @@ final class BookClient {
     }
     if (bookAddress != null) return [];
     if (source.format == BookFormat.featured) {
-      if (query.trim().isEmpty) return source.featured;
+      final hasCatalog = source.rules['catalogSearch'] == 'true';
+      final listing = hasCatalog
+          ? await _mappedFeatured(
+              source,
+              category,
+              token,
+              allowRedirects: allowDiscoveryNetworkExpansion,
+            )
+          : source.featured;
+      if (query.trim().isEmpty) return listing;
       final match = BookSearchQuery(query, BookSearchField.all);
-      return source.featured.where((book) => match.rank(book) != null).toList();
+      return listing.where((book) => match.rank(book) != null).toList();
     }
     if (source.format == BookFormat.feed) {
       final feed = await _feed(source, token);
@@ -355,11 +378,100 @@ final class BookClient {
     token.check();
     final text = response.text;
     final uri = response.uri;
+    final mapping = source.jsonCatalog[discovery ? 'discover' : 'search'];
     final parsed = await Isolate.run(
-      () => _htmlBooks(source, uri, text, discovery),
+      () => mapping == null
+          ? _htmlBooks(source, uri, text, discovery)
+          : _jsonBooks(source, uri, text, mapping),
     );
     token.check();
     return parsed;
+  }
+
+  static BookDiscoveryPage _jsonBooks(
+    BookSource source,
+    Uri base,
+    String text,
+    BookCatalogRules mapping,
+  ) {
+    final payload = jsonDecode(text);
+    final rows = mapping.read(payload, 'list');
+    if (rows is! List) throw const FormatException('JSON 书目列表无效');
+    final books = <Uri, Book>{};
+    for (final row in rows.take(5000)) {
+      final title = bookLabel(mapping.read(row, 'title'));
+      final link = mapping.read(row, 'url');
+      if (title.isEmpty || link is! String || link.trim().isEmpty) continue;
+      try {
+        final uri = source.resolve(base, link);
+        books.putIfAbsent(
+          uri,
+          () => Book(
+            source.id,
+            source.kind,
+            title,
+            bookLabel(mapping.read(row, 'author')),
+            uri,
+            description: bookLabel(mapping.read(row, 'description'), 600),
+            cover: bookCoverAddress(
+              base,
+              '${mapping.read(row, 'cover') ?? ''}',
+            ),
+          ),
+        );
+      } on FormatException {
+        continue;
+      }
+    }
+    final next = mapping.read(payload, 'next');
+    final target = next is String && next.trim().isNotEmpty
+        ? source.resolve(base, next)
+        : null;
+    return (
+      books: books.values.toList(),
+      next: target == base ? null : target?.toString(),
+    );
+  }
+
+  Future<List<Book>> _mappedFeatured(
+    BookSource source,
+    LegadoCategory? category,
+    CancellationToken token, {
+    required bool allowRedirects,
+  }) async {
+    final defaultTarget = source.resolve(source.endpoint, source.discover);
+    final target = source.resolve(
+      source.endpoint,
+      category?.address ?? source.discover,
+    );
+    try {
+      final response = await fetch(
+        source,
+        target,
+        token,
+        allowRedirects: allowRedirects,
+      );
+      final listing = await _parseHtmlBooks(
+        source,
+        response,
+        token,
+        discovery: true,
+      );
+      return [
+        if (target == defaultTarget) ...source.featured,
+        ...listing.books.where(
+          (book) =>
+              target != defaultTarget ||
+              !source.featured.any((featured) => featured.uri == book.uri),
+        ),
+      ];
+    } on RemoteFailure catch (error) {
+      token.check();
+      if (target != defaultTarget || error.kind == FailureKind.cancelled) {
+        rethrow;
+      }
+      return source.featured;
+    }
   }
 
   static BookDiscoveryPage _htmlBooks(
@@ -368,7 +480,7 @@ final class BookClient {
     String text,
     bool discovery,
   ) {
-    final document = parseBookHtml(text);
+    final document = parseBookHtml(text, keepNavigation: true);
     String rule(String key) {
       final discoverKey = 'discover${key[0].toUpperCase()}${key.substring(1)}';
       return (discovery ? source.rules[discoverKey] : null) ??
@@ -377,7 +489,20 @@ final class BookClient {
     }
 
     final results = <Uri, Book>{};
-    for (final row in bookElements(document, rule('list'))) {
+    final heading = discovery ? source.rules['discoverAuthorHeading'] : null;
+    final list = rule('list');
+    final headings = heading == null
+        ? const <dom.Element>{}
+        : bookElements(document, heading).toSet();
+    var author = '';
+    final rows = heading == null
+        ? bookElements(document, list)
+        : bookElements(document, '$heading, $list');
+    for (final row in rows) {
+      if (headings.contains(row)) {
+        author = bookLabel(plainBookText(row));
+        continue;
+      }
       final title = bookLabel(bookField(row, rule('title')));
       final link = bookField(row, rule('book'));
       if (title.isEmpty || link.isEmpty) continue;
@@ -394,12 +519,14 @@ final class BookClient {
             source.id,
             source.kind,
             title,
-            bookLabel(
-              bookField(
-                row,
-                rule('author'),
-              ).replaceFirst(RegExp(r'^作者[:：]\s*'), ''),
-            ),
+            rule('author').isEmpty
+                ? author
+                : bookLabel(
+                    bookField(
+                      row,
+                      rule('author'),
+                    ).replaceFirst(RegExp(r'^作者[:：]\s*'), ''),
+                  ),
             uri,
             description: bookLabel(bookField(row, rule('description')), 600),
             cover: bookCoverAddress(base, cover),
@@ -454,50 +581,7 @@ final class BookClient {
     if (source.format == BookFormat.feed) {
       return (await _feed(source, token)).$2;
     }
-    final chapters = <Uri, BookChapter>{};
-    final visited = <Uri>{};
-    var next = book.uri;
-    for (var page = 0; page < 12 && visited.add(next); page++) {
-      final response = await fetch(
-        source,
-        next,
-        token,
-        requestGuard: requestGuard,
-      );
-      final document = parseBookHtml(response.text);
-      final toc = page == 0
-          ? bookField(document, source.rules['toc'] ?? '')
-          : '';
-      if (toc.isNotEmpty) {
-        final target = source.resolve(response.uri, toc);
-        if (!visited.contains(target)) {
-          next = target;
-          continue;
-        }
-      }
-      for (final row in bookElements(
-        document,
-        source.rules['chapters']!,
-      ).take(4000 - chapters.length)) {
-        final title = bookLabel(bookField(row, source.rules['chapterTitle']!));
-        final link = bookField(row, source.rules['chapterUrl']!);
-        if (title.isEmpty || link.isEmpty) continue;
-        try {
-          final uri = source.resolve(
-            response.uri,
-            link,
-            media: source.directAudio,
-          );
-          chapters.putIfAbsent(uri, () => BookChapter(title, uri));
-        } on FormatException {
-          continue;
-        }
-      }
-      final more = bookField(document, source.rules['nextToc'] ?? '');
-      if (more.isEmpty || chapters.length == 4000) break;
-      next = source.resolve(response.uri, more);
-    }
-    return chapters.values.toList();
+    return _nativeChapters(source, book, token, requestGuard);
   }
 
   Future<String> text(
@@ -571,7 +655,12 @@ final class BookClient {
       if (parts.fold<int>(0, (sum, part) => sum + part.length) > 500000) {
         throw const FormatException('章节正文超过大小限制');
       }
-      final more = bookField(document, source.rules['nextContent'] ?? '');
+      final pagination = source.rules['nextContent'] ?? '';
+      if (pagination.isEmpty) break;
+      final more = bookField(
+        parseBookHtml(response.text, keepNavigation: true),
+        pagination,
+      );
       if (more.isEmpty) break;
       next = source.resolve(response.uri, more);
       if (page == 9 && !visited.contains(next)) {

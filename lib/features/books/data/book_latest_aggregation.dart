@@ -44,39 +44,63 @@ List<BookLatestChapter> planBookLatestChapters(
   final known = catalog.map((c) => bookIdentity(c.title)).toSet();
   final pending = editions.where((e) => _sameWork(target, e.book)).toList();
   while (pending.isNotEmpty) {
-    List<BookChapter> best = [];
-    Book? origin;
-    for (final edition in pending) {
-      final keys = edition.chapters.map((c) => bookIdentity(c.title)).toList();
-      final boundary = bookChapterTailBoundary(aligned, edition.chapters);
-      if (boundary == null) continue;
-      final tail = edition.chapters.skip(boundary + 1).toList();
-      final tailKeys = keys.skip(boundary + 1).toList();
-      // Different chapter URLs can legitimately share a title (e.g. notices).
-      // Keep their identities; never discard a complete tail for that alone.
-      if (tailKeys.any((key) => key.isEmpty || known.contains(key)) ||
-          tail.map((c) => c.id).toSet().length != tail.length) {
-        continue;
-      }
-      if (tail.length > best.length) {
-        best = tail;
-        origin = edition.book;
-      }
+    final batch = _latestBatch(target, aligned, known, pending);
+    if (batch.isEmpty) break;
+    result.addAll(batch);
+    for (final item in batch) {
+      aligned.add(item.chapter);
+      known.add(bookIdentity(item.chapter.title));
     }
-    if (origin == null) break;
-    for (final chapter in best) {
-      result.add((
-        target: _targetChapter(target, origin, chapter),
-        origin: origin,
-        chapter: chapter,
-      ));
-      final key = bookIdentity(chapter.title);
-      aligned.add(chapter);
-      known.add(key);
-    }
-    pending.removeWhere((edition) => edition.book.id == origin!.id);
+    pending.removeWhere((edition) => edition.book.id == batch.first.origin.id);
   }
   return result;
+}
+
+List<BookLatestChapter> _latestBatch(
+  Book target,
+  List<BookChapter> catalog,
+  Set<String> known,
+  Iterable<({Book book, List<BookChapter> chapters})> editions,
+) {
+  List<BookChapter> best = [];
+  Book? origin;
+  final ids = catalog.map((chapter) => chapter.id).toSet();
+  for (final edition in editions) {
+    final current = edition.book.id == target.id;
+    if (!current && !_sameWork(target, edition.book)) continue;
+    final boundary = bookChapterTailBoundary(catalog, edition.chapters);
+    if (boundary == null) continue;
+    final length = edition.chapters.length - boundary - 1;
+    if (length == 0 ||
+        length < best.length ||
+        (length == best.length && (!current || origin?.id == target.id))) {
+      continue;
+    }
+    final tail = edition.chapters.skip(boundary + 1).toList();
+    final tailIds = <String>{};
+    if (tail.any((chapter) {
+      final title = bookIdentity(chapter.title);
+      return title.isEmpty ||
+          known.contains(title) ||
+          (current && ids.contains(chapter.id)) ||
+          !tailIds.add(chapter.id);
+    })) {
+      continue;
+    }
+    best = tail;
+    origin = edition.book;
+  }
+  if (origin == null) return [];
+  return [
+    for (final chapter in best)
+      (
+        target: origin.id == target.id
+            ? chapter
+            : _targetChapter(target, origin, chapter),
+        origin: origin,
+        chapter: chapter,
+      ),
+  ];
 }
 
 /// Durable routing is separate from the chapter URL. Both ends retain the
@@ -115,6 +139,58 @@ final class BookLatestAggregation {
     CancellationToken token,
   ) async {
     final additions = planBookLatestChapters(book, catalog, editions);
+    return _persist(book, catalog, additions, token);
+  }
+
+  Future<List<BookChapter>> prepareNext(
+    Book book,
+    List<BookChapter> catalog,
+    Iterable<({Book book, List<BookChapter> chapters})> editions,
+    CancellationToken token,
+    bool Function(Book) isCurrent,
+    Future<void> Function(List<BookChapter>) saveCatalog,
+  ) {
+    if (catalog.isEmpty) {
+      // Only the original edition can provide an initial catalog to align against.
+      final base = editions
+          .where((edition) => edition.book.id == book.id)
+          .firstOrNull;
+      return _persist(
+        book,
+        catalog,
+        [
+          for (final chapter in base?.chapters ?? const <BookChapter>[])
+            (target: chapter, origin: book, chapter: chapter),
+        ],
+        token,
+        isCurrent: isCurrent,
+        saveCatalog: saveCatalog,
+      );
+    }
+    final additions = _latestBatch(
+      book,
+      catalog,
+      catalog.map((chapter) => bookIdentity(chapter.title)).toSet(),
+      editions,
+    );
+    return _persist(
+      book,
+      catalog,
+      additions,
+      token,
+      isCurrent: isCurrent,
+      saveCatalog: saveCatalog,
+    );
+  }
+
+  Future<List<BookChapter>> _persist(
+    Book book,
+    List<BookChapter> catalog,
+    List<BookLatestChapter> additions,
+    CancellationToken token, {
+    bool Function(Book)? isCurrent,
+    Future<void> Function(List<BookChapter>)? saveCatalog,
+  }) async {
     if (additions.isEmpty) return catalog;
     if (catalog.length + additions.length > BookCatalogWindow.limit) {
       throw const BookCatalogCapacityExceeded();
@@ -124,12 +200,14 @@ final class BookLatestAggregation {
     final proofs = <BookDownloadEvidence>[];
     for (final item in additions) {
       token.check();
+      if (isCurrent?.call(item.origin) == false) throw const ContentBlocked();
       final proof = origins[item.origin.id] ??= await guard.capture(
         book,
         item.target,
         item.origin,
         item.chapter,
       );
+      if (item.origin.id == book.id) continue;
       proofs.add(
         BookDownloadEvidence(
           target: book,
@@ -143,22 +221,33 @@ final class BookLatestAggregation {
         ),
       );
     }
-    await store.db.atomic(() async {
+    final next = [...catalog, ...additions.map((item) => item.target)];
+    void authorize() {
       token.check();
+      if (guard.lease() != lease ||
+          origins.values.any(
+            (proof) => isCurrent?.call(proof.origin) == false,
+          )) {
+        throw const ContentBlocked();
+      }
+    }
+
+    await store.db.atomic(() async {
+      authorize();
       for (final proof in origins.values) {
         await guard.validate(proof, expected: lease);
       }
       for (final proof in proofs) {
+        token.check();
         await store.writeBookValue(
           book,
           _key(book, proof.targetChapter),
           proof.toJson(),
         );
       }
-      token.check();
-      if (guard.lease() != lease) throw const ContentBlocked();
+      if (saveCatalog != null) await saveCatalog(next);
+      store.db.beforeCommit(authorize);
     }, tables: {'app_meta'});
-    token.check();
-    return [...catalog, ...additions.map((item) => item.target)];
+    return next;
   }
 }

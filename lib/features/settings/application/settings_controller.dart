@@ -38,7 +38,8 @@ final class UserSettings {
     this.probeConcurrency = 8,
     this.lineProbeConcurrency = 8,
     this.backgroundProbe = true,
-    this.bookSiteAutoCheck = true,
+    this.bookSiteAutoCheck = false,
+    this.bookAggregateCertificateExceptions = false,
     this.autoDownloadFallback = true,
     this.multiSourceDownload = false,
     this.downloadConcurrency = 2,
@@ -79,6 +80,7 @@ final class UserSettings {
   final int lineProbeConcurrency;
   final bool backgroundProbe;
   final bool bookSiteAutoCheck;
+  final bool bookAggregateCertificateExceptions;
   final bool autoDownloadFallback;
   final bool multiSourceDownload;
   final int downloadConcurrency;
@@ -120,6 +122,7 @@ final class UserSettings {
     'lineProbeConcurrency': lineProbeConcurrency,
     'backgroundProbe': backgroundProbe,
     'bookSiteAutoCheck': bookSiteAutoCheck,
+    'bookAggregateCertificateExceptions': bookAggregateCertificateExceptions,
     'autoDownloadFallback': autoDownloadFallback,
     'multiSourceDownload': multiSourceDownload,
     'downloadConcurrency': downloadConcurrency,
@@ -200,7 +203,9 @@ final class UserSettings {
     lineProbeConcurrency: ((map['lineProbeConcurrency'] as num?)?.toInt() ?? 8)
         .clamp(1, 16),
     backgroundProbe: map['backgroundProbe'] != false,
-    bookSiteAutoCheck: map['bookSiteAutoCheck'] != false,
+    bookSiteAutoCheck: map['bookSiteAutoCheck'] == true,
+    bookAggregateCertificateExceptions:
+        map['bookAggregateCertificateExceptions'] == true,
     autoDownloadFallback: map['autoDownloadFallback'] != false,
     multiSourceDownload: map['multiSourceDownload'] == true,
     downloadConcurrency: ((map['downloadConcurrency'] as num?)?.toInt() ?? 2)
@@ -306,7 +311,11 @@ final class SettingsController extends ChangeNotifier {
   }
 
   void _checkAdultFilter(Map<String, Object> changes) {
-    if (['backgroundProbe', 'bookSiteAutoCheck'].any(changes.containsKey)) {
+    if ([
+      'backgroundProbe',
+      'bookSiteAutoCheck',
+      'bookAggregateCertificateExceptions',
+    ].any(changes.containsKey)) {
       authorize?.call();
     }
     if ([

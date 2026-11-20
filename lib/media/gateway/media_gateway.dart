@@ -18,6 +18,7 @@ import '../hls/ad_filter.dart';
 import '../hls/timeline.dart';
 import 'timestamp_segments.dart';
 import '../network/media_response_policy.dart';
+import '../network/hls_probe.dart';
 
 final class GatewaySession {
   GatewaySession._(this._gateway, this.token, this.policy);
@@ -100,18 +101,7 @@ final class GatewaySession {
           r'\.(mp3|aac|mp4|flv|mkv|webm|ts|ogg|wav|flac)$',
           caseSensitive: false,
         ).hasMatch(uri.path)) {
-      final payload = await _gateway._client.open(
-        uri,
-        policy: policy,
-        cancellation: cancellation,
-      );
-      final first = await payload.body.take(1).toList();
-      hls =
-          first.isNotEmpty &&
-          utf8
-              .decode(first.first.take(512).toList(), allowMalformed: true)
-              .trimLeft()
-              .startsWith('#EXTM3U');
+      hls = await probeHls(_gateway._client, uri, policy, cancellation);
     }
     cancellation.check();
     return register(uri, playlist: hls, streaming: !hls);

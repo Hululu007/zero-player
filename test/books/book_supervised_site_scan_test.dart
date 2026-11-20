@@ -1047,6 +1047,9 @@ final class _Fixture {
         );
         await services.supervision.load();
         await services.settings.load();
+        if (!services.supervision.enabled) {
+          await services.settings.update({'bookSiteAutoCheck': true});
+        }
         await services.books.sources(BookKind.text);
         return services;
       },

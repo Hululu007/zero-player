@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 
 import '../../../app/app_services.dart';
 import '../../../core/persistence/metadata_domain.dart';
+import '../../../core/platform/file_transfer.dart';
 import '../../../core/network/cancellation_token.dart';
 import '../../../core/network/document_client.dart';
 import '../../supervision/domain/adult_source_evidence.dart';
@@ -24,7 +25,7 @@ import '../domain/book_rule_clues.dart';
 import '../domain/book_site_audit_clues.dart';
 import 'book_links.dart';
 
-enum _SourceAction { catalog, file, link, feed }
+enum _SourceAction { catalog, file, link, feed, exportRules }
 
 final class BookSourcesPage extends StatefulWidget {
   const BookSourcesPage({
@@ -52,6 +53,9 @@ final class _BookSourcesPageState extends State<BookSourcesPage> {
   bool _historicalAmsi = false, _pageScriptClues = false;
   bool? _enabled;
   String _query = '';
+  final _scroll = ScrollController();
+  bool _showTop = false;
+  bool _showSearch = false;
   bool _selecting = false;
   final _selected = <String>{};
   CancellationToken? _token;
@@ -84,6 +88,7 @@ final class _BookSourcesPageState extends State<BookSourcesPage> {
   void dispose() {
     _token?.cancel();
     _sourceRefresh?.cancel();
+    _scroll.dispose();
     _releaseMonitor();
     unawaited(_sourceChanges.cancel());
     _services.contentPolicy.removeListener(_policyChanged);
@@ -281,6 +286,57 @@ final class _BookSourcesPageState extends State<BookSourcesPage> {
     );
     _importNotice(parsed, result);
   }, protected: true);
+
+  Future<void> _exportRules() => _run(() async {
+    final repository = _services.books;
+    final revision = repository.sourceConfigurationRevision;
+    final entries = (await repository.sources(widget.kind))
+        .where((entry) => !_selecting || _selected.contains(entry.source.id))
+        .toList();
+    if (entries.isEmpty) throw const FormatException('没有可导出的渠道规则');
+    if (!mounted) return;
+    final accepted = await showDialog<bool>(
+      context: context,
+      builder: (dialog) => AlertDialog(
+        title: Text('导出 ${entries.length} 个渠道的解析规则'),
+        content: const Text('规则可以重新导入，包含渠道地址和原有请求参数。导出文件请存放于个人位置。'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialog),
+            child: const Text('取消'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialog, true),
+            child: const Text('导出 JSON'),
+          ),
+        ],
+      ),
+    );
+    if (accepted != true || !mounted) return;
+    await runSensitive(
+      context,
+      _services.supervision,
+      SensitiveOperation.export,
+      () async {
+        void verify() {
+          _services.supervision.require(SensitiveOperation.export);
+          if (!repository.sourceRisksReady ||
+              repository.sourceConfigurationChanging ||
+              repository.sourceConfigurationRevision != revision ||
+              entries.any((entry) => !repository.sourceEntryAllowed(entry))) {
+            throw const FormatException('渠道权限已变化，请重新选择');
+          }
+        }
+
+        verify();
+        await FileTransfer.saveText(
+          'reading-${widget.kind.name}-rules.json',
+          encodeBookSourceRules(entries.map((entry) => entry.source)),
+          beforeWrite: verify,
+        );
+      },
+    );
+  });
 
   Future<void> _importAddress() async {
     final address = await _prompt('Legado 导入链接、来源 JSON 或源仓库详情页', limit: 4096);
@@ -481,6 +537,7 @@ final class _BookSourcesPageState extends State<BookSourcesPage> {
         'group': '订阅',
         if (host.isNotEmpty) 'mediaHosts': [host],
       });
+
       final result = await _services.books.importSources([source]);
       _notice(
         result.added == 1
@@ -772,16 +829,36 @@ final class _BookSourcesPageState extends State<BookSourcesPage> {
     }
   }
 
-  Future<void> _batch(bool enabled) async {
-    final ids = Set<String>.of(_selected);
+  Future<void> _setEnabled(Set<String> ids, bool enabled) async {
+    final selected = _entries
+        .where((entry) => ids.contains(entry.source.id))
+        .map((entry) => entry.source)
+        .toList();
+    final needsComicApproval =
+        enabled &&
+        widget.kind == BookKind.comic &&
+        selected.any((source) => !_services.books.comicAccess.allowed(source));
     await _run(() async {
-      await _services.books.setSourcesEnabled(widget.kind, ids, enabled);
+      if (needsComicApproval) {
+        final confirmed = await runSensitive(
+          context,
+          _services.supervision,
+          SensitiveOperation.supervision,
+          () => _services.books.authorizeAndEnableComics(selected),
+          explanation: '验证后启用所选 ${selected.length} 个漫画渠道。授权绑定当前规则，规则变更后需要重新验证。',
+        );
+        if (!confirmed) return;
+      } else {
+        await _services.books.setSourcesEnabled(widget.kind, ids, enabled);
+      }
       setStateIfMounted(() {
         _selected.clear();
         _selecting = false;
       });
-    }, protected: true);
+    }, protected: !needsComicApproval);
   }
+
+  Future<void> _batch(bool enabled) => _setEnabled(Set.of(_selected), enabled);
 
   Widget _selectionTools(List<BookSourceEntry> visible) => Padding(
     padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -865,6 +942,32 @@ final class _BookSourcesPageState extends State<BookSourcesPage> {
           }),
         ),
       ),
+      ListenableBuilder(
+        listenable: _services.settings,
+        builder: (context, _) => SwitchListTile(
+          dense: true,
+          secondary: const Icon(Icons.verified_user_outlined),
+          title: const Text('聚合使用已确认的证书'),
+          subtitle: const Text('默认跳过校验失败的渠道。单独进入渠道可临时加载或记住证书。'),
+          value: _services.settings.value.bookAggregateCertificateExceptions,
+          onChanged: (value) => _run(() async {
+            await runSensitive(
+              context,
+              _services.supervision,
+              SensitiveOperation.settings,
+              () => _services.settings.update({
+                'bookAggregateCertificateExceptions': value,
+              }),
+            );
+          }),
+        ),
+      ),
+      if (widget.kind == BookKind.comic)
+        const ListTile(
+          leading: Icon(Icons.shield_outlined),
+          title: Text('旧漫画书源包已隔离'),
+          subtitle: Text('随包漫画仅开放新人漫画。自行导入的其他漫画仍需监管授权。'),
+        ),
       const ExpansionTile(
         dense: true,
         title: Text('自动检测说明'),
@@ -914,122 +1017,179 @@ final class _BookSourcesPageState extends State<BookSourcesPage> {
   Widget build(BuildContext context) {
     final list = _visibleEntries();
     return Scaffold(
-      appBar: AppBar(
-        title: Text(switch (widget.kind) {
-          BookKind.text => '网络小说渠道',
-          BookKind.audio => '听书源',
-          BookKind.comic => '网络漫画渠道',
-        }),
-        actions: [
-          IconButton(
-            tooltip: _selecting ? '退出批量选择' : '批量选择',
-            icon: Icon(_selecting ? Icons.close : Icons.checklist),
-            onPressed: _busy
-                ? null
-                : () => setState(() {
-                    _selecting = !_selecting;
-                    _selected.clear();
-                  }),
-          ),
-          IconButton(
-            tooltip: '书源黑名单',
-            icon: const Icon(Icons.block),
-            onPressed: _busy || _services.supervision.enabled
-                ? null
-                : _blacklist,
-          ),
-          if (_token != null)
-            IconButton(
-              tooltip: '取消操作',
-              onPressed: () => _token?.cancel(),
-              icon: const Icon(Icons.stop_circle_outlined),
-            ),
-          PopupMenuButton<_SourceAction>(
-            tooltip: '导入书源',
-            enabled: !_busy,
-            icon: const Icon(Icons.add),
-            onSelected: (action) => switch (action) {
-              _SourceAction.catalog => _importCatalog(),
-              _SourceAction.file => _import(),
-              _SourceAction.link => _importAddress(),
-              _SourceAction.feed => _addFeed(),
-            },
-            itemBuilder: (_) => [
-              const PopupMenuItem(
-                value: _SourceAction.catalog,
-                child: Text('内置 Legado 书源包'),
-              ),
-              const PopupMenuItem(
-                value: _SourceAction.file,
-                child: Text('导入来源文件'),
-              ),
-              const PopupMenuItem(
-                value: _SourceAction.link,
-                child: Text('导入 Legado 链接'),
-              ),
-              if (widget.kind != BookKind.comic)
-                const PopupMenuItem(
-                  value: _SourceAction.feed,
-                  child: Text('添加 RSS / Atom'),
-                ),
-            ],
-          ),
-          IconButton(
-            tooltip: '管理书源订阅',
-            onPressed: _busy ? null : _subscriptions,
-            icon: const Icon(Icons.subscriptions_outlined),
-          ),
-        ],
-      ),
-      body: Column(
-        children: [
-          if (_busy) const LinearProgressIndicator(),
-          if (_siteProgress != null) Text(_siteProgress!),
-          _restoreControls(),
-          _filters(),
-          if (_selecting) _selectionTools(list),
-          Expanded(
-            child: list.isEmpty
-                ? Center(
-                    child: Text(
-                      _siteResultsUnavailable && _pageScriptClues
-                          ? '网页抽查记录读取失败，无法筛选，请重试'
-                          : '没有符合条件的来源',
+      appBar: _appBar(),
+      floatingActionButton: _showTop
+          ? FloatingActionButton.small(
+              heroTag: null,
+              tooltip: '渠道列表回顶',
+              onPressed: () => _scroll.jumpTo(0),
+              child: const Icon(Icons.vertical_align_top),
+            )
+          : null,
+      body: NotificationListener<ScrollUpdateNotification>(
+        onNotification: (event) {
+          final show = event.metrics.pixels > 300;
+          if (event.depth == 0 && show != _showTop) {
+            setState(() => _showTop = show);
+          }
+          return false;
+        },
+        child: CustomScrollView(
+          controller: _scroll,
+          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+          slivers: [
+            SliverToBoxAdapter(
+              child: Column(
+                children: [
+                  if (_busy) const LinearProgressIndicator(minHeight: 2),
+                  if (_siteProgress != null)
+                    Text(
+                      _siteProgress!,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                  )
-                : ListView.builder(
-                    itemCount: list.length,
-                    itemBuilder: (_, index) => _tile(list[index]),
+                  _filters(),
+                  if (_selecting) _selectionTools(list),
+                  ExpansionTile(
+                    dense: true,
+                    title: const Text('渠道维护'),
+                    children: [_restoreControls()],
                   ),
-          ),
-        ],
+                ],
+              ),
+            ),
+            if (list.isEmpty)
+              SliverFillRemaining(
+                hasScrollBody: false,
+                child: Center(
+                  child: Text(
+                    _siteResultsUnavailable && _pageScriptClues
+                        ? '网页抽查记录读取失败，无法筛选，请重试'
+                        : '没有符合条件的来源',
+                  ),
+                ),
+              )
+            else
+              SliverList.builder(
+                itemCount: list.length,
+                itemBuilder: (_, index) => _tile(list[index]),
+              ),
+          ],
+        ),
       ),
     );
   }
+
+  AppBar _appBar() => AppBar(
+    title: Text(switch (widget.kind) {
+      BookKind.text => '网络小说渠道',
+      BookKind.audio => '听书源',
+      BookKind.comic => '网络漫画渠道',
+    }),
+    actions: [
+      if (_token != null)
+        IconButton(
+          tooltip: '取消操作',
+          onPressed: () => _token?.cancel(),
+          icon: const Icon(Icons.stop_circle_outlined),
+        ),
+      PopupMenuButton<_SourceAction>(
+        tooltip: '导入书源',
+        enabled: !_busy,
+        icon: const Icon(Icons.more_vert),
+        onSelected: (action) => switch (action) {
+          _SourceAction.catalog => _importCatalog(),
+          _SourceAction.file => _import(),
+          _SourceAction.link => _importAddress(),
+          _SourceAction.feed => _addFeed(),
+          _SourceAction.exportRules => _exportRules(),
+        },
+        itemBuilder: (_) => [
+          const PopupMenuItem(
+            value: _SourceAction.catalog,
+            child: Text('内置 Legado 书源包'),
+          ),
+          const PopupMenuItem(value: _SourceAction.file, child: Text('导入来源文件')),
+          const PopupMenuItem(
+            value: _SourceAction.link,
+            child: Text('导入 Legado 链接'),
+          ),
+          const PopupMenuItem(
+            value: _SourceAction.exportRules,
+            child: Text('导出解析规则'),
+          ),
+          if (widget.kind != BookKind.comic)
+            const PopupMenuItem(
+              value: _SourceAction.feed,
+              child: Text('添加 RSS / Atom'),
+            ),
+        ],
+      ),
+      IconButton(
+        tooltip: '管理书源订阅',
+        onPressed: _busy ? null : _subscriptions,
+        icon: const Icon(Icons.subscriptions_outlined),
+      ),
+    ],
+  );
 
   Widget _filters() => Padding(
     padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        TextField(
-          onChanged: (value) => setState(() => _query = value),
-          decoration: InputDecoration(
-            hintText: '筛选名称、分组或域名',
-            prefixIcon: const Icon(Icons.filter_alt_outlined),
-            suffixIcon: IconButton(
+        if (_showSearch)
+          TextFormField(
+            initialValue: _query,
+            autofocus: true,
+            onChanged: (value) => setState(() => _query = value),
+            decoration: InputDecoration(
+              hintText: '筛选名称、分组或域名',
+              prefixIcon: const Icon(Icons.search),
+              suffixIcon: IconButton(
+                tooltip: '清除并收起搜索',
+                onPressed: () => setState(() {
+                  _query = '';
+                  _showSearch = false;
+                }),
+                icon: const Icon(Icons.close),
+              ),
+            ),
+          ),
+        Wrap(
+          spacing: 6,
+          children: [
+            if (!_showSearch)
+              IconButton(
+                tooltip: '搜索渠道',
+                onPressed: () => setState(() => _showSearch = true),
+                icon: const Icon(Icons.search),
+              ),
+            IconButton(
               tooltip: '仅收藏源',
               isSelected: _favorites,
               onPressed: () => setState(() => _favorites = !_favorites),
               icon: const Icon(Icons.star_outline),
               selectedIcon: const Icon(Icons.star),
             ),
-          ),
-        ),
-        const SizedBox(height: 8),
-        Wrap(
-          spacing: 6,
-          children: [
+            FilterChip(
+              avatar: _selecting ? null : const Icon(Icons.checklist),
+              label: Text(_selecting ? '退出批量选择' : '批量选择'),
+              selected: _selecting,
+              onSelected: _busy
+                  ? null
+                  : (value) => setState(() {
+                      _selecting = value;
+                      _selected.clear();
+                    }),
+            ),
+            IconButton(
+              tooltip: '书源黑名单',
+              icon: const Icon(Icons.block),
+              onPressed: _busy || _services.supervision.enabled
+                  ? null
+                  : _blacklist,
+            ),
             for (final (value, label) in const [
               (null, '全部'),
               (true, '已启用'),
@@ -1068,19 +1228,6 @@ final class _BookSourcesPageState extends State<BookSourcesPage> {
       enabled: !_busy,
       onSelected: (value) async {
         switch (value) {
-          case 'comicAuthorize':
-            await _run(() async {
-              if (!_services.supervision.configured) {
-                throw const FormatException('请先在监管模式中设置密码');
-              }
-              await runSensitive(
-                context,
-                _services.supervision,
-                SensitiveOperation.supervision,
-                () => _services.books.comicAccess.approve(source),
-                explanation: '授权当前漫画渠道规则；订阅规则变化后需要重新验证。来源风险和内容过滤继续生效。',
-              );
-            });
           case 'copy':
             await copyBookLink(context, source.endpoint);
           case 'probe':
@@ -1110,12 +1257,6 @@ final class _BookSourcesPageState extends State<BookSourcesPage> {
         }
       },
       itemBuilder: (_) => [
-        if (source.kind == BookKind.comic &&
-            !_services.books.comicAccess.allowed(source))
-          const PopupMenuItem(
-            value: 'comicAuthorize',
-            child: Text('验证监管密码授权漫画渠道'),
-          ),
         const PopupMenuItem(value: 'copy', child: Text('复制渠道链接')),
         const PopupMenuItem(value: 'probe', child: Text('解析检测（执行来源规则）')),
         const PopupMenuItem(value: 'group', child: Text('修改分组')),
@@ -1131,7 +1272,7 @@ final class _BookSourcesPageState extends State<BookSourcesPage> {
     if (_selecting) {
       return CheckboxListTile(
         value: _selected.contains(source.id),
-        title: Text(source.name),
+        title: Text(source.name, maxLines: 1, overflow: TextOverflow.ellipsis),
         subtitle: Text(
           '${entry.enabled ? '已启用' : '已停用'} · ${source.endpoint.host}',
         ),
@@ -1146,7 +1287,28 @@ final class _BookSourcesPageState extends State<BookSourcesPage> {
               }),
       );
     }
+    final details = [
+      if (source.kind == BookKind.comic &&
+          !_services.books.comicAccess.allowed(source))
+        '强制停用：需验证监管密码授权',
+      if (source.builtin) '内置',
+      if (entry.fromCatalog) 'aoaostar/legado',
+      if (source.legado != null) 'Legado',
+      if (bookSourceHasDynamicCode(source)) '规则含动态求值，待复核',
+      if (bookSourceHasHistoricalAmsiClue(source)) '2026-11-15 首页防护检出，待复核',
+      if (entry.group.isNotEmpty) entry.group,
+      source.endpoint.host,
+      if (entry.health.isNotEmpty) '解析：${entry.health}',
+      if (siteCheck != null)
+        '网页：${siteCheck.inspection.label} · ${siteCheck.inspection.finding == BookSiteFinding.sourceChanged ? '上次检查于 ' : ''}${_siteTime(siteCheck.checkedAt)}${siteCheck.isDue(DateTime.now()) ? '（已过期）' : ''}',
+      if (siteCheck == null)
+        _siteResultsUnavailable ? '网页：抽查记录读取失败，请重试' : '网页：无可用抽查记录，待检查',
+      if (siteCheck != null)
+        for (final clue in siteCheck.historicalScriptClues.entries)
+          '历史网页脚本待复核：${_scriptClueLabel(clue.key)}（上次发现 ${_siteTime(clue.value)}）',
+    ].join(' · ');
     return ListTile(
+      onTap: () => _showSourceInfo(entry, details),
       leading: IconButton(
         tooltip: entry.favorite ? '取消收藏源' : '收藏源',
         icon: Icon(entry.favorite ? Icons.star : Icons.star_outline),
@@ -1159,29 +1321,8 @@ final class _BookSourcesPageState extends State<BookSourcesPage> {
                 protected: true,
               ),
       ),
-      title: Text(source.name),
-      subtitle: Text(
-        [
-          if (source.kind == BookKind.comic &&
-              !_services.books.comicAccess.allowed(source))
-            '强制停用：需验证监管密码授权',
-          if (source.builtin) '内置',
-          if (entry.fromCatalog) 'aoaostar/legado',
-          if (source.legado != null) 'Legado',
-          if (bookSourceHasDynamicCode(source)) '规则含动态求值，待复核',
-          if (bookSourceHasHistoricalAmsiClue(source)) '2026-11-15 首页防护检出，待复核',
-          if (entry.group.isNotEmpty) entry.group,
-          source.endpoint.host,
-          if (entry.health.isNotEmpty) '解析：${entry.health}',
-          if (siteCheck != null)
-            '网页：${siteCheck.inspection.label} · ${siteCheck.inspection.finding == BookSiteFinding.sourceChanged ? '上次检查于 ' : ''}${_siteTime(siteCheck.checkedAt)}${siteCheck.isDue(DateTime.now()) ? '（已过期）' : ''}',
-          if (siteCheck == null)
-            _siteResultsUnavailable ? '网页：抽查记录读取失败，请重试' : '网页：无可用抽查记录，待检查',
-          if (siteCheck != null)
-            for (final clue in siteCheck.historicalScriptClues.entries)
-              '历史网页脚本待复核：${_scriptClueLabel(clue.key)}（上次发现 ${_siteTime(clue.value)}）',
-        ].join(' · '),
-      ),
+      title: Text(source.name, maxLines: 1, overflow: TextOverflow.ellipsis),
+      subtitle: Text(details, maxLines: 2, overflow: TextOverflow.ellipsis),
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -1189,17 +1330,39 @@ final class _BookSourcesPageState extends State<BookSourcesPage> {
             value: entry.enabled,
             onChanged: _busy
                 ? null
-                : (value) => _run(
-                    () =>
-                        _services.books.saveSource(source, {'enabled': value}),
-                    protected: true,
-                  ),
+                : (value) => _setEnabled({source.id}, value),
           ),
           _sourceActions(entry),
         ],
       ),
     );
   }
+
+  Future<void> _showSourceInfo(BookSourceEntry entry, String details) =>
+      showDialog<void>(
+        context: context,
+        builder: (context) => ListenableBuilder(
+          listenable: Listenable.merge([
+            _services.contentPolicy,
+            _services.books.sourceRiskChanges,
+          ]),
+          builder: (context, _) {
+            final allowed = _services.books.sourceEntryAllowed(entry);
+            return AlertDialog(
+              title: Text(allowed ? entry.source.name : '渠道信息'),
+              content: SingleChildScrollView(
+                child: SelectableText(allowed ? details : '当前内容策略限制访问此渠道'),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('关闭'),
+                ),
+              ],
+            );
+          },
+        ),
+      );
 
   String _siteTime(DateTime value) {
     String two(int n) => n.toString().padLeft(2, '0');

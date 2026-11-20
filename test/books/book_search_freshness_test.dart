@@ -22,4 +22,10 @@ void main() {
     final manga = edition('第 103 话', '2026-11-14 21:15');
     expect(compareBookChapterFreshness(manga, newest), lessThan(0));
   });
+
+  test('oversized chapter numbers sort as unknown', () {
+    final oversized = edition('第 9999999999999999999999999999 章', '');
+    final known = edition('第 2 章', '');
+    expect(compareBookChapterFreshness(known, oversized), lessThan(0));
+  });
 }

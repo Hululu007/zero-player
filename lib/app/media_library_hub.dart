@@ -3,6 +3,7 @@ import 'dart:async';
 import 'app_services.dart';
 import '../features/books/domain/book.dart';
 import '../features/books/presentation/books_page.dart';
+import '../features/books/presentation/book_download_management_page.dart';
 import '../features/downloads/presentation/downloads_page.dart';
 import '../features/library/presentation/history_page.dart';
 import '../features/music/presentation/music_library_panel.dart';
@@ -52,18 +53,26 @@ class _MediaLibraryHubState extends State<MediaLibraryHub> {
                 services: services,
                 view: downloads ? 'downloads' : 'history',
               ),
-              BooksPage(
-                services: services,
-                kind: BookKind.text,
-                initialTab: 1,
-                libraryMode: downloads ? 'downloads' : 'history',
-              ),
-              BooksPage(
-                services: services,
-                kind: BookKind.audio,
-                initialTab: 1,
-                libraryMode: downloads ? 'downloads' : 'history',
-              ),
+              downloads
+                  ? BookDownloadManagementPage(services: services, inline: true)
+                  : BooksPage(
+                      services: services,
+                      kind: BookKind.text,
+                      initialTab: 1,
+                      libraryMode: 'history',
+                    ),
+              downloads
+                  ? BookDownloadManagementPage(
+                      services: services,
+                      inline: true,
+                      initialKind: BookKind.audio,
+                    )
+                  : BooksPage(
+                      services: services,
+                      kind: BookKind.audio,
+                      initialTab: 1,
+                      libraryMode: 'history',
+                    ),
             ],
           ),
         ),

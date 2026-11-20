@@ -1,6 +1,7 @@
 import '../core/platform/audio_playback_coordinator.dart';
 import '../media/content_filter/fingerprints/feature_repository.dart';
 import 'dart:async';
+import '../core/diagnostics/local_error_log.dart';
 import 'startup_failure.dart';
 import 'dart:io';
 import '../features/supervision/application/content_policy.dart';
@@ -175,6 +176,8 @@ final class AppServices {
     contentPolicy,
     exporter.validateAudiobook,
     coverCacheMiB: settings.value.bookCoverCacheMiB,
+    allowAggregateCertificateExceptions: () =>
+        settings.value.bookAggregateCertificateExceptions,
   );
   BookSiteChecks? _bookSiteChecks;
   BookSiteChecks get bookSiteChecks =>
@@ -457,6 +460,7 @@ final class AppServices {
         });
     await services.builtinLive.initialize();
     await services.store.initialize();
+    LocalErrorLog.attach(File(p.join(root.path, 'runtime-errors.json')));
     await services.platform.initialize(
       windowState: File(p.join(root.path, 'window.json')),
     );

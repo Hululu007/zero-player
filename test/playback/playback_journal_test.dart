@@ -16,11 +16,23 @@ void main() {
     'unclean evidence survives a later normal session and a new instance',
     () async {
       var journal = PlaybackJournal(root);
-      await journal.initialize();
-      await journal.write('memory 300; native warning');
+      await journal.current.parent.create(recursive: true);
+      await journal.current.writeAsString(
+        jsonEncode({
+          'status': 'running',
+          'owner': 'previous-process',
+          'report': 'memory 300; native warning',
+        }),
+      );
+      expect(await journal.latestUnclosedReport(), contains('native warning'));
       journal = PlaybackJournal(root);
       await journal.initialize();
       expect(journal.previousReport, contains('native warning'));
+      await journal.write('current session running');
+      expect(
+        await PlaybackJournal(root).latestUnclosedReport(),
+        contains('native warning'),
+      );
       await journal.write('next session closed', closed: true);
       journal = PlaybackJournal(root);
       await journal.initialize();
@@ -50,6 +62,16 @@ void main() {
       expect(await File('${journal.current.path}.tmp').exists(), isFalse);
     },
   );
+
+  test('an active session is not reported as an unclean exit', () async {
+    final journal = PlaybackJournal(root);
+    await journal.initialize();
+    await journal.write('current session running');
+    final reader = PlaybackJournal(root);
+    await reader.initialize();
+    expect(reader.previousReport, isNull);
+    expect(await reader.latestUnclosedReport(), isNull);
+  });
 
   test('corrupt prior snapshot cannot prevent a new diagnostic', () async {
     final journal = PlaybackJournal(root);

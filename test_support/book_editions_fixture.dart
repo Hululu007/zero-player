@@ -15,8 +15,23 @@ final class BookEditionsFixture {
   late Book book;
   final sources = <String, BookSource>{};
 
-  static Future<BookEditionsFixture> create() async {
+  static Future<BookEditionsFixture> create({
+    int targetChapterCount = 3,
+    int targetCatalogPages = 1,
+    bool stallSlowCatalog = false,
+    bool serveTargetChapters = false,
+    int? denyTargetFrom,
+    int denyTargetStatus = 403,
+    int fastChapterCount = 5,
+  }) async {
     final f = BookEditionsFixture();
+    f.http.targetChapterCount = targetChapterCount;
+    f.http.targetCatalogPages = targetCatalogPages;
+    f.http.stallSlowCatalog = stallSlowCatalog;
+    f.http.serveTargetChapters = serveTargetChapters;
+    f.http.denyTargetFrom = denyTargetFrom;
+    f.http.denyTargetStatus = denyTargetStatus;
+    f.http.fastChapterCount = fastChapterCount;
     f.root = await Directory.systemTemp.createTemp('book-editions-');
     await HttpOverrides.runZoned(() async {
       f.services = AppServices.scoped(f.root, AppDatabase.memory());
@@ -45,6 +60,10 @@ final class BookEditionsFixture {
             'chapterTitle': '@text',
             'chapterUrl': '@href',
             'content': '.content',
+            if (host == 'target' && targetCatalogPages > 1) ...{
+              'toc': '.toc@href',
+              'tocPageLinks': 'select option[value]',
+            },
           },
         });
       }
@@ -64,6 +83,8 @@ final class BookEditionsFixture {
   }
 
   bool get slowWaiting => http.slowWaiting;
+  int get targetChapterRequests => http.targetChapterRequests;
+  set targetChapterCount(int count) => http.targetChapterCount = count;
   bool get slowReleased => http.gate.isCompleted;
   void releaseSlow() {
     if (!http.gate.isCompleted) http.gate.complete();
@@ -83,6 +104,14 @@ final class BookEditionsFixture {
 final class _Client implements HttpClient {
   final gate = Completer<void>();
   bool slowWaiting = false;
+  bool stallSlowCatalog = false;
+  bool serveTargetChapters = false;
+  int? denyTargetFrom;
+  int denyTargetStatus = 403;
+  int fastChapterCount = 5;
+  int targetChapterRequests = 0;
+  int targetChapterCount = 3;
+  int targetCatalogPages = 1;
   @override
   Future<HttpClientRequest> openUrl(String method, Uri uri) async {
     if (method != 'GET' ||
@@ -116,7 +145,8 @@ final class _Request implements HttpClientRequest {
   final HttpHeaders headers = _Headers();
   @override
   Future<HttpClientResponse> close() async {
-    if (uri.host == 'slow.example') {
+    if (uri.host == 'slow.example' &&
+        (!client.stallSlowCatalog || uri.path == '/book')) {
       client.slowWaiting = true;
       await Future.any([client.gate.future, _aborted.future]);
       if (_aborted.isCompleted) throw const RequestCancelled();
@@ -129,11 +159,17 @@ final class _Request implements HttpClientRequest {
         200,
       );
     }
+    if (uri.host == 'target.example' && client.targetCatalogPages > 1) {
+      if (uri.path == '/book') {
+        return _Response('<a class="toc" href="/toc/1">目录</a>', 200);
+      }
+      if (uri.path.startsWith('/toc/')) return _catalogPage();
+    }
     if (uri.path == '/book') {
       final count = uri.host == 'target.example'
-          ? 3
+          ? client.targetChapterCount
           : uri.host == 'fast.example'
-          ? 5
+          ? client.fastChapterCount
           : 7;
       return _Response(
         '<h1 class="title">测试作品</h1><span class="author">作者</span>'
@@ -141,7 +177,42 @@ final class _Request implements HttpClientRequest {
         200,
       );
     }
+    if (uri.host == 'target.example' && uri.path.startsWith('/chapter/')) {
+      client.targetChapterRequests++;
+      final deniedAt = client.denyTargetFrom;
+      final index = int.tryParse(uri.pathSegments.last);
+      if (deniedAt != null && index != null && index >= deniedAt) {
+        final response = _Response('', client.denyTargetStatus);
+        if (client.denyTargetStatus == 429) {
+          response.headers.set('retry-after', '12');
+        }
+        return response;
+      }
+    }
+    if ((uri.host == 'fast.example' ||
+            client.serveTargetChapters &&
+                (uri.host == 'target.example' || uri.host == 'slow.example')) &&
+        uri.path.startsWith('/chapter/')) {
+      return _Response('<div class="content">替代渠道的正文</div>', 200);
+    }
     return _Response('', 404);
+  }
+
+  _Response _catalogPage() {
+    final page = int.parse(uri.pathSegments.last);
+    final options = List.generate(
+      client.targetCatalogPages,
+      (i) => '<option value="/toc/${i + 1}">${i + 1}</option>',
+    ).join();
+    final first = (page - 1) * client.targetChapterCount + 1;
+    final chapters = List.generate(client.targetChapterCount, (i) {
+      final index = first + i;
+      return '<a class="chapter" href="/chapter/$index">第$index章</a>';
+    }).join();
+    return _Response(
+      '<select>$options</select><select>$options</select>$chapters',
+      200,
+    );
   }
 
   @override

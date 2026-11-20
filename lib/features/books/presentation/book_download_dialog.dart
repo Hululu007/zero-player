@@ -137,7 +137,7 @@ final class _BookDownloadDialogState extends State<_BookDownloadDialog> {
             SwitchListTile(
               contentPadding: EdgeInsets.zero,
               title: const Text('聚合最新'),
-              subtitle: const Text('自动从同名同作者的其他渠道补充后续章节'),
+              subtitle: const Text('下载已有章节时，后台限时查找可衔接的新章节'),
               value: _aggregateLatest,
               onChanged: (value) => setState(() => _aggregateLatest = value),
             ),

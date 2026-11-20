@@ -1,5 +1,94 @@
 [
   {
+    "name": "新人漫画",
+    "group": "正版漫画 书源",
+    "kind": "comic",
+    "format": "html",
+    "url": "https://xapi.xinmanhua.net",
+    "sample": "漫画",
+    "mediaHosts": [
+      "works.xinmanhua.net"
+    ],
+    "legado": {
+      "search": "https://xapi.xinmanhua.net/search/selfdefine,{\n  \"method\": \"POST\",\n  \"body\": \"keyword={{key}}&page={{page}}\"\n}",
+      "explore": [
+        {
+          "title": "全部",
+          "url": "https://xapi.xinmanhua.net/search/catalog?keyword=all&ischarge=2&isfinish=2&order=0&page={{page}}"
+        },
+        {
+          "title": "治愈",
+          "url": "https://xapi.xinmanhua.net/search/catalog?keyword=治愈&page={{page}}"
+        },
+        {
+          "title": "日常",
+          "url": "https://xapi.xinmanhua.net/search/catalog?keyword=日常&page={{page}}"
+        },
+        {
+          "title": "都市",
+          "url": "https://xapi.xinmanhua.net/search/catalog?keyword=都市&page={{page}}"
+        },
+        {
+          "title": "悬疑",
+          "url": "https://xapi.xinmanhua.net/search/catalog?keyword=悬疑&page={{page}}"
+        },
+        {
+          "title": "科幻",
+          "url": "https://xapi.xinmanhua.net/search/catalog?keyword=科幻&page={{page}}"
+        },
+        {
+          "title": "奇幻",
+          "url": "https://xapi.xinmanhua.net/search/catalog?keyword=奇幻&page={{page}}"
+        },
+        {
+          "title": "热血",
+          "url": "https://xapi.xinmanhua.net/search/catalog?keyword=热血&page={{page}}"
+        },
+        {
+          "title": "武侠",
+          "url": "https://xapi.xinmanhua.net/search/catalog?keyword=武侠&page={{page}}"
+        },
+        {
+          "title": "古风",
+          "url": "https://xapi.xinmanhua.net/search/catalog?keyword=古风&page={{page}}"
+        },
+        {
+          "title": "恋爱",
+          "url": "https://xapi.xinmanhua.net/search/catalog?keyword=恋爱&page={{page}}"
+        },
+        {
+          "title": "少年",
+          "url": "https://xapi.xinmanhua.net/search/catalog?keyword=少年&page={{page}}"
+        },
+        {
+          "title": "日漫",
+          "url": "https://xapi.xinmanhua.net/search/catalog?keyword=日漫&page={{page}}"
+        },
+        {
+          "title": "原创",
+          "url": "https://xapi.xinmanhua.net/search/catalog?keyword=原创&page={{page}}"
+        }
+      ],
+      "headers": {
+        "User-Agent": "okhttp/3.10.0"
+      },
+      "rules": {
+        "searchList": "@JSon:$.data.*",
+        "searchAuthor": "@JSon:$.attributes.author",
+        "chapters": "$.included.*",
+        "chapterUrl": "https://xapi.xinmanhua.net/chapters/{$.id}/qualitywebs",
+        "content": "$.data[*].attributes.url",
+        "searchTitle": "@JSon:$.attributes.title",
+        "searchLink": "https://xapi.xinmanhua.net/worksinfos/{$.attributes.wid}?include=chapters.digests",
+        "searchCover": "@JSon:$.attributes.logo_detail",
+        "searchCategory": "@JSon:$.attributes.workscate",
+        "searchLatest": "@JSon:$.attributes.lastctitle",
+        "infoDescription": "@JSon:$.data.attributes.intro&&$.data.attributes.description",
+        "chapterTitle": "$.attributes.title&&$.attributes.intro"
+      }
+    }
+  },
+  {
     "name": "UU看书",
     "defaultEnabled": false,
     "group": "网络小说",
@@ -205,7 +294,12 @@
     "format": "featured",
     "url": "https://www.gutenberg.org/",
     "sample": "孙子兵法",
-    "originNote": "Project Gutenberg 发布的公版人工朗读",
+    "originNote": "Project Gutenberg 官方有声分类和公开音频文件",
+    "discover": "/browse/categories/1.html",
+    "discoveryCategories": [
+      {"title": "人工朗读", "url": "/browse/categories/1.html"},
+      {"title": "合成朗读", "url": "/browse/categories/2.html"}
+    ],
     "directAudio": true,
     "featured": [
       {
@@ -222,30 +316,15 @@
       }
     ],
     "rules": {
-      "chapters": "a[type='audio/mp4'][href$='.m4b']",
+      "catalogSearch": "true",
+      "discoverList": "li a[href^='/ebooks/']",
+      "discoverTitle": "@text",
+      "discoverBook": "@href",
+      "discoverAuthorHeading": "h2",
+      "chapters": "a[href$='.m4b']||a[href$='.mp3']||a[href$='.ogg']",
       "chapterTitle": "@filename",
       "chapterUrl": "@href"
     }
-  },
-  {
-    "name": "机核 · 核市奇谭",
-    "group": "文化播客",
-    "kind": "audio",
-    "format": "feed",
-    "url": "https://alioss.gcores.com/feeds/heshi.xml",
-    "originNote": "源仓库机核条目对应发布者官方播客 https://www.yckceo.com/yuedu/rsss/content/id/174.html"
-  },
-  {
-    "name": "机核 · 科幻的黄金时代",
-    "group": "文化播客",
-    "kind": "audio",
-    "format": "feed",
-    "url": "https://feed.xyzfm.space/tqrhwlptvah3",
-    "mediaHosts": [
-      "dts-api.xiaoyuzhoufm.com",
-      "media.xyzcdn.net"
-    ],
-    "originNote": "源仓库机核条目对应发布者官方播客 https://www.yckceo.com/yuedu/rsss/content/id/174.html"
   },
   {
     "name": "台灣小說網",
@@ -396,7 +475,8 @@
       "chapters": ".lb li",
       "chapterTitle": "@text",
       "chapterUrl": "a@href",
-      "nextToc": ".bt-next span a@href",
+      "tocPageLinks": "#zjlb .showpage a[href]",
+      "nextToc": "#zjlb .bt-next + .bt-next a@href",
       "content": "#nr@text",
       "nextContent": "@next",
       "discoverList": ".xbk",
@@ -526,6 +606,10 @@
     "format": "bookan",
     "url": "https://api.bookan.com.cn/voice/book/list",
     "sample": "三国演义",
+    "jsonCatalog": {
+      "discover": {"list": "list", "id": "id", "title": "name", "author": "extra.author", "description": "intro", "cover": "cover"},
+      "search": {"list": "list", "id": "id", "title": "name", "author": "extra.author", "description": "intro", "cover": "cover"}
+    },
     "mediaHosts": ["audio.bookan.com.cn"],
     "originNote": "freefly22/tingshu-free-jar 的 BoKanYouSheng DEX 协议参考；本项目静态 HTTPS 适配"
   },
@@ -536,7 +620,19 @@
     "format": "ximalaya",
     "url": "https://mobile.ximalaya.com/mobile/v1/album/track",
     "sample": "三国演义",
-    "mediaHosts": ["aod.cos.tx.xmcdn.com"],
+    "discoveryCategories": [
+      {"title": "网络小说", "url": "3"},
+      {"title": "有声图书", "url": "1001"},
+      {"title": "人文国学", "url": "1002"},
+      {"title": "儿童", "url": "6"},
+      {"title": "历史", "url": "9"},
+      {"title": "相声评书", "url": "12"}
+    ],
+    "jsonCatalog": {
+      "discover": {"list": "data.albums", "id": "albumId", "title": "albumTitle", "author": "albumUserNickName", "description": "intro", "cover": "albumCoverPath"},
+      "search": {"list": "response.docs", "id": "id", "title": "title", "author": "nickname", "description": "intro", "cover": "cover_path"}
+    },
+    "mediaHosts": ["aod.cos.tx.xmcdn.com", "imagev2.xmcdn.com"],
     "originNote": "freefly22/tingshu-free-jar 的 XiMaLaYa DEX 协议参考；仅接入免费专辑与免费音轨，音频限同域 HTTPS"
   },
   {

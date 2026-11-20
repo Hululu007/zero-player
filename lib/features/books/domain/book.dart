@@ -3,6 +3,7 @@ import 'dart:io';
 import '../../../core/network/network_target_policy.dart';
 import '../../sources/domain/video_source.dart';
 import 'biquge7_legacy_source_fix.dart';
+import 'book_catalog_rules.dart';
 import 'fanfanu_legacy_source_fix.dart';
 import 'jhsssd_legacy_source_fix.dart';
 import 'jingzhi_legacy_source_fix.dart';
@@ -63,6 +64,9 @@ Uri legacyBookUri(Uri uri, {bool legacyQueryEncoding = false}) => publicBookUri(
   legacyQueryEncoding: legacyQueryEncoding,
 );
 
+const bookChapterCatalogLimit = 12000;
+const bookChapterPageLimit = 320;
+
 final class BookSource {
   BookSource.fromJson(Map data, {this.builtin = false})
     : name = bookLabel(data['name']),
@@ -79,6 +83,7 @@ final class BookSource {
       ),
       sample = bookLabel(data['sample'], 80),
       rules = _rules(data['rules']),
+      jsonCatalog = _jsonCatalog(data['jsonCatalog']),
       legado = data['legado'] == null
           ? null
           : LegadoSource.fromJson(_repairedLegadoRules(data)),
@@ -134,11 +139,12 @@ final class BookSource {
                     !searchForm.values.any(
                       (value) => value.contains('{key}'),
                     )) ||
-                [
-                  'list',
-                  'title',
-                  'book',
-                ].any((key) => !rules.containsKey(key)))) ||
+                (!jsonCatalog.containsKey('search') &&
+                    [
+                      'list',
+                      'title',
+                      'book',
+                    ].any((key) => !rules.containsKey(key))))) ||
         (legado == null &&
             format != BookFormat.feed &&
             format != BookFormat.shuyin &&
@@ -153,6 +159,10 @@ final class BookSource {
             ].any((key) => !rules.containsKey(key)))) {
       throw const FormatException('来源缺少名称或必要的搜索、目录及正文规则');
     }
+    if (format == BookFormat.html &&
+        jsonCatalog.values.any((stage) => !stage.fields.containsKey('url'))) {
+      throw const FormatException('静态 JSON 规则必须声明作品地址字段');
+    }
     if (search.isNotEmpty) {
       resolve(endpoint, search.replaceAll('{key}', 'test'));
     }
@@ -162,6 +172,7 @@ final class BookSource {
   final String name, group, search, discover, sample, originNote, sourceKey;
   final String searchCharset;
   final int updatedAt;
+  final Map<String, BookCatalogRules> jsonCatalog;
   final Map<String, String> searchForm;
   final BookKind kind;
   final BookFormat format;
@@ -244,6 +255,10 @@ final class BookSource {
           .toList(),
     'sample': sample,
     'rules': rules,
+    if (jsonCatalog.isNotEmpty)
+      'jsonCatalog': jsonCatalog.map(
+        (stage, rules) => MapEntry(stage, rules.fields),
+      ),
     if (legado != null) 'legado': legado!.toJson(),
     'mediaHosts': mediaHosts.toList(),
     'originNote': originNote,
@@ -267,6 +282,22 @@ final class BookSource {
       throw const FormatException('仅支持有界的静态来源规则');
     }
     return input.trim();
+  }
+
+  static Map<String, BookCatalogRules> _jsonCatalog(Object? input) {
+    if (input == null) return const {};
+    if (input is! Map ||
+        input.entries.any(
+          (entry) =>
+              (entry.key != 'search' && entry.key != 'discover') ||
+              entry.value is! Map,
+        )) {
+      throw const FormatException('JSON 书目规则阶段无效');
+    }
+    return Map.unmodifiable({
+      for (final entry in input.entries)
+        entry.key as String: BookCatalogRules.fromJson(entry.value as Map),
+    });
   }
 
   static Map<String, String> _rules(Object? raw) {
@@ -304,11 +335,14 @@ final class BookSource {
             'discoverAuthor',
             'discoverBook',
             'discoverDescription',
+            'catalogSearch',
+            'discoverAuthorHeading',
             'toc',
             'chapters',
             'chapterTitle',
             'chapterUrl',
             'nextToc',
+            'tocPageLinks',
             'content',
             'nextContent',
           }.contains(entry.key))

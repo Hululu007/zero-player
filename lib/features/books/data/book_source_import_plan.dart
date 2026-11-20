@@ -85,7 +85,11 @@ final class BookSourceImportPlan {
     required bool supervisionRestricted,
   }) {
     final (:source, :previous, :blacklisted) = candidate;
-    if (blacklisted || !allowed) return _count(BookSourceImportAction.skip);
+    if (blacklisted ||
+        !allowed ||
+        (fromCatalog && source.kind == BookKind.comic)) {
+      return _count(BookSourceImportAction.skip);
+    }
     if (!_seen.add(source.id)) return _count(BookSourceImportAction.duplicate);
     if (previous == null) {
       return _count(

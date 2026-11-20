@@ -10,15 +10,23 @@ CatalogItem item(
   String title = '同一部剧',
   String year = '2026',
   String category = '国产剧',
+  String remarks = '',
 }) => CatalogItem(
   sourceId: source,
   id: '1',
   title: title,
   year: year,
   category: category,
+  remarks: remarks,
 );
 
 void main() {
+  test('version tags identify the same work regardless of order', () {
+    final a = item('a', remarks: '加长版 未删减');
+    final b = item('b', remarks: '未删减 加长版');
+    expect(groupCatalogItems([a, b]).values.single, [a, b]);
+    expect(sameDownloadWork(a, b), isTrue);
+  });
   test(
     'source-specific category names merge, remakes and seasons stay separate',
     () {

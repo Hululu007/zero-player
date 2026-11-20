@@ -156,6 +156,8 @@ final class DownloadScheduler {
     }
   }
 
+  bool get _canStart => !_closed && (foreground || !Platform.isAndroid);
+
   Future<void> _drain() async {
     final initial = await repository.all();
     final usage = <String, int>{};
@@ -168,13 +170,13 @@ final class DownloadScheduler {
       usage[task.id] = bytes > task.bytes ? bytes : task.bytes;
     }
     _quota.initialize(usage);
-    while (!_closed && (foreground || !Platform.isAndroid)) {
+    while (_canStart) {
       final all = await repository.all();
       final limit = settings.value.multiSourceDownload
           ? settings.value.downloadConcurrency
           : 1;
       for (final task in all.reversed) {
-        if (_jobs.length >= limit || _closed) break;
+        if (_jobs.length >= limit || !_canStart) break;
         if ((task.status != DownloadStatus.queued &&
                 task.status != DownloadStatus.pendingSave) ||
             _jobs.containsKey(task.id)) {

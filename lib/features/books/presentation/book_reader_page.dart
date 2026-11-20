@@ -1110,14 +1110,16 @@ final class _BookReaderPageState extends State<BookReaderPage>
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
                 IconButton(
-                  tooltip: '上一页',
-                  icon: const Icon(Icons.chevron_left),
-                  onPressed: () => _page(-1),
+                  tooltip: '上一章',
+                  icon: const Icon(Icons.skip_previous_outlined),
+                  onPressed: _canCross(-1)
+                      ? () => _cross(-1, lastPage: false)
+                      : null,
                 ),
                 IconButton(
                   focusNode: _contentsFocus,
                   tooltip: '章节目录',
-                  icon: const Icon(Icons.format_list_bulleted),
+                  icon: const Icon(Icons.list_alt_outlined),
                   onPressed: _showChapters,
                 ),
                 IconButton(
@@ -1127,13 +1129,20 @@ final class _BookReaderPageState extends State<BookReaderPage>
                 ),
                 IconButton(
                   tooltip: '阅读样式',
-                  icon: const Icon(Icons.text_fields),
+                  icon: const Icon(Icons.format_size_outlined),
                   onPressed: _settings,
                 ),
                 IconButton(
-                  tooltip: '下一页',
-                  icon: const Icon(Icons.chevron_right),
-                  onPressed: () => _page(1),
+                  tooltip: '下一章',
+                  icon: const Icon(Icons.skip_next_outlined),
+                  onPressed:
+                      _canCross(1) ||
+                          (_ready &&
+                              !_checkingEnd &&
+                              _index == _chapters.length - 1 &&
+                              widget.book.sourceId != 'local')
+                      ? () => _cross(1, lastPage: false)
+                      : null,
                 ),
               ],
             ),

@@ -1,3 +1,5 @@
+import 'book.dart';
+
 final class BookDownloadPlan {
   const BookDownloadPlan(
     this.first,
@@ -6,11 +8,23 @@ final class BookDownloadPlan {
     this.chapterIds,
     this.fullBook = false,
     this.aggregateLatest = false,
+    this.aggregationPending = false,
   });
 
   final int first, last;
   final bool fallback, fullBook, aggregateLatest;
+  final bool aggregationPending;
   final List<String>? chapterIds;
+
+  BookDownloadPlan withFallback() => BookDownloadPlan(
+    first,
+    last,
+    true,
+    chapterIds: chapterIds,
+    fullBook: fullBook,
+    aggregateLatest: aggregateLatest,
+    aggregationPending: aggregationPending,
+  );
 
   static BookDownloadPlan? fromJson(Object? value) {
     if (value case {
@@ -26,8 +40,9 @@ final class BookDownloadPlan {
           fallback,
           fullBook: value['fullBook'] == true,
           aggregateLatest: value['aggregateLatest'] == true,
+          aggregationPending: value['aggregationPending'] == true,
           chapterIds: ids is List
-              ? ids.whereType<String>().take(4000).toList()
+              ? ids.whereType<String>().take(bookChapterCatalogLimit).toList()
               : null,
         );
       }
@@ -41,6 +56,7 @@ final class BookDownloadPlan {
     'fallback': fallback,
     'fullBook': fullBook,
     'aggregateLatest': aggregateLatest,
+    if (aggregationPending) 'aggregationPending': true,
     'chapterIds': ?chapterIds,
   };
 }

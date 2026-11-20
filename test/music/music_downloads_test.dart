@@ -12,10 +12,13 @@ import 'package:zero_player/features/music/application/music_downloads.dart';
 import 'package:zero_player/features/music/data/music_repository.dart';
 import 'package:zero_player/features/music/data/myfreemp3_client.dart';
 import 'package:zero_player/features/music/domain/music_track.dart';
+import 'package:zero_player/features/supervision/application/content_policy.dart';
+import 'package:zero_player/features/supervision/domain/supervision_rules.dart';
 import 'package:zero_player/media/cache/segment_store.dart';
 import 'package:zero_player/media/cache/segment_fetcher.dart';
 import 'package:zero_player/media/gateway/offline_server.dart';
 import '../../test_support/http_test_server.dart';
+import '../../test_support/supervision_fixture.dart';
 
 void main() {
   test('missing completed entry preserves metadata and intact file', () async {
@@ -84,6 +87,8 @@ void main() {
   _downloadTests();
   _queueTests();
   _quotaResumeTests();
+  _downloadPolicyTest();
+  _concurrentRegistrationTest();
 }
 
 MusicTrack _other(_Fixture f, String id) => MusicTrack(
@@ -93,6 +98,28 @@ MusicTrack _other(_Fixture f, String id) => MusicTrack(
   url: f.track.url,
   fetchedAt: DateTime.now(),
 );
+
+void _concurrentRegistrationTest() {
+  test('concurrent enqueue shares the last available task slot', () async {
+    final f = await _Fixture.create();
+    addTearDown(f.close);
+    await f.downloads.load();
+    f.downloads.items = [
+      for (var i = 0; i < 499; i++)
+        MusicDownload(_other(f, 'stored-$i'), 'paused', 0),
+    ];
+    f.resolver = (track, token) async => throw const FormatException('fixture');
+    final first = _other(f, 'first');
+    final second = _other(f, 'second');
+    await Future.wait([
+      f.downloads.download(first),
+      expectLater(f.downloads.download(second), throwsFormatException),
+    ]);
+    await f.downloads.idle;
+    expect(f.downloads.items, hasLength(500));
+    expect(f.downloads.items.last.track.key, first.key);
+  });
+}
 
 void _queueTests() {
   test(
@@ -174,6 +201,65 @@ void _queueTests() {
         f.downloads.items.firstWhere((i) => i.track.id == 'later').status,
         'complete',
       );
+    },
+  );
+}
+
+void _downloadPolicyTest() {
+  test('policy notifications pause only the affected tracks', () async {
+    final policy = SupervisionFixture();
+    await policy.configure();
+    final f = await _Fixture.create(policy: policy.policy);
+    final resolving = Completer<CancellationToken>();
+    f.resolver = (track, token) async {
+      if (track.key == f.track.key) {
+        final stopped = Completer<void>();
+        final unlink = token.listen(stopped.complete);
+        resolving.complete(token);
+        try {
+          await stopped.future;
+          token.check();
+        } finally {
+          unlink();
+        }
+      }
+      return track;
+    };
+    addTearDown(() async {
+      await f.close();
+      await policy.close();
+    });
+    await f.downloads.download(f.track);
+    final token = await resolving.future;
+    final unaffected = _other(f, 'allowed');
+    await f.downloads.download(unaffected);
+    policy.policy.refresh();
+    expect(token.isCancelled, isFalse);
+    await policy.authorized(
+      SensitiveOperation.supervision,
+      () =>
+          policy.guard.updateRules(SupervisionRules(keywords: [f.track.title])),
+    );
+    await f.downloads.idle;
+    expect(token.isCancelled, isTrue);
+    expect(f.downloads.items.first.status, 'paused');
+    expect(f.downloads.completed(unaffected), isNotNull);
+  });
+
+  test(
+    'offline library can load again after a temporary query error',
+    () async {
+      final f = await _Fixture.create();
+      addTearDown(f.close);
+      await f.db.customStatement(
+        'ALTER TABLE app_meta RENAME TO fixture_app_meta',
+      );
+      await expectLater(f.downloads.load(), throwsException);
+      await f.db.customStatement(
+        'ALTER TABLE fixture_app_meta RENAME TO app_meta',
+      );
+      await f.downloads.load();
+      expect(f.downloads.items, isEmpty);
     },
   );
 }
@@ -363,6 +449,7 @@ final class _Fixture {
   static Future<_Fixture> create({
     int limit = 1024 * 1024,
     int total = 1024 * 1024 * 1024,
+    ContentPolicy? policy,
   }) async {
     final fixture = _Fixture()
       ..limit = limit
@@ -399,6 +486,7 @@ final class _Fixture {
     fixture.offline = OfflineServer(fixture.store);
     fixture.repository = MusicRepository(
       MyFreeMp3Client(DocumentClient(fixture.http)),
+      policy: policy,
     );
     fixture.track = MusicTrack(
       id: 'fixture',

@@ -585,6 +585,33 @@ class _RichReaderState extends State<RichReaderPage>
     _next(direction);
   }
 
+  Widget _navigationButton(int direction, {bool tonal = false}) {
+    final label = _isPdf
+        ? (direction < 0 ? '上一页' : '下一页')
+        : (direction < 0 ? '上一章' : '下一章');
+    final icon = Icon(
+      _isPdf
+          ? (direction < 0 ? Icons.chevron_left : Icons.chevron_right)
+          : (direction < 0
+                ? Icons.skip_previous_outlined
+                : Icons.skip_next_outlined),
+    );
+    final target = _index + direction;
+    final action = !_ready || target < 0 || target >= _chapters.length
+        ? null
+        : () {
+            if (_isPdf) {
+              _manualTurn(direction);
+            } else {
+              _stop();
+              _crossSection(direction);
+            }
+          };
+    return tonal
+        ? IconButton.filledTonal(tooltip: label, icon: icon, onPressed: action)
+        : IconButton(tooltip: label, icon: icon, onPressed: action);
+  }
+
   Widget _readingStatus() => Positioned(
     bottom: 0,
     left: 0,
@@ -596,22 +623,14 @@ class _RichReaderState extends State<RichReaderPage>
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            IconButton.filledTonal(
-              tooltip: '上一页',
-              icon: const Icon(Icons.chevron_left),
-              onPressed: () => _manualTurn(-1),
-            ),
+            _navigationButton(-1, tonal: true),
             _pageLabel(),
             IconButton.filledTonal(
               tooltip: _auto ? '停止自动阅读' : '阅读菜单',
               icon: Icon(_auto ? Icons.pause : Icons.more_horiz),
               onPressed: _auto ? _stop : _toggleControls,
             ),
-            IconButton.filledTonal(
-              tooltip: '下一页',
-              icon: const Icon(Icons.chevron_right),
-              onPressed: () => _manualTurn(1),
-            ),
+            _navigationButton(1, tonal: true),
           ],
         ),
       ),
@@ -776,22 +795,14 @@ class _RichReaderState extends State<RichReaderPage>
   Widget _footerBar() => Row(
     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
     children: [
-      IconButton(
-        tooltip: '上一页',
-        onPressed: () => _manualTurn(-1),
-        icon: const Icon(Icons.chevron_left),
-      ),
+      _navigationButton(-1),
       Text('${_index + 1} / ${_chapters.length}'),
       IconButton(
         tooltip: '阅读菜单',
         onPressed: _toggleControls,
         icon: const Icon(Icons.more_horiz),
       ),
-      IconButton(
-        tooltip: '下一页',
-        onPressed: () => _manualTurn(1),
-        icon: const Icon(Icons.chevron_right),
-      ),
+      _navigationButton(1),
     ],
   );
 

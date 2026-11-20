@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
+import '../../../core/network/cancellation_token.dart';
 import '../../../core/platform/background_audio_session.dart';
 import '../../../core/platform/audio_playback_coordinator.dart';
 import '../../live/domain/live_channel.dart';
@@ -33,7 +34,7 @@ final class RadioController extends ChangeNotifier
 
   final PlayerEngine Function() createEngine;
   final Duration operationTimeout;
-  final _closing = Completer<void>();
+  final _closing = CancellationToken();
   Future<void>? _closeFuture;
   PlayerEngine? _engine;
   StreamSubscription<PlaybackSnapshot>? _states;
@@ -260,6 +261,8 @@ final class RadioController extends ChangeNotifier
     Future<void> operation, {
     Future<void>? interrupted,
   }) async {
+    final stopped = Completer<void>();
+    final unlink = _closing.listen(stopped.complete);
     final expired = Completer<void>();
     final timer = Timer(
       operationTimeout,
@@ -270,11 +273,12 @@ final class RadioController extends ChangeNotifier
       await Future.any([
         operation,
         expired.future,
-        _closing.future,
+        stopped.future,
         ?interrupted,
       ]);
     } finally {
       timer.cancel();
+      unlink();
     }
   }
 
@@ -298,7 +302,7 @@ final class RadioController extends ChangeNotifier
     _closed = true;
     _interruptSelection();
     ++_generation;
-    _closing.complete();
+    _closing.cancel();
     await _states?.cancel();
     await _errors?.cancel();
     try {

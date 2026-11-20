@@ -162,54 +162,79 @@ final class _LxSourcesState extends State<_LxSources> {
       child: const Text('检查'),
     ),
   );
-  Widget _source(Map row) => ListTile(
-    title: Text('${row['id']} · ${row['version']}'),
-    subtitle: Text(
-      '${row['status']}\nSHA-256 ${'${row['sha256']}'.substring(0, 12)}…${_status[row['id']] == null ? '' : '\n${_status[row['id']]}'}',
-    ),
-    trailing: Wrap(
-      children: [
-        if (musicSources.containsKey(row['provider']))
-          TextButton(
-            onPressed: () {
-              widget.services.musicBrowser.selectProvider(
-                row['provider'] as String,
-              );
+  Widget _source(Map row) {
+    final id = row['id'] as String;
+    final provider = row['provider'];
+    final details = [
+      '${row['status']}',
+      'SHA-256 ${row['sha256']}',
+      ?_status[id],
+    ].join('\n');
+    return ListTile(
+      title: Text(
+        '$id · ${row['version']}',
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+      ),
+      subtitle: Text(
+        _status[id] ?? '${row['status']}',
+        maxLines: 2,
+        overflow: TextOverflow.ellipsis,
+      ),
+      onTap: () => showDialog<void>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text(id),
+          content: SingleChildScrollView(child: SelectableText(details)),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('关闭'),
+            ),
+          ],
+        ),
+      ),
+      trailing: PopupMenuButton<String>(
+        tooltip: '渠道操作',
+        onSelected: (action) {
+          switch (action) {
+            case 'select':
+              widget.services.musicBrowser.selectProvider(provider as String);
               Navigator.pop(context);
-            },
-            child: const Text('选择原生分支'),
-          ),
-        if (row['id'] != 'exclusive-v6')
-          TextButton(
-            onPressed: _busy.contains(row['id'])
-                ? null
-                : () => _check(row['id'] as String),
-            child: const Text('版本'),
-          ),
-        if (lxSourceNames.contains(row['id']))
-          PopupMenuButton<bool>(
-            tooltip: '复制音源链接',
-            icon: const Icon(Icons.link),
-            onSelected: (proxy) {
-              final direct =
-                  'https://raw.githubusercontent.com/pdone/lx-music-source/main/${row['id']}/latest.js';
+            case 'check':
+              _check(id);
+            case 'direct':
+            case 'proxy':
+              final url =
+                  'https://raw.githubusercontent.com/pdone/lx-music-source/main/$id/latest.js';
               Clipboard.setData(
                 ClipboardData(
-                  text: proxy ? 'https://gh-proxy.org/$direct' : direct,
+                  text: action == 'proxy' ? 'https://gh-proxy.org/$url' : url,
                 ),
               );
               ScaffoldMessenger.of(
                 context,
               ).showSnackBar(const SnackBar(content: Text('音源链接已复制')));
-            },
-            itemBuilder: (_) => const [
-              PopupMenuItem(value: false, child: Text('复制 GitHub 原始链接')),
-              PopupMenuItem(value: true, child: Text('复制加速链接')),
-            ],
-          ),
-      ],
-    ),
-  );
+          }
+        },
+        itemBuilder: (_) => [
+          if (musicSources.containsKey(provider))
+            const PopupMenuItem(value: 'select', child: Text('选择原生分支')),
+          if (id != 'exclusive-v6')
+            PopupMenuItem(
+              value: 'check',
+              enabled: !_busy.contains(id),
+              child: const Text('检查版本'),
+            ),
+          if (lxSourceNames.contains(id)) ...const [
+            PopupMenuItem(value: 'direct', child: Text('复制 GitHub 原始链接')),
+            PopupMenuItem(value: 'proxy', child: Text('复制加速链接')),
+          ],
+        ],
+      ),
+    );
+  }
+
   Widget _openApi() => ListenableBuilder(
     listenable: widget.services.musicOpenApi,
     builder: (context, _) {

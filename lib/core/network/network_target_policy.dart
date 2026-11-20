@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'lan_access_policy.dart';
+import 'source_certificate.dart';
 
 /// Block non-HTTP resources and private targets unless a LAN origin is granted.
 /// The blanket private-network bypass is only for explicit test fixtures.
@@ -86,8 +87,9 @@ final class NetworkTargetPolicy {
   Future<ConnectionTask<Socket>> connect(
     Uri uri,
     String? proxyHost,
-    int? proxyPort,
-  ) async {
+    int? proxyPort, {
+    SourceCertificate? certificate,
+  }) async {
     validateUri(uri, legacyQueryEncoding: allowLegacyQueryEncoding);
     if (proxyHost != null) throw const FormatException('不支持未校验的代理目标');
     final addresses = await InternetAddress.lookup(
@@ -98,6 +100,9 @@ final class NetworkTargetPolicy {
     }
     for (final address in addresses) {
       validateAddress(address, uri: uri);
+      if (certificate != null && isPrivate(address)) {
+        throw const FormatException('证书例外仅可用于公网来源');
+      }
     }
     // Connect to the checked address, never resolve the host a second time.
     final address =
@@ -108,11 +113,27 @@ final class NetworkTargetPolicy {
     final task = await Socket.startConnect(address, uri.port);
     if (uri.scheme != 'https') return task;
     Socket? connected;
-    final secure = task.socket.then((socket) {
+    final secure = task.socket.then((socket) async {
       connected = socket;
       // A custom connectionFactory owns TLS as well as TCP. Keep SNI and
       // certificate verification bound to the original hostname.
-      return SecureSocket.secure(socket, host: uri.host);
+      SourceCertificateFailure? rejected;
+      try {
+        return await SecureSocket.secure(
+          socket,
+          host: uri.host,
+          onBadCertificate: (leaf) {
+            final failure = SourceCertificateFailure(uri, leaf);
+            if (certificate?.accepts(uri, failure) == true) return true;
+            rejected = failure;
+            return false;
+          },
+        );
+      } on HandshakeException {
+        socket.destroy();
+        if (rejected != null) throw rejected!;
+        rethrow;
+      }
     });
     return ConnectionTask.fromSocket(secure, () {
       task.cancel();

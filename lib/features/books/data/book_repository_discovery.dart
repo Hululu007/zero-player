@@ -10,6 +10,10 @@ Uri? _bookAddress(String query) {
   return legacyBookUri(uri);
 }
 
+final _searchFingerprints = Expando<String>();
+String _searchFingerprint(BookSource source) =>
+    _searchFingerprints[source] ??= jsonEncode(source.toJson());
+
 /// Discovery always selects from the current, policy-filtered categories.
 extension _BookRepositoryDiscovery on BooksRepository {
   Future<({List<Book> books, int failed})> _find(
@@ -53,6 +57,12 @@ extension _BookRepositoryDiscovery on BooksRepository {
         })
         .toList();
     final prioritized = _prioritize(entries, preferredSource, favorites);
+    if (sourceId == null && query.isEmpty && kind == BookKind.audio) {
+      final index = prioritized.indexWhere(
+        (entry) => entry.source.format == BookFormat.bookan,
+      );
+      if (index > 0) prioritized.insert(0, prioritized.removeAt(index));
+    }
     final selected = maxSources == null
         ? prioritized
         : prioritized.take(maxSources).toList();
@@ -63,6 +73,7 @@ extension _BookRepositoryDiscovery on BooksRepository {
       completed: 0,
       total: selected.length,
       failed: false,
+      certificateFailed: false,
       latencyMs: null,
     ));
     return _searchSources(
@@ -74,6 +85,12 @@ extension _BookRepositoryDiscovery on BooksRepository {
       address,
       field,
       onProgress,
+      certificatePins:
+          sourceId == null &&
+              certificateExceptionsAvailable &&
+              allowAggregateCertificateExceptions?.call() == true
+          ? await _certificatePins()
+          : const {},
     );
   }
 
@@ -124,8 +141,8 @@ extension _BookRepositoryDiscovery on BooksRepository {
       return false;
     }
     return identical(current.source, snapshot.source) ||
-        jsonEncode(current.source.toJson()) ==
-            jsonEncode(snapshot.source.toJson());
+        _searchFingerprint(current.source) ==
+            _searchFingerprint(snapshot.source);
   }
 
   Future<({List<Book> books, int failed})> _searchSources(
@@ -136,12 +153,14 @@ extension _BookRepositoryDiscovery on BooksRepository {
     int page,
     Uri? address,
     BookSearchField field,
-    void Function(BookSearchUpdate)? onProgress,
-  ) async {
+    void Function(BookSearchUpdate)? onProgress, {
+    required Map<String, List<String>> certificatePins,
+  }) async {
     final results = <String, List<Book>>{};
     final match = address == null && query.trim().isNotEmpty
         ? BookSearchQuery(query, field)
         : null;
+    final interactive = query.isNotEmpty && category == null && address == null;
     var failed = 0;
     var cursor = 0, completed = 0;
     Future<void> fetchSources() async {
@@ -151,20 +170,26 @@ extension _BookRepositoryDiscovery on BooksRepository {
         final source = entry.source;
         var books = <Book>[];
         var failure = false;
+        var certificateFailed = false;
         int? latencyMs;
         try {
           if (_currentSearchEntry(entry) &&
               !await _blocked(source.id) &&
               _currentSearchEntry(entry)) {
             final watch = Stopwatch()..start();
-            final found = await _booksWithDiscoveryPolicy(
+            Future<List<Book>> search() => _searchEntry(
               source,
               query,
               token,
-              category: category,
-              page: page,
-              bookAddress: address,
+              category,
+              page,
+              address,
+              interactive,
             );
+            final certificate = _aggregateCertificate(source, certificatePins);
+            final found = await (certificate == null
+                ? search()
+                : certificate.run(search));
             latencyMs = watch.elapsedMilliseconds;
             if (_currentSearchEntry(entry) &&
                 !await _blocked(source.id) &&
@@ -184,25 +209,31 @@ extension _BookRepositoryDiscovery on BooksRepository {
                   .toList();
             }
           }
-        } on Exception {
+        } on Exception catch (error) {
           failed++;
           failure = true;
+          certificateFailed = error is SourceCertificateFailure;
         }
         token.check();
-        results[source.id] = books;
+        if (books.isNotEmpty) results[source.id] = books;
         onProgress?.call((
           sourceId: source.id,
           books: books,
           completed: ++completed,
           total: selected.length,
           failed: failure,
+          certificateFailed: certificateFailed,
           latencyMs: latencyMs,
         ));
       }
     }
 
+    final parallelism = interactive ? 18 : 4;
     await Future.wait(
-      List.generate(math.min(4, selected.length), (_) => fetchSources()),
+      List.generate(
+        math.min(parallelism, selected.length),
+        (_) => fetchSources(),
+      ),
     );
     token.check();
     return (
@@ -212,6 +243,37 @@ extension _BookRepositoryDiscovery on BooksRepository {
           .toList(),
       failed: failed,
     );
+  }
+
+  Future<List<Book>> _searchEntry(
+    BookSource source,
+    String query,
+    CancellationToken parent,
+    LegadoCategory? category,
+    int page,
+    Uri? address,
+    bool interactive,
+  ) async {
+    final request = CancellationToken();
+    final unlink = parent.listen(request.cancel);
+    final deadline = interactive
+        ? Timer(const Duration(seconds: 12), request.cancel)
+        : null;
+    try {
+      final found = await _booksWithDiscoveryPolicy(
+        source,
+        query,
+        request,
+        category: category,
+        page: page,
+        bookAddress: address,
+      );
+      request.check();
+      return found;
+    } finally {
+      deadline?.cancel();
+      unlink();
+    }
   }
 
   Future<List<LegadoCategory>> _discoveryCategories(
@@ -494,6 +556,10 @@ extension _BookRepositoryDiscovery on BooksRepository {
 }
 
 bool _globalDiscoveryCategory(BookSource source, LegadoCategory category) {
+  if (source.format == BookFormat.ximalaya &&
+      category.address == XimalayaAudioClient.featuredCategory.address) {
+    return true;
+  }
   if (source.format == BookFormat.shuyin && category.address == '0') {
     return true;
   }

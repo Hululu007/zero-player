@@ -11,8 +11,10 @@ import 'package:path/path.dart' as p;
 
 import '../../../core/network/cancellation_token.dart';
 import '../../../core/network/document_client.dart';
+import '../../../core/network/header_policy.dart';
 import '../../../core/network/media_http_client.dart';
 import '../../../core/network/poster_repository.dart';
+import '../../../core/network/source_certificate.dart';
 import '../../../core/persistence/app_database.dart';
 import '../../../media/gateway/offline_server.dart';
 import '../../supervision/application/content_policy.dart';
@@ -33,6 +35,7 @@ import 'book_comic_access.dart';
 import 'book_cover_cache.dart';
 import 'book_download_evidence.dart';
 import 'book_download_guard.dart';
+import 'book_download_source_health.dart';
 import 'book_latest_aggregation.dart';
 import 'book_discovery_paging.dart';
 import 'book_import.dart';
@@ -56,12 +59,15 @@ import 'book_store.dart';
 import 'book_catalog_window.dart';
 import 'local_book_library.dart';
 import 'qidian_catalog.dart';
+import 'ximalaya_audio_client.dart';
 
 export 'book_source_import_plan.dart' show BookImportChanges;
 
 part 'book_comic_download.dart';
 part 'book_chapter_download.dart';
 part 'book_repository_discovery.dart';
+part 'book_repository_certificates.dart';
+part 'book_repository_builtin_catalog.dart';
 part 'book_repository_editions.dart';
 part 'book_repository_mutations.dart';
 part 'book_repository_media_access.dart';
@@ -75,11 +81,16 @@ part 'book_site_observed_sources.dart';
 part 'book_supervised_site_scan.dart';
 
 typedef BookEdition = ({Book book, List<BookChapter> chapters});
+typedef VerifiedBookEdition = ({
+  BookEdition edition,
+  bool Function() isCurrent,
+});
 typedef BookEditionUpdate = ({
   BookSourceEntry? source,
   BookEdition? edition,
   int completed,
   int total,
+  int eligible,
   bool failed,
 });
 typedef BookSearchUpdate = ({
@@ -88,6 +99,7 @@ typedef BookSearchUpdate = ({
   int completed,
   int total,
   bool failed,
+  bool certificateFailed,
   int? latencyMs,
 });
 
@@ -99,6 +111,7 @@ final class BooksRepository {
     this.policy,
     Future<void> Function(File, CancellationToken, String) validateAudio, {
     int coverCacheMiB = 32,
+    this.allowAggregateCertificateExceptions,
     this.downloadText,
   }) : store = BookStore(db),
        riskStore = BookSourceRiskStore(db),
@@ -203,8 +216,11 @@ final class BooksRepository {
     CancellationToken,
   )?
   downloadText;
-  late final client = BookClient(DocumentClient(_http));
-  late final qidian = QidianCatalog(client.network, policy, store.db);
+  final bool Function()? allowAggregateCertificateExceptions;
+  late final client = BookClient(
+    DocumentClient(_http, sourceCertificates: true),
+  );
+  late final qidian = QidianCatalog(DocumentClient(_http), policy, store.db);
   late final AudiobookFiles audioFiles;
   late final Future<List<BookSource>> _builtins = _loadBuiltins();
   Future<void>? _siteObservation;
@@ -271,55 +287,15 @@ final class BooksRepository {
   );
 
   Future<void> ensureCatalog() async {
-    if (policy.supervision.enabled || policy.supervision.corrupted) return;
+    if (closing || policy.supervision.enabled || policy.supervision.corrupted) {
+      return;
+    }
     final running = _seeding ??= _seedCatalog();
     try {
       await running;
     } finally {
       if (identical(_seeding, running)) _seeding = null;
     }
-  }
-
-  Future<void> _seedCatalog() async {
-    final catalog = await AoaoStarBookCatalog.load();
-    // A filtered import skips restricted rows. Revisit the same snapshot when
-    // the user later changes the filter, or those rows would be lost forever.
-    final filterAdult = policy.filterAdult;
-    final revision =
-        '${catalog.revision}:adult-${filterAdult ? 'filtered' : 'all'}:2';
-    if (await store.read('books_catalog_revision') == revision) return;
-    await importSources(
-      (await catalog.read()).sources,
-      fromCatalog: true,
-      catalogRevision: revision,
-      catalogAdultFilter: filterAdult,
-    );
-  }
-
-  Future<List<BookSource>> _loadBuiltins() async {
-    final data =
-        jsonDecode(
-              await rootBundle.loadString(
-                'assets/catalogs/books/verified.json',
-              ),
-            )
-            as List;
-    final builtins = data
-        .cast<Map>()
-        .map((s) => BookSource.fromJson(s, builtin: true))
-        .toList();
-    builtins.addAll(
-      await loadReviewedBookDomains(
-        store,
-        riskStore,
-        migratePreferences:
-            !policy.supervision.enabled && !policy.supervision.corrupted,
-      ),
-    );
-    _verifiedSources.addEntries(
-      builtins.map((source) => MapEntry(source.id, source)),
-    );
-    return builtins;
   }
 
   /// Load source metadata before exposing saved works or offline chapters.
@@ -578,8 +554,13 @@ final class BooksRepository {
   Future<List<LegadoCategory>> categories(
     BookKind kind,
     String sourceId,
-    CancellationToken token,
-  ) => _discoveryCategories(kind, sourceId, token);
+    CancellationToken token, {
+    SourceCertificateFailure? temporaryCertificate,
+  }) => _certificateRequest(
+    sourceId,
+    temporaryCertificate,
+    () => _discoveryCategories(kind, sourceId, token),
+  );
 
   Future<BookDiscoveryPage> discover(
     BookKind kind,
@@ -588,13 +569,18 @@ final class BooksRepository {
     LegadoCategory? category,
     int page = 1,
     String? cursor,
-  }) => _discoverPage(
-    kind,
+    SourceCertificateFailure? temporaryCertificate,
+  }) => _certificateRequest(
     sourceId,
-    token,
-    category: category,
-    page: page,
-    cursor: cursor,
+    temporaryCertificate,
+    () => _discoverPage(
+      kind,
+      sourceId,
+      token,
+      category: category,
+      page: page,
+      cursor: cursor,
+    ),
   );
 
   Future<void> restoreDefaultSources(BookKind kind) => _withEvidenceMutation(
@@ -663,6 +649,9 @@ final class BooksRepository {
     );
     if (changed) await _refreshChangedSources();
   }
+
+  Future<void> authorizeAndEnableComics(List<BookSource> selection) =>
+      _authorizeAndEnableComics(selection);
 
   Future<void> blockSource(BookSource source) => _withEvidenceMutation(
     () => _blockSource(source),
@@ -901,6 +890,7 @@ final class BooksRepository {
     Book book,
     CancellationToken token, {
     bool refresh = false,
+    bool persistCatalog = true,
   }) async {
     token.check();
     if (book.sourceId != 'local') await ensureSourceRiskLoaded();
@@ -914,7 +904,11 @@ final class BooksRepository {
       throw const ContentBlocked();
     }
     token.check();
-    if (saved != null && saved.chapters.isNotEmpty && !refresh) {
+    final catalogRevision = _catalogReparseRevision(book, saved);
+    if (saved != null &&
+        saved.chapters.isNotEmpty &&
+        !refresh &&
+        catalogRevision == null) {
       return saved.chapters
           .where(
             (c) =>
@@ -923,7 +917,17 @@ final class BooksRepository {
           .toList();
     }
     final source = await _active(book);
-    return _guardedBookChapters(source, book, token);
+    final fresh = await _guardedBookChapters(source, book, token);
+    token.check();
+    if (persistCatalog && fresh.isNotEmpty && catalogRevision != null) {
+      await store.updateShelfChapters(
+        book,
+        fresh,
+        catalogRevision: catalogRevision,
+      );
+    }
+    token.check();
+    return fresh;
   }
 
   Future<Book> details(Book book, CancellationToken token) async {
@@ -980,12 +984,20 @@ final class BooksRepository {
     bool refresh = false,
     bool includeCurrent = false,
     void Function(BookEditionUpdate)? onProgress,
+    Duration? timeLimit,
+    void Function()? onTimeLimit,
+    int? maxSources,
+    void Function(VerifiedBookEdition)? onVerified,
   }) => _inspectEditions(
     book,
     token,
     refresh: refresh,
     includeCurrent: includeCurrent,
     onProgress: onProgress,
+    timeLimit: timeLimit,
+    onTimeLimit: onTimeLimit,
+    maxSources: maxSources,
+    onVerified: onVerified,
   );
 
   BookChapter? matchingChapter(
@@ -1446,13 +1458,17 @@ final class BooksRepository {
     BookChapter chapter,
     CancellationToken token, {
     List<BookEdition> alternatives = const [],
+    List<(Book, BookChapter)> matchedAlternatives = const [],
     bool tryOriginal = true,
+    BookDownloadSourceHealth? sourceHealth,
   }) => _downloadChapter(
     book,
     chapter,
     token,
     alternatives: alternatives,
+    matchedAlternatives: matchedAlternatives,
     tryOriginal: tryOriginal,
+    sourceHealth: sourceHealth,
   );
 
   Future<Book> importLocal(File file) => _localLibrary.importLocal(file);

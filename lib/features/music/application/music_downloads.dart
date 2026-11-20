@@ -29,6 +29,15 @@ final class MusicDownload {
   final String? entry, error;
 }
 
+final class _MusicDownloadJob {
+  _MusicDownloadJob(this.track);
+
+  final MusicTrack track;
+  final token = CancellationToken();
+  late final Future<void> queued;
+  MusicTrack? media;
+}
+
 final class MusicDownloads extends ChangeNotifier {
   MusicDownloads(
     this.db,
@@ -112,7 +121,7 @@ final class MusicDownloads extends ChangeNotifier {
     ];
   }
 
-  final _tokens = <String, CancellationToken>{};
+  final _jobs = <String, _MusicDownloadJob>{};
   final _removing = <String>{};
   CancellationToken? _activeToken;
   Completer<void>? _activeDone;
@@ -122,7 +131,17 @@ final class MusicDownloads extends ChangeNotifier {
   String id(MusicTrack track) => stableId(track.key);
   Directory directory(MusicTrack track) =>
       Directory(p.join(root.path, id(track)));
-  Future<void> load() => _loaded ??= _read(recover: true);
+  Future<void> load() => _loaded ??= _load();
+
+  Future<void> _load() async {
+    try {
+      await _read(recover: true);
+    } catch (_) {
+      _loaded = null;
+      rethrow;
+    }
+  }
+
   Future<void> _read({bool recover = false}) async {
     final rows = await db.rows(
       "SELECT key,value FROM app_meta WHERE key GLOB 'music_download:*'",
@@ -190,17 +209,28 @@ final class MusicDownloads extends ChangeNotifier {
   }
 
   void _policyChanged() {
-    for (final token in _tokens.values) {
-      token.cancel();
+    for (final job in _jobs.values) {
+      final media = job.media;
+      if (!repository.allowed(job.track) ||
+          (media != null && !repository.allowed(media))) {
+        job.token.cancel();
+      }
     }
   }
 
   Future<void> download(MusicTrack track) async {
     await load();
-    if (_closed ||
-        _removing.contains(id(track)) ||
-        _tokens[id(track)]?.isCancelled == false) {
-      return;
+    final key = id(track);
+    if (_closed || _removing.contains(key)) return;
+    if (_jobs[key] case final job?) {
+      if (!job.token.isCancelled) return;
+      await job.queued;
+      if (identical(_activeToken, job.token)) await _activeDone?.future;
+      if (_closed ||
+          _removing.contains(key) ||
+          (_jobs[key] != null && !identical(_jobs[key], job))) {
+        return;
+      }
     }
     if (!repository.allowed(track)) throw const FormatException('歌曲已被过滤');
     if (!track.canDownload) {
@@ -211,30 +241,36 @@ final class MusicDownloads extends ChangeNotifier {
     )) {
       return;
     }
-    if (items.length >= 500 &&
-        !items.any((item) => item.track.key == track.key)) {
+    final occupied = {for (final item in items) id(item.track), ..._jobs.keys};
+    if (occupied.length >= 500 && !occupied.contains(key)) {
       throw const FormatException('离线任务最多 500 项');
     }
-    final token = _tokens[id(track)] = CancellationToken();
-    try {
-      await _save(track, 'queued');
-    } catch (_) {
-      if (identical(_tokens[id(track)], token)) _tokens.remove(id(track));
-      rethrow;
-    }
-    final job = _pending.then((_) => _execute(track, token));
-    _pending = job.catchError((Object _) {});
-    unawaited(
-      job
-          .whenComplete(() {
-            if (identical(_tokens[id(track)], token)) _tokens.remove(id(track));
-          })
-          .catchError((Object _) {}),
-    );
+
+    final job = _jobs[key] = _MusicDownloadJob(track);
+    job.queued = _save(track, 'queued').catchError((
+      Object error,
+      StackTrace stack,
+    ) {
+      if (identical(_jobs[key], job)) _jobs.remove(key);
+      Error.throwWithStackTrace(error, stack);
+    });
+    _pending = _pending
+        .then((_) async {
+          try {
+            await job.queued;
+            await _execute(key, job);
+          } finally {
+            if (identical(_jobs[key], job)) _jobs.remove(key);
+          }
+        })
+        .catchError((Object _) {});
+    await job.queued;
   }
 
-  Future<void> _execute(MusicTrack track, CancellationToken token) async {
-    if (_closed || !identical(_tokens[id(track)], token)) return;
+  Future<void> _execute(String key, _MusicDownloadJob job) async {
+    if (_closed || !identical(_jobs[key], job)) return;
+    final track = job.track;
+    final token = job.token;
     if (token.isCancelled) {
       final item = items.where((i) => i.track.key == track.key).firstOrNull;
       if (item?.status == 'queued') {
@@ -245,7 +281,7 @@ final class MusicDownloads extends ChangeNotifier {
     final done = _activeDone = Completer<void>();
     _activeToken = token;
     try {
-      await _run(track, token);
+      await _run(job);
     } finally {
       _activeToken = null;
       _activeDone = null;
@@ -253,14 +289,16 @@ final class MusicDownloads extends ChangeNotifier {
     }
   }
 
-  Future<void> _run(MusicTrack track, CancellationToken token) async {
+  Future<void> _run(_MusicDownloadJob job) async {
+    final track = job.track;
+    final token = job.token;
     var bytes = 0;
     try {
       token.check();
-      final media =
+      final media = job.media =
           await (resolve?.call(track, token) ??
               repository.resolve(track, token, refresh: true));
-      if (!repository.allowed(media)) throw const FormatException('歌曲已被过滤');
+      _requireAllowed(job, media);
       if (!media.canDownload) throw const FormatException('该音源未开放此歌曲下载');
       final dir = directory(track);
       await dir.create(recursive: true);
@@ -302,8 +340,7 @@ final class MusicDownloads extends ChangeNotifier {
           fileName: entry,
         );
       }
-      token.check();
-      if (!repository.allowed(track)) throw const FormatException('歌曲已被过滤');
+      _requireAllowed(job, media);
       await _save(track, 'complete', bytes: bytes, entry: entry);
     } catch (_) {
       await _save(
@@ -313,6 +350,13 @@ final class MusicDownloads extends ChangeNotifier {
         error: token.isCancelled ? null : '下载未完成，可重试；请检查音源及剩余容量。',
       );
     }
+  }
+
+  void _requireAllowed(_MusicDownloadJob job, MusicTrack media) {
+    if (!repository.allowed(job.track) || !repository.allowed(media)) {
+      job.token.cancel();
+    }
+    job.token.check();
   }
 
   Future<int> _reusableBytes(MusicTrack track, Uri uri) async {
@@ -342,9 +386,13 @@ final class MusicDownloads extends ChangeNotifier {
 
   Future<void> pause(MusicTrack track) async {
     await load();
-    final token = _tokens[id(track)];
-    if (token == null) return;
+    final key = id(track);
+    final job = _jobs[key];
+    if (job == null) return;
+    final token = job.token;
     token.cancel();
+    await job.queued;
+    if (!identical(_jobs[key], job)) return;
     if (identical(_activeToken, token)) {
       await _activeDone?.future;
     } else {
@@ -397,18 +445,21 @@ final class MusicDownloads extends ChangeNotifier {
     final base = p.normalize(p.absolute(root.path));
     final target = p.normalize(p.absolute(dir.path));
     if (!p.isWithin(base, target)) throw const FormatException('无效的下载目录');
-    _tokens.remove(id(track));
+    _jobs.remove(id(track));
     await fetcher.store.unpin('music:${id(track)}');
     if (await dir.exists()) await dir.delete(recursive: true);
     await db.write('DELETE FROM app_meta WHERE key=?', [
       'music_download:${id(track)}',
     ]);
-    await _read();
+    items = items.where((item) => item.track.key != track.key).toList();
+    if (!_closed) notifyListeners();
   }
 
   Future<void> close() async {
     _closed = true;
-    _policyChanged();
+    for (final job in _jobs.values) {
+      job.token.cancel();
+    }
     await _pending;
     repository.policy?.removeListener(_policyChanged);
     super.dispose();

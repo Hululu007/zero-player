@@ -13,6 +13,7 @@ import 'package:zero_player/features/supervision/domain/supervision_rules.dart';
 void main() {
   _snapshotTests();
   _restrictionTests();
+  _archivedComicTest();
   _reviewTests();
 }
 
@@ -97,6 +98,57 @@ void _snapshotTests() {
       expect(f.publish([source], generation: old), isFalse);
       expect(f.access.blocked(source.id), isTrue);
       // Only a current database snapshot may publish the committed unblock.
+      f.publish([source]);
+      expect(f.access.sourceAllowed(source), isTrue);
+    },
+  );
+}
+
+void _archivedComicTest() {
+  test(
+    'an enabled comic from the old bundled catalog is quarantined',
+    () async {
+      final f = await _Fixture.create();
+      final source = _source({'kind': 'comic'});
+      final archived = BookSourceEntry(
+        source,
+        true,
+        false,
+        '',
+        '',
+        null,
+        fromCatalog: true,
+      );
+      f.access.publish(
+        generation: f.access.beginReload(),
+        entries: [archived],
+        assessments: const {},
+        blocked: const [],
+      );
+      expect(f.access.sourceAllowed(source), isFalse);
+      expect(f.access.entryAllowed(archived), isFalse);
+      expect(f.access.riskEntries().single.fixedQuarantine, isTrue);
+
+      final builtin = BookSource.fromJson(source.toJson(), builtin: true);
+      final upgraded = BookSourceEntry(
+        builtin,
+        true,
+        false,
+        '',
+        '',
+        null,
+        fromCatalog: true,
+      );
+      f.access.publish(
+        generation: f.access.beginReload(),
+        entries: [upgraded],
+        assessments: const {},
+        blocked: const [],
+      );
+      expect(builtin.id, source.id);
+      expect(f.access.entryAllowed(upgraded), isTrue);
+      expect(f.access.riskEntries(), isEmpty);
+
       f.publish([source]);
       expect(f.access.sourceAllowed(source), isTrue);
     },

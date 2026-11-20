@@ -1,16 +1,17 @@
 import 'playback_request.dart';
 import '../../../app/app_version.dart';
 import '../../../core/network/cancellation_token.dart';
+import '../../../core/diagnostics/local_error_log.dart';
 import '../../../media/content_filter/fingerprints/feature_capture.dart';
 import '../../../media/content_filter/fingerprints/feature_rule.dart';
 import 'dart:async';
-import 'dart:convert';
 import '../../supervision/domain/supervision_rules.dart';
 import 'package:flutter/foundation.dart';
 
 import '../../../app/app_services.dart';
 import '../../../core/network/header_policy.dart';
 import '../../../media/gateway/media_gateway.dart';
+import '../../../media/network/hls_probe.dart';
 import '../../../media/hls/timeline.dart';
 import '../../../media/hls/hls_quality.dart';
 import '../../../media/content_filter/background_filter.dart';
@@ -212,7 +213,7 @@ final class PlaybackController extends ChangeNotifier {
   bool _switching = false;
   bool _closed = false;
   Future<void>? _closing;
-  final _shutdown = Completer<void>();
+  final _shutdown = CancellationToken();
   bool _advancing = false;
   int _generation = 0;
   Duration? _resume;
@@ -363,7 +364,7 @@ final class PlaybackController extends ChangeNotifier {
     _resumeTimer?.cancel();
     _healthError = false;
     _routeToken.cancel();
-    _routeToken = CancellationToken();
+    final routeToken = _routeToken = CancellationToken();
     _captureToken?.cancel();
     _contentSession?.cancel();
     _filterEpoch++;
@@ -376,12 +377,22 @@ final class PlaybackController extends ChangeNotifier {
     final generation = ++_generation;
     _queue = _queue.catchError((Object _) {}).then((_) async {
       if (_closed || generation != _generation) return;
-      await Future.any([_open(next, generation), _shutdown.future]);
+      final stopped = Completer<void>();
+      final unlink = _shutdown.listen(stopped.complete);
+      try {
+        await Future.any([_open(next, generation, routeToken), stopped.future]);
+      } finally {
+        unlink();
+      }
     });
     return _queue;
   }
 
-  Future<void> _open(PlaybackRequest next, int generation) async {
+  Future<void> _open(
+    PlaybackRequest next,
+    int generation,
+    CancellationToken routeToken,
+  ) async {
     await save();
     if (_closed || generation != _generation) return;
     _switching = true;
@@ -425,7 +436,7 @@ final class PlaybackController extends ChangeNotifier {
       if (_closed || generation != _generation) return;
       workSkipEnabled = await services.skips.workEnabled(seriesKey);
       if (_closed || generation != _generation) return;
-      final uri = next.offline?.uri ?? await _onlineUri(next);
+      final uri = next.offline?.uri ?? await _onlineUri(next, routeToken);
       if (generation != _generation || _closed) return;
       await _validate(next);
       if (generation != _generation || _closed) return;
@@ -452,26 +463,9 @@ final class PlaybackController extends ChangeNotifier {
       if (services.settings.value.contentFilter && !next.live) {
         unawaited(_startContentFilter(uri, generation));
       }
-    } catch (e) {
+    } catch (e, stack) {
       if (_closed || generation != _generation) return;
-      if (e is ContentBlocked) {
-        blocked = true;
-        cancelRecovery();
-        _gateway?.close();
-        next.offline?.close();
-      }
-      if (e is TimeoutException) cancelRecovery();
-      error = e is TimeoutException
-          ? '播放器未响应，请返回后重新打开视频'
-          : e is FilterFailure
-          ? e.message
-          : e is RemoteFailure
-          ? e.message
-          : e is FormatException
-          ? e.message
-          : next.offline != null
-          ? '无法打开本地媒体，请检查文件是否存在及编码是否受支持'
-          : '无法打开媒体。请检查来源，或切换线路后重试';
+      _recordOpenFailure(next, e, stack);
     } finally {
       if (generation == _generation && !_closed) {
         _switching = false;
@@ -481,13 +475,42 @@ final class PlaybackController extends ChangeNotifier {
     }
   }
 
-  Future<Uri> _onlineUri(PlaybackRequest next) async {
+  void _recordOpenFailure(PlaybackRequest next, Object e, StackTrace stack) {
+    if (e is! RequestCancelled && e is! ContentBlocked) {
+      LocalErrorLog.record('video-open', e, stack);
+    }
+    _gateway?.close();
+    _gateway = null;
+    if (e is ContentBlocked) {
+      blocked = true;
+      cancelRecovery();
+      next.offline?.close();
+    }
+    if (e is TimeoutException) {
+      cancelRecovery();
+      _routeToken.cancel();
+      unawaited(engine.stop().catchError((Object _) {}));
+    }
+    error = e is TimeoutException
+        ? '播放器未响应，请返回后重新打开视频'
+        : e is FilterFailure
+        ? e.message
+        : e is RemoteFailure
+        ? e.message
+        : e is FormatException
+        ? e.message
+        : next.offline != null
+        ? '无法打开本地媒体，请检查文件是否存在及编码是否受支持'
+        : '无法打开媒体。请检查来源，或切换线路后重试';
+  }
+
+  Future<Uri> _onlineUri(PlaybackRequest next, CancellationToken token) async {
     var media = episode;
     if (!media.playable) {
       throw const FormatException('此地址需要网页解析，不支持直接播放');
     }
     final source = await services.sources.find(next.item.sourceId);
-    if (_closed) throw StateError('Playback is closed');
+    token.check();
     if (source != null && (!source.enabled || source.suppressed)) {
       throw const FormatException('此源已屏蔽，请选择其他来源');
     }
@@ -508,12 +531,13 @@ final class PlaybackController extends ChangeNotifier {
       final resolved = await createVodProvider(
         source,
         services.network,
+        cancellation: token,
         policy: services.contentPolicy,
       ).resolve(media);
       media = Episode(media.label, resolved.uri);
       headers = resolved.headers;
     }
-    if (_closed) throw StateError('Playback is closed');
+    token.check();
     resolvedMedia = ResolvedMedia(media.uri, headers: headers);
     final policy = HeaderPolicy({media.uri: headers});
     var hls = media.uri.path.toLowerCase().endsWith('.m3u8');
@@ -522,16 +546,9 @@ final class PlaybackController extends ChangeNotifier {
           r'\.(mp4|flv|mkv|webm|ts)$',
           caseSensitive: false,
         ).hasMatch(media.uri.path)) {
-      final response = await services.http.open(media.uri, policy: policy);
-      final first = await response.body.take(1).toList();
-      hls =
-          first.isNotEmpty &&
-          utf8
-              .decode(first.first.take(512).toList(), allowMalformed: true)
-              .trimLeft()
-              .startsWith('#EXTM3U');
+      hls = await probeHls(services.http, media.uri, policy, token);
     }
-    if (_closed) throw StateError('Playback is closed');
+    token.check();
     _gateway = services.gateway.createSession(policy)
       ..normalizeTimestamps =
           !next.live && services.settings.value.contentFilter
@@ -1313,7 +1330,7 @@ final class PlaybackController extends ChangeNotifier {
     _generation++;
     _captureToken?.cancel();
     _contentSession?.cancel();
-    _shutdown.complete();
+    _shutdown.cancel();
     cancelRecovery();
     _previousRate = null;
     _saveTimer.cancel();
@@ -1357,7 +1374,10 @@ final class PlaybackController extends ChangeNotifier {
     } finally {
       dispose();
     }
-    if (failure != null) Error.throwWithStackTrace(failure!, trace!);
+    if (failure != null) {
+      LocalErrorLog.record('video-close', failure!, trace);
+      Error.throwWithStackTrace(failure!, trace!);
+    }
   }
 
   void cancelRecovery() {

@@ -147,6 +147,7 @@ void _lifecycleTests() {
       f.calls.clear();
       final resumed = f.manager.start(f.target, shelf.chapters, plan);
       await resumed.done;
+      expect(f.inspections, 1, reason: '续传应复用已校验的聚合目录');
       expect(resumed.failures, 0);
       expect(resumed.total, 1);
       expect(f.calls, ['${f.origin.sourceId}:第4章']);
@@ -192,7 +193,12 @@ void _routingSafetyTests() {
       final stopped = f.manager.start(f.target, f.current, _aggregatePlan);
       await stopped.done;
       expect(stopped.status, BookDownloadStatus.paused);
-      expect(f.calls, isEmpty);
+      expect(f.calls, hasLength(f.current.length));
+      expect(
+        f.calls.every((call) => call.startsWith('${f.target.sourceId}:')),
+        isTrue,
+      );
+      f.calls.clear();
       await f.books.saveSource(f.originSource, {'enabled': true});
       final catalog = await BookLatestAggregation(
         f.books.store,
@@ -211,19 +217,23 @@ void _routingSafetyTests() {
     },
   );
 
-  test(
-    'cancelled scans do not publish aggregation or start chapter requests',
-    () async {
-      final f = await _Fixture.create();
-      addTearDown(f.close);
-      f.cancelScan = true;
-      final task = f.manager.start(f.target, f.current, _aggregatePlan);
-      await task.done;
-      expect(task.status, BookDownloadStatus.paused);
-      expect(f.calls, isEmpty);
-      expect(await f.books.store.entry(f.target), isNull);
-    },
-  );
+  test('cancelled scans do not publish new chapters', () async {
+    final f = await _Fixture.create();
+    addTearDown(f.close);
+    f.cancelScan = true;
+    final task = f.manager.start(f.target, f.current, _aggregatePlan);
+    await task.done;
+    expect(task.status, BookDownloadStatus.paused);
+    expect(
+      f.calls.every((call) => call.startsWith('${f.target.sourceId}:')),
+      isTrue,
+    );
+    final entry = await f.books.store.entry(f.target);
+    expect(
+      entry?.chapters.map((chapter) => chapter.id),
+      f.current.map((chapter) => chapter.id),
+    );
+  });
 
   test(
     'missing durable origin fails closed without requesting synthetic URLs',
@@ -284,7 +294,7 @@ void _capacityTests() {
       final f = await _Fixture.create();
       addTearDown(f.close);
       f.newer = List.generate(
-        4001,
+        bookChapterCatalogLimit + 1,
         (i) => BookChapter(
           '第${i + 1}章',
           Uri.https('origin.example', '/chapter/${i + 1}'),
@@ -295,8 +305,11 @@ void _capacityTests() {
       expect(task.status, BookDownloadStatus.failed);
       expect(task.error, contains('目录容量不足'));
       expect(task.chapters, hasLength(2));
-      expect(f.calls, isEmpty);
-      expect(await f.books.store.entry(f.target), isNull);
+      expect(f.calls, hasLength(f.current.length));
+      expect(
+        await f.books.store.savedText(f.target),
+        hasLength(f.current.length),
+      );
     },
   );
 }

@@ -9,6 +9,7 @@ import 'media_http_client.dart';
 import 'request_scheduler.dart';
 import 'network_budget.dart';
 import 'document_encoding.dart';
+import 'source_certificate.dart';
 
 enum FailureKind {
   cancelled,
@@ -40,8 +41,9 @@ final class Document {
 }
 
 final class DocumentClient {
-  const DocumentClient(this.http);
+  const DocumentClient(this.http, {this.sourceCertificates = false});
   final MediaHttpClient http;
+  final bool sourceCertificates;
 
   /// Fixed native JSON APIs only. POST redirects and automatic retries are disabled.
   Future<Document> postJson(
@@ -231,6 +233,7 @@ final class DocumentClient {
         onActivity: onActivity,
         validateTarget: validateTarget,
         mapRedirect: mapRedirect,
+        certificate: sourceCertificates ? SourceCertificate.current : null,
       );
       if (response.response.statusCode != 200) {
         await response.body.take(0).drain<void>();
@@ -252,7 +255,8 @@ final class DocumentClient {
       throw const RemoteFailure(FailureKind.network, '无法连接，请检查网络和来源地址');
     } on HttpException {
       throw const RemoteFailure(FailureKind.network, '来源连接中断或响应不完整');
-    } on HandshakeException {
+    } on HandshakeException catch (error) {
+      if (sourceCertificates && error is SourceCertificateFailure) rethrow;
       throw const RemoteFailure(FailureKind.network, '来源的安全连接验证失败');
     } on FormatException {
       throw const RemoteFailure(FailureKind.invalid, '来源数据格式不正确');

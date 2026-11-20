@@ -301,18 +301,11 @@ final class LegadoBookClient {
         : _stored(source, book.uri, book.request);
     if (first == null) return [];
     final chapters = <String, BookChapter>{};
-    final visited = <String>{};
+    final scheduled = <String>{first.targetKey};
     final queue = <LegadoRequest>[first];
-    for (
-      var page = 1;
-      page <= 12 && queue.isNotEmpty && chapters.length < 4000;
-      page++
-    ) {
-      final next = queue.removeAt(0);
-      if (!visited.add(next.targetKey)) {
-        page--;
-        continue;
-      }
+    for (var index = 0; index < queue.length; index++) {
+      final next = queue[index];
+      final page = index + 1;
       final document = await _fetch(
         source,
         next,
@@ -331,14 +324,20 @@ final class LegadoBookClient {
         token,
         requestGuard: requestGuard,
       );
-      for (final item in result.chapters.take(4000 - chapters.length)) {
-        chapters.putIfAbsent(item.id, () => item);
+      for (final item in result.chapters) {
+        if (chapters.containsKey(item.id)) continue;
+        if (chapters.length == bookChapterCatalogLimit) {
+          throw const FormatException('目录超过 $bookChapterCatalogLimit 章，未完整加载');
+        }
+        chapters[item.id] = item;
       }
       for (final address in result.links) {
         final request = _link(source, document.uri, address, page + 1);
-        if (request != null && !visited.contains(request.targetKey)) {
-          queue.add(request);
+        if (request == null || !scheduled.add(request.targetKey)) continue;
+        if (queue.length >= bookChapterPageLimit) {
+          throw const FormatException('目录分页超过安全上限，未完整加载');
         }
+        queue.add(request);
       }
     }
     return chapters.values.toList();

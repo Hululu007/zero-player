@@ -7,11 +7,11 @@ import '../data/live_repository.dart';
 final class BuiltinLiveSources {
   BuiltinLiveSources(this.repository);
   final LiveRepository repository;
-  Future<void>? _refresh;
+  Future<void>? _refreshMissing, _refreshAll;
   final _token = CancellationToken();
   Future<void> close() async {
     _token.cancel();
-    await _refresh;
+    await (_refreshAll ?? _refreshMissing);
   }
 
   late final Future<Map> _catalog = _loadCatalog();
@@ -180,7 +180,24 @@ final class BuiltinLiveSources {
   }
 
   Future<void> refresh({bool onlyMissing = false}) {
-    return _refresh ??= _run(onlyMissing).whenComplete(() => _refresh = null);
+    if (_refreshAll case final running?) return running;
+    if (onlyMissing) {
+      return _refreshMissing ??= _run(
+        true,
+      ).whenComplete(() => _refreshMissing = null);
+    }
+    return _refreshAll = _runAllAfter(
+      _refreshMissing,
+    ).whenComplete(() => _refreshAll = null);
+  }
+
+  Future<void> _runAllAfter(Future<void>? missing) async {
+    try {
+      await missing;
+    } catch (_) {
+      // The full refresh gets its own attempt and reports its own result.
+    }
+    if (!_token.isCancelled) await _run(false);
   }
 
   Future<void> _run(bool onlyMissing) async {

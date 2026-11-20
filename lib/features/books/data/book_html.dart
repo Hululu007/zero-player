@@ -1,11 +1,11 @@
 import 'package:html/dom.dart' as dom;
 import 'package:html/parser.dart' as html;
 
-dom.Document parseBookHtml(String input) {
+dom.Document parseBookHtml(String input, {bool keepNavigation = false}) {
   final document = html.parse(input);
   for (final node in document.querySelectorAll(
-    'script, style, iframe, object, embed, template, noscript, svg, form, nav, '
-    '[hidden], [aria-hidden="true"]',
+    'script, style, iframe, object, embed, template, noscript, svg, '
+    '[hidden], [aria-hidden="true"]${keepNavigation ? '' : ', form, nav'}',
   )) {
     node.remove();
   }
@@ -68,11 +68,15 @@ String plainBookText(dom.Node node, {int limit = 250000, bool own = false}) {
       .join('\n\n');
 }
 
-Iterable<dom.Element> bookElements(dom.Node node, String rule) {
+Iterable<dom.Element> bookElements(
+  dom.Node node,
+  String rule, {
+  int limit = 5000,
+}) {
   for (final alternative in rule.split('||')) {
     final elements = <dom.Element>{
       for (final selector in alternative.split('&&'))
-        ..._select(node, selector).whereType<dom.Element>(),
+        ..._select(node, selector, limit: limit).whereType<dom.Element>(),
     };
     if (elements.isNotEmpty) return elements;
   }
@@ -92,7 +96,7 @@ String bookField(dom.Node node, String rule, {bool long = false}) {
   return '';
 }
 
-Iterable<dom.Node> _select(dom.Node node, String rule) {
+Iterable<dom.Node> _select(dom.Node node, String rule, {int limit = 5000}) {
   if (rule.isEmpty) return [node];
   final steps = rule.split('@');
   if (steps.length > 8) throw const FormatException('选择器层数超过限制');
@@ -100,7 +104,7 @@ Iterable<dom.Node> _select(dom.Node node, String rule) {
   for (final selector in steps) {
     selected = selected
         .expand((parent) => _selectStep(parent, selector))
-        .take(5000);
+        .take(limit);
   }
   return selected;
 }

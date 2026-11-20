@@ -76,6 +76,7 @@ final class MediaKitEngine implements PlayerEngine, VideoRecoveryEngine {
     networkTimeout: networkTimeout,
   );
   Future<void>? _disposing;
+  int _openRevision = 0;
   Timer? _stateTimer;
   bool _softwareDecoder = false;
   bool _videoOutputFailed = false;
@@ -176,23 +177,40 @@ final class MediaKitEngine implements PlayerEngine, VideoRecoveryEngine {
     _unavailableDiagnostics.clear();
     NetworkTargetPolicy.validateUri(uri);
     if (_disposing != null) throw StateError('Player is closing');
+    final revision = ++_openRevision;
     await _security.ensureReady();
-    if (_disposing != null) return;
-    _session?.close();
+    if (!_current(revision)) return;
+    _releaseSession();
+    try {
+      await _openMedia(uri, headers, revision);
+    } catch (_) {
+      if (_current(revision)) _releaseSession();
+      rethrow;
+    }
+  }
+
+  bool _current(int revision) =>
+      _disposing == null && revision == _openRevision;
+
+  Future<void> _openMedia(
+    Uri uri,
+    Map<String, String> headers,
+    int revision,
+  ) async {
     final transport = gateway;
     if (transport != null &&
         !transport.isRegisteredResource(uri) &&
         isTrustedResource?.call(uri) != true &&
         isTrustedPlaylist?.call(uri) != true) {
       await transport.start();
-      if (_disposing != null) return;
+      if (!_current(revision)) return;
       final session = _session = transport.createSession(
         HeaderPolicy({uri: headers}),
       )..cacheEnabled = false;
       uri = await session.openMedia(uri);
       headers = const {};
     }
-    if (_disposing != null) return;
+    if (!_current(revision)) return;
     validateNativeInput(
       uri,
       registered:
@@ -203,7 +221,7 @@ final class MediaKitEngine implements PlayerEngine, VideoRecoveryEngine {
     // media_kit.open writes a temporary playlist. A single trusted media item
     // can use add/loadfile directly, keeping external playlist access disabled.
     await _clearPlaylist();
-    if (_disposing != null) return;
+    if (!_current(revision)) return;
     final trustedHls =
         gateway?.isRegisteredPlaylist(uri) == true ||
         isTrustedPlaylist?.call(uri) == true;
@@ -216,13 +234,13 @@ final class MediaKitEngine implements PlayerEngine, VideoRecoveryEngine {
       'demuxer-lavf-o',
       isFilteredPlaylist?.call(uri) == true ? 'live_start_index=0' : '',
     );
-    if (_disposing != null) return;
+    if (!_current(revision)) return;
     await player.add(
       Media(uri.toString(), httpHeaders: HeaderPolicy.sanitize(headers)),
     );
-    if (_disposing != null) return;
+    if (!_current(revision)) return;
     await player.jump(0);
-    await player.play();
+    if (_current(revision)) await player.play();
   }
 
   @override
@@ -235,8 +253,9 @@ final class MediaKitEngine implements PlayerEngine, VideoRecoveryEngine {
   Future<void> dispose() => _disposing ??= _dispose();
 
   Future<void> _dispose() async {
+    _openRevision++;
     _stateTimer?.cancel();
-    _session?.close();
+    _releaseSession();
     await closeResources([
       for (final subscription in _subscriptions) subscription.cancel,
       player.dispose,
@@ -250,9 +269,15 @@ final class MediaKitEngine implements PlayerEngine, VideoRecoveryEngine {
   Future<void> pause() => player.pause();
   @override
   Future<void> stop() {
-    _session?.close();
-    _session = null;
+    _openRevision++;
+    _releaseSession();
     return _clearPlaylist();
+  }
+
+  void _releaseSession() {
+    final session = _session;
+    _session = null;
+    session?.close();
   }
 
   Future<void> _clearPlaylist() async {

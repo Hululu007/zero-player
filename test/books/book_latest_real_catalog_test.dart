@@ -8,6 +8,11 @@ import 'package:zero_player/features/books/domain/book_chapter_alignment.dart';
 
 void main() {
   test(
+    'fallback rejects shifted titles with ambiguous or missing anchors',
+    _ambiguousFallback,
+  );
+
+  test(
     'observed Ye Wujiang 68 chapter catalogue extends beyond 949 entries',
     () {
       final data =
@@ -91,5 +96,26 @@ void main() {
         isNull,
       );
     },
+  );
+}
+
+void _ambiguousFallback() {
+  BookChapter part(int index, String title) =>
+      BookChapter(title, Uri.https('test.example', '/$index'));
+  final current = [part(1, '第1章 前文'), part(2, '第2章 对应'), part(3, '第3章 后文')];
+  final index = BookChapterFallbackIndex(current);
+  final valid = [part(4, '第4章 前文'), part(5, '第5章 对应'), part(6, '第6章 后文')];
+  final unrelated = [valid[0], valid[1], part(6, '第6章 异文')];
+  expect(
+    index.match(current[1], BookChapterFallbackIndex(valid)),
+    same(valid[1]),
+  );
+  expect(index.match(current[1], BookChapterFallbackIndex(unrelated)), isNull);
+  expect(
+    index.match(
+      current[1],
+      BookChapterFallbackIndex([...valid, part(9, '第9章 对应')]),
+    ),
+    isNull,
   );
 }

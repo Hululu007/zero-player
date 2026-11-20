@@ -1218,7 +1218,7 @@ void _monitorLifecycleTests() {
       );
       addTearDown(monitor.close);
       monitor.start();
-      await fixture.services.settings.update({'bookSiteAutoCheck': false});
+      expect(fixture.services.settings.value.bookSiteAutoCheck, isFalse);
       await monitor.check();
       expect(inspected, 0);
       await fixture.services.settings.update({'bookSiteAutoCheck': true});
@@ -1231,7 +1231,7 @@ void _monitorLifecycleTests() {
       expect(inspected, 0);
       releaseSecond();
       await monitor.check();
-    expect(inspected, greaterThan(0));
+      expect(inspected, greaterThan(0));
     },
   );
 
@@ -1323,6 +1323,7 @@ void _monitorLifecycleTests() {
         fixture.services.settings,
         startDelay: const Duration(hours: 1),
       );
+      await fixture.services.settings.update({'bookSiteAutoCheck': true});
       monitor.start();
       final running = monitor.check();
       await started.future;
@@ -1360,6 +1361,7 @@ void _monitorPolicyTests() {
       fixture.services.settings,
       startDelay: const Duration(hours: 1),
     );
+    await fixture.services.settings.update({'bookSiteAutoCheck': true});
     monitor.start();
     final running = monitor.check();
     await started.future;
@@ -1424,6 +1426,7 @@ void _monitorRetryTests() {
         interval: const Duration(hours: 1),
       );
       addTearDown(monitor.close);
+      await fixture.services.settings.update({'bookSiteAutoCheck': true});
       monitor.start();
       await monitor.check().timeout(const Duration(seconds: 10));
       final key = 'books_site_check:${original.id}';
@@ -1516,6 +1519,7 @@ void _monitorRetryTests() {
         interval: const Duration(hours: 1),
       );
       addTearDown(monitor.close);
+      await fixture.services.settings.update({'bookSiteAutoCheck': true});
       monitor.start();
       await monitor.check().timeout(const Duration(seconds: 10));
       await monitor.check().timeout(const Duration(seconds: 10));
@@ -1598,6 +1602,7 @@ void _monitorRetryTests() {
         interval: const Duration(hours: 1),
       );
       addTearDown(monitor.close);
+      await fixture.services.settings.update({'bookSiteAutoCheck': true});
       monitor.start();
       await monitor.check().timeout(const Duration(seconds: 10));
       expect(requested, hasLength(20));
@@ -1655,6 +1660,7 @@ void _monitorRetryTests() {
         interval: const Duration(hours: 1),
       );
       addTearDown(monitor.close);
+      await fixture.services.settings.update({'bookSiteAutoCheck': true});
       monitor.start();
       await monitor.check().timeout(const Duration(seconds: 10));
       final key = 'books_site_check:${source.id}';

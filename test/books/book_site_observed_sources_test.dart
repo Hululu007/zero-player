@@ -663,6 +663,7 @@ void main() {
         interval: const Duration(hours: 1),
       );
       addTearDown(monitor.close);
+      await service.settings.update({'bookSiteAutoCheck': true});
       repo.suspendSourceRisks();
       monitor.start();
       await Future<void>.delayed(Duration.zero);

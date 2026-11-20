@@ -96,12 +96,40 @@ void main() {
       expect(player.request!.episode, 1);
     },
   );
+  test(
+    'a new open cancels the obsolete extensionless media probe',
+    _replaceProbe,
+  );
+}
+
+Future<void> _replaceProbe() async {
+  probeGate = Completer<void>();
+  final withSlowRoute = CatalogItem(
+    sourceId: item.sourceId,
+    id: 'slow-route',
+    title: 'slow route',
+    lines: [
+      PlayLine('slow', [Episode('1', server.baseUri.resolve('slow'))]),
+    ],
+  );
+  final first = player.open(PlaybackRequest(withSlowRoute));
+  for (var i = 0; i < 100 && server.calls['/slow'] == null; i++) {
+    await Future<void>.delayed(const Duration(milliseconds: 10));
+  }
+  expect(server.calls['/slow'], 1);
+  await player.open(PlaybackRequest(item)).timeout(const Duration(seconds: 2));
+  await first;
+  expect(probeGate!.isCompleted, isFalse);
+  expect(player.request!.item, same(item));
+  expect(player.error, isNull);
 }
 
 Future<void> _initialize() async {
   root = await Directory.systemTemp.createTemp('playback-switch-');
   server = await HttpTestServer.start((request) async {
-    if (request.uri.path == '/alternate.mp4') await probeGate?.future;
+    if (['/alternate.mp4', '/slow'].contains(request.uri.path)) {
+      await probeGate?.future;
+    }
     request.response.headers.contentType = ContentType('video', 'mp4');
     request.response.add([0, 0, 0, 24, 102, 116, 121, 112, 105, 115, 111, 109]);
   });

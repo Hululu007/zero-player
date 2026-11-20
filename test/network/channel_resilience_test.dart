@@ -48,6 +48,10 @@ void main() {
         calls.clear();
         await search.search('test', concurrency: 1);
         expect(calls, ['/good', '/bad']);
+        expect((await sources.find(bad))!.available, isFalse);
+        calls.clear();
+        await search.retryFailed();
+        expect(calls, ['/bad']);
         await search.blockSource(bad);
         expect((await SourceRepository(db).find(bad))!.enabled, isFalse);
         await sources.setEnabled(bad, true);

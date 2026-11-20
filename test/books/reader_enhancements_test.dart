@@ -181,7 +181,7 @@ void _readerWidgetTest(Size size) {
     await _saveTestNote(tester, services, book);
     await tester.tap(find.byTooltip('章节目录'));
     await tester.pumpAndSettle();
-    await tester.tap(find.byTooltip('下一章'));
+    await tester.tap(find.byTooltip('下一章').hitTestable());
     await tester.pumpAndSettle();
     await tester.tap(find.byTooltip('阅读菜单'));
     await tester.pumpAndSettle();

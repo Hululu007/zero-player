@@ -107,16 +107,16 @@ extension BookStoreShelfActions on BookStore {
         }
       }
     }
-    for (final pattern in [
-      'books_read_cache:${book.id}:*',
-      'books_image_cache:${book.id}:*',
-      'books_mixed_cache:${book.id}:*',
-      if (includeOffline) ...[
+    if (includeOffline) {
+      for (final pattern in [
+        'books_read_cache:${book.id}:*',
+        'books_image_cache:${book.id}:*',
+        'books_mixed_cache:${book.id}:*',
         'books_image_offline:${book.id}:*',
         'books_image_data:${book.id}:*',
-      ],
-    ]) {
-      await db.write('DELETE FROM app_meta WHERE key GLOB ?', [pattern]);
+      ]) {
+        await db.write('DELETE FROM app_meta WHERE key GLOB ?', [pattern]);
+      }
     }
   }
 
@@ -172,6 +172,42 @@ extension BookStoreShelfActions on BookStore {
     );
   }
 
+  Future<void> saveDownloadTarget(
+    Book book, {
+    required bool private,
+    List<BookChapter>? chapters,
+    String? listId,
+  }) async {
+    await vault.ensureLoaded();
+    await db.atomic(
+      () async {
+        if (private) {
+          final session = vault.captureSession();
+          db.beforeCommit(() => vault.checkSession(session));
+          await moveToVault(book);
+        } else if (vault.isPrivate(book.id)) {
+          await moveOutOfVault(book);
+        }
+        await saveBook(
+          book,
+          chapters: chapters,
+          favorite: true,
+          preserveCatalog: true,
+        );
+        if (listId != null) {
+          await BookShelfLists(
+            this,
+            book.kind,
+            private: private,
+          ).addToList(book, listId);
+        }
+        if (private) await _requirePrivateCapacity();
+      },
+      tables: {'app_meta'},
+      metadataDomains: {MetadataDomain.books},
+    );
+  }
+
   /// Moves every book-scoped record into the encrypted space.
   Future<void> moveToVault(Book book) async {
     await vault.ensureLoaded();
@@ -204,6 +240,7 @@ extension BookStoreShelfActions on BookStore {
         ).removeBook(book.id);
         await _moveCleanupRules(book.id, toPrivate: true);
         await vault.addBook(book.id);
+        await _requirePrivateCapacity();
       },
       tables: {'app_meta'},
       metadataDomains: {MetadataDomain.books},

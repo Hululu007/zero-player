@@ -92,6 +92,10 @@ final class PlatformServices {
     }
   }
 
+  Future<void> requestStatusNotifications() => const MethodChannel(
+    'zero_player/status_notifications',
+  ).invokeMethod('request');
+
   Future<bool> isMetered() async {
     if (!Platform.isAndroid) return false;
     return queryMeteredConnection();

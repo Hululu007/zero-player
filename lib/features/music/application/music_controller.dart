@@ -241,7 +241,7 @@ final class MusicController extends ChangeNotifier
   }
 
   bool get lyricsLoading => _lyricsRequest != null;
-  final _closing = Completer<void>();
+  final _closing = CancellationToken();
   Completer<void>? _interrupt;
   Future<void> _pending = Future.value();
   Future<void>? _closeFuture;
@@ -866,12 +866,19 @@ final class MusicController extends ChangeNotifier
     });
   }
 
-  Future<void> _bounded(Future<void> action, {Future<void>? interrupt}) =>
-      Future.any([
+  Future<void> _bounded(Future<void> action, {Future<void>? interrupt}) async {
+    final stopped = Completer<void>();
+    final unlink = _closing.listen(stopped.complete);
+    try {
+      await Future.any([
         action,
-        _closing.future,
+        stopped.future,
         ?interrupt,
       ]).timeout(operationTimeout);
+    } finally {
+      unlink();
+    }
+  }
 
   Future<void> _discardEngine() async {
     final engine = _engine;
@@ -898,7 +905,7 @@ final class MusicController extends ChangeNotifier
     _closed = true;
     ++_generation;
     _cancelSelection();
-    _closing.complete();
+    _closing.cancel();
     try {
       await _preflight.close();
       await _discardEngine();

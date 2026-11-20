@@ -52,6 +52,13 @@ class BookImageChapterState extends State<BookImageChapter> {
   late PageController _pager = PageController(initialPage: _initialPage);
   late int _page = _initialPage;
   late List<BookChapterSegment> _parts = _makeParts();
+  late List<int> _imageNumbers = _numberImages();
+
+  List<int> _numberImages() {
+    var image = 0;
+    return [for (final part in _parts) part is BookImageSegment ? ++image : 0];
+  }
+
   List<BookChapterSegment> _makeParts() =>
       widget.segments ??
       [for (final image in widget.images) BookImageSegment(image)];
@@ -102,6 +109,7 @@ class BookImageChapterState extends State<BookImageChapter> {
     if (oldWidget.images != widget.images ||
         oldWidget.segments != widget.segments) {
       _parts = _makeParts();
+      _imageNumbers = _numberImages();
     }
     if (oldWidget.mode == widget.mode) return;
     if (!_scrolling) {
@@ -201,7 +209,7 @@ class BookImageChapterState extends State<BookImageChapter> {
       key: ValueKey('$index:$address'),
       loadImage: widget.loadImage,
       address: address,
-      index: parts.take(index + 1).whereType<BookImageSegment>().length,
+      index: _imageNumbers[index],
       paged: !_scrolling,
     );
   }
@@ -250,6 +258,7 @@ class BookImageChapterState extends State<BookImageChapter> {
       },
       child: ListView.builder(
         controller: _scroll,
+        addAutomaticKeepAlives: false,
         itemCount: _parts.length + 1,
         itemBuilder: _part,
       ),
@@ -280,9 +289,8 @@ class _ChapterImageState extends State<_ChapterImage> {
   late Future<({Uint8List bytes, double aspect})> _image = _load();
 
   Future<({Uint8List bytes, double aspect})> _load() async {
-    final bytes = Uint8List.fromList(
-      await widget.loadImage(widget.address, _token),
-    );
+    final payload = await widget.loadImage(widget.address, _token);
+    final bytes = payload is Uint8List ? payload : Uint8List.fromList(payload);
     _token.check();
     final buffer = await ui.ImmutableBuffer.fromUint8List(bytes);
     try {
@@ -318,7 +326,7 @@ class _ChapterImageState extends State<_ChapterImage> {
             InteractiveViewer(
               minScale: 0.5,
               maxScale: 5,
-              child: Center(child: Image.memory(bytes)),
+              child: Center(child: Image.memory(bytes, cacheWidth: 2048)),
             ),
             Positioned(
               top: 8,

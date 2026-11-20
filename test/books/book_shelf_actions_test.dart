@@ -31,6 +31,7 @@ void main() {
       chapter = BookChapter('第一章', Uri.parse('https://fixture.test/1'));
       await services.books.store.saveBook(book, chapters: [chapter]);
       await services.books.store.saveText(book, chapter, '正文内容');
+      await services.books.store.cacheReading(book, chapter, '阅读缓存');
       entry = (await services.books.store.entry(book))!;
     });
     addTearDown(() => _close(tester, services, temp));
@@ -66,10 +67,7 @@ void main() {
     );
     expect(find.text('同时删除缓存与离线文件'), findsOneWidget);
     await _tapLabel(tester, find.text('取消'));
-    await _waitFor(
-      tester,
-      () => find.text('删除《书架操作测试》？').evaluate().isEmpty,
-    );
+    await _waitFor(tester, () => find.text('删除《书架操作测试》？').evaluate().isEmpty);
 
     await _tapLabel(tester, find.byTooltip('书架操作'));
     await _waitFor(tester, () => find.text('从书架移除').evaluate().isNotEmpty);
@@ -81,13 +79,11 @@ void main() {
     expect(find.text('同时删除离线文件与阅读缓存'), findsOneWidget);
 
     await _tapLabel(tester, find.text('移除'));
-    await _waitFor(
-      tester,
-      () => find.text('已从书架移除').evaluate().isNotEmpty,
-    );
+    await _waitFor(tester, () => find.text('已从书架移除').evaluate().isNotEmpty);
     await tester.runAsync(() async {
       expect(await services.books.store.entry(book), isNull);
       expect(await services.books.store.text(book, chapter), '正文内容');
+      expect(await services.books.store.readingCache(book, chapter), '阅读缓存');
     });
     expect(tester.takeException(), isNull);
   });

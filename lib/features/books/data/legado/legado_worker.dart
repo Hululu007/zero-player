@@ -306,8 +306,11 @@ final class _LegadoEvaluation {
     final reverse = selector.startsWith('-');
     if (reverse || selector.startsWith('+')) selector = selector.substring(1);
     final rows = evaluator.elements(selector, root);
+    if (rows.length > 4000) {
+      throw const FormatException('该来源单页目录超过 4000 项，未完整加载');
+    }
     final result = <String, BookChapter>{};
-    for (final row in (reverse ? rows.reversed : rows).take(4000)) {
+    for (final row in reverse ? rows.reversed : rows) {
       final title = bookLabel(_field('chapterTitle', row));
       if (title.isEmpty || _optional('chapterVolume', row) == 'true') continue;
       final media =
@@ -503,8 +506,13 @@ final class _LegadoEvaluation {
   }
 
   List<String> _links(String name, Object? value) {
+    final rule = rules[name] ?? '';
+    if (rule.isEmpty) return const [];
+    final document = value is dom.Document
+        ? parseBookHtml(job.input, keepNavigation: true)
+        : value;
     return evaluator
-        .field(rules[name] ?? '', value)
+        .field(rule, document)
         .split('\n')
         .where((item) => item.isNotEmpty)
         .take(12)

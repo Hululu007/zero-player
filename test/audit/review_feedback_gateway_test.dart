@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:async';
 import 'dart:io';
 import 'package:crypto/crypto.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -9,6 +10,36 @@ import 'package:zero_player/media/gateway/offline_server.dart';
 import '../../test_support/http_test_server.dart';
 
 void main() {
+  test('extensionless HLS marker can span HTTP chunks', () async {
+    final prefixSent = Completer<void>();
+    final continueBody = Completer<void>();
+    final root = await Directory.systemTemp.createTemp('split-hls-prefix-');
+    final server = await HttpTestServer.start((request) async {
+      request.response.bufferOutput = false;
+      request.response.write('#EX');
+      await request.response.flush();
+      prefixSent.complete();
+      await continueBody.future;
+      request.response.write('TM3U\n#EXTINF:4,\nsegment.ts\n');
+    });
+    final gateway = MediaGateway(
+      SegmentStore(root),
+      allowPrivateNetworks: true,
+    );
+    addTearDown(() async {
+      if (!continueBody.isCompleted) continueBody.complete();
+      await gateway.close();
+      await server.close();
+      await root.delete(recursive: true);
+    });
+    await gateway.start();
+    final session = gateway.createSession(HeaderPolicy({}));
+    final opened = session.openMedia(server.baseUri.resolve('stream'));
+    await prefixSent.future;
+    await Future<void>.delayed(const Duration(milliseconds: 100));
+    continueBody.complete();
+    expect(gateway.isRegisteredPlaylist(await opened), isTrue);
+  });
   _rollingManifestTest();
   _repeatedManifestTest();
   _offlineLeaseTest();

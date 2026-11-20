@@ -288,6 +288,39 @@ void main() {
     },
   );
 
+  test('one scoped grant enables a batch of exact comic rules', () async {
+    final a = bookFixtureSource('first-comic.test', kind: BookKind.comic);
+    final b = bookFixtureSource('second-comic.test', kind: BookKind.comic);
+    final repo = services.books;
+    await verified(() => services.supervision.setEnabled(false));
+    await repo.importSources([a, b]);
+    await expectLater(
+      repo.authorizeAndEnableComics([a, b]),
+      throwsFormatException,
+    );
+    final outdated = BookSource.fromJson({
+      ...b.toJson(),
+      'mediaHosts': ['other.test'],
+    });
+    await expectLater(
+      verified(() => repo.authorizeAndEnableComics([a, outdated])),
+      throwsFormatException,
+    );
+    expect(repo.comicAccess.allowed(a), isFalse);
+    expect((await repo.sourceEntry(BookKind.comic, a.id))!.enabled, isFalse);
+
+    await verified(() => repo.authorizeAndEnableComics([a, b]));
+    final entries = await repo.sources(BookKind.comic, enabledOnly: true);
+    expect(entries.map((entry) => entry.source.id), containsAll([a.id, b.id]));
+    expect(
+      entries.any(
+        (entry) => entry.source.builtin && entry.source.name == '新人漫画',
+      ),
+      isTrue,
+    );
+    expect(repo.comicAccess.allowed(outdated), isFalse);
+  });
+
   test('comic approval needs password and exact source fingerprint', () async {
     final source = bookFixtureSource('comic.test', kind: BookKind.comic);
     final access = services.books.comicAccess;
@@ -322,7 +355,7 @@ void main() {
       access.allowed(
         BookSource.fromJson({...sameHost.toJson(), 'name': '新人漫画'}),
       ),
-      isTrue,
+      isFalse,
     );
     expect(
       access.allowed(

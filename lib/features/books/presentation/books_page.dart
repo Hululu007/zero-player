@@ -29,11 +29,15 @@ final class BooksPage extends StatefulWidget {
     required this.kind,
     this.initialTab = 0,
     this.libraryMode,
+    this.discoverySourceId,
+    this.onOpenModule,
   });
   final AppServices services;
   final BookKind kind;
   final int initialTab;
   final String? libraryMode;
+  final String? discoverySourceId;
+  final ValueChanged<BookKind>? onOpenModule;
 
   @override
   State<BooksPage> createState() => _BooksPageState();
@@ -52,7 +56,6 @@ final class _BooksPageState extends State<BooksPage> {
   Set<String> _downloadIds = {};
   late var _policy = _policyState;
 
-  bool get _audio => widget.kind == BookKind.audio;
   AppServices get _services => widget.services;
   Object get _policyState => (
     _services.contentPolicy.filterAdult,
@@ -176,6 +179,8 @@ final class _BooksPageState extends State<BooksPage> {
     for (final entry in shelf) {
       final saved = entry.book.kind == BookKind.audio
           ? await _services.books.savedAudio(entry.book)
+          : entry.book.kind == BookKind.comic
+          ? await _services.books.store.savedImages(entry.book)
           : await _services.books.store.savedText(entry.book);
       if (saved.isNotEmpty) downloaded.add(entry);
     }
@@ -240,7 +245,10 @@ final class _BooksPageState extends State<BooksPage> {
   Future<void> _openDownloads() async {
     await Navigator.of(context).push(
       BookPageRoute<void>(
-        builder: (_) => BookDownloadManagementPage(services: _services),
+        builder: (_) => BookDownloadManagementPage(
+          services: _services,
+          initialKind: widget.kind,
+        ),
       ),
     );
     if (mounted) await _reloadShelf();
@@ -411,7 +419,6 @@ final class _BooksPageState extends State<BooksPage> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             _header(),
-            if (!_audio && widget.libraryMode == null) _readingActions(),
             Expanded(
               child: _error != null
                   ? Center(
@@ -428,6 +435,7 @@ final class _BooksPageState extends State<BooksPage> {
                           repository: _services.books,
                           kind: widget.kind,
                           sources: _sources,
+                          initialSourceId: widget.discoverySourceId,
                           active: _tab == 0,
                           onOpen: _searchBook,
                           onSearch: (query, sourceId, favorites) => _search(
@@ -462,58 +470,54 @@ final class _BooksPageState extends State<BooksPage> {
     );
   }
 
-  Widget _readingActions() => Padding(
-    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-    child: Wrap(
-      spacing: 8,
-      runSpacing: 4,
-      children: [
-        if (widget.kind == BookKind.text)
-          OutlinedButton.icon(
-            onPressed: _import,
-            icon: const Icon(Icons.upload_file),
-            label: const Text('导入 EPUB / PDF'),
-          ),
-        if (widget.kind == BookKind.text)
-          IconButton(
-            tooltip: '网络漫画',
-            onPressed: () => Navigator.of(context).push(
-              BookPageRoute<void>(
-                builder: (_) => Scaffold(
-                  appBar: AppBar(title: const Text('网络漫画')),
-                  body: BooksPage(services: _services, kind: BookKind.comic),
-                ),
-              ),
-            ),
-            icon: const Icon(Icons.auto_stories_outlined),
-          ),
-        if (widget.kind == BookKind.text)
-          IconButton(
-            tooltip: '听书',
-            onPressed: () => Navigator.of(context).push(
-              BookPageRoute<void>(
-                builder: (_) => Scaffold(
-                  appBar: AppBar(title: const Text('听书')),
-                  body: BooksPage(services: _services, kind: BookKind.audio),
-                ),
-              ),
-            ),
-            icon: const Icon(Icons.headphones_outlined),
-          ),
-      ],
+  List<Widget> _readingActions() => [
+    IconButton(
+      tooltip: '导入 EPUB / PDF / TXT',
+      icon: const Icon(Icons.upload_file_outlined),
+      onPressed: _import,
     ),
-  );
+    if (_services.books.kindAllowed(BookKind.comic))
+      IconButton(
+        tooltip: '网络漫画',
+        icon: const Icon(Icons.collections_bookmark_outlined),
+        onPressed: () => _openModule(BookKind.comic),
+      ),
+    if (_services.books.kindAllowed(BookKind.audio))
+      IconButton(
+        tooltip: '网络听书',
+        icon: const Icon(Icons.headphones_outlined),
+        onPressed: () => _openModule(BookKind.audio),
+      ),
+  ];
+
+  void _openModule(BookKind kind) {
+    if (!_services.books.kindAllowed(kind)) return;
+    if (widget.onOpenModule case final open?) {
+      open(kind);
+      return;
+    }
+    Navigator.of(context).push(
+      BookPageRoute<void>(
+        builder: (_) => Scaffold(
+          appBar: AppBar(title: Text(kind == BookKind.comic ? '网络漫画' : '听书')),
+          body: BooksPage(services: _services, kind: kind),
+        ),
+      ),
+    );
+  }
+
+  String get _moduleTitle => switch (widget.kind) {
+    BookKind.text => '网络小说',
+    BookKind.comic => '网络漫画',
+    BookKind.audio => '听书',
+  };
 
   Widget _header() => LayoutBuilder(
     builder: (context, constraints) {
       final theme = Theme.of(context);
       final compact = constraints.maxWidth < 620;
       final title = Text(
-        _audio
-            ? '听书'
-            : widget.kind == BookKind.comic
-            ? '网络漫画'
-            : '网络小说',
+        _moduleTitle,
         style: theme.textTheme.headlineMedium?.copyWith(
           fontWeight: FontWeight.w700,
         ),
@@ -550,11 +554,12 @@ final class _BooksPageState extends State<BooksPage> {
         onPressed: _openDownloads,
         icon: const Icon(Icons.download_outlined),
       );
-      final privateButton = IconButton(
-        tooltip: '私密书架',
-        onPressed: _openPrivateShelf,
-        icon: const Icon(Icons.lock_outline),
-      );
+      final readingActions =
+          widget.kind == BookKind.text &&
+              widget.libraryMode == null &&
+              widget.discoverySourceId == null
+          ? _readingActions()
+          : const <Widget>[];
       return Padding(
         padding: EdgeInsets.fromLTRB(
           compact ? 12 : 26,
@@ -562,15 +567,28 @@ final class _BooksPageState extends State<BooksPage> {
           compact ? 12 : 26,
           compact ? 4 : 8,
         ),
-        child: compact
+        child:
+            compact && readingActions.isNotEmpty && widget.onOpenModule == null
+            ? Wrap(
+                crossAxisAlignment: WrapCrossAlignment.center,
+                children: [
+                  tabs,
+                  ...readingActions,
+                  downloadButton,
+                  sourceButton,
+                ],
+              )
+            : compact
             ? Row(
                 children: [
                   Expanded(
                     child: Align(alignment: Alignment.centerLeft, child: tabs),
                   ),
-                  privateButton,
-                  downloadButton,
-                  sourceButton,
+                  ...readingActions,
+                  if (widget.onOpenModule == null) ...[
+                    downloadButton,
+                    sourceButton,
+                  ],
                 ],
               )
             : Row(
@@ -579,13 +597,14 @@ final class _BooksPageState extends State<BooksPage> {
                   const SizedBox(width: 24),
                   tabs,
                   const Spacer(),
-                  privateButton,
-                  downloadButton,
-                  OutlinedButton.icon(
-                    onPressed: _manageSources,
-                    icon: const Icon(Icons.tune),
-                    label: const Text('源管理'),
-                  ),
+                  ...readingActions,
+                  if (widget.onOpenModule == null) downloadButton,
+                  if (widget.onOpenModule == null)
+                    OutlinedButton.icon(
+                      onPressed: _manageSources,
+                      icon: const Icon(Icons.tune),
+                      label: const Text('源管理'),
+                    ),
                 ],
               ),
       );

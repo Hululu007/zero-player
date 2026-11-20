@@ -14,6 +14,7 @@ final class PlaybackMonitor {
   bool _closed = false, _sampling = false;
   Future<void>? _starting;
   int _ticks = 0, _frozenFrames = 0;
+  final _recentRss = <int>[];
   bool _hadVideo = false;
   bool _outputReported = false;
   Duration _position = Duration.zero;
@@ -41,8 +42,11 @@ final class PlaybackMonitor {
     if (_closed || _sampling) return;
     _sampling = true;
     try {
-      player.runtimeDiagnostics['RSS MiB'] = (ProcessInfo.currentRss / 1048576)
-          .round();
+      final rss = (ProcessInfo.currentRss / 1048576).round();
+      _recentRss.add(rss);
+      if (_recentRss.length > 24) _recentRss.removeAt(0);
+      player.runtimeDiagnostics['RSS MiB'] = rss;
+      player.runtimeDiagnostics['近期 RSS MiB（约 5 秒间隔）'] = List.of(_recentRss);
       player.runtimeDiagnostics['峰值 RSS MiB'] = (ProcessInfo.maxRss / 1048576)
           .round();
       if (_ticks++ % 3 == 0) {

@@ -1,6 +1,21 @@
 part of 'books_repository.dart';
 
 extension _BookRepositoryRequestPolicy on BooksRepository {
+  String? _catalogReparseRevision(Book book, BookShelfEntry? saved) {
+    const current = 'yingsx-page-index-v1';
+    final entry = _sourceAccess.entry(book.sourceId);
+    if (saved == null ||
+        saved.catalogRevision == current ||
+        entry == null ||
+        !entry.enabled ||
+        !entry.source.builtin ||
+        entry.source.endpoint.host != 'wap.yingsx.com' ||
+        !entry.source.rules.containsKey('tocPageLinks')) {
+      return null;
+    }
+    return current;
+  }
+
   Future<void> _guardedAudioDownload(
     BookSource source,
     Book target,

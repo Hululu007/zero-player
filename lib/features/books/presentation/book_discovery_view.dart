@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 
 import '../../../core/network/cancellation_token.dart';
 import '../../../core/network/document_client.dart';
+import '../../../core/network/source_certificate.dart';
+import '../../supervision/presentation/sensitive_action.dart';
 import '../data/book_store.dart';
 import '../data/books_repository.dart';
 import '../data/qidian_catalog.dart';
@@ -19,6 +21,7 @@ import 'book_source_favorite.dart';
 import 'qidian_book_preview.dart';
 import 'qidian_browser_import.dart';
 
+part 'book_discovery_certificates.dart';
 part 'book_discovery_toolbar.dart';
 
 final class BookDiscoveryView extends StatefulWidget {
@@ -32,6 +35,7 @@ final class BookDiscoveryView extends StatefulWidget {
     required this.onSearch,
     required this.onSourceFavorite,
     required this.onManage,
+    this.initialSourceId,
   });
 
   final BooksRepository repository;
@@ -42,6 +46,7 @@ final class BookDiscoveryView extends StatefulWidget {
   final void Function(String query, String? sourceId, bool favorites) onSearch;
   final void Function(String id, bool favorite) onSourceFavorite;
   final VoidCallback onManage;
+  final String? initialSourceId;
 
   @override
   State<BookDiscoveryView> createState() => _BookDiscoveryViewState();
@@ -55,6 +60,8 @@ final class _BookDiscoveryViewState extends State<BookDiscoveryView> {
   bool _showTop = false;
   final _results = <String, List<Book>>{};
   final _failures = <String>{};
+  final _certificateFailures = <String>{};
+  SourceCertificateFailure? _certificateError, _temporaryCertificate;
   final _resultOrder = <String>[];
   final _recommended = <Book>[];
   final _qidianSections = <String, LegadoCategory>{};
@@ -62,7 +69,9 @@ final class _BookDiscoveryViewState extends State<BookDiscoveryView> {
   DateTime? _qidianCachedAt;
   bool _qidianImported = false;
   CancellationToken? _token;
-  String? _sourceId, _categorySource, _error;
+  late String? _sourceId = widget.initialSourceId;
+  bool _pickedSource = false;
+  String? _categorySource, _error;
   bool _favorites = false, _busy = false, _needsLoad = true;
   bool _direct = false;
   bool _aggregate = false, _preferencesReady = false;
@@ -146,6 +155,8 @@ final class _BookDiscoveryViewState extends State<BookDiscoveryView> {
       _resultOrder.clear();
       _recommended.clear();
       _failures.clear();
+      _certificateFailures.clear();
+      _certificateError = _temporaryCertificate = null;
       _error = null;
       if (_source?.source.id != before?.id || _source != null) {
         _resetCategories();
@@ -171,7 +182,18 @@ final class _BookDiscoveryViewState extends State<BookDiscoveryView> {
     final enabled =
         widget.sources?.where((entry) => entry.enabled).toList() ?? [];
     _enabled = enabled;
-    if (_source == null) _sourceId = null;
+    if (widget.sources != null && _source == null) {
+      _sourceId =
+          !_pickedSource &&
+              widget.initialSourceId == null &&
+              widget.kind == BookKind.comic
+          ? enabled
+                .where((entry) => entry.source.builtin)
+                .firstOrNull
+                ?.source
+                .id
+          : null;
+    }
   }
 
   void _loadIfReady() {
@@ -203,6 +225,7 @@ final class _BookDiscoveryViewState extends State<BookDiscoveryView> {
       _resultOrder.clear();
       _recommended.clear();
       _qidianSections.clear();
+      _certificateError = _temporaryCertificate = null;
       _needsLoad = true;
     });
     _loadIfReady();
@@ -215,6 +238,7 @@ final class _BookDiscoveryViewState extends State<BookDiscoveryView> {
       _busy = true;
       _needsLoad = false;
       _error = null;
+      _certificateError = null;
       _resetPaging();
       _qidianCachedAt = null;
       _qidianImported = false;
@@ -223,6 +247,7 @@ final class _BookDiscoveryViewState extends State<BookDiscoveryView> {
       _resultOrder.clear();
       _recommended.clear();
       _failures.clear();
+      _certificateFailures.clear();
     });
     if (_scroll.hasClients) _scroll.jumpTo(_scroll.position.minScrollExtent);
     final sourceId = _sourceId;
@@ -240,6 +265,7 @@ final class _BookDiscoveryViewState extends State<BookDiscoveryView> {
           widget.kind,
           sourceId,
           token,
+          temporaryCertificate: _temporaryCertificate,
         );
         if (!mounted || token.isCancelled) return;
         setState(() {
@@ -269,13 +295,14 @@ final class _BookDiscoveryViewState extends State<BookDiscoveryView> {
               _results[id] = update.books;
               if (update.books.isNotEmpty) _resultOrder.add(id);
               if (update.failed) _failures.add(id);
+              if (update.certificateFailed) _certificateFailures.add(id);
             }
           });
         },
       );
     } on Exception catch (error) {
       if (mounted && !token.isCancelled) {
-        setState(() => _error = _loadMessage(error));
+        setState(() => _error = _listingFailure(error));
       }
     } finally {
       if (mounted && identical(_token, token)) {
@@ -410,6 +437,7 @@ final class _BookDiscoveryViewState extends State<BookDiscoveryView> {
     setState(() {
       _busy = true;
       _error = null;
+      _certificateError = null;
     });
     try {
       if (sourceId == null) {
@@ -433,6 +461,7 @@ final class _BookDiscoveryViewState extends State<BookDiscoveryView> {
           sourceId,
           token,
           category: _category,
+          temporaryCertificate: _temporaryCertificate,
         );
         if (!mounted || token.isCancelled) return;
         setState(() {
@@ -444,7 +473,7 @@ final class _BookDiscoveryViewState extends State<BookDiscoveryView> {
       if (_scroll.hasClients) _scroll.jumpTo(0);
     } on Exception catch (error) {
       if (!mounted || token.isCancelled) return;
-      setState(() => _error = '刷新失败，已保留书单 · ${_loadMessage(error)}');
+      setState(() => _error = '刷新失败，已保留书单 · ${_listingFailure(error)}');
     } finally {
       if (mounted && identical(_token, token)) {
         setState(() => _busy = false);
@@ -497,6 +526,7 @@ final class _BookDiscoveryViewState extends State<BookDiscoveryView> {
       category: _category,
       page: _page,
       cursor: cursor,
+      temporaryCertificate: _temporaryCertificate,
     );
     if (!mounted || token.isCancelled || !identical(_token, token)) return;
     setState(() {
@@ -523,6 +553,7 @@ final class _BookDiscoveryViewState extends State<BookDiscoveryView> {
       _busy = true;
       _moreError = null;
       _error = null;
+      _certificateError = null;
     });
     try {
       if (sourceId == null) {
@@ -532,7 +563,7 @@ final class _BookDiscoveryViewState extends State<BookDiscoveryView> {
       }
     } on Exception catch (error) {
       if (!mounted || token.isCancelled) return;
-      setState(() => _moreError = _loadMessage(error));
+      setState(() => _moreError = _listingFailure(error));
     } finally {
       if (mounted && identical(_token, token)) {
         setState(() => _busy = false);
@@ -606,7 +637,9 @@ final class _BookDiscoveryViewState extends State<BookDiscoveryView> {
     if (id == null) _search.clear();
     FocusManager.instance.primaryFocus?.unfocus();
     setState(() {
+      _pickedSource = true;
       _sourceId = id;
+      _temporaryCertificate = null;
       _channelsOnly = false;
       _resetCategories();
     });
@@ -728,7 +761,6 @@ final class _BookDiscoveryViewState extends State<BookDiscoveryView> {
             Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                _toolbar(gutter, compact: compact),
                 Expanded(
                   child: NotificationListener<ScrollUpdateNotification>(
                     onNotification: _onResultsScroll,
@@ -738,11 +770,16 @@ final class _BookDiscoveryViewState extends State<BookDiscoveryView> {
                           ScrollViewKeyboardDismissBehavior.onDrag,
                       slivers: [
                         SliverToBoxAdapter(
+                          child: _toolbar(gutter, compact: compact),
+                        ),
+                        SliverToBoxAdapter(
                           child: _browseHeader(
                             gutter,
                             compact: compact && constraints.maxWidth < 520,
                           ),
                         ),
+                        if (_certificateNotice() case final notice?)
+                          SliverToBoxAdapter(child: notice),
                         ..._content(gutter, constraints.maxWidth),
                       ],
                     ),
@@ -797,6 +834,17 @@ final class _BookDiscoveryViewState extends State<BookDiscoveryView> {
 
   Iterable<BookSourceEntry> get _orderedResults sync* {
     final byId = {for (final entry in _enabled) entry.source.id: entry};
+    if (widget.kind == BookKind.audio) {
+      for (final format in [BookFormat.bookan, BookFormat.ximalaya]) {
+        final featured = byId.values
+            .where((entry) => entry.source.format == format)
+            .firstOrNull;
+        if (featured != null && _results.containsKey(featured.source.id)) {
+          byId.remove(featured.source.id);
+          yield featured;
+        }
+      }
+    }
     for (final id in _resultOrder) {
       if (byId[id] case final entry?) yield entry;
     }
@@ -1113,6 +1161,7 @@ final class _BookDiscoveryViewState extends State<BookDiscoveryView> {
         .where(widget.repository.bookAllowed)
         .take(10)
         .toList();
+    final compact = widget.kind == BookKind.audio && preview.length <= 2;
     final height = 190 + MediaQuery.textScalerOf(context).scale(13) * 4 + 18;
     return Padding(
       key: ValueKey(source.id),
@@ -1149,46 +1198,96 @@ final class _BookDiscoveryViewState extends State<BookDiscoveryView> {
               ],
             ),
           ),
-          const SizedBox(height: 8),
-          SizedBox(
-            height: height,
-            child: ScrollConfiguration(
-              behavior: ScrollConfiguration.of(context).copyWith(
-                dragDevices: {
-                  ...ScrollConfiguration.of(context).dragDevices,
-                  PointerDeviceKind.mouse,
-                },
-              ),
-              child: ListView.separated(
-                primary: false,
-                scrollDirection: Axis.horizontal,
-                padding: EdgeInsets.symmetric(horizontal: gutter),
-                itemCount: preview.length,
-                separatorBuilder: (_, _) => const SizedBox(width: 14),
-                itemBuilder: (_, index) =>
-                    SizedBox(width: 134, child: _card(preview[index])),
+          if (compact)
+            _compactAudioPreviews(preview, gutter)
+          else ...[
+            const SizedBox(height: 8),
+            SizedBox(
+              height: height,
+              child: ScrollConfiguration(
+                behavior: ScrollConfiguration.of(context).copyWith(
+                  dragDevices: {
+                    ...ScrollConfiguration.of(context).dragDevices,
+                    PointerDeviceKind.mouse,
+                  },
+                ),
+                child: ListView.separated(
+                  primary: false,
+                  scrollDirection: Axis.horizontal,
+                  padding: EdgeInsets.symmetric(horizontal: gutter),
+                  itemCount: preview.length,
+                  separatorBuilder: (_, _) => const SizedBox(width: 14),
+                  itemBuilder: (_, index) =>
+                      SizedBox(width: 134, child: _card(preview[index])),
+                ),
               ),
             ),
-          ),
+          ],
         ],
       ),
     );
   }
 
+  Widget _compactAudioPreviews(List<Book> books, double gutter) => Padding(
+    padding: EdgeInsets.symmetric(horizontal: gutter),
+    child: LayoutBuilder(
+      builder: (context, constraints) => Align(
+        alignment: Alignment.centerLeft,
+        child: Wrap(
+          spacing: 12,
+          children: [
+            for (final book in books)
+              SizedBox(
+                width: constraints.maxWidth.clamp(0.0, 290.0),
+                child: ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: book.cover.isEmpty
+                      ? const Icon(Icons.headphones_outlined)
+                      : SizedBox(
+                          width: 34,
+                          height: 46,
+                          child: BookCover(
+                            book: book,
+                            repository: widget.repository,
+                          ),
+                        ),
+                  title: Text(
+                    book.title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  subtitle: book.author.isEmpty
+                      ? null
+                      : Text(
+                          book.author,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                  onTap: () => _openBook(book),
+                ),
+              ),
+          ],
+        ),
+      ),
+    ),
+  );
+
   Widget _card(Book book) => _DiscoveryBookCard(
     key: ValueKey(book.id),
     book: book,
     repository: widget.repository,
-    onTap: () {
-      final recommendation = book.sourceId == qidianRecommendationId;
-      if (recommendation && !widget.repository.qidian.allows(book)) return;
-      if (!recommendation && !widget.repository.bookAllowed(book)) return;
-      widget.onOpen(
-        book,
-        direct: !recommendation && _direct && (_sourceId != null || _aggregate),
-      );
-    },
+    onTap: () => _openBook(book),
   );
+
+  void _openBook(Book book) {
+    final recommendation = book.sourceId == qidianRecommendationId;
+    if (recommendation && !widget.repository.qidian.allows(book)) return;
+    if (!recommendation && !widget.repository.bookAllowed(book)) return;
+    widget.onOpen(
+      book,
+      direct: !recommendation && _direct && (_sourceId != null || _aggregate),
+    );
+  }
 }
 
 final class _ChannelPicker extends StatefulWidget {
@@ -1202,6 +1301,29 @@ final class _ChannelPicker extends StatefulWidget {
 
 final class _ChannelPickerState extends State<_ChannelPicker> {
   String _query = '';
+  static const _rowHeight = 72.0;
+  late final _scroll = ScrollController(
+    initialScrollOffset: _selectedOffset(widget.entries),
+  );
+
+  double _selectedOffset(List<BookSourceEntry> entries) {
+    final index = entries.indexWhere(
+      (entry) => entry.source.id == widget.selected,
+    );
+    return index < 0 ? 0 : index * _rowHeight;
+  }
+
+  void _jump(double offset) {
+    if (_scroll.hasClients) {
+      _scroll.jumpTo(offset.clamp(0, _scroll.position.maxScrollExtent));
+    }
+  }
+
+  @override
+  void dispose() {
+    _scroll.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -1235,8 +1357,27 @@ final class _ChannelPickerState extends State<_ChannelPicker> {
                 title: const Text('回到推荐与聚合'),
                 onTap: () => Navigator.pop(context, (id: null as String?)),
               ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                IconButton(
+                  tooltip: '定位当前渠道',
+                  onPressed: widget.selected == null
+                      ? null
+                      : () => _jump(_selectedOffset(sources)),
+                  icon: const Icon(Icons.my_location),
+                ),
+                IconButton(
+                  tooltip: '返回顶部',
+                  onPressed: () => _jump(0),
+                  icon: const Icon(Icons.vertical_align_top),
+                ),
+              ],
+            ),
             Expanded(
               child: ListView.builder(
+                controller: _scroll,
+                itemExtent: _rowHeight,
                 itemCount: sources.length,
                 itemBuilder: (context, index) {
                   final entry = sources[index];

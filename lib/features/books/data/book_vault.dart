@@ -83,7 +83,7 @@ final class BookVault extends ChangeNotifier {
 
   Future<void> ensureLoaded() async {
     if (_loaded) return;
-    await (_loading ??= _load());
+    await (_loading ??= _load().whenComplete(() => _loading = null));
   }
 
   Future<void> _load() async {
@@ -92,26 +92,34 @@ final class BookVault extends ChangeNotifier {
       'SELECT key,value FROM app_meta WHERE key IN (?,?,?)',
       [configKey, indexKey, guardKey],
     );
+    VaultConfig? config;
+    List<String>? ids;
+    var failures = 0;
+    var lockUntil = 0;
     for (final row in rows) {
       final value = _decode(row['value']);
       switch (row['key']) {
         case configKey:
-          _config = VaultConfig.fromJson(value);
-          if (_config == null) {
+          config = VaultConfig.fromJson(value);
+          if (config == null) {
             throw const FormatException('私密书架配置损坏，请保留数据并从备份恢复');
           }
         case indexKey:
-          _readIndex(value);
+          ids = _readIndex(value);
         case guardKey:
           if (value is Map) {
-            _failures = _boundedInt(value['failures'], 0, 1000);
-            _lockUntil = _boundedInt(value['lockUntil'], 0, 1 << 52);
+            failures = _boundedInt(value['failures'], 0, 1000);
+            lockUntil = _boundedInt(value['lockUntil'], 0, 1 << 52);
           }
       }
     }
-    if (_config != null && !rows.any((row) => row['key'] == indexKey)) {
+    if (config != null && ids == null) {
       throw const FormatException('私密书架索引缺失，请保留数据并从备份恢复');
     }
+    _config = config;
+    _ids.addAll(ids ?? const []);
+    _failures = failures;
+    _lockUntil = lockUntil;
     _loaded = true;
   }
 
@@ -127,15 +135,13 @@ final class BookVault extends ChangeNotifier {
   int _boundedInt(Object? value, int min, int max) =>
       value is int && value >= min && value <= max ? value : min;
 
-  void _readIndex(Object? value) {
+  List<String> _readIndex(Object? value) {
     if (value is! List ||
         value.length > _maxBooks ||
         value.any((id) => id is! String || id.isEmpty || id.length > 256)) {
       throw const FormatException('私密书架索引损坏，请保留数据并从备份恢复');
     }
-    _ids
-      ..clear()
-      ..addAll(value.cast<String>());
+    return value.cast<String>();
   }
 
   bool isPrivate(String bookId) => _currentIds.contains(bookId);

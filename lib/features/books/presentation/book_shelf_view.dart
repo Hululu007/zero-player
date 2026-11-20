@@ -92,6 +92,10 @@ class _BookShelfViewState extends State<BookShelfView> {
 
   Future<void> _refreshOffline() async {
     final sequence = ++_offlineSequence;
+    if (_filter != _ShelfFilter.offline) {
+      await _refreshLegacyFormats(sequence);
+      return;
+    }
     final ids = <String>{};
     for (final entry in widget.entries) {
       final book = entry.book;
@@ -108,17 +112,22 @@ class _BookShelfViewState extends State<BookShelfView> {
     }
     if (mounted && sequence == _offlineSequence) {
       setState(() => _offlineIds = ids);
-      final formats = <String, String>{};
-      for (final entry in widget.entries) {
-        if (entry.book.sourceId == 'local') {
-          formats[entry.book.id] = await widget.repository.localDocumentFormat(
-            entry.book,
-          );
-        }
+      await _refreshLegacyFormats(sequence);
+    }
+  }
+
+  Future<void> _refreshLegacyFormats(int sequence) async {
+    final formats = <String, String>{};
+    for (final entry in widget.entries) {
+      if (!mounted || sequence != _offlineSequence) return;
+      if (entry.book.sourceId == 'local' && entry.book.documentFormat.isEmpty) {
+        formats[entry.book.id] = await widget.repository.localDocumentFormat(
+          entry.book,
+        );
       }
-      if (mounted && sequence == _offlineSequence) {
-        setState(() => _documentFormats = formats);
-      }
+    }
+    if (mounted && sequence == _offlineSequence) {
+      setState(() => _documentFormats = formats);
     }
   }
 
@@ -712,6 +721,7 @@ class _BookShelfViewState extends State<BookShelfView> {
     onChanged: (value) {
       if (value == null) return;
       setState(() => _filter = value);
+      if (value == _ShelfFilter.offline) unawaited(_refreshOffline());
       if (value == _ShelfFilter.updated) {
         final list = _lists.where((item) => item.id == _selected).firstOrNull;
         final entries = widget.entries.where(

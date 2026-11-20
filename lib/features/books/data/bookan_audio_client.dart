@@ -3,6 +3,7 @@ import 'dart:convert';
 import '../../../core/network/cancellation_token.dart';
 import '../../../core/network/document_client.dart';
 import '../domain/book.dart';
+import '../domain/book_catalog_rules.dart';
 import '../domain/legado_source.dart';
 
 /// Static HTTPS adapter derived from the public BoKan source protocol.
@@ -10,6 +11,14 @@ final class BookanAudioClient {
   const BookanAudioClient(this.network);
 
   final DocumentClient network;
+  static final _legacyMapping = BookCatalogRules.fromJson(const {
+    'list': 'list',
+    'id': 'id',
+    'title': 'name',
+    'author': 'extra.author',
+    'description': 'intro',
+    'cover': 'cover',
+  });
 
   static const categories = <LegadoCategory>[
     LegadoCategory('经典必读', '1314'),
@@ -85,7 +94,7 @@ final class BookanAudioClient {
       token,
       allowRedirects: allowRedirects,
     );
-    final books = _books(source, data['list'], 24);
+    final books = _books(source, data, 24, stage: 'discover');
     final total = int.tryParse('${data['total']}') ?? 0;
     return (
       books: books,
@@ -111,31 +120,40 @@ final class BookanAudioClient {
       'limitNum': '20',
     });
     final data = await _get(uri, 'es.bookan.com.cn', token);
-    return _books(source, data['list'], 20);
+    return _books(source, data, 20, stage: 'search');
   }
 
-  List<Book> _books(BookSource source, Object? raw, int limit) {
+  List<Book> _books(
+    BookSource source,
+    Map payload,
+    int limit, {
+    required String stage,
+  }) {
+    final mapping = source.jsonCatalog[stage] ?? _legacyMapping;
+    final raw = mapping.read(payload, 'list');
     if (raw is! List) throw const FormatException('博看书目结构无效');
     final books = <Book>[];
     for (final row in raw.take(limit)) {
       if (row is! Map) continue;
-      final id = '${row['id']}';
-      final title = bookLabel(row['name']);
+      final id = '${mapping.read(row, 'id')}';
+      final title = bookLabel(mapping.read(row, 'title'));
       if (!RegExp(r'^\d{1,10}$').hasMatch(id) || title.isEmpty) continue;
       final uri = source.endpoint.replace(
         path: '/voice/album/units',
         queryParameters: {'album_id': id},
       );
-      final extra = row['extra'];
       books.add(
         Book(
           source.id,
           BookKind.audio,
           title,
-          extra is Map ? bookLabel(extra['author']) : '',
+          bookLabel(mapping.read(row, 'author')),
           uri,
-          description: bookLabel(row['intro'], 600),
-          cover: bookCoverAddress(source.endpoint, '${row['cover'] ?? ''}'),
+          description: bookLabel(mapping.read(row, 'description'), 600),
+          cover: bookCoverAddress(
+            source.endpoint,
+            '${mapping.read(row, 'cover') ?? ''}',
+          ),
         ),
       );
     }

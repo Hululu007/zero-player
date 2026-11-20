@@ -5,10 +5,22 @@ import 'package:media_kit/media_kit.dart';
 
 import 'app/application_bootstrap.dart';
 import 'app/local_open_startup.dart';
+import 'core/diagnostics/local_error_log.dart';
 
 Future<void> main(List<String> args) async {
   if (args.isNotEmpty) LocalOpenStartup.path = args.first;
   WidgetsFlutterBinding.ensureInitialized();
+  final previousFlutterError = FlutterError.onError;
+  FlutterError.onError = (details) {
+    LocalErrorLog.record('flutter', details.exception, details.stack);
+    previousFlutterError?.call(details);
+  };
+  final dispatcher = PlatformDispatcher.instance;
+  final previousUnhandledError = dispatcher.onError;
+  dispatcher.onError = (error, stack) {
+    LocalErrorLog.record('dart', error, stack);
+    return previousUnhandledError?.call(error, stack) ?? false;
+  };
   MediaKit.ensureInitialized();
   LicenseRegistry.addLicense(() async* {
     yield LicenseEntryWithLineBreaks([

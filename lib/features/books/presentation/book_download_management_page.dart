@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../../../app/app_services.dart';
 import '../data/book_download_coordinator.dart';
+import '../data/book_download_source_health.dart';
 import '../data/book_store.dart';
 import '../domain/book.dart';
 import '../domain/book_download_plan.dart';
@@ -19,7 +20,7 @@ typedef _DownloadItem = ({
   BookDownloadPlan? plan,
   Set<String> saved,
   Map<String, String> blocked,
-  Set<String> failed,
+  Map<String, String> failed,
 });
 
 enum _DownloadFilter { all, running, pending, saved }
@@ -29,9 +30,12 @@ final class BookDownloadManagementPage extends StatefulWidget {
     super.key,
     required this.services,
     this.private = false,
+    this.inline = false,
+    this.initialKind,
   });
   final AppServices services;
-  final bool private;
+  final bool private, inline;
+  final BookKind? initialKind;
 
   @override
   State<BookDownloadManagementPage> createState() =>
@@ -43,7 +47,7 @@ final class _BookDownloadManagementPageState
   List<_DownloadItem> _items = [];
   Set<String> _activeIds = {};
   final Set<String> _busyIds = {};
-  BookKind? _kind;
+  late BookKind? _kind = widget.initialKind;
   _DownloadFilter _filter = _DownloadFilter.all;
   int _sequence = 0;
   bool _loading = true;
@@ -130,13 +134,17 @@ final class _BookDownloadManagementPageState
         final plan = plans[book.id];
         final active = _manager.active(book);
         final saved = await _saved(book);
-        if (plan != null || active != null || saved.isNotEmpty) {
+        final failed = await _failed(book);
+        if (plan != null ||
+            active != null ||
+            saved.isNotEmpty ||
+            failed.isNotEmpty) {
           items.add((
             entry: entry,
             plan: plan,
             saved: saved,
             blocked: await _blocked(book),
-            failed: await _failed(book),
+            failed: failed,
           ));
           seen.add(book.id);
         }
@@ -186,57 +194,145 @@ final class _BookDownloadManagementPageState
     };
   }
 
-  Future<Set<String>> _failed(Book book) async {
+  Future<Map<String, String>> _failed(Book book) async {
     final raw = await widget.services.books.store.readBookValue(
       book,
       'books_download_failures:${book.id}',
     );
-    return raw is Map ? raw.keys.whereType<String>().toSet() : {};
+    return {
+      if (raw is Map)
+        for (final key in raw.keys.whereType<String>())
+          key: bookDownloadFailureReason(raw[key]),
+    };
   }
 
-  Future<void> _failureReport(_DownloadItem item) {
-    final chapters = item.entry.chapters.indexed
-        .where((entry) => item.failed.contains(entry.$2.id))
-        .toList();
-    return showDialog<void>(
+  Future<void> _failureReport(_DownloadItem item) async {
+    final chapters = [
+      for (final (position, chapter) in item.entry.chapters.indexed)
+        if (item.failed[chapter.id] case final reason?)
+          (position, chapter, reason),
+    ];
+    final book = item.entry.book;
+    final books = widget.services.books;
+    final vault = books.store.vault;
+    bool allowed(BookChapter chapter) =>
+        books.policy.textAllowed(chapter.title);
+    final selected = {
+      for (final (_, chapter, _) in chapters)
+        if (allowed(chapter)) chapter.id,
+    };
+    final changes = Listenable.merge([
+      books.policy,
+      books.sourceRiskChanges,
+      vault,
+      _manager,
+    ]);
+    final retry = await showDialog<String>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('下载失败章节'),
-        content: SizedBox(
-          width: 420,
-          height: 320,
-          child: ListView.builder(
-            itemCount: chapters.length,
-            itemBuilder: (_, index) {
-              final (position, chapter) = chapters[index];
-              return ListTile(
-                title: Text('第${position + 1}章 · ${chapter.title}'),
-                subtitle: const Text('下载失败，请检查来源或网络'),
-              );
-            },
-          ),
+      builder: (context) => StatefulBuilder(
+        builder: (context, update) => ListenableBuilder(
+          listenable: changes,
+          builder: (context, _) {
+            final visible = _bookVisible(book);
+            final canRetry = visible && _manager.active(book) == null;
+            return AlertDialog(
+              title: const Text('下载失败章节'),
+              content: visible
+                  ? SizedBox(
+                      width: 420,
+                      height: 320,
+                      child: _failureChapters(
+                        chapters,
+                        selected,
+                        allowed,
+                        update,
+                      ),
+                    )
+                  : const Text('作品当前不可访问'),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('关闭'),
+                ),
+                if (item.plan != null && canRetry)
+                  TextButton(
+                    onPressed: () => Navigator.pop(context, 'resume'),
+                    child: const Text('重试未完成章节'),
+                  ),
+                if (canRetry)
+                  FilledButton(
+                    onPressed:
+                        chapters.any(
+                          (row) =>
+                              selected.contains(row.$2.id) && allowed(row.$2),
+                        )
+                        ? () => Navigator.pop(context, 'fallback')
+                        : null,
+                    child: Text(
+                      book.kind == BookKind.comic ? '重试所选章节' : '所选章节自动换源重试',
+                    ),
+                  ),
+              ],
+            );
+          },
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('关闭'),
-          ),
-          if (item.plan != null && _manager.active(item.entry.book) == null)
-            FilledButton(
-              onPressed: () {
-                Navigator.pop(context);
-                _manager.start(
-                  item.entry.book,
-                  item.entry.chapters,
-                  item.plan!,
-                );
-              },
-              child: const Text('重试未完成章节'),
-            ),
-        ],
       ),
     );
+    if (!mounted ||
+        retry == null ||
+        _manager.active(book) != null ||
+        !_bookVisible(book)) {
+      return;
+    }
+    if (retry == 'resume') {
+      // The coordinator rechecks each chapter under the current policy.
+      _manager.start(book, item.entry.chapters, item.plan!);
+      return;
+    }
+    final retryIds = [
+      for (final (_, chapter, _) in chapters)
+        if (selected.contains(chapter.id) && allowed(chapter)) chapter.id,
+    ];
+    if (retryIds.isEmpty) return;
+    _manager.start(
+      book,
+      item.entry.chapters,
+      BookDownloadPlan(
+        1,
+        item.entry.chapters.length,
+        book.kind != BookKind.comic,
+        chapterIds: retryIds,
+      ),
+      keepPlan: false,
+    );
   }
+
+  Widget _failureChapters(
+    List<(int, BookChapter, String)> chapters,
+    Set<String> selected,
+    bool Function(BookChapter) allowed,
+    StateSetter update,
+  ) => ListView.builder(
+    itemCount: chapters.length,
+    itemBuilder: (_, index) {
+      final (position, chapter, reason) = chapters[index];
+      if (!allowed(chapter)) {
+        return ListTile(title: Text('第${position + 1}章 · 内容已过滤'));
+      }
+      return CheckboxListTile(
+        value: selected.contains(chapter.id),
+        title: Text('第${position + 1}章 · ${chapter.title}'),
+        subtitle: Text(reason),
+        onChanged: (checked) => update(() {
+          if (checked == true) {
+            selected.add(chapter.id);
+          } else {
+            selected.remove(chapter.id);
+          }
+        }),
+      );
+    },
+  );
 
   Future<void> _blockedReport(_DownloadItem item) => showBlockedChaptersDialog(
     context,
@@ -341,20 +437,24 @@ final class _BookDownloadManagementPageState
     if (mounted) await _reload();
   }
 
+  bool _bookVisible(Book book) {
+    final books = widget.services.books;
+    final vault = books.store.vault;
+    return vault.isPrivate(book.id) == widget.private &&
+        (!widget.private || vault.unlocked) &&
+        books.bookAllowed(book);
+  }
+
   List<_DownloadItem> get _visible => _items.where((item) {
-    final vault = widget.services.books.store.vault;
-    if (vault.isPrivate(item.entry.book.id) != widget.private ||
-        (widget.private && !vault.unlocked) ||
-        !widget.services.books.bookAllowed(item.entry.book)) {
-      return false;
-    }
+    if (!_bookVisible(item.entry.book)) return false;
     if (_kind != null && item.entry.book.kind != _kind) return false;
     final running = _manager.active(item.entry.book) != null;
     return switch (_filter) {
       _DownloadFilter.all => true,
       _DownloadFilter.running => running,
       _DownloadFilter.pending => !running && item.plan != null,
-      _DownloadFilter.saved => !running && item.plan == null,
+      _DownloadFilter.saved =>
+        !running && item.plan == null && item.saved.isNotEmpty,
     };
   }).toList();
 
@@ -362,16 +462,18 @@ final class _BookDownloadManagementPageState
   Widget build(BuildContext context) {
     final visible = _visible;
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('书籍下载管理'),
-        actions: [
-          IconButton(
-            tooltip: '刷新下载记录',
-            onPressed: _reload,
-            icon: const Icon(Icons.refresh),
-          ),
-        ],
-      ),
+      appBar: widget.inline
+          ? null
+          : AppBar(
+              title: const Text('书籍下载管理'),
+              actions: [
+                IconButton(
+                  tooltip: '刷新下载记录',
+                  onPressed: _reload,
+                  icon: const Icon(Icons.refresh),
+                ),
+              ],
+            ),
       body: Column(
         children: [
           _filters(),
@@ -458,14 +560,30 @@ final class _BookDownloadManagementPageState
     final task = _manager.active(book);
     final busy = _busyIds.contains(book.id);
     final count = item.saved.length;
-    final planned =
-        item.plan?.chapterIds?.length ??
-        (item.plan == null ? 0 : item.plan!.last - item.plan!.first + 1);
+    final plan = item.plan;
+    final canResume =
+        task == null && plan != null && item.entry.chapters.isNotEmpty;
+    final planned = plan == null
+        ? const <String>{}
+        : plan.chapterIds?.toSet() ??
+              item.entry.chapters
+                  .skip(plan.fullBook ? 0 : plan.first - 1)
+                  .take(
+                    plan.fullBook
+                        ? item.entry.chapters.length
+                        : plan.last - plan.first + 1,
+                  )
+                  .map((chapter) => chapter.id)
+                  .toSet();
+    final savedInPlan = item.saved.intersection(planned).length;
     final status = task != null
-        ? '下载中 ${task.finished}/${task.total} · 已离线 $count 章'
-        : item.plan != null
-        ? '待续传 · 已离线 $count/$planned 章'
-        : '已离线 $count 章';
+        ? task.preparation ??
+              '下载中 ${task.finished}/${task.total} · 已离线 $count 章'
+        : plan != null
+        ? '待续传 · 计划 $savedInPlan/${planned.length} 章 · 全书离线 $count 章'
+        : count > 0
+        ? '已离线 $count 章'
+        : '待重试';
     return ListTile(
       leading: Icon(switch (book.kind) {
         BookKind.text => Icons.menu_book_outlined,
@@ -476,7 +594,9 @@ final class _BookDownloadManagementPageState
       subtitle: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(status, maxLines: 1, overflow: TextOverflow.ellipsis),
+          Text(status, maxLines: 2, overflow: TextOverflow.ellipsis),
+          if (task?.aggregationProgress case final progress?) Text(progress),
+          if (task?.aggregationNotice case final notice?) Text(notice),
           if (item.blocked.isNotEmpty)
             Text('过滤跳过 ${item.blocked.length} 章，可在管理菜单复核'),
           if ((task?.failedChapters.length ?? item.failed.length) > 0)
@@ -499,9 +619,13 @@ final class _BookDownloadManagementPageState
               unawaited(_blockedReport(item));
             case 'pause':
               task?.pause();
-            case 'resume':
+            case 'resume' || 'resume_fallback':
               if (item.plan case final plan?) {
-                _manager.start(book, item.entry.chapters, plan);
+                _manager.start(
+                  book,
+                  item.entry.chapters,
+                  action == 'resume_fallback' ? plan.withFallback() : plan,
+                );
               }
             case 'remove':
               unawaited(_removePlan(book));
@@ -516,10 +640,13 @@ final class _BookDownloadManagementPageState
             const PopupMenuItem(value: 'blocked', child: Text('过滤原因与章节复核')),
           if (task != null)
             const PopupMenuItem(value: 'pause', child: Text('暂停')),
-          if (task == null &&
-              item.plan != null &&
-              item.entry.chapters.isNotEmpty)
+          if (canResume)
             const PopupMenuItem(value: 'resume', child: Text('继续下载')),
+          if (canResume &&
+              !plan.fallback &&
+              book.kind == BookKind.text &&
+              book.sourceId != 'local')
+            const PopupMenuItem(value: 'resume_fallback', child: Text('换源续传')),
           if (item.plan != null)
             const PopupMenuItem(value: 'remove', child: Text('移除下载计划')),
           if (count > 0)

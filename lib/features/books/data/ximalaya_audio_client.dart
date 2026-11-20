@@ -3,6 +3,7 @@ import 'dart:convert';
 import '../../../core/network/cancellation_token.dart';
 import '../../../core/network/document_client.dart';
 import '../domain/book.dart';
+import '../domain/book_catalog_rules.dart';
 import '../domain/legado_source.dart';
 
 /// Public, free-track protocol identified by static inspection of the source JAR.
@@ -11,11 +12,42 @@ final class XimalayaAudioClient {
 
   final DocumentClient network;
 
-  static const categories = <LegadoCategory>[
-    LegadoCategory('有声小说', '3'),
+  static const featuredCategory = LegadoCategory('免费精选', 'featured-free');
+
+  static const _legacyCategories = <LegadoCategory>[
+    LegadoCategory('网络小说', '3'),
+    LegadoCategory('有声图书', '1001'),
+    LegadoCategory('人文国学', '1002'),
     LegadoCategory('儿童', '6'),
     LegadoCategory('历史', '9'),
+    LegadoCategory('相声评书', '12'),
   ];
+  static List<LegadoCategory> _topics(BookSource source) =>
+      source.discoveryCategories.isEmpty
+      ? _legacyCategories
+      : source.discoveryCategories;
+
+  static List<LegadoCategory> categories(BookSource source) => [
+    featuredCategory,
+    ..._topics(source),
+  ];
+
+  static final _legacyDiscovery = BookCatalogRules.fromJson(const {
+    'list': 'data.albums',
+    'id': 'albumId',
+    'title': 'albumTitle',
+    'author': 'albumUserNickName',
+    'description': 'intro',
+    'cover': 'albumCoverPath',
+  });
+  static final _legacySearch = BookCatalogRules.fromJson(const {
+    'list': 'response.docs',
+    'id': 'id',
+    'title': 'title',
+    'author': 'nickname',
+    'description': 'intro',
+    'cover': 'cover_path',
+  });
 
   Future<Map> _get(
     Uri uri,
@@ -51,10 +83,81 @@ final class XimalayaAudioClient {
     int page = 1,
     bool allowRedirects = true,
   }) async {
-    final id = category?.address ?? categories.first.address;
-    if (!categories.any((entry) => entry.address == id)) {
+    final topics = _topics(source);
+    final id = category?.address ?? featuredCategory.address;
+    if (id == featuredCategory.address) {
+      return _discoverFeatured(source, topics, token, page, allowRedirects);
+    }
+    if (!topics.any((entry) => entry.address == id)) {
       throw const FormatException('喜马拉雅分类编号无效');
     }
+    return _discoverCategory(source, id, token, page, allowRedirects);
+  }
+
+  Future<BookDiscoveryPage> _discoverFeatured(
+    BookSource source,
+    List<LegadoCategory> topics,
+    CancellationToken token,
+    int page,
+    bool allowRedirects,
+  ) async {
+    final ids = topics
+        .map((topic) => topic.address)
+        .where(RegExp(r'^\d{1,6}$').hasMatch)
+        .toSet()
+        .take(8);
+    final results = await Future.wait([
+      for (final id in ids)
+        _featuredPage(source, id, token, page, allowRedirects),
+    ]);
+    token.check();
+    final pages = results.whereType<BookDiscoveryPage>().toList();
+    if (pages.isEmpty) {
+      if (results.whereType<Exception>().firstOrNull case final error?) {
+        throw error;
+      }
+      throw const FormatException('喜马拉雅未配置免费精选分类');
+    }
+    final books = <String, Book>{};
+    for (var index = 0; index < 30; index++) {
+      for (final listing in pages) {
+        if (index < listing.books.length) {
+          final book = listing.books[index];
+          books.putIfAbsent(book.id, () => book);
+        }
+      }
+    }
+    return (
+      books: books.values.toList(),
+      next: pages
+          .map((listing) => listing.next)
+          .whereType<String>()
+          .firstOrNull,
+    );
+  }
+
+  Future<Object> _featuredPage(
+    BookSource source,
+    String id,
+    CancellationToken token,
+    int page,
+    bool allowRedirects,
+  ) async {
+    try {
+      return await _discoverCategory(source, id, token, page, allowRedirects);
+    } on Exception catch (error) {
+      token.check();
+      return error;
+    }
+  }
+
+  Future<BookDiscoveryPage> _discoverCategory(
+    BookSource source,
+    String id,
+    CancellationToken token,
+    int page,
+    bool allowRedirects,
+  ) async {
     final current = page.clamp(1, 100);
     final data = await _get(
       Uri.https('www.ximalaya.com', '/revision/category/v2/albums', {
@@ -71,7 +174,7 @@ final class XimalayaAudioClient {
       throw const FormatException('喜马拉雅分类数据无效');
     }
     final result = data['data'] as Map;
-    final books = _albums(source, result['albums'], discovery: true);
+    final books = _albums(source, data, discovery: true);
     final total = int.tryParse('${result['total']}') ?? 0;
     return (
       books: books,
@@ -99,32 +202,40 @@ final class XimalayaAudioClient {
       'search.ximalaya.com',
       token,
     );
-    final response = data['response'];
-    if (response is! Map) throw const FormatException('喜马拉雅搜索数据无效');
-    return _albums(source, response['docs'], discovery: false);
+    return _albums(source, data, discovery: false);
   }
 
   List<Book> _albums(
     BookSource source,
-    Object? raw, {
+    Map payload, {
     required bool discovery,
   }) {
+    final mapping = discovery
+        ? source.jsonCatalog['discover'] ?? _legacyDiscovery
+        : source.jsonCatalog['search'] ?? _legacySearch;
+    final raw = mapping.read(payload, 'list');
     if (raw is! List) throw const FormatException('喜马拉雅书目结构无效');
     final books = <Book>[];
     for (final row in raw.take(30)) {
       if (row is! Map ||
-          row['isPaid'] == true ||
-          row['is_paid'] == true ||
+          row[discovery ? 'isPaid' : 'is_paid'] != false ||
           row['is_vip'] == true ||
-          (int.tryParse('${row['vipType'] ?? 0}') ?? 0) != 0 ||
-          (int.tryParse('${row['price_type_id'] ?? 0}') ?? 0) != 0) {
+          row['isVipFree'] == true ||
+          row['isVideo'] == true ||
+          row['isDeleted'] == true ||
+          row['isNoCopyright'] == true ||
+          int.tryParse('${row[discovery ? 'vipType' : 'price_type_id']}') !=
+              0 ||
+          (!discovery &&
+              !_topics(source).any(
+                (category) => category.address == '${row['category_id']}',
+              ))) {
         continue;
       }
-      final id = '${discovery ? row['albumId'] : row['id']}';
-      final title = bookLabel(discovery ? row['albumTitle'] : row['title']);
+      final id = '${mapping.read(row, 'id')}';
+      final title = bookLabel(mapping.read(row, 'title'));
       if (!RegExp(r'^\d{1,12}$').hasMatch(id) || title.isEmpty) continue;
-      final coverRaw =
-          '${discovery ? row['albumCoverPath'] : row['cover_path']}';
+      final coverRaw = '${mapping.read(row, 'cover') ?? ''}';
       final cover = coverRaw.startsWith('http')
           ? coverRaw.replaceFirst('http://', 'https://').split('!').first
           : 'https://imagev2.xmcdn.com/${coverRaw.split('!').first}';
@@ -133,10 +244,14 @@ final class XimalayaAudioClient {
           source.id,
           BookKind.audio,
           title,
-          bookLabel(discovery ? row['albumUserNickName'] : row['nickname']),
+          bookLabel(mapping.read(row, 'author')),
           source.endpoint.replace(queryParameters: {'albumId': id}),
-          description: bookLabel(row['intro'], 600),
-          cover: Uri.tryParse(cover)?.host == 'imagev2.xmcdn.com' ? cover : '',
+          description: bookLabel(mapping.read(row, 'description'), 600),
+          cover:
+              coverRaw.isNotEmpty &&
+                  Uri.tryParse(cover)?.host == 'imagev2.xmcdn.com'
+              ? cover
+              : '',
         ),
       );
     }
@@ -172,8 +287,10 @@ final class XimalayaAudioClient {
       last = (int.tryParse('${result['maxPageId']}') ?? 1).clamp(1, 1000);
       for (final row in rows.take(30)) {
         if (row is! Map ||
-            row['isPaid'] == true ||
-            (int.tryParse('${row['paidType']}') ?? 0) != 0 ||
+            row['isPaid'] != false ||
+            int.tryParse('${row['paidType']}') != 0 ||
+            row['isSample'] == true ||
+            row['isPublic'] == false ||
             row['isVideo'] == true) {
           continue;
         }
@@ -203,8 +320,12 @@ final class XimalayaAudioClient {
     }
     final data = await _get(chapter.uri, source.endpoint.host, token);
     if (data['ret'] != 0 ||
-        data['isPaid'] == true ||
-        (int.tryParse('${data['paidType']}') ?? 0) != 0) {
+        data['isPaid'] != false ||
+        int.tryParse('${data['paidType']}') != 0 ||
+        int.tryParse('${data['priceTypeId']}') != 0 ||
+        data['isVipFree'] == true ||
+        data['isPublic'] != true ||
+        data['isVideo'] == true) {
       throw const FormatException('该章节不提供免费音频');
     }
     final address = data['playUrl64'] ?? data['playUrl32'];

@@ -2,6 +2,8 @@ import '../core/platform/foreground_workload.dart';
 import '../features/playback/presentation/local_video_page.dart';
 import 'local_open_startup.dart';
 import 'dart:async';
+import 'dart:io';
+import 'status_notifications.dart';
 import '../features/supervision/presentation/supervision_page.dart';
 import 'dart:ui' show AppExitResponse;
 import 'package:flutter/material.dart';
@@ -44,6 +46,8 @@ final class _ProductAppState extends ConsumerState<ProductApp>
   final _shellScaffold = GlobalKey<ScaffoldState>();
   StreamSubscription<String>? _localOpens;
   int _openSequence = 0;
+  StatusNotifications? _status;
+  VoidCallback? _removeStatusHook;
   @override
   void initState() {
     super.initState();
@@ -65,6 +69,10 @@ final class _ProductAppState extends ConsumerState<ProductApp>
     unawaited(services.subscriptions.refreshDue());
     services.sourceMonitor.start();
     services.bookSiteMonitor.start();
+    if (Platform.isAndroid) {
+      _status = StatusNotifications(services);
+      _removeStatusHook = services.addCloseHook(() async => _status?.close());
+    }
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted && LocalOpenStartup.path != null) {
         final path = LocalOpenStartup.path!;
@@ -121,7 +129,15 @@ final class _ProductAppState extends ConsumerState<ProductApp>
 
   GoRoute _bookRoute(String path, BookKind kind) => GoRoute(
     path: path,
-    builder: (_, _) => BooksPage(services: services, kind: kind),
+    builder: (context, _) => BooksPage(
+      services: services,
+      kind: kind,
+      onOpenModule: (target) => context.go(switch (target) {
+        BookKind.text => '/reading',
+        BookKind.comic => '/comics',
+        BookKind.audio => '/audiobooks',
+      }),
+    ),
   );
 
   GoRouter _createRouter() => GoRouter(
@@ -174,6 +190,7 @@ final class _ProductAppState extends ConsumerState<ProductApp>
             ),
             _bookRoute('/reading', BookKind.text),
             _bookRoute('/audiobooks', BookKind.audio),
+            _bookRoute('/comics', BookKind.comic),
             GoRoute(
               path: '/calendar',
               builder: (_, _) => ReleaseCalendarPage(services: services),
@@ -257,6 +274,7 @@ final class _ProductAppState extends ConsumerState<ProductApp>
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) _status?.invalidate();
     ForegroundWorkload.instance.setForeground(
       state == AppLifecycleState.resumed,
     );
@@ -291,6 +309,8 @@ final class _ProductAppState extends ConsumerState<ProductApp>
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     unawaited(_localOpens?.cancel());
+    _removeStatusHook?.call();
+    _status?.close();
     router.dispose();
     super.dispose();
   }

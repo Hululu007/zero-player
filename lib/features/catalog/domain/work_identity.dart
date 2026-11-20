@@ -84,8 +84,12 @@ Map<String, List<CatalogItem>> groupCatalogItems(Iterable<CatalogItem> items) {
   return result;
 }
 
-String workVersion(CatalogItem item) => RegExp(r'导演剪辑|加长版|未删减|重制版|特别版|剧场版')
-    .allMatches('${item.title} ${item.remarks}')
-    .map((m) => m.group(0)!)
-    .toSet()
-    .join('|');
+String workVersion(CatalogItem item, {bool preserveTagOrder = false}) {
+  final tags = RegExp(r'导演剪辑|加长版|未删减|重制版|特别版|剧场版')
+      .allMatches('${item.title} ${item.remarks}')
+      .map((m) => m.group(0)!)
+      .toSet()
+      .toList();
+  if (!preserveTagOrder) tags.sort();
+  return tags.join('|');
+}

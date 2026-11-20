@@ -72,14 +72,13 @@ void _siteRecordStatusTests() {
           home: BookSourcesPage(
             services: services,
             kind: BookKind.text,
-            beforeSiteReadForTesting: () async {
-              if (failSiteRead) {
-                throw StateError('controlled local read failure');
-              }
-            },
+            beforeSiteReadForTesting: () => failSiteRead
+                ? Future.error(StateError('controlled local read failure'))
+                : Future.value(),
           ),
         ),
       );
+      await _openSourceSearch(tester);
       await tester.enterText(find.byType(TextField).first, '状态测试');
       final absentTile = find.widgetWithText(ListTile, absent.name);
       final damagedTile = find.widgetWithText(ListTile, damaged.name);
@@ -189,6 +188,7 @@ void _domainSaleCluePageTests() {
           home: BookSourcesPage(services: services, kind: BookKind.text),
         ),
       );
+      await _openSourceSearch(tester);
       await tester.enterText(find.byType(TextField).first, '出售测试');
       final currentTile = find.widgetWithText(ListTile, current.name);
       final historicalTile = find.widgetWithText(ListTile, historical.name);
@@ -253,6 +253,7 @@ void _pageScriptClueTests() {
         ),
       ),
     );
+    await _openSourceSearch(tester);
     await tester.enterText(find.byType(TextField).first, '稳定刷新源');
     await _waitFor(
       tester,
@@ -350,6 +351,7 @@ void _pageScriptClueTests() {
           home: BookSourcesPage(services: services, kind: BookKind.text),
         ),
       );
+      await _openSourceSearch(tester);
       await tester.enterText(find.byType(TextField).first, '历史网页线索');
       final tile = find.widgetWithText(ListTile, '历史网页线索');
       final currentClue = find.descendant(
@@ -442,18 +444,17 @@ void _pageScriptClueTests() {
         home: BookSourcesPage(services: services, kind: BookKind.text),
       ),
     );
+    await _openSourceSearch(tester);
     await tester.enterText(find.byType(TextField).first, '网页测试');
     await _waitFor(tester, () => find.text('网页测试普通').evaluate().isNotEmpty);
     expect(find.text('网页测试普通'), findsOneWidget);
     await tester.scrollUntilVisible(
       find.text('网页测试线索'),
       80,
-      scrollable: find.descendant(
-        of: find.byType(ListView),
-        matching: find.byType(Scrollable),
-      ),
+      scrollable: find.byType(Scrollable).first,
     );
     expect(find.textContaining('跨源跳转写法，待复核'), findsOneWidget);
+    await tester.ensureVisible(find.text('疑似网页脚本'));
     await tester.tap(find.text('疑似网页脚本'));
     await tester.pump();
     expect(find.text('网页测试线索'), findsOneWidget);
@@ -502,6 +503,7 @@ void _ruleCluePageTests() {
           home: BookSourcesPage(services: services, kind: BookKind.text),
         ),
       );
+      await _openSourceSearch(tester);
       await tester.enterText(find.byType(TextField).first, '规则源');
       await _waitFor(tester, () => find.text('动态规则源').evaluate().isNotEmpty);
       expect(find.textContaining('规则含动态求值，待复核'), findsOneWidget);
@@ -571,11 +573,20 @@ void _quarantineReviewPageTests() {
           home: BookSourcesPage(services: services, kind: BookKind.text),
         ),
       );
+      await _openSourceSearch(tester);
       await tester.enterText(find.byType(TextField).first, '样本抽查');
       await _waitFor(
         tester,
         () => find.textContaining('网页：疑似博彩文字线索').evaluate().isNotEmpty,
       );
+      await tester.tap(find.widgetWithText(FilterChip, '批量选择'));
+      await tester.pumpAndSettle();
+      expect(find.byType(CheckboxListTile), findsOneWidget);
+      expect(find.text('一键停用'), findsOneWidget);
+      await tester.tap(find.widgetWithText(FilterChip, '退出批量选择'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('渠道维护'));
+      await tester.pumpAndSettle();
       expect(find.text('网页抽查'), findsOneWidget);
       expect(find.text('风险记录'), findsOneWidget);
       expect(find.textContaining('不执行网页脚本'), findsNothing);
@@ -584,6 +595,9 @@ void _quarantineReviewPageTests() {
       expect(find.textContaining('不执行网页脚本'), findsOneWidget);
       expect(find.textContaining('定期抽查已启用书源的首页'), findsOneWidget);
       expect(find.textContaining('每 30 分钟'), findsNothing);
+      await tester.ensureVisible(find.text('自动检测说明'));
+      await tester.tap(find.text('自动检测说明'));
+      await tester.pumpAndSettle();
       expect(find.textContaining('网页：疑似博彩文字线索'), findsOneWidget);
       expect(tester.takeException(), isNull);
       await tester.tap(find.text('风险记录'));
@@ -603,6 +617,7 @@ void _quarantineReviewPageTests() {
         tester,
         () => find.byType(LinearProgressIndicator).evaluate().isEmpty,
       );
+      await _openSourceSearch(tester);
       await tester.enterText(find.byType(TextField).first, '待复核源');
       await _waitFor(
         tester,
@@ -668,6 +683,7 @@ void _sourceListPolicyRaceTests() {
             ),
           ),
         );
+        await _openSourceSearch(tester);
         await tester.enterText(find.byType(TextField).first, '受控分组样本');
         await _waitFor(tester, () => readStarted.isCompleted);
         await tester.runAsync(() async {
@@ -762,3 +778,10 @@ BookSource _source(String name, String host) => BookSource.fromJson({
   'format': 'feed',
   'url': 'https://$host/feed',
 });
+
+Future<void> _openSourceSearch(WidgetTester tester) async {
+  final button = find.byTooltip('搜索渠道');
+  if (button.evaluate().isEmpty) return;
+  await tester.tap(button);
+  await tester.pump();
+}

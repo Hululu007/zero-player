@@ -1,6 +1,12 @@
 import '../../supervision/presentation/sensitive_action.dart';
 import 'backup_restore.dart';
+import 'dart:convert';
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import '../../../core/diagnostics/local_error_log.dart';
+import '../../playback/application/playback_journal.dart';
 import 'package:go_router/go_router.dart';
 import '../../../app/app_services.dart';
 import '../../../app/app_version.dart';
@@ -93,7 +99,7 @@ final class SettingsPage extends StatelessWidget {
             for (final value in {128, 256, 512, 1024, 2048, settings.cacheMiB})
               '$value': '$value MiB',
           }, numeric: true),
-          ..._bookCoverCacheOptions(context),
+          ..._readingOptions(context),
           _downloadLimit(context, settings.downloadMiB),
           _toggle(
             context,
@@ -112,6 +118,7 @@ final class SettingsPage extends StatelessWidget {
           ),
           const Divider(),
           ..._performanceOptions(context),
+          ..._runtimeOptions(context),
           ..._dataActions(context),
           const Divider(),
           ..._helpActions(context),
@@ -119,13 +126,70 @@ final class SettingsPage extends StatelessWidget {
       );
     },
   );
+  List<Widget> _runtimeOptions(BuildContext context) => [
+    if (services.platform.android)
+      ListTile(
+        leading: const Icon(Icons.notifications_outlined),
+        title: const Text('下载与音乐通知'),
+        onTap: () =>
+            perform(context, services.platform.requestStatusNotifications),
+      ),
+    ListTile(
+      leading: const Icon(Icons.monitor_heart_outlined),
+      title: const Text('运行诊断'),
+      subtitle: const Text('本机错误、应用退出原因和内存信息'),
+      onTap: () => _showRuntimeDiagnostics(context),
+    ),
+  ];
+
+  Future<void> _showRuntimeDiagnostics(BuildContext context) async {
+    final previous = await PlaybackJournal(
+      services.root,
+    ).latestUnclosedReport();
+    Map<String, Object?> device = const {};
+    try {
+      device = await services.platform.playbackDeviceSnapshot();
+    } on Exception {
+      // The local journal remains available if the Android bridge is absent.
+    }
+    if (!context.mounted) return;
+    final report = [
+      'Zero Player $appVersion',
+      '当前进程 RSS：${(ProcessInfo.currentRss / (1024 * 1024)).round()} MiB',
+      if (device.isNotEmpty)
+        'Android 内存与退出记录\n${const JsonEncoder.withIndent('  ').convert(device)}',
+      if (previous != null) '未正常关闭的播放会话\n$previous',
+      'Flutter / Dart 记录\n${LocalErrorLog.report()}',
+    ].join('\n\n');
+    await showDialog<void>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('运行诊断'),
+        content: SingleChildScrollView(child: SelectableText(report)),
+        actions: [
+          TextButton(
+            onPressed: () async {
+              await Clipboard.setData(ClipboardData(text: report));
+              if (context.mounted) Navigator.pop(context);
+            },
+            child: const Text('复制诊断'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('关闭'),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _downloadLimit(BuildContext context, int limit) =>
       _choice(context, '离线下载及本地副本容量（分别计算）', 'downloadMiB', '$limit', {
         for (final value in {1024, 4096, 8192, 16384, limit})
           '$value': '$value MiB',
       }, numeric: true);
 
-  List<Widget> _bookCoverCacheOptions(BuildContext context) {
+  List<Widget> _readingOptions(BuildContext context) {
     final limit = services.settings.value.bookCoverCacheMiB;
     return [
       _choice(context, '书籍封面缓存容量', 'bookCoverCacheMiB', '$limit', {
@@ -133,6 +197,13 @@ final class SettingsPage extends StatelessWidget {
           '$value': value == 0 ? '关闭' : '$value MiB',
       }, numeric: true),
       BookCoverCacheSetting(services: services, limitMiB: limit),
+      _toggle(
+        context,
+        '阅读聚合使用已确认的证书',
+        'bookAggregateCertificateExceptions',
+        services.settings.value.bookAggregateCertificateExceptions,
+        subtitle: '证书失效时默认跳过。可在单个渠道记住证书后开启；监管模式下始终校验。',
+      ),
     ];
   }
 
@@ -440,7 +511,8 @@ final class SettingsPage extends StatelessWidget {
         needed:
             key == 'filterAdult' && !v ||
             key == 'backgroundProbe' ||
-            key == 'bookSiteAutoCheck',
+            key == 'bookSiteAutoCheck' ||
+            key == 'bookAggregateCertificateExceptions',
       ),
     ),
   );

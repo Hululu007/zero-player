@@ -91,6 +91,10 @@ void main() {
         tester,
         () => find.textContaining('更新 1').evaluate().isNotEmpty,
       );
+      if (find.byTooltip('搜索渠道').evaluate().isNotEmpty) {
+        await tester.tap(find.byTooltip('搜索渠道'));
+        await tester.pump();
+      }
       await tester.enterText(find.byType(TextField).first, '已修订规则');
       final row = find.widgetWithText(ListTile, '已修订规则');
       await _waitFor(tester, () => row.evaluate().isNotEmpty);

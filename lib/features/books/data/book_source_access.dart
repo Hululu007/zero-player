@@ -178,7 +178,9 @@ final class BookSourceAccess {
         hostAdult ||
         (isCurrentHost && sourceAdult) ||
         (assessment == null && _assessedAdultIds.contains(id));
-    final fixed = fixedRisk(id, host, source);
+    final fixed =
+        (sourceEntry != null && _archivedComic(sourceEntry)) ||
+        fixedRisk(id, host, source);
     final quarantined =
         fixed ||
         (assessment?.quarantined ?? false) ||
@@ -249,6 +251,8 @@ final class BookSourceAccess {
 
   bool sourceAllowed(BookSource source) {
     if (!_riskLoaded) return false;
+    final installed = entry(source.id);
+    if (installed != null && _archivedComic(installed)) return false;
     final hosts = [source.endpoint.host, ...source.mediaHosts];
     return kindAllowed(source.kind) &&
         !_blockedSourceIds.contains(source.id) &&
@@ -275,7 +279,13 @@ final class BookSourceAccess {
   }
 
   bool entryAllowed(BookSourceEntry entry) =>
+      !_archivedComic(entry) &&
       sourceAllowed(entry.source) &&
       policy.textAllowed('', category: entry.group) &&
       !(policy.filterAdult && adultBookLabels(entry.source.name, entry.group));
+
+  static bool _archivedComic(BookSourceEntry entry) =>
+      entry.fromCatalog &&
+      !entry.source.builtin &&
+      entry.source.kind == BookKind.comic;
 }

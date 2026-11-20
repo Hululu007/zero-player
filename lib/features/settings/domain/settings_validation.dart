@@ -67,6 +67,7 @@ void validateSetting(String key, Object? value) {
   } else if ({
     'backgroundProbe',
     'bookSiteAutoCheck',
+    'bookAggregateCertificateExceptions',
     'startFullscreen',
     'navigationGuideSeen',
     'autoDownloadFallback',

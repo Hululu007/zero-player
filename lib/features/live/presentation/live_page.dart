@@ -218,7 +218,7 @@ final class _LivePageState extends State<LivePage> {
         showTonkiang(context, widget.services);
       case 'restore':
         perform(context, () async {
-          await runSensitive(
+          final refreshed = await runSensitive(
             context,
             widget.services.supervision,
             SensitiveOperation.channels,
@@ -227,7 +227,8 @@ final class _LivePageState extends State<LivePage> {
               await widget.services.builtinLive.refresh();
             },
           );
-        }, success: '刷新完成，失败详情见订阅管理');
+          if (refreshed && mounted) message(context, '刷新完成，失败详情见订阅管理');
+        });
       case 'export':
         perform(
           context,
@@ -380,9 +381,8 @@ final class _LivePageState extends State<LivePage> {
       'M3U / TXT URL',
       'XMLTV / XMLTV.GZ URL（可留空）',
     ]);
-    if (values == null) return;
-    if (!mounted) return;
-    await runSensitive(
+    if (values == null || !mounted) return;
+    final saved = await runSensitive(
       context,
       widget.services.supervision,
       SensitiveOperation.channels,
@@ -392,7 +392,8 @@ final class _LivePageState extends State<LivePage> {
         epg: values[2].isEmpty ? null : Uri.parse(values[2]),
       ),
     );
-  }, success: '直播列表已保存');
+    if (saved && mounted) message(context, '直播列表已保存');
+  });
   Future<void> _epg(LiveChannel channel) => showDialog<void>(
     context: context,
     builder: (_) =>

@@ -31,7 +31,7 @@ int compareBookChapterFreshness(Book a, Book b) {
   if (dates != 0) return dates;
   int chapter(String value) {
     final match = _bookChapterNumber.firstMatch(value);
-    return match == null ? 0 : int.parse(match[1]!);
+    return int.tryParse(match?[1] ?? '') ?? 0;
   }
 
   return chapter(b.latestChapter).compareTo(chapter(a.latestChapter));
@@ -77,9 +77,11 @@ class BookSearchPage extends StatefulWidget {
 
 class _BookSearchPageState extends State<BookSearchPage> {
   final _results = <String, Book>{};
+  Timer? _progressRefresh;
   final _sources = <String, BookSourceEntry>{};
   final _latencies = <String, int>{};
   final _failedSources = <String>{};
+  final _certificateFailures = <String>{};
   late final _input = TextEditingController(text: widget.query);
   late String _query = widget.query;
   late BookSearchField _field = widget.field;
@@ -197,6 +199,7 @@ class _BookSearchPageState extends State<BookSearchPage> {
         _sources.clear();
         _latencies.clear();
         _failedSources.clear();
+        _certificateFailures.clear();
         _done = _total = 0;
       }
       _busy = true;
@@ -238,7 +241,11 @@ class _BookSearchPageState extends State<BookSearchPage> {
         },
       );
       if (mounted && !token.isCancelled && retry != null) {
-        setState(() => _failedSources.removeAll(retry.difference(retried)));
+        setState(() {
+          final removed = retry.difference(retried);
+          _failedSources.removeAll(removed);
+          _certificateFailures.removeAll(removed);
+        });
       }
     } on FormatException catch (error) {
       if (mounted && !token.isCancelled) setState(() => _error = error.message);
@@ -246,7 +253,11 @@ class _BookSearchPageState extends State<BookSearchPage> {
       if (mounted && !token.isCancelled) setState(() => _error = '搜索未完成，请重试');
     } finally {
       if (mounted && identical(token, _token)) {
-        if (!_restartPending) setState(() => _busy = false);
+        _progressRefresh?.cancel();
+        _progressRefresh = null;
+        setState(() {
+          if (!_restartPending) _busy = false;
+        });
         _updates.value++;
       }
     }
@@ -308,28 +319,38 @@ class _BookSearchPageState extends State<BookSearchPage> {
     required bool retrying,
   }) {
     if (!mounted || token.isCancelled) return;
-    setState(() {
-      if (update.sourceId == null) _searchStarted = true;
-      if (!retrying) {
-        _done = update.completed;
-        _total = update.total;
-      }
-      final id = update.sourceId;
-      if (id != null) {
-        if (update.failed) {
-          _failedSources.add(id);
-        } else {
-          _failedSources.remove(id);
-        }
-      }
-      final latency = update.latencyMs;
-      if (id != null && latency != null) _latencies[id] = latency;
-      for (final book in update.books) {
-        _results[book.id] = book;
-      }
+    if (update.sourceId == null) _searchStarted = true;
+    if (!retrying) {
+      _done = update.completed;
+      _total = update.total;
+    }
+    final id = update.sourceId;
+    if (id == null) {
+      setState(() {});
+      widget.onSearchStarted?.call();
+      return;
+    }
+    if (update.failed) {
+      _failedSources.add(id);
+    } else {
+      _failedSources.remove(id);
+    }
+    if (update.certificateFailed) {
+      _certificateFailures.add(id);
+    } else {
+      _certificateFailures.remove(id);
+    }
+    final latency = update.latencyMs;
+    if (latency != null) _latencies[id] = latency;
+    for (final book in update.books) {
+      _results[book.id] = book;
+    }
+    _progressRefresh ??= Timer(const Duration(milliseconds: 80), () {
+      _progressRefresh = null;
+      if (!mounted || !identical(token, _token) || token.isCancelled) return;
+      setState(() {});
+      _updates.value++;
     });
-    _updates.value++;
-    if (update.sourceId == null) widget.onSearchStarted?.call();
   }
 
   void _retryFailed() {
@@ -338,6 +359,8 @@ class _BookSearchPageState extends State<BookSearchPage> {
   }
 
   void _cancelSearch() {
+    _progressRefresh?.cancel();
+    _progressRefresh = null;
     _token?.cancel();
     setState(() {
       _busy = false;
@@ -491,6 +514,7 @@ class _BookSearchPageState extends State<BookSearchPage> {
 
   @override
   void dispose() {
+    _progressRefresh?.cancel();
     _token?.cancel();
     _input.dispose();
     _updates.dispose();
@@ -526,6 +550,9 @@ class _BookSearchPageState extends State<BookSearchPage> {
 
   Widget _searchStatus(int count) => ListTile(
     dense: true,
+    subtitle: _certificateFailures.isEmpty
+        ? null
+        : Text('${_certificateFailures.length} 个渠道的 HTTPS 证书无法验证'),
     title: Text(
       _error ??
           (_busy && _retrying

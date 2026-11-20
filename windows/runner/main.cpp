@@ -2,6 +2,8 @@
 #include <flutter/flutter_view_controller.h>
 #include <windows.h>
 
+#include <cstdio>
+
 #include "flutter_window.h"
 #include "utils.h"
 
@@ -18,7 +20,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance, _In_opt_ HINSTANCE prev,
 
   // Initialize COM, so that it is available for use in the library and/or
   // plugins.
-  ::CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
+  const HRESULT com_result = ::CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
 
   flutter::DartProject project(L"data");
 
@@ -31,19 +33,28 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance, _In_opt_ HINSTANCE prev,
   Win32Window::Point origin(10, 10);
   Win32Window::Size size(1280, 720);
   if (!window.Create(L"Zero Player", origin, size)) {
+    if (SUCCEEDED(com_result)) ::CoUninitialize();
     return EXIT_FAILURE;
   }
   window.SetQuitOnClose(true);
 
   ::MSG msg;
-  while (::GetMessage(&msg, nullptr, 0, 0)) {
+  BOOL result;
+  while ((result = ::GetMessage(&msg, nullptr, 0, 0)) > 0) {
     ::TranslateMessage(&msg);
     ::DispatchMessage(&msg);
+  }
+  if (result == -1) {
+    char diagnostic[96];
+    std::snprintf(diagnostic, sizeof(diagnostic),
+                  "GetMessage failed with Win32 error %lu\n", ::GetLastError());
+    ::OutputDebugStringA(diagnostic);
+    std::fputs(diagnostic, stderr);
   }
 
   // Plugins and the view may use COM during shutdown and dispatch window
   // messages. Release them explicitly before COM and C++ member teardown.
   window.Destroy();
-  ::CoUninitialize();
-  return EXIT_SUCCESS;
+  if (SUCCEEDED(com_result)) ::CoUninitialize();
+  return result == -1 ? EXIT_FAILURE : EXIT_SUCCESS;
 }

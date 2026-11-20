@@ -32,10 +32,52 @@ void main() {
   });
 
   _basicNavigationTests();
+  _desktopReadingNavigationTest();
   _stackTests();
   _viewportAndExitTests();
   _immersiveRouteTest();
   _discoveryStateTest();
+}
+
+void _desktopReadingNavigationTest() {
+  testWidgets('desktop drawer expands the reading destinations', (
+    tester,
+  ) async {
+    await fixture.pump(tester, size: const Size(1100, 820));
+    final router = GoRouter.of(tester.element(find.byType(AppShell)));
+    await tester.tap(find.byTooltip('展开导航 (Ctrl+M)'));
+    await fixture.settle(tester);
+    expect(find.widgetWithText(ListTile, '网络漫画'), findsNothing);
+    await tester.tap(find.text('阅读'));
+    await fixture.settle(tester);
+    expect(find.widgetWithText(ListTile, '网络小说'), findsOneWidget);
+    expect(find.widgetWithText(ListTile, '网络听书'), findsOneWidget);
+    await tester.tap(find.widgetWithText(ListTile, '网络漫画'));
+    await fixture.settle(tester);
+    expect(router.state.uri.path, '/comics');
+    await fixture.finish(tester);
+  });
+}
+
+Future<void> _checkReadingLinks(WidgetTester tester, GoRouter router) async {
+  expect(find.byTooltip('导入 EPUB / PDF / TXT').hitTestable(), findsOneWidget);
+  final reading = find.widgetWithText(NavigationDestination, '阅读');
+  await tester.tap(reading);
+  await fixture.settle(tester);
+  expect(find.widgetWithText(ListTile, '网络小说').hitTestable(), findsOneWidget);
+  await tester.tap(find.widgetWithText(ListTile, '网络漫画').hitTestable());
+  await fixture.settle(tester);
+  expect(router.state.uri.path, '/comics');
+  await tester.tap(reading);
+  await fixture.settle(tester);
+  await tester.tap(find.widgetWithText(ListTile, '网络听书').hitTestable());
+  await fixture.settle(tester);
+  expect(router.state.uri.path, '/audiobooks');
+  await tester.tap(reading);
+  await fixture.settle(tester);
+  await tester.tap(find.widgetWithText(ListTile, '网络小说').hitTestable());
+  await fixture.settle(tester);
+  expect(router.state.uri.path, '/reading');
 }
 
 void _discoveryStateTest() {
@@ -87,7 +129,11 @@ void _discoveryStateTest() {
       tester,
       () => find.text('按渠道聚合').evaluate().isNotEmpty,
     );
-    expect(find.text('导入 EPUB / PDF').hitTestable(), findsOneWidget);
+    await _checkReadingLinks(tester, router);
+    await fixture.waitFor(
+      tester,
+      () => find.text('按渠道聚合').hitTestable().evaluate().isNotEmpty,
+    );
     await tester.tap(find.text('按渠道聚合'));
     await fixture.waitFor(
       tester,
@@ -283,6 +329,11 @@ void _basicNavigationTests() {
   });
 }
 
+Future<void> _settleRoute(WidgetTester tester) async {
+  await tester.pump();
+  await tester.pump(const Duration(milliseconds: 400));
+}
+
 void _stackTests() {
   testWidgets('reading keeps its branch state and both return paths', (
     tester,
@@ -290,9 +341,12 @@ void _stackTests() {
     await fixture.pump(tester, size: const Size(320, 740));
     final router = GoRouter.of(tester.element(find.byType(AppShell)));
     router.go('/reading');
-    await fixture.settle(tester);
+    await fixture.waitFor(
+      tester,
+      () => find.text('书架').hitTestable().evaluate().isNotEmpty,
+    );
     await tester.tap(find.text('书架'));
-    await fixture.settle(tester);
+    await _settleRoute(tester);
     final branch = tester.element(find.byType(BooksPage));
     Navigator.of(branch).push(
       MaterialPageRoute<void>(
@@ -302,9 +356,9 @@ void _stackTests() {
         ),
       ),
     );
-    await fixture.settle(tester);
+    await _settleRoute(tester);
     await tester.binding.handlePopRoute();
-    await fixture.settle(tester);
+    await _settleRoute(tester);
     expect(router.state.uri.path, '/reading');
     expect(
       tester
@@ -313,9 +367,9 @@ void _stackTests() {
       {1},
     );
     router.go('/settings');
-    await fixture.settle(tester);
+    await _settleRoute(tester);
     router.go('/reading');
-    await fixture.settle(tester);
+    await _settleRoute(tester);
     expect(
       tester
           .widget<SegmentedButton<int>>(find.byType(SegmentedButton<int>))
@@ -327,9 +381,9 @@ void _stackTests() {
         builder: (_) => Scaffold(appBar: AppBar(title: const Text('模块详情'))),
       ),
     );
-    await fixture.settle(tester);
+    await _settleRoute(tester);
     await tester.tap(find.byType(BackButton));
-    await fixture.settle(tester);
+    await _settleRoute(tester);
     expect(router.state.uri.path, '/reading');
     expect(tester.takeException(), isNull);
     await fixture.finish(tester);

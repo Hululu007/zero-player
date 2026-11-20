@@ -20,6 +20,7 @@ Future<void> showModuleSources(
     '/radio': '广播',
     '/music': '音乐',
     '/reading': '网络小说',
+    '/comics': '网络漫画',
     '/audiobooks': '听书',
   };
   if (!kinds.containsKey(module)) {
@@ -43,11 +44,16 @@ Future<void> showModuleSources(
   switch (module) {
     case '/reading':
     case '/audiobooks':
+    case '/comics':
       await Navigator.of(context, rootNavigator: true).push(
         BookPageRoute<void>(
           builder: (_) => BookSourcesPage(
             services: services,
-            kind: module == '/reading' ? BookKind.text : BookKind.audio,
+            kind: switch (module) {
+              '/reading' => BookKind.text,
+              '/comics' => BookKind.comic,
+              _ => BookKind.audio,
+            },
           ),
         ),
       );

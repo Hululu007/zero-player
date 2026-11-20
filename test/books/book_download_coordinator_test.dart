@@ -11,6 +11,7 @@ import 'package:zero_player/features/books/domain/book_download_plan.dart';
 import 'package:zero_player/features/supervision/domain/supervision_rules.dart';
 
 void main() {
+  _planRemovalRollbackTest();
   test(
     'paused download resumes with bounded per-kind concurrency and cleans up',
     () async {
@@ -311,4 +312,43 @@ void main() {
     expect(task.status, BookDownloadStatus.paused);
     expect(task.error, isNull);
   });
+}
+
+void _planRemovalRollbackTest() {
+  test(
+    'failed second deletion preserves the download plan and failures',
+    () async {
+      final root = await Directory.systemTemp.createTemp('book-plan-rollback-');
+      final db = AppDatabase.memory();
+      final services = AppServices.scoped(root, db);
+      addTearDown(() async {
+        await services.close();
+        await root.delete(recursive: true);
+      });
+      final book = Book(
+        'source',
+        BookKind.text,
+        '离线测试',
+        '',
+        Uri.parse('https://fixture.test/plan'),
+      );
+      final planKey = 'books_download:${book.id}';
+      final failureKey = 'books_download_failures:${book.id}';
+      final plan = const BookDownloadPlan(1, 2, false).toJson();
+      final failures = {'chapter': 'failed'};
+      await services.books.store.write(planKey, plan);
+      await services.books.store.write(failureKey, failures);
+      await db.customStatement("""
+      CREATE TRIGGER fail_chapter_removal BEFORE INSERT ON app_meta
+      WHEN NEW.key GLOB 'books_download_failures:*'
+      BEGIN SELECT RAISE(ABORT, 'injected failure'); END
+    """);
+      await expectLater(
+        services.bookDownloads.removePlan(book),
+        throwsException,
+      );
+      expect(await services.books.store.read(planKey), plan);
+      expect(await services.books.store.read(failureKey), failures);
+    },
+  );
 }

@@ -1,3 +1,6 @@
+import 'dart:async';
+import 'dart:convert';
+
 import 'package:zero_player/features/sources/domain/video_source.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:zero_player/core/network/document_client.dart';
@@ -8,8 +11,10 @@ import 'package:zero_player/features/search/application/search_controller.dart';
 import 'package:zero_player/features/settings/data/backup_service.dart';
 import 'package:zero_player/features/supervision/domain/supervision_rules.dart';
 import '../../test_support/supervision_fixture.dart';
+import '../../test_support/http_test_server.dart';
 
 void main() {
+  _searchPolicyRaceTest();
   test(
     'stale source snapshots cannot downgrade adult classification',
     () async {
@@ -104,6 +109,74 @@ void main() {
         contains('ZeroPlayer-Backup'),
       );
       await expectLater(backup.export(), throwsFormatException);
+    },
+  );
+}
+
+void _searchPolicyRaceTest() {
+  test(
+    'a policy change cancels only the newly restricted search source',
+    () async {
+      final f = SupervisionFixture();
+      await f.load();
+      final entered = <String, Completer<void>>{
+        '/allowed': Completer<void>(),
+        '/restricted': Completer<void>(),
+      };
+      final release = Completer<void>();
+      final server = await HttpTestServer.start((request) async {
+        final path = request.uri.path;
+        entered[path]!.complete();
+        await release.future;
+        request.response.write(
+          jsonEncode({
+            'pagecount': 1,
+            'list': [
+              {'vod_id': path, 'vod_name': 'fixture'},
+            ],
+          }),
+        );
+      });
+      final http = MediaHttpClient(allowPrivateNetworks: true);
+      final search = SearchController(
+        f.sources,
+        DocumentClient(http),
+        HistoryRepository(f.db),
+      );
+      addTearDown(() async {
+        if (!release.isCompleted) release.complete();
+        search.dispose();
+        http.close();
+        await server.close();
+        await f.close();
+      });
+      final allowed = await f.sources.saveManual(
+        'allowed',
+        server.baseUri.resolve('allowed'),
+      );
+      final restricted = await f.sources.saveManual(
+        'restricted',
+        server.baseUri.resolve('restricted'),
+      );
+
+      final work = search.search('fixture');
+      await Future.wait(entered.values.map((start) => start.future));
+      f.policy.refresh();
+      expect(search.loading, isTrue);
+      f.policy.rememberSource(
+        VideoSource(
+          id: restricted,
+          name: 'restricted',
+          endpoint: server.baseUri.resolve('restricted'),
+          classification: 'adult',
+        ),
+      );
+      expect(search.loading, isTrue);
+      expect(search.statuses.containsKey(restricted), isFalse);
+      release.complete();
+      await work;
+      expect(search.items.single.sourceId, allowed);
+      expect(search.error, isNull);
     },
   );
 }

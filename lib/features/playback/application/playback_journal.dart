@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:math';
 
 /// Two bounded snapshots survive a native crash / system kill. A missed close
 /// is evidence of an unclean exit, not a diagnosis of its cause.
@@ -10,16 +11,28 @@ final class PlaybackJournal {
   final File current, previous;
   String? previousReport;
   Future<void> _queue = Future.value();
+  static final _owner =
+      '$pid-${Random.secure().nextInt(1 << 32)}-${DateTime.now().microsecondsSinceEpoch}';
+
+  bool _unclean(Map<String, dynamic>? snapshot) =>
+      snapshot?['status'] == 'running' && snapshot?['owner'] != _owner;
+
   static const limit = 64 * 1024;
 
   Future<void> initialize() async {
     await current.parent.create(recursive: true);
     final old = await _read(current);
-    if (old != null && old['status'] == 'running') {
+    if (_unclean(old)) {
       await previous.writeAsString(jsonEncode(old), flush: true);
     }
     final saved = await _read(previous);
     previousReport = saved?['report'] as String?;
+  }
+
+  Future<String?> latestUnclosedReport() async {
+    final latest = await _read(current);
+    if (_unclean(latest)) return latest?['report'] as String?;
+    return (await _read(previous))?['report'] as String?;
   }
 
   Future<Map<String, dynamic>?> _read(File file) async {
@@ -39,6 +52,7 @@ final class PlaybackJournal {
     // Reports contain at most 60 short events. Apply a final byte bound too.
     final snapshot = jsonEncode({
       'status': closed ? 'closed' : 'running',
+      'owner': _owner,
       'savedAt': DateTime.now().toUtc().toIso8601String(),
       'report': report.length > 8000 ? report.substring(0, 8000) : report,
     });

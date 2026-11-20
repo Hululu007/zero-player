@@ -9,6 +9,8 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   _incrementalSwitchTest();
   _revokedResultsTest();
+  _detailsActionsTest();
+  _largeCatalogTest();
 }
 
 void _incrementalSwitchTest() {
@@ -48,6 +50,17 @@ void _incrementalSwitchTest() {
       expect(f.slowReleased, isFalse);
       expect(find.textContaining('第5章 标题4'), findsWidgets);
       final row = find.widgetWithText(ListTile, 'fast 渠道');
+      expect(find.text('failed 渠道'), findsNothing);
+      await tester.ensureVisible(find.textContaining('显示全部渠道'));
+      await tester.tap(find.textContaining('显示全部渠道'));
+      await tester.pump();
+      expect(find.text('failed 渠道'), findsOneWidget);
+      await tester.tap(find.text('仅显示有书渠道'));
+      await tester.pump();
+      await tester.ensureVisible(row);
+      await tester.tap(find.text('fast 渠道'));
+      await tester.pump();
+      expect(tester.widget<ListTile>(row).selected, isTrue);
       final jump = find.descendant(of: row, matching: find.text('跳转'));
       await tester.ensureVisible(jump);
       await tester.tap(jump);
@@ -123,6 +136,86 @@ void _revokedResultsTest() {
     expect(tester.takeException(), isNull);
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pumpAndSettle();
+    await tester.runAsync(f.close);
+  });
+}
+
+void _detailsActionsTest() {
+  testWidgets('disabling a source immediately offers another edition', (
+    tester,
+  ) async {
+    final f = (await tester.runAsync(BookEditionsFixture.create))!;
+    addTearDown(() => tester.runAsync(f.close));
+    f.releaseSlow();
+    await tester.pumpWidget(
+      MaterialApp(
+        home: BookDetailPage(services: f.services, initial: f.book),
+      ),
+    );
+    await _until(tester, () => find.byTooltip('停用当前渠道').evaluate().isNotEmpty);
+    await tester.tap(find.byTooltip('停用当前渠道'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('停用并查找其他渠道'));
+    await _until(
+      tester,
+      () =>
+          find.text('选择其他可用渠道').evaluate().isNotEmpty &&
+          find.text('fast 渠道').evaluate().isNotEmpty,
+    );
+    final disabled = await tester.runAsync(
+      () => f.services.books.sourceEntry(f.book.kind, f.book.sourceId),
+    );
+    expect(disabled?.enabled, isFalse);
+    expect(find.text('target 渠道（当前）'), findsNothing);
+    await tester.tap(find.text('关闭'));
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.runAsync(f.close);
+  });
+}
+
+void _largeCatalogTest() {
+  testWidgets('chapter navigation jumps across pages and back to chapter one', (
+    tester,
+  ) async {
+    final f = (await tester.runAsync(
+      () => BookEditionsFixture.create(targetChapterCount: 160),
+    ))!;
+    addTearDown(() => tester.runAsync(f.close));
+    await tester.pumpWidget(
+      MaterialApp(
+        home: BookDetailPage(services: f.services, initial: f.book),
+      ),
+    );
+    await _until(tester, () => find.byTooltip('跳转章节').evaluate().isNotEmpty);
+    await tester.tap(find.byTooltip('跳转章节'));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.descendant(
+        of: find.byType(AlertDialog),
+        matching: find.byType(TextField),
+      ),
+      '125',
+    );
+    await tester.pump();
+    await tester.tap(find.text('定位'));
+    await tester.pumpAndSettle();
+    expect(find.text('2/2'), findsOneWidget);
+    expect(find.text('第125章 标题124').hitTestable(), findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.byType(FloatingActionButton),
+        matching: find.byIcon(Icons.vertical_align_top),
+      ),
+      findsOneWidget,
+    );
+    await tester.tap(find.byTooltip('目录回到开头'));
+    await tester.pumpAndSettle();
+    expect(find.text('1/2'), findsOneWidget);
+    expect(find.text('第1章 标题0').hitTestable(), findsOneWidget);
+    expect(tester.takeException(), isNull);
+    await tester.pumpWidget(const SizedBox.shrink());
     await tester.runAsync(f.close);
   });
 }

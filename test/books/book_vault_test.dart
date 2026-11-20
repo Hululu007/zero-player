@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:zero_player/core/persistence/app_database.dart';
 import 'package:zero_player/features/books/data/book_download_evidence.dart';
+import 'package:zero_player/features/books/data/book_resource_limits.dart';
 import 'package:zero_player/features/books/data/book_shelf_lists.dart';
 import 'package:zero_player/features/books/data/book_store.dart';
 import 'package:zero_player/features/books/data/book_vault.dart';
@@ -37,6 +38,91 @@ void main() {
   _encryptedRecordTests();
   _rollbackTests();
   _revocationTests();
+  _downloadTargetTests();
+}
+
+void _downloadTargetTests() {
+  _migrationQuotaTest();
+  test(
+    'failed private download target never leaves a public favorite',
+    () async {
+      await store.vault.create('secret-123');
+      await store.write('books_reading_cleanup:v1', {'malformed': true});
+      await expectLater(
+        store.saveDownloadTarget(book, private: true, chapters: [chapter]),
+        throwsFormatException,
+      );
+      expect(await store.shelf(), isEmpty);
+      expect(await store.vaultShelf(), isEmpty);
+      expect(await store.isPrivateBook(book.id), isFalse);
+      await store.write('books_reading_cleanup:v1', []);
+      await store.saveDownloadTarget(book, private: true, chapters: [chapter]);
+      expect((await store.vaultShelf()).single.favorite, isTrue);
+      expect(await store.read('books_shelf:${book.id}'), isNull);
+    },
+  );
+
+  test(
+    'missing private list rolls back migration and public membership',
+    () async {
+      await seed();
+      await store.vault.create('secret-123');
+      final lists = BookShelfLists(store, book.kind);
+      await lists.save('公开书单', ShelfListKind.list);
+      await lists.addToList(book, (await lists.load()).single.id);
+      await expectLater(
+        store.saveDownloadTarget(book, private: true, listId: 'missing'),
+        throwsFormatException,
+      );
+      expect(await store.isPrivateBook(book.id), isFalse);
+      expect((await lists.load()).single.books, {book.id});
+      expect(await store.text(book, chapter), body);
+      expect(await store.vaultShelf(), isEmpty);
+    },
+  );
+
+  test('the same vault retries initialization after index repair', () async {
+    await db.setMetadata(BookVault.indexKey, '{}', MetadataDomain.books);
+    await expectLater(
+      Future.wait([store.vault.ensureLoaded(), store.vault.ensureLoaded()]),
+      throwsFormatException,
+    );
+    await db.setMetadata(
+      BookVault.indexKey,
+      jsonEncode([book.id]),
+      MetadataDomain.books,
+    );
+    await store.vault.ensureLoaded();
+    expect(store.vault.ids, {book.id});
+  });
+}
+
+void _migrationQuotaTest() {
+  test(
+    'migration beyond the encrypted byte budget rolls back all writes',
+    () async {
+      await seed();
+      await store.vault.create('secret-123');
+      final lists = BookShelfLists(store, book.kind);
+      await lists.save('公开书单', ShelfListKind.list);
+      await lists.addToList(book, (await lists.load()).single.id);
+      // Only SQLite's byte count matters; no password or real book is needed
+      // to fill the remainder of the test vault.
+      await db.customStatement(
+        'INSERT INTO app_meta(key,value) VALUES(?,zeroblob(?))',
+        [
+          '${BookVault.dataPrefix}remaining-capacity-fixture',
+          BookResourceLimits.privateVaultBytes - 8,
+        ],
+      );
+      await expectLater(store.moveToVault(book), throwsFormatException);
+      expect(await store.isPrivateBook(book.id), isFalse);
+      expect((await store.shelf()).single.book.id, book.id);
+      expect((await lists.load()).single.books, {book.id});
+      expect(await store.text(book, chapter), body);
+      expect(await rawRows('${BookVault.dataPrefix}books_shelf:*'), isEmpty);
+    },
+  );
 }
 
 Future<void> seed() async {

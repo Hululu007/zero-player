@@ -370,11 +370,11 @@ void _protectedSettings() {
       throwsA(isA<Exception>()),
     );
     await expectLater(
-      f.settings.update({'bookSiteAutoCheck': false}),
+      f.settings.update({'bookSiteAutoCheck': true}),
       throwsA(isA<Exception>()),
     );
     expect(f.settings.value.backgroundProbe, isTrue);
-    expect(f.settings.value.bookSiteAutoCheck, isTrue);
+    expect(f.settings.value.bookSiteAutoCheck, isFalse);
     await f.authorized(
       SensitiveOperation.settings,
       () => f.settings.update({'backgroundProbe': false}),

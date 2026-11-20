@@ -9,6 +9,8 @@ import android.app.UiModeManager
 import android.content.Context
 import android.content.res.Configuration
 import android.net.ConnectivityManager
+import android.net.Uri
+import android.provider.DocumentsContract
 import android.util.Rational
 import android.content.Intent
 import android.app.Activity
@@ -25,10 +27,36 @@ class MainActivity : FlutterActivity() {
     private val musicOverlay by lazy { MusicLyricsOverlay(this) }
     private val protectedBookExport by lazy { ProtectedBookExport(this) }
     private val vaultBiometric by lazy { VaultBiometric(this) }
+    private var statusChannel: MethodChannel? = null
+    private var statusNotifications: StatusNotifications? = null
     private var saveResult: MethodChannel.Result? = null
     private var savePath: String? = null
+    private var exportCopy: ExportCopy? = null
+
+    private class ExportCopy {
+        @Volatile var cancelled = false
+            private set
+        private var settled = false
+
+        @Synchronized
+        fun cancel() {
+            if (!settled) cancelled = true
+        }
+
+        @Synchronized
+        fun settle(): Boolean {
+            settled = true
+            return !cancelled
+        }
+    }
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
+        val status = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "zero_player/status_notifications")
+        statusChannel = status
+        statusNotifications?.close()
+        statusNotifications = StatusNotifications(this, status).also { bridge ->
+            status.setMethodCallHandler(bridge::handle)
+        }
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "zero_player/reader_fonts")
             .setMethodCallHandler { call, result ->
                 if (call.method == "systemFamilies") result.success(ReaderFonts.systemFamilies())
@@ -106,6 +134,15 @@ class MainActivity : FlutterActivity() {
             }
     }
 
+    override fun onRequestPermissionsResult(
+        requestCode: Int, permissions: Array<out String>, grantResults: IntArray
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == StatusNotifications.PERMISSION) {
+            statusChannel?.invokeMethod("refresh", null)
+        }
+    }
+
     override fun onTrimMemory(level: Int) {
         playbackDiagnostics.lastTrimLevel = level
         super.onTrimMemory(level)
@@ -143,18 +180,22 @@ class MainActivity : FlutterActivity() {
         if (saveResult !== pending) return
         saveResult = null
         savePath = null
+        exportCopy = null
         if (error == null) pending.success(saved)
         else pending.error("save_failed", error, null)
     }
 
     override fun onDestroy() {
         try {
+            exportCopy?.cancel() ?: saveResult?.let { finishSave(it) }
+            statusNotifications?.close()
+            statusNotifications = null
+            statusChannel = null
             videoPicker.close()
             videoDirectories.close()
             musicOverlay.hide()
             protectedBookExport.close()
             vaultBiometric.close()
-            saveResult?.let { finishSave(it) }
         } finally {
             super.onDestroy()
         }
@@ -174,16 +215,46 @@ class MainActivity : FlutterActivity() {
             finishSave(pending)
             return
         }
-        Thread {
-            try {
-                contentResolver.openOutputStream(uri, "w").use { output ->
-                    requireNotNull(output)
-                    File(path).inputStream().use { input -> input.copyTo(output) }
+        if (exportCopy != null) return
+        val copy = ExportCopy()
+        exportCopy = copy
+        Thread { copyExport(copy, pending, File(path), uri) }.start()
+    }
+
+    private fun copyExport(
+        copy: ExportCopy, pending: MethodChannel.Result, source: File, target: Uri
+    ) {
+        var written = false
+        try {
+            if (!copy.cancelled) {
+                source.inputStream().use { input ->
+                    requireNotNull(contentResolver.openOutputStream(target, "w")).use { output ->
+                        val buffer = ByteArray(64 * 1024)
+                        while (!copy.cancelled) {
+                            val count = input.read(buffer)
+                            if (count == -1) {
+                                written = true
+                                break
+                            }
+                            if (!copy.cancelled) output.write(buffer, 0, count)
+                        }
+                    }
                 }
-                runOnUiThread { finishSave(pending, saved = true) }
-            } catch (_: Exception) {
-                runOnUiThread { finishSave(pending, error = "Unable to save file") }
             }
-        }.start()
+        } catch (_: Exception) {
+            written = false
+        }
+        val completed = copy.settle()
+        val saved = completed && written
+        val removed = saved || runCatching {
+            DocumentsContract.deleteDocument(contentResolver, target)
+        }.getOrDefault(false)
+        val error = when {
+            !removed -> "Unable to remove the incomplete export"
+            completed && !written -> "Unable to save file"
+            else -> null
+        }
+        // Deliver the result only after streams and any incomplete target are settled.
+        runOnUiThread { finishSave(pending, saved = saved, error = error) }
     }
 }
