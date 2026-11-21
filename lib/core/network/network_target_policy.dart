@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'lan_access_policy.dart';
 import 'source_certificate.dart';
@@ -89,6 +90,7 @@ final class NetworkTargetPolicy {
     String? proxyHost,
     int? proxyPort, {
     SourceCertificate? certificate,
+    Duration timeout = const Duration(seconds: 15),
   }) async {
     validateUri(uri, legacyQueryEncoding: allowLegacyQueryEncoding);
     if (proxyHost != null) throw const FormatException('不支持未校验的代理目标');
@@ -104,40 +106,102 @@ final class NetworkTargetPolicy {
         throw const FormatException('证书例外仅可用于公网来源');
       }
     }
-    // Connect to the checked address, never resolve the host a second time.
-    final address =
-        addresses
-            .where((a) => a.type == InternetAddressType.IPv4)
-            .firstOrNull ??
-        addresses.first;
-    final task = await Socket.startConnect(address, uri.port);
-    if (uri.scheme != 'https') return task;
-    Socket? connected;
-    final secure = task.socket.then((socket) async {
-      connected = socket;
-      // A custom connectionFactory owns TLS as well as TCP. Keep SNI and
-      // certificate verification bound to the original hostname.
-      SourceCertificateFailure? rejected;
+    // Reuse only validated DNS answers, preserving IPv4 preference.
+    final ordered = [
+      ...addresses.where((a) => a.type == InternetAddressType.IPv4),
+      ...addresses.where((a) => a.type != InternetAddressType.IPv4),
+    ].take(4).toList(growable: false);
+    final attempt = _VerifiedConnection(uri, ordered, timeout);
+    final socket = attempt.open().then<Socket>(
+      (socket) =>
+          uri.scheme == 'https' ? _secure(socket, uri, certificate) : socket,
+    );
+    socket.ignore();
+    return ConnectionTask.fromSocket(
+      socket,
+      Zone.current.bindCallback(attempt.cancel),
+    );
+  }
+
+  Future<Socket> _secure(
+    Socket socket,
+    Uri uri,
+    SourceCertificate? certificate,
+  ) async {
+    // Keep SNI and certificate verification bound to the original hostname.
+    SourceCertificateFailure? rejected;
+    try {
+      return await SecureSocket.secure(
+        socket,
+        host: uri.host,
+        onBadCertificate: (leaf) {
+          final failure = SourceCertificateFailure(uri, leaf);
+          if (certificate?.accepts(uri, failure) == true) return true;
+          rejected = failure;
+          return false;
+        },
+      );
+    } on HandshakeException {
+      socket.destroy();
+      if (rejected != null) throw rejected!;
+      rethrow;
+    }
+  }
+}
+
+final class _VerifiedConnection {
+  _VerifiedConnection(this.uri, this.addresses, this.timeout);
+  final Uri uri;
+  final List<InternetAddress> addresses;
+  final Duration timeout;
+  ConnectionTask<Socket>? _pending;
+  Socket? _connected;
+  bool _cancelled = false;
+
+  Future<Socket> open() async {
+    final watch = Stopwatch()..start();
+    SocketException? lastError;
+    for (var i = 0; i < addresses.length; i++) {
+      final remaining = timeout - watch.elapsed;
+      if (_cancelled || remaining <= Duration.zero) break;
+      const fallbackDelay = Duration(seconds: 3);
+      final limit = i == addresses.length - 1 || remaining < fallbackDelay
+          ? remaining
+          : fallbackDelay;
       try {
-        return await SecureSocket.secure(
-          socket,
-          host: uri.host,
-          onBadCertificate: (leaf) {
-            final failure = SourceCertificateFailure(uri, leaf);
-            if (certificate?.accepts(uri, failure) == true) return true;
-            rejected = failure;
-            return false;
-          },
-        );
-      } on HandshakeException {
-        socket.destroy();
-        if (rejected != null) throw rejected!;
-        rethrow;
+        return await _dial(addresses[i], limit);
+      } on SocketException catch (error) {
+        lastError = error;
       }
-    });
-    return ConnectionTask.fromSocket(secure, () {
-      task.cancel();
-      connected?.destroy();
-    });
+    }
+    throw lastError ?? const SocketException('Connection no longer available');
+  }
+
+  Future<Socket> _dial(InternetAddress address, Duration limit) async {
+    final task = _pending = await Socket.startConnect(address, uri.port);
+    task.socket.ignore();
+    if (_cancelled) task.cancel();
+    try {
+      final socket = await task.socket.timeout(
+        limit,
+        onTimeout: () {
+          task.cancel();
+          throw const SocketException('Connection attempt timed out');
+        },
+      );
+      if (_cancelled) {
+        socket.destroy();
+        throw const SocketException('Connection cancelled');
+      }
+      return _connected = socket;
+    } finally {
+      _pending = null;
+    }
+  }
+
+  void cancel() {
+    _cancelled = true;
+    _pending?.cancel();
+    _connected?.destroy();
   }
 }

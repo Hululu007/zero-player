@@ -22,6 +22,7 @@ import java.io.File
 
 class MainActivity : FlutterActivity() {
     private val videoPicker by lazy { VideoFilePicker(this) }
+    private val publicationPicker by lazy { PublicationFilePicker(this) }
     private val videoDirectories by lazy { VideoDirectoryBridge(this) }
     private val playbackDiagnostics by lazy { PlaybackDeviceDiagnostics(this) }
     private val musicOverlay by lazy { MusicLyricsOverlay(this) }
@@ -51,6 +52,8 @@ class MainActivity : FlutterActivity() {
     }
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
+        PublicationAndroidBridge.installActivity(this, flutterEngine.dartExecutor.binaryMessenger)
+        publicationPicker.install(flutterEngine.dartExecutor.binaryMessenger)
         val status = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "zero_player/status_notifications")
         statusChannel = status
         statusNotifications?.close()
@@ -113,7 +116,16 @@ class MainActivity : FlutterActivity() {
                     "clearLocalVideoCopies" -> videoPicker.clear(call, result)
                     "chooseVideoDirectory" -> videoDirectories.choose(result)
                     "verifyVideoInDirectory" -> videoDirectories.verify(call, result)
+                    "verifyPublicationInDirectory" -> videoDirectories.verify(call, result, publication = true)
                     "saveVideoToDirectory" -> videoDirectories.save(call, result)
+                    "savePublicationToDirectory" -> {
+                        val mime = call.argument<String>("mime")
+                        if (mime == "application/epub+zip" || mime == "application/pdf") {
+                            videoDirectories.save(call, result, mime)
+                        } else {
+                            result.error("publication_format", "图书格式无效", null)
+                        }
+                    }
                     "cancelVideoSave" -> { videoDirectories.cancel(call.argument<String>("path")); result.success(null) }
                     "isTelevision" -> {
                         val mode = getSystemService(Context.UI_MODE_SERVICE) as UiModeManager
@@ -192,6 +204,7 @@ class MainActivity : FlutterActivity() {
             statusNotifications = null
             statusChannel = null
             videoPicker.close()
+            publicationPicker.close()
             videoDirectories.close()
             musicOverlay.hide()
             protectedBookExport.close()
@@ -205,6 +218,7 @@ class MainActivity : FlutterActivity() {
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         if (videoPicker.onResult(requestCode, resultCode, data)) return
+        if (publicationPicker.onResult(requestCode, resultCode, data)) return
         if (videoDirectories.onResult(requestCode, resultCode, data)) return
         if (protectedBookExport.onResult(requestCode, resultCode, data)) return
         if (requestCode != ActivityRequestCodes.SAVE_FILE) return

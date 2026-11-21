@@ -10,6 +10,11 @@ import 'book_store.dart';
 import 'local_book.dart';
 import 'rich_book.dart';
 
+typedef RemoveLinkedDocument =
+    Future<bool> Function(Book, Future<void> Function(), bool);
+typedef HoldLocalDocument =
+    Future<Future<void> Function()?> Function(Book, File);
+
 /// Owns local document parsing, policy checks and staged persistence.
 /// Reuses the repository's work authorization without accessing source state.
 final class LocalBookLibrary {
@@ -18,12 +23,16 @@ final class LocalBookLibrary {
     required this.documents,
     required this.policy,
     required this._bookAllowed,
+    this.removeLinkedDocument,
+    this.holdDocument,
   });
 
   final BookStore store;
   final Directory documents;
   final ContentPolicy policy;
   final bool Function(Book) _bookAllowed;
+  final RemoveLinkedDocument? removeLinkedDocument;
+  final HoldLocalDocument? holdDocument;
 
   File documentFile(Book book, String extension) =>
       File(p.join(documents.path, '${book.id}.$extension'));
@@ -141,11 +150,23 @@ final class LocalBookLibrary {
     }
   }
 
-  Future<void> removeLocalBook(Book book) => store.db.atomic(() async {
-    await store.removeLocal(book);
-    for (final extension in ['epub', 'pdf']) {
-      final file = documentFile(book, extension);
-      if (await file.exists()) await file.delete();
+  Future<void> removeLocalBook(
+    Book book, {
+    Future<void> Function()? removeRecord,
+    bool clearOffline = true,
+  }) async {
+    final remove =
+        removeRecord ?? () => store.deleteBook(book, clearOffline: true);
+    if (await removeLinkedDocument?.call(book, remove, clearOffline) == true) {
+      return;
     }
-  }, tables: {'app_meta'});
+    await store.db.atomic(() async {
+      await remove();
+      if (!clearOffline) return;
+      for (final extension in ['epub', 'pdf']) {
+        final file = documentFile(book, extension);
+        if (await file.exists()) await file.delete();
+      }
+    }, tables: {'app_meta'});
+  }
 }

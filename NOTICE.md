@@ -69,3 +69,10 @@ assets/brand/logo.jpg was supplied by the project owner. Platform icons and the 
 ## EPUB and PDF readers
 
 PDF rendering uses pdfrx 2.2.24 and PDFium chromium/7520 from bblanchon/pdfium-binaries. PDFium and bundled third-party notices are included in assets/licenses/pdfium.txt. Fixed archive and binary SHA-256 values are in tool/pdfium_checksums.json. HTML rendering uses flutter_widget_from_html_core under its upstream license.
+
+## Publication sources
+
+- The publications module links to the simplified Chinese edition of *The Rust Programming Language*, pinned to revision `2a9740644f678cafbc48786d00b67927fc0e1b3c`. The translation repository carries the MIT license and credits the Rust Chinese community. [Translation and license](https://github.com/KaiserY/trpl-zh-cn/tree/2a9740644f678cafbc48786d00b67927fc0e1b3c)
+- The Chinese *Pro Git* entry links to the publisher's 2.1.79 EPUB and PDF under CC BY-NC-SA 3.0. [Release](https://github.com/progit/progit2-zh/releases/tag/2.1.79) · [Book license](https://git-scm.com/book/zh/v2)
+- Open Textbook Library supplies catalog metadata. The individual editions retain their own license terms. Selected publisher URLs are stored as references and the application fetches the files on request. [Library API](https://open.umn.edu/opentextbooks/api-docs/index.html) · [Think Python publisher](https://greenteapress.com/wp/think-python-2e/) · [Making Games publisher](https://inventwithpython.com/pygame/)
+- Quark, UC and Lanzou sharing adapters are Dart implementations based on observed public request and response behavior. Reference material was the YunX network source at `cc9afe24c9409b239c361263b976f7aad77d1d9e` and the LinkSwift project at `3ebdd12c526d572334cbe1c6e8eb6943d2a7db9b`. The installation contains the application's Dart code and bibliographic references. [YunX](https://github.com/CYQawa/YunX/tree/cc9afe24c9409b239c361263b976f7aad77d1d9e) · [LinkSwift](https://github.com/hmjz100/LinkSwift/tree/3ebdd12c526d572334cbe1c6e8eb6943d2a7db9b)

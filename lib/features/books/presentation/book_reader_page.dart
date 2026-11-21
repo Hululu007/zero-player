@@ -1,6 +1,8 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:math' as math;
 
+import 'package:crypto/crypto.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
@@ -13,11 +15,14 @@ import '../../../core/platform/foreground_workload.dart';
 import '../application/reader_preloader.dart';
 import 'reader_cleanup_sheet.dart';
 import '../data/books_repository.dart';
+import '../data/reading_marks_store.dart';
 import '../data/book_chapter_policy.dart';
 import '../../supervision/domain/supervision_rules.dart';
 import 'book_text_policy_dialog.dart';
 import '../data/book_mixed_content.dart';
 import '../domain/book.dart';
+import '../domain/reading_mark.dart';
+import 'reading_mark_tools.dart';
 import 'reader_pagination.dart';
 import 'reader_automation.dart';
 import 'reader_style.dart';
@@ -26,6 +31,7 @@ import 'reader_safe_area.dart';
 import 'book_image_chapter.dart';
 
 part 'reader_tools.dart';
+part 'text_reader_marks.dart';
 part 'reader_session.dart';
 
 final class BookReaderPage extends StatefulWidget {
@@ -79,6 +85,13 @@ final class _BookReaderPageState extends State<BookReaderPage>
   ReaderProgress? _retryPosition;
   TextRange? _highlight;
   String _sourceStatus = '', _selection = '', _text = '';
+  List<ReadingMark> _textMarks = const [];
+  String? _markDigest;
+  late final _textMarkStore = ReadingMarksStore(
+    _books.store,
+    widget.book,
+    _marksAllowed,
+  );
   List<Uri> _images = const [];
   List<BookChapterSegment>? _mixedSegments;
   Book? _imageBook;
@@ -89,6 +102,9 @@ final class _BookReaderPageState extends State<BookReaderPage>
   String? _error;
   ChapterContentBlocked? _blockedChapter;
   double? _seeking;
+
+  void _setReadingMarks(List<ReadingMark> marks) =>
+      setState(() => _textMarks = marks);
 
   BooksRepository get _books => widget.repository;
   int get _index => _chapters.indexOf(_chapter);
@@ -226,6 +242,7 @@ final class _BookReaderPageState extends State<BookReaderPage>
       _error = null;
       _blockedChapter = null;
       _text = _selection = _sourceStatus = '';
+      _markDigest = null;
       _images = const [];
       _mixedSegments = null;
       _imageBook = null;
@@ -353,6 +370,8 @@ final class _BookReaderPageState extends State<BookReaderPage>
         _imageSourceChapter = result.sourceChapter;
       } else if (images.isEmpty) {
         _text = _chapterText(chapter.title, body);
+        _markDigest = _textVersion(chapter, _text);
+        unawaited(_reloadTextMarks());
       } else {
         _images = images;
         _imageBook = result.sourceBook;
@@ -922,6 +941,11 @@ final class _BookReaderPageState extends State<BookReaderPage>
           onBoundary: _cross,
           onSelection: (selection) => _selection = selection,
           onAnnotate: _addAnnotation,
+          onMark: _editTextMark,
+          marks: [
+            for (final mark in _textMarks)
+              if (mark.digest == _markDigest && mark.matches(_text)) mark,
+          ],
           onCleanup: _cleanupSelection,
         ),
       ),
@@ -971,6 +995,12 @@ final class _BookReaderPageState extends State<BookReaderPage>
                 color: palette.ink,
                 icon: const Icon(Icons.format_size),
                 onPressed: _quickStyle,
+              ),
+              IconButton(
+                tooltip: '标注与关联书签',
+                color: palette.ink,
+                icon: const Icon(Icons.border_color_outlined),
+                onPressed: _text.isEmpty ? null : _openTextMarks,
               ),
               IconButton(
                 tooltip: '书签与笔记',

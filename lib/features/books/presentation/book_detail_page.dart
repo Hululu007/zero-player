@@ -433,6 +433,7 @@ final class _BookDetailPageState extends State<_BookDetailContent> {
     if (_openingReader) return;
     _openingReader = true;
     final book = _book;
+    Future<void> Function()? releaseDocument;
     try {
       _requirePageBook(book, chapter);
       if (_following) await _books.store.saveBook(book, clearUpdates: true);
@@ -445,6 +446,10 @@ final class _BookDetailPageState extends State<_BookDetailContent> {
         for (final extension in ['epub', 'pdf']) {
           final file = _books.documentFile(book, extension);
           if (await file.exists()) {
+            releaseDocument = await _books.localBooks.holdDocument?.call(
+              book,
+              file,
+            );
             reader = RichReaderPage(
               repository: _books,
               book: book,
@@ -501,6 +506,7 @@ final class _BookDetailPageState extends State<_BookDetailContent> {
       _toast('无法打开电子书，请重试');
     } finally {
       _openingReader = false;
+      await releaseDocument?.call();
     }
   }
 
@@ -509,7 +515,7 @@ final class _BookDetailPageState extends State<_BookDetailContent> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('移除本地电子书'),
-        content: const Text('应用内副本、阅读进度及本书的书签笔记将被删除。'),
+        content: const Text('删除旧书库的记录和阅读数据。图书库仍在使用的副本及阅读数据会保留。'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),

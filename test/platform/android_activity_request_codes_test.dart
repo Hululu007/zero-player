@@ -19,6 +19,7 @@ void main() {
       'VIDEO_DIRECTORY',
       'VIDEO_FILE',
       'PROTECTED_BOOK_EXPORT',
+      'PUBLICATION_FILE',
     });
     expect(codes.values.toSet().length, codes.length);
     expect(codes['PROTECTED_BOOK_EXPORT'], isNot(codes['VIDEO_FILE']));
@@ -31,6 +32,9 @@ void main() {
       '$folder/VideoDirectoryBridge.kt',
     ).readAsStringSync();
     final books = File('$folder/ProtectedBookExport.kt').readAsStringSync();
+    final publications = File(
+      '$folder/PublicationFilePicker.kt',
+    ).readAsStringSync();
     expect(main, contains('ActivityRequestCodes.validate()'));
     expect(
       main,
@@ -43,6 +47,7 @@ void main() {
       (video, 'VIDEO_FILE'),
       (directory, 'VIDEO_DIRECTORY'),
       (books, 'PROTECTED_BOOK_EXPORT'),
+      (publications, 'PUBLICATION_FILE'),
     ]) {
       expect(pair.$1, contains('ActivityRequestCodes.${pair.$2})'));
       expect(

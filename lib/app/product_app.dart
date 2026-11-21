@@ -18,6 +18,7 @@ import '../features/radio/presentation/radio_page.dart';
 import '../features/music/presentation/music_page.dart';
 import '../features/books/domain/book.dart';
 import '../features/books/presentation/books_page.dart';
+import '../features/publications/presentation/publications_page.dart';
 import '../features/playback/application/playback_controller.dart';
 import '../features/playback/presentation/player_page.dart';
 import '../features/search/presentation/search_page.dart';
@@ -31,6 +32,7 @@ import 'list_keyboard_navigation.dart';
 import 'app_back_dispatcher.dart';
 import 'app_layout.dart';
 import 'media_library_hub.dart';
+import 'reading_navigation.dart';
 
 final class ProductApp extends ConsumerStatefulWidget {
   const ProductApp({super.key});
@@ -191,6 +193,7 @@ final class _ProductAppState extends ConsumerState<ProductApp>
             _bookRoute('/reading', BookKind.text),
             _bookRoute('/audiobooks', BookKind.audio),
             _bookRoute('/comics', BookKind.comic),
+            _publicationRoute(),
             GoRoute(
               path: '/calendar',
               builder: (_, _) => ReleaseCalendarPage(services: services),
@@ -227,6 +230,20 @@ final class _ProductAppState extends ConsumerState<ProductApp>
       ),
       ..._standaloneRoutes(),
     ],
+  );
+
+  GoRoute _publicationRoute() => GoRoute(
+    path: publicationReadingPath,
+    redirect: (_, _) => services.platform.television ? '/reading' : null,
+    builder: (_, _) => ListenableBuilder(
+      listenable: router.routerDelegate,
+      builder: (_, _) => PublicationsPage(
+        module: services.publications,
+        books: services.books,
+        platform: services.platform,
+        visible: router.routerDelegate.state.uri.path == publicationReadingPath,
+      ),
+    ),
   );
 
   List<RouteBase> _standaloneRoutes() => [

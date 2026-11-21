@@ -14,7 +14,11 @@ import java.util.concurrent.atomic.AtomicBoolean
 
 /** Two-phase SAF export. Only a URI returned by this create-document request is touched. */
 class ProtectedBookExport(private val activity: MainActivity) {
-    private class Request(val id: String, var picker: MethodChannel.Result?) {
+    private class Request(
+        val id: String,
+        var picker: MethodChannel.Result?,
+        val publicationFile: File?,
+    ) {
         val cancelled = AtomicBoolean(false)
         @Volatile var output: OutputStream? = null
         @Volatile var worker: Thread? = null
@@ -25,6 +29,7 @@ class ProtectedBookExport(private val activity: MainActivity) {
     }
 
     private var current: Request? = null
+    private val publicationIdPattern = Regex("[a-f0-9]{64}")
 
     fun choose(call: MethodCall, result: MethodChannel.Result) {
         val id = call.argument<String>("id")
@@ -32,12 +37,15 @@ class ProtectedBookExport(private val activity: MainActivity) {
             result.error("protected_busy", "Unable to open another export", null)
             return
         }
-        val request = Request(id, result)
-        current = request
         try {
+            val mime = call.argument<String>("mime") ?: "application/octet-stream"
+            val publication = call.argument<String>("publicationId")?.let { sourceId ->
+                publicationFile(sourceId, mime, call.argument<Boolean>("publicationLegacy") == true)
+            }
+            current = Request(id, result, publication)
             val intent = Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
                 addCategory(Intent.CATEGORY_OPENABLE)
-                type = call.argument<String>("mime") ?: "application/octet-stream"
+                type = mime
                 putExtra(Intent.EXTRA_TITLE, call.argument<String>("name"))
             }
             activity.startActivityForResult(intent, ActivityRequestCodes.PROTECTED_BOOK_EXPORT)
@@ -45,6 +53,17 @@ class ProtectedBookExport(private val activity: MainActivity) {
             current = null
             result.error("protected_picker_failed", "Unable to open the file picker", null)
         }
+    }
+
+    private fun publicationFile(id: String, mime: String, legacy: Boolean): File {
+        require(publicationIdPattern.matches(id))
+        val extension = when (mime) {
+            "application/pdf" -> "pdf"
+            "application/epub+zip" -> "epub"
+            else -> throw IllegalArgumentException("Unsupported publication MIME type")
+        }
+        val directory = if (legacy) "book_documents" else "publications/files"
+        return File(activity.filesDir.canonicalFile, "$directory/$id.$extension")
     }
 
     fun onResult(requestCode: Int, resultCode: Int, intent: Intent?): Boolean {
@@ -82,13 +101,19 @@ class ProtectedBookExport(private val activity: MainActivity) {
             result.error("protected_cancelled", "Export is no longer available", null)
             return
         }
-        val file = File(path)
-        try {
-            val cache = activity.cacheDir.canonicalFile.path + File.separator
-            if (!file.isFile || !file.canonicalPath.startsWith(cache)) {
-                result.error("protected_invalid_file", "Export file is not in the application cache", null)
+        val file = try {
+            val source = File(path).canonicalFile
+            val allowed = if (request.publicationFile != null) {
+                source == request.publicationFile
+            } else {
+                val cache = activity.cacheDir.canonicalFile.path + File.separator
+                source.path.startsWith(cache)
+            }
+            if (!allowed || !source.isFile) {
+                result.error("protected_invalid_file", "Export file is outside the approved location", null)
                 return
             }
+            source
         } catch (_: Exception) {
             result.error("protected_invalid_file", "Unable to inspect the export file", null)
             return

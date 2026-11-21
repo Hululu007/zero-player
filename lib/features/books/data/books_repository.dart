@@ -113,6 +113,8 @@ final class BooksRepository {
     int coverCacheMiB = 32,
     this.allowAggregateCertificateExceptions,
     this.downloadText,
+    RemoveLinkedDocument? removeLinkedLocalDocument,
+    HoldLocalDocument? holdLocalDocument,
   }) : store = BookStore(db),
        riskStore = BookSourceRiskStore(db),
        coverCache = BookCoverCache(
@@ -123,11 +125,13 @@ final class BooksRepository {
          maxConnectionsPerHost: 2,
          allowLegacyQueryEncoding: true,
        ) {
-    _localLibrary = LocalBookLibrary(
+    localBooks = LocalBookLibrary(
       store: store,
       documents: Directory(p.join(root.path, 'book_documents')),
       policy: policy,
       bookAllowed: bookAllowed,
+      removeLinkedDocument: removeLinkedLocalDocument,
+      holdDocument: holdLocalDocument,
     );
     audioFiles = AudiobookFiles(
       Directory(p.join(root.path, 'book_audio')),
@@ -148,12 +152,12 @@ final class BooksRepository {
     _sourceRiskChanges.addListener(_discoveryRiskChanged);
   }
 
-  late final LocalBookLibrary _localLibrary;
-  Directory get documents => _localLibrary.documents;
+  late final LocalBookLibrary localBooks;
+  Directory get documents => localBooks.documents;
   Future<String> localDocumentFormat(Book book) =>
-      _localLibrary.documentFormat(book);
+      localBooks.documentFormat(book);
   File documentFile(Book book, String extension) =>
-      _localLibrary.documentFile(book, extension);
+      localBooks.documentFile(book, extension);
   final BookStore store;
   final BookSourceRiskStore riskStore;
   late final _sourceEditor = BookSourceEditor(
@@ -1471,10 +1475,8 @@ final class BooksRepository {
     sourceHealth: sourceHealth,
   );
 
-  Future<Book> importLocal(File file) => _localLibrary.importLocal(file);
-
-  Future<void> removeLocalBook(Book book) =>
-      _localLibrary.removeLocalBook(book);
+  Future<Book> importLocal(File file) => localBooks.importLocal(file);
+  Future<void> removeLocalBook(Book book) => localBooks.removeLocalBook(book);
 
   Future<void> close() {
     final running = _closing;

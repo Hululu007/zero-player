@@ -6,6 +6,10 @@ import 'package:media_kit/media_kit.dart';
 import 'app/application_bootstrap.dart';
 import 'app/local_open_startup.dart';
 import 'core/diagnostics/local_error_log.dart';
+import 'features/publications/application/publication_android_worker.dart';
+
+@pragma('vm:entry-point')
+Future<void> publicationBackgroundMain() => runPublicationAndroidWorker();
 
 Future<void> main(List<String> args) async {
   if (args.isNotEmpty) LocalOpenStartup.path = args.first;

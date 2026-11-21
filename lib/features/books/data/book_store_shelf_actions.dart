@@ -316,6 +316,7 @@ extension BookStoreShelfActions on BookStore {
     final patterns = [
       'books_shelf:$id',
       'books_notes:$id',
+      'books_marks:$id',
       'rich_position_$id',
       'publication_$id',
       'books_detached:$id',

@@ -86,6 +86,18 @@ void _epubParsing() {
       expect(section.html, isNot(contains('evil.test')));
     },
   );
+  test('EPUB recognizes the legacy writing mode on the document root', () {
+    final archive = ZipDecoder().decodeBytes(sampleEpub());
+    archive.addFile(
+      ArchiveFile.string(
+        'OEBPS/style.css',
+        'html { -epub-writing-mode: vertical-rl; }',
+      ),
+    );
+    final section = readRichEpub(ZipEncoder().encode(archive)).single;
+    expect(section.vertical, isTrue);
+    expect(section.html, contains('<ruby>漢<rt>hàn</rt></ruby>'));
+  });
   test('EPUB refuses archive traversal and corrupt containers', () {
     final zip = Archive()..addFile(ArchiveFile.string('../outside', 'bad'));
     expect(() => readRichEpub(ZipEncoder().encode(zip)), throwsFormatException);

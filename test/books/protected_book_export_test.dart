@@ -21,6 +21,46 @@ void main() {
 
   desktopExportTests(() => directory);
   androidExportTests(() => directory);
+
+  test(
+    'publication export binds its file identity when opening the picker',
+    () async {
+      const channel = MethodChannel('test/protected-publication-export');
+      final messenger =
+          TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+      addTearDown(() => messenger.setMockMethodCallHandler(channel, null));
+      final source = File(p.join(directory.path, 'source'))
+        ..writeAsStringSync('book');
+      final id = List.filled(64, 'a').join();
+      final calls = <MethodCall>[];
+      messenger.setMockMethodCallHandler(channel, (call) async {
+        calls.add(call);
+        return switch (call.method) {
+          'chooseProtectedBookExport' || 'finishProtectedBookExport' => true,
+          _ => null,
+        };
+      });
+      await ProtectedBookExport(android: true, channel: channel).saveFile(
+        source,
+        'book.pdf',
+        'application/pdf',
+        cancellation: CancellationToken(),
+        validate: () {},
+        publication: (id: id, legacy: true),
+      );
+      expect(calls.map((call) => call.method), [
+        'chooseProtectedBookExport',
+        'writeProtectedBookExport',
+        'finishProtectedBookExport',
+      ]);
+      final picker = calls.first.arguments as Map;
+      expect(picker['publicationId'], id);
+      expect(picker['publicationLegacy'], isTrue);
+      expect(picker['mime'], 'application/pdf');
+      expect(calls[1].arguments, {'id': picker['id'], 'path': source.path});
+      expect((calls[2].arguments as Map)['commit'], isTrue);
+    },
+  );
 }
 
 void desktopExportTests(Directory Function() root) {

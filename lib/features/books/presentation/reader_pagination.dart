@@ -4,7 +4,9 @@ import 'dart:math' as math;
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 
+import '../domain/reading_mark.dart';
 import 'reader_curl.dart';
+import 'reading_mark_span.dart';
 import 'reader_style.dart';
 
 /// Positions from older builds contain only a fraction of the chapter.
@@ -274,6 +276,8 @@ class ReaderViewport extends StatefulWidget {
     required this.onSelection,
     required this.onAnnotate,
     this.onCleanup,
+    this.onMark,
+    this.marks = const [],
     this.highlight,
     this.align = TextAlign.start,
   });
@@ -295,12 +299,15 @@ class ReaderViewport extends StatefulWidget {
   final ValueChanged<String> onSelection;
   final VoidCallback onAnnotate;
   final VoidCallback? onCleanup;
+  final ValueChanged<ReadingRange>? onMark;
+  final List<ReadingMark> marks;
 
   @override
   State<ReaderViewport> createState() => ReaderViewportState();
 }
 
 class ReaderViewportState extends State<ReaderViewport> {
+  final _markSpans = ReadingMarkSpans();
   final _curl = GlobalKey<ReaderCurlState>();
   final _selectionArea = GlobalKey<SelectionAreaState>();
   PageController? _pager;
@@ -420,7 +427,20 @@ class ReaderViewportState extends State<ReaderViewport> {
   }
 
   @override
+  void initState() {
+    super.initState();
+    _markSpans.marks.value = widget.marks;
+  }
+
+  @override
+  void didUpdateWidget(ReaderViewport oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    _markSpans.marks.value = widget.marks;
+  }
+
+  @override
   void dispose() {
+    _markSpans.dispose();
     _pager?.dispose();
     _scroller?.dispose();
     super.dispose();
@@ -613,7 +633,7 @@ class ReaderViewportState extends State<ReaderViewport> {
     final end = continues
         ? layout.slices[index + 1].visibleEnd
         : page.visibleEnd;
-    return Text.rich(
+    final text = Text.rich(
       layout.span(
         page.start,
         end,
@@ -624,6 +644,9 @@ class ReaderViewportState extends State<ReaderViewport> {
       maxLines: page.lines,
       overflow: TextOverflow.clip,
     );
+    return widget.onMark == null
+        ? text
+        : ReadingMarkSpan(_markSpans, page.start, page.visibleEnd, text);
   }
 
   Widget _pageText(int index, EdgeInsets padding) => Padding(
@@ -635,28 +658,41 @@ class ReaderViewportState extends State<ReaderViewport> {
     key: _selectionArea,
     onSelectionChanged: (selection) =>
         widget.onSelection(selection?.plainText ?? ''),
-    contextMenuBuilder: (context, region) =>
-        AdaptiveTextSelectionToolbar.buttonItems(
-          anchors: region.contextMenuAnchors,
-          buttonItems: [
-            ...region.contextMenuButtonItems,
-            if (widget.onCleanup != null)
-              ContextMenuButtonItem(
-                label: '隐藏或替换',
-                onPressed: () {
-                  widget.onCleanup!();
-                  ContextMenuController.removeAny();
-                },
-              ),
+    contextMenuBuilder: (context, region) {
+      final range = _markSpans.selectedRange();
+      return AdaptiveTextSelectionToolbar.buttonItems(
+        anchors: region.contextMenuAnchors,
+        buttonItems: [
+          ...region.contextMenuButtonItems,
+          if (widget.onMark != null &&
+              range != null &&
+              range.end - range.start <= 1200)
             ContextMenuButtonItem(
-              label: '摘录或写笔记',
+              label: '添加标注',
               onPressed: () {
-                widget.onAnnotate();
+                widget.onMark!(range);
+                region.clearSelection();
+                region.hideToolbar();
+              },
+            ),
+          if (widget.onCleanup != null)
+            ContextMenuButtonItem(
+              label: '隐藏或替换',
+              onPressed: () {
+                widget.onCleanup!();
                 ContextMenuController.removeAny();
               },
             ),
-          ],
-        ),
+          ContextMenuButtonItem(
+            label: '摘录或写笔记',
+            onPressed: () {
+              widget.onAnnotate();
+              ContextMenuController.removeAny();
+            },
+          ),
+        ],
+      );
+    },
     child: child,
   );
 
@@ -788,12 +824,15 @@ class ReaderTapZones extends StatefulWidget {
   const ReaderTapZones({
     super.key,
     required this.horizontal,
+    this.reverse = false,
+    this.tapRevision,
     required this.selectionActive,
     required this.onTurn,
     required this.onMenu,
     required this.child,
   });
-  final bool horizontal;
+  final bool horizontal, reverse;
+  final int Function()? tapRevision;
   final bool Function() selectionActive;
   final ValueChanged<int> onTurn;
   final VoidCallback onMenu;
@@ -839,12 +878,27 @@ class _ReaderTapZonesState extends State<ReaderTapZones> {
         final fraction = widget.horizontal
             ? event.localPosition.dx / constraints.maxWidth
             : event.localPosition.dy / constraints.maxHeight;
-        if (fraction < .28) {
-          widget.onTurn(-1);
-        } else if (fraction > .72) {
-          widget.onTurn(1);
+        void dispatch() {
+          if (fraction < .28) {
+            widget.onTurn(widget.reverse ? 1 : -1);
+          } else if (fraction > .72) {
+            widget.onTurn(widget.reverse ? -1 : 1);
+          } else {
+            widget.onMenu();
+          }
+        }
+
+        final revision = widget.tapRevision?.call();
+        if (revision == null) {
+          dispatch();
         } else {
-          widget.onMenu();
+          scheduleMicrotask(() {
+            if (mounted &&
+                widget.tapRevision?.call() == revision &&
+                !widget.selectionActive()) {
+              dispatch();
+            }
+          });
         }
       },
       child: widget.child,

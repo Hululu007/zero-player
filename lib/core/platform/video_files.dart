@@ -78,14 +78,14 @@ final class VideoFiles {
   static Future<String?> recoverSave(
     String destination,
     String name,
-    String digest,
-  ) async {
+    String digest, {
+    bool publication = false,
+  }) async {
     if (Platform.isAndroid) {
-      return channel.invokeMethod<String>('verifyVideoInDirectory', {
-        'directory': destination,
-        'name': name,
-        'digest': digest,
-      });
+      return channel.invokeMethod<String>(
+        publication ? 'verifyPublicationInDirectory' : 'verifyVideoInDirectory',
+        {'directory': destination, 'name': name, 'digest': digest},
+      );
     }
     final file = File(p.join(destination, name));
     if (!await file.exists()) return null;
@@ -100,14 +100,21 @@ final class VideoFiles {
     String destination,
     String name, {
     CancellationToken? cancellation,
+    String? publicationMime,
   }) async {
     cancellation?.check();
     if (Platform.isAndroid) {
-      final saving = channel.invokeMethod<String>('saveVideoToDirectory', {
-        'path': source.path,
-        'directory': destination,
-        'name': name,
-      });
+      final saving = channel.invokeMethod<String>(
+        publicationMime == null
+            ? 'saveVideoToDirectory'
+            : 'savePublicationToDirectory',
+        {
+          'path': source.path,
+          'directory': destination,
+          'name': name,
+          'mime': ?publicationMime,
+        },
+      );
       final remove = cancellation?.listen(
         () => unawaited(
           channel.invokeMethod<void>('cancelVideoSave', {'path': source.path}),

@@ -56,6 +56,7 @@ import '../features/playback/application/line_probe.dart';
 import '../features/playback/application/local_video.dart';
 import '../features/playback/data/local_video_repository.dart';
 import '../features/books/data/books_repository.dart';
+import '../features/publications/application/publication_module.dart';
 import '../features/books/data/book_download_coordinator.dart';
 import '../media/engine/media_kit_engine.dart';
 import '../features/live/data/live_health_repository.dart';
@@ -178,6 +179,21 @@ final class AppServices {
     coverCacheMiB: settings.value.bookCoverCacheMiB,
     allowAggregateCertificateExceptions: () =>
         settings.value.bookAggregateCertificateExceptions,
+    removeLinkedLocalDocument: (book, remove, clearOffline) =>
+        publications.library.removeLegacyDocument(book, remove, clearOffline),
+    holdLocalDocument: (book, file) =>
+        publications.library.holdLegacyDocument(book, file),
+  );
+  PublicationModule? _publications;
+  PublicationModule get publications => _publications ??= PublicationModule(
+    db,
+    Directory(p.join(root.path, 'publications')),
+    contentPolicy,
+    books.store,
+    books.documents,
+    books.bookAllowed,
+    http,
+    allowLoopback: allowPrivateNetworks,
   );
   BookSiteChecks? _bookSiteChecks;
   BookSiteChecks get bookSiteChecks =>
@@ -564,6 +580,7 @@ final class AppServices {
         () => _audiobookPlayer?.close(),
         () => _bookDownloads?.close(),
         () => _bookSiteMonitor?.close(),
+        () => _publications?.close(),
         () => _books?.close(),
         () async {
           await _musicOpenApi?.close();

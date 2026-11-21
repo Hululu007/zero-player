@@ -12,6 +12,7 @@ class ReaderCurl extends StatefulWidget {
     required this.page,
     required this.canTurn,
     required this.onTurn,
+    this.onBoundary,
     required this.pageBuilder,
   });
 
@@ -21,6 +22,7 @@ class ReaderCurl extends StatefulWidget {
   final int page;
   final bool Function(int direction) canTurn;
   final ValueChanged<int> onTurn;
+  final ValueChanged<int>? onBoundary;
   final Widget Function(int page, bool selectable) pageBuilder;
 
   @override
@@ -56,7 +58,14 @@ class ReaderCurlState extends State<ReaderCurl>
   }
 
   void _release(DragEndDetails event) {
-    if (_direction == 0 || _settling) return;
+    if (_settling) return;
+    if (_direction == 0) {
+      if (_delta.abs() >= 42) {
+        final direction = _delta < 0 ? 1 : -1;
+        if (!widget.canTurn(direction)) widget.onBoundary?.call(direction);
+      }
+      return;
+    }
     final velocity = -(event.primaryVelocity ?? 0) * _direction;
     _settle(velocity > 480 || (_fold.value >= .26 && velocity > -480));
   }

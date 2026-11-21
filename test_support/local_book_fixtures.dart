@@ -1,17 +1,23 @@
 import 'dart:convert';
 import 'package:archive/archive.dart';
 
-List<int> samplePdf() {
+List<int> samplePdf({String? secondPageText}) {
   const text = 'BT /F1 24 Tf 50 700 Td (Hello Technical Book) Tj ET';
+  final secondPageContent = secondPageText == null
+      ? null
+      : 'BT /F1 24 Tf 50 700 Td ($secondPageText) Tj ET';
+  final secondPageObject = secondPageContent == null ? 6 : 9;
   final objects = [
     '<< /Type /Catalog /Pages 2 0 R /Outlines 7 0 R >>',
     '<< /Type /Pages /Kids [3 0 R 4 0 R] /Count 2 >>',
     '<< /Type /Page /Parent 2 0 R /MediaBox [0 0 600 800] /Resources << /Font << /F1 5 0 R >> >> /Contents 6 0 R >>',
-    '<< /Type /Page /Parent 2 0 R /MediaBox [0 0 600 800] /Resources << /Font << /F1 5 0 R >> >> /Contents 6 0 R >>',
+    '<< /Type /Page /Parent 2 0 R /MediaBox [0 0 600 800] /Resources << /Font << /F1 5 0 R >> >> /Contents $secondPageObject 0 R >>',
     '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>',
     '<< /Length ${text.length} >>\nstream\n$text\nendstream',
     '<< /Type /Outlines /First 8 0 R /Last 8 0 R /Count 1 >>',
     '<< /Title (Second chapter) /Parent 7 0 R /Dest [4 0 R /Fit] >>',
+    if (secondPageContent != null)
+      '<< /Length ${secondPageContent.length} >>\nstream\n$secondPageContent\nendstream',
   ];
   final buffer = StringBuffer('%PDF-1.4\n');
   final offsets = <int>[0];

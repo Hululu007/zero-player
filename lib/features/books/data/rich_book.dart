@@ -40,8 +40,11 @@ Future<LocalBook> parsePdfBook(String filename, Uint8List bytes) async {
 
 typedef RichSection = ({String title, String html, String text, bool vertical});
 
-Future<List<RichSection>> readRichEpubOffThread(List<int> bytes) =>
-    Isolate.run(() => readRichEpub(bytes));
+Future<List<RichSection>> readRichEpubOffThread(
+  List<int> bytes, {
+  bool internalLinks = false,
+}) =>
+    Isolate.run(() => _readEpub(bytes, internalLinks: internalLinks).sections);
 
 Future<LocalBook> parseEpubBookOffThread(String filename, List<int> bytes) =>
     Isolate.run(() {
@@ -77,8 +80,9 @@ bool _unsafeEpubPath(String path) =>
 
 /// No extraction to disk or external resource loading. Bound decoded resources.
 ({String title, String author, List<RichSection> sections}) _readEpub(
-  List<int> bytes,
-) {
+  List<int> bytes, {
+  bool internalLinks = false,
+}) {
   final directory = ZipDirectory()..read(InputMemoryStream(bytes));
   if (directory.fileHeaders.length > 4000) {
     throw const FormatException('EPUB 条目过多');
@@ -153,7 +157,13 @@ bool _unsafeEpubPath(String path) =>
   if (opf == null) throw const FormatException('EPUB 缺少书籍清单');
   final path = resolve('', opf);
   final package = xml(path);
-  return _readEpubSpine(package, p.posix.dirname(path), read, resolve);
+  return _readEpubSpine(
+    package,
+    p.posix.dirname(path),
+    read,
+    resolve,
+    internalLinks,
+  );
 }
 
 ({String title, String author, List<RichSection> sections}) _readEpubSpine(
@@ -161,6 +171,7 @@ bool _unsafeEpubPath(String path) =>
   String folder,
   List<int> Function(String) read,
   String Function(String, String) resolve,
+  bool internalLinks,
 ) {
   XmlElement? child(String name) =>
       package.childElements.where((e) => e.name.local == name).firstOrNull;
@@ -182,14 +193,22 @@ bool _unsafeEpubPath(String path) =>
   };
   final items = spine.childElements.where((e) => e.name.local == 'itemref');
   if (items.length > 4000) throw const FormatException('EPUB 正文章节过多');
-  final loaded = <String, RichSection>{};
-  final sections = <RichSection>[];
-  for (final item in items) {
-    final href = manifest[item.getAttribute('idref')];
-    if (href == null) continue;
-    final path = resolve(folder, href);
-    sections.add(loaded.putIfAbsent(path, () => _section(path, read, resolve)));
+  final paths = [
+    for (final item in items)
+      if (manifest[item.getAttribute('idref')] case final String href)
+        resolve(folder, href),
+  ];
+  final index = <String, int>{};
+  if (internalLinks) {
+    for (final (section, path) in paths.indexed) {
+      index.putIfAbsent(path, () => section);
+    }
   }
+  final loaded = <String, RichSection>{};
+  final sections = [
+    for (final path in paths)
+      loaded.putIfAbsent(path, () => _section(path, read, resolve, index)),
+  ];
   if (sections.isEmpty) throw const FormatException('EPUB 阅读顺序为空');
   return (title: label('title'), author: label('creator'), sections: sections);
 }
@@ -198,6 +217,7 @@ RichSection _section(
   String path,
   List<int> Function(String) read,
   String Function(String, String) resolve,
+  Map<String, int> index,
 ) {
   final source = utf8.decode(read(path), allowMalformed: true);
   final doc = html.parse(source);
@@ -224,7 +244,7 @@ RichSection _section(
   )) {
     node.remove();
   }
-  _inlineResources(doc, path, read, resolve);
+  _inlineResources(doc, path, read, resolve, index);
   final body = doc.body!;
   final heading = bookLabel(body.querySelector('h1,h2,h3')?.text);
   final title = bookLabel(doc.querySelector('title')?.text);
@@ -295,13 +315,21 @@ void _inlineResources(
   String path,
   List<int> Function(String) read,
   String Function(String, String) resolve,
+  Map<String, int> index,
 ) {
   for (final element in doc.querySelectorAll('*')) {
+    final link = index.isEmpty || element.localName != 'a'
+        ? null
+        : element.attributes['href'];
     element.attributes.removeWhere(
       (key, _) =>
           key.toString().startsWith('on') ||
           const ['srcset', 'background', 'href'].contains(key),
     );
+    if (link != null) {
+      final target = _safeEpubLink(link, path, index, resolve);
+      if (target != null) element.attributes['href'] = target;
+    }
     if (element.localName == 'img') {
       final src = element.attributes.remove('src');
       if (src == null) continue;
@@ -328,6 +356,32 @@ void _inlineResources(
         // Missing, invalid or remote artwork stays a placeholder.
       }
     }
+  }
+}
+
+String? _safeEpubLink(
+  String link,
+  String path,
+  Map<String, int> index,
+  String Function(String, String) resolve,
+) {
+  if (link.length > 2048) return null;
+  try {
+    final uri = Uri.parse(link);
+    if (uri.hasScheme || uri.hasAuthority || uri.hasQuery) return null;
+    final target = uri.path.isEmpty
+        ? path
+        : resolve(p.posix.dirname(path), uri.path);
+    final destination = index[target];
+    if (destination == null) return null;
+    if (target == path && uri.hasFragment) return '#${uri.fragment}';
+    return Uri(
+      scheme: 'epub-section',
+      path: '$destination',
+      fragment: uri.hasFragment ? uri.fragment : null,
+    ).toString();
+  } on FormatException {
+    return null;
   }
 }
 

@@ -820,6 +820,7 @@ final class BookStore {
     required int index,
     required bool horizontal,
     required int verticalPage,
+    int? sourceOffset,
     required double offset,
     required double fraction,
   }) async {
@@ -833,6 +834,7 @@ final class BookStore {
           'index': index,
           'horizontal': horizontal,
           'verticalPage': verticalPage,
+          'sourceOffset': ?sourceOffset,
           'offset': offset,
         };
         if (private) {

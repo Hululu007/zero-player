@@ -8,7 +8,9 @@
 
 ## v0.8.0
 
-源码版本 **0.8.0+80**。整合性能优化、书架移除与私密书架、阅读下载与续播修复、书源新域和 GitHub 影视渠道更新，并修复 12 项审计问题。专业图书独立模块仍处于规划阶段。详见[发行说明](https://github.com/yixunfei/zero-player/releases/tag/v0.8.0)。
+源码版本 **0.8.0+80**。整合性能优化、书架移除与私密书架、阅读下载与续播修复、书源新域和 GitHub 影视渠道更新，并修复 12 项审计问题。已发布版本的内容见[发行说明](https://github.com/yixunfei/zero-player/releases/tag/v0.8.0)。
+
+当前工作区的「图书」模块已进入本机验收。支持按书名、作者或 ISBN 查找专业图书，解析公开分享，以及导入 EPUB、PDF 或 ZIP 后离线阅读。使用入口和验收记录见本机 `docs/implementation/USER-GUIDE.md` 与 `docs/implementation/STATUS.md`。
 
 Android 开发测试版使用独立包名 `dev.zeroplayer.zero_player.devtest` 和已有测试签名，可与正式版并存；Android 最新正式版仍为 v0.0.7。Windows 安装器未做商业代码签名。Android/TV 真机、长期播放及后台生命周期仍待验收，来源可用性以实际网络为准。
 

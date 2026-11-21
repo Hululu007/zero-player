@@ -366,9 +366,9 @@ class _BookShelfViewState extends State<BookShelfView> {
   Future<void> _removeFromShelf(Book book, {bool clearOffline = false}) async {
     try {
       await _stopDownload(book);
-      if (clearOffline) await _removeOfflineFiles(book);
-      await widget.repository.store.removeFromShelf(
+      await _removeRecord(
         book,
+        widget.repository.store.removeFromShelf,
         clearOffline: clearOffline,
       );
       await _store.removeBook(book.id);
@@ -387,16 +387,22 @@ class _BookShelfViewState extends State<BookShelfView> {
   Future<void> _deleteBook(Book book, {bool clearOffline = true}) async {
     try {
       await _stopDownload(book);
-      if (clearOffline) await _removeOfflineFiles(book);
-      await widget.repository.store.deleteBook(
+      await _removeRecord(
         book,
+        widget.repository.store.deleteBook,
         clearOffline: clearOffline,
       );
       await _store.removeBook(book.id);
       await _reload();
       if (mounted) {
         widget.onFollowChanged();
-        _toast(clearOffline ? '已删除作品与离线内容' : '已删除作品，离线内容已保留');
+        _toast(
+          book.sourceId == 'local' && clearOffline
+              ? '已从旧书库删除作品'
+              : clearOffline
+              ? '已删除作品与离线内容'
+              : '已删除作品，离线内容已保留',
+        );
       }
     } on FormatException catch (error) {
       if (mounted) _toast(error.message);
@@ -409,18 +415,28 @@ class _BookShelfViewState extends State<BookShelfView> {
     if (widget.cancelDownload case final cancel?) await cancel(book);
   }
 
+  Future<void> _removeRecord(
+    Book book,
+    Future<void> Function(Book, {required bool clearOffline}) remove, {
+    required bool clearOffline,
+  }) async {
+    if (book.sourceId == 'local') {
+      await widget.repository.localBooks.removeLocalBook(
+        book,
+        removeRecord: () => remove(book, clearOffline: clearOffline),
+        clearOffline: clearOffline,
+      );
+    } else {
+      if (clearOffline) await _removeOfflineFiles(book);
+      await remove(book, clearOffline: clearOffline);
+    }
+  }
+
   Future<void> _removeOfflineFiles(Book book) async {
     if (book.kind == BookKind.audio) {
       await widget.repository.removeSavedAudio(book);
     } else {
       await widget.repository.store.clearOffline(book);
-    }
-    if (book.sourceId == 'local') {
-      // Delete document files without removing metadata before the main action.
-      for (final extension in ['epub', 'pdf']) {
-        final file = widget.repository.documentFile(book, extension);
-        if (await file.exists()) await file.delete();
-      }
     }
     await widget.repository.store.clearReadingCache(book);
   }

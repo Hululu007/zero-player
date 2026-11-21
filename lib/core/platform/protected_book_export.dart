@@ -146,10 +146,11 @@ final class ProtectedBookExport {
     String mime, {
     required CancellationToken cancellation,
     required void Function() validate,
+    ({String id, bool legacy})? publication,
   }) async {
     _check(cancellation, validate);
     if (_android) {
-      await _saveAndroid(file, name, mime, cancellation, validate);
+      await _saveAndroid(file, name, mime, cancellation, validate, publication);
     } else {
       if (!Platform.isWindows) {
         throw UnsupportedError('受保护的导出仅支持 Windows 和 Android');
@@ -220,6 +221,7 @@ final class ProtectedBookExport {
     String mime,
     CancellationToken token,
     void Function() validate,
+    ({String id, bool legacy})? publication,
   ) async {
     final id = '${DateTime.now().microsecondsSinceEpoch}-${_serial++}';
     Future<void>? cancellation;
@@ -241,7 +243,15 @@ final class ProtectedBookExport {
       try {
         selected = await _channel.invokeMethod<bool>(
           'chooseProtectedBookExport',
-          {'id': id, 'name': name, 'mime': mime},
+          {
+            'id': id,
+            'name': name,
+            'mime': mime,
+            if (publication != null) ...{
+              'publicationId': publication.id,
+              'publicationLegacy': publication.legacy,
+            },
+          },
         );
       } on PlatformException catch (error) {
         if (error.code == 'protected_busy' ||

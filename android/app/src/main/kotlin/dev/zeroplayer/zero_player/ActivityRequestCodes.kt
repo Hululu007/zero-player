@@ -6,9 +6,10 @@ internal object ActivityRequestCodes {
     const val VIDEO_DIRECTORY = 7202
     const val VIDEO_FILE = 7203
     const val PROTECTED_BOOK_EXPORT = 7204
+    const val PUBLICATION_FILE = 7205
 
     fun validate() {
-        val codes = listOf(SAVE_FILE, VIDEO_DIRECTORY, VIDEO_FILE, PROTECTED_BOOK_EXPORT)
+        val codes = listOf(SAVE_FILE, VIDEO_DIRECTORY, VIDEO_FILE, PROTECTED_BOOK_EXPORT, PUBLICATION_FILE)
         check(codes.toSet().size == codes.size) { "Activity request codes must be distinct" }
     }
 }

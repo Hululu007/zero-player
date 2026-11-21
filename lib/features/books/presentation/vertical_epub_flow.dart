@@ -3,13 +3,22 @@ import 'package:flutter/material.dart';
 import 'package:html/dom.dart' as dom;
 import 'package:html/parser.dart' as html;
 import '../data/epub_styles.dart';
+import 'epub_source.dart';
 
 /// A glyph, paragraph boundary, or an intact illustration/technical block.
 class VerticalItem {
-  const VerticalItem(this.text, this.style, {this.ruby = '', this.html});
+  const VerticalItem(
+    this.text,
+    this.style, {
+    this.ruby = '',
+    this.html,
+    this.offset = 0,
+    this.url,
+  });
   final String text, ruby;
   final TextStyle style;
-  final String? html;
+  final String? html, url;
+  final int offset;
   double get extent => (style.fontSize ?? 21) * 1.25;
 }
 
@@ -21,11 +30,18 @@ List<VerticalItem> verticalEpubItems(String source, TextStyle base) {
     }
   }
 
-  void visit(dom.Node node, TextStyle inherited) {
+  void visit(dom.Node node, TextStyle inherited, String? url) {
     if (node is dom.Text) {
+      final previous = items.lastOrNull;
+      var offset = epubElementStart(node.parent) ?? 0;
+      if (node.text.trim().isEmpty && previous != null) {
+        offset = math.max(offset, previous.offset + previous.text.length);
+      }
       for (final char in node.text.replaceAll(RegExp(r'\s+'), ' ').characters) {
+        final start = offset;
+        offset += char.length;
         if (char == ' ' && (items.isEmpty || items.last.text == '\n')) continue;
-        items.add(VerticalItem(char, inherited));
+        items.add(VerticalItem(char, inherited, offset: start, url: url));
       }
       return;
     }
@@ -33,32 +49,46 @@ List<VerticalItem> verticalEpubItems(String source, TextStyle base) {
     final tag = node.localName;
     if (['rt', 'rp', 'script', 'style'].contains(tag)) return;
     final style = _elementStyle(node, inherited);
+    final target = tag == 'a' ? node.attributes['href'] : url;
     if (['img', 'figure', 'pre', 'table'].contains(tag)) {
       boundary();
-      items.add(VerticalItem('', style, html: node.outerHtml));
+      items.add(
+        VerticalItem(
+          '',
+          style,
+          html: node.outerHtml,
+          offset: epubElementStart(node) ?? 0,
+        ),
+      );
       return;
     }
     if (tag == 'ruby') {
-      _rubyItems(node, style, items);
+      _rubyItems(node, style, items, target);
       return;
     }
     final block = ['p', 'div', 'section', 'h1', 'h2', 'h3', 'li', 'blockquote'];
     if (block.contains(tag) || tag == 'br') boundary();
     for (final child in node.nodes) {
-      visit(child, style);
+      visit(child, style, target);
     }
     if (block.contains(tag)) boundary();
   }
 
   for (final node in html.parseFragment(source).nodes) {
-    visit(node, base);
+    visit(node, base, null);
   }
   return items;
 }
 
-void _rubyItems(dom.Element node, TextStyle style, List<VerticalItem> items) {
+void _rubyItems(
+  dom.Element node,
+  TextStyle style,
+  List<VerticalItem> items,
+  String? url,
+) {
   // Each rt annotates the preceding base group, including EPUB rb/rt pairs.
   var pending = StringBuffer();
+  var offset = epubElementStart(node) ?? 0;
   void flush(String annotation) {
     final bases = pending.toString().characters.toList();
     final notes = annotation.characters.toList();
@@ -66,8 +96,15 @@ void _rubyItems(dom.Element node, TextStyle style, List<VerticalItem> items) {
       final start = (i * notes.length / bases.length).floor();
       final end = ((i + 1) * notes.length / bases.length).floor();
       items.add(
-        VerticalItem(bases[i], style, ruby: notes.sublist(start, end).join()),
+        VerticalItem(
+          bases[i],
+          style,
+          ruby: notes.sublist(start, end).join(),
+          offset: offset,
+          url: url,
+        ),
       );
+      offset += bases[i].length;
     }
     pending = StringBuffer();
   }
@@ -77,6 +114,9 @@ void _rubyItems(dom.Element node, TextStyle style, List<VerticalItem> items) {
     if (child is dom.Element && child.localName == 'rt') {
       flush(child.text);
     } else {
+      if (pending.isEmpty && child is dom.Element) {
+        offset = epubElementStart(child) ?? offset;
+      }
       pending.write(child.text);
     }
   }
@@ -113,7 +153,11 @@ TextStyle _elementStyle(dom.Element node, TextStyle base) {
 }
 
 typedef VerticalColumn = ({List<VerticalItem> items, double width});
-typedef VerticalPage = ({List<VerticalColumn> columns, String? html});
+typedef VerticalPage = ({
+  List<VerticalColumn> columns,
+  String? html,
+  int offset,
+});
 
 List<VerticalPage> paginateVertical(List<VerticalItem> items, Size size) {
   final pages = <VerticalPage>[];
@@ -122,7 +166,11 @@ List<VerticalPage> paginateVertical(List<VerticalItem> items, Size size) {
   double usedWidth = 0, usedHeight = 0, width = 0;
   void flushPage() {
     if (columns.isEmpty) return;
-    pages.add((columns: columns, html: null));
+    pages.add((
+      columns: columns,
+      html: null,
+      offset: columns.first.items.first.offset,
+    ));
     columns = [];
     usedWidth = 0;
   }
@@ -141,7 +189,7 @@ List<VerticalPage> paginateVertical(List<VerticalItem> items, Size size) {
     if (item.html != null) {
       flushColumn();
       flushPage();
-      pages.add((columns: [], html: item.html));
+      pages.add((columns: [], html: item.html, offset: item.offset));
     } else if (item.text == '\n') {
       flushColumn();
     } else {
@@ -153,5 +201,5 @@ List<VerticalPage> paginateVertical(List<VerticalItem> items, Size size) {
   }
   flushColumn();
   flushPage();
-  return pages.isEmpty ? [(columns: [], html: null)] : pages;
+  return pages.isEmpty ? [(columns: [], html: null, offset: 0)] : pages;
 }

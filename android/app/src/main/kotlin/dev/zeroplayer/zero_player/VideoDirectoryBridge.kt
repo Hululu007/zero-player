@@ -1,9 +1,12 @@
 package dev.zeroplayer.zero_player
 
 import android.app.Activity
+import android.content.ContentResolver
 import android.content.Intent
 import android.net.Uri
 import android.provider.DocumentsContract
+import android.system.ErrnoException
+import android.system.OsConstants
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import java.io.File
@@ -52,19 +55,20 @@ class VideoDirectoryBridge(private val activity: Activity) {
         return true
     }
 
-    fun verify(call: MethodCall, result: MethodChannel.Result) {
+    fun verify(call: MethodCall, result: MethodChannel.Result, publication: Boolean = false) {
         Thread {
             try {
                 val tree = Uri.parse(requireNotNull(call.argument<String>("directory")))
                 val name = requireNotNull(call.argument<String>("name"))
                 val expected = requireNotNull(call.argument<String>("digest"))
                 val resolver = activity.contentResolver
+                if (publication) requireDirectoryGrant(resolver, tree)
                 val children = DocumentsContract.buildChildDocumentsUriUsingTree(tree, DocumentsContract.getTreeDocumentId(tree))
                 var found: String? = null
                 requireNotNull(resolver.query(children, arrayOf(DocumentsContract.Document.COLUMN_DOCUMENT_ID, DocumentsContract.Document.COLUMN_DISPLAY_NAME), null, null, null)).use { cursor ->
                     while (cursor.moveToNext()) {
                         if (cursor.getString(1) != name) continue
-                        check(found == null) { "Ambiguous document identity" }
+                        if (found != null) throw DestinationConflict()
                         val uri = DocumentsContract.buildDocumentUriUsingTree(tree, cursor.getString(0))
                         val digest = java.security.MessageDigest.getInstance("SHA-256")
                         requireNotNull(resolver.openInputStream(uri)).use { input ->
@@ -75,23 +79,27 @@ class VideoDirectoryBridge(private val activity: Activity) {
                                 digest.update(buffer, 0, count)
                             }
                         }
-                        check(digest.digest().joinToString("") { "%02x".format(it) } == expected) { "Published content differs" }
+                        if (digest.digest().joinToString("") { "%02x".format(it) } != expected) {
+                            throw DestinationConflict()
+                        }
                         found = uri.toString()
                     }
                 }
                 activity.runOnUiThread { result.success(found) }
-            } catch (_: Exception) {
-                activity.runOnUiThread { result.error("verify_failed", "无法核验已保存文件，请检查授权或选择其他目录", null) }
+            } catch (error: Exception) {
+                val code = if (publication) publicationFailureCode(error) else "verify_failed"
+                activity.runOnUiThread { result.error(code, "无法核验已保存文件，请检查授权或选择其他目录", null) }
             }
         }.start()
     }
 
-    fun save(call: MethodCall, result: MethodChannel.Result) {
+    fun save(call: MethodCall, result: MethodChannel.Result, mime: String = "video/mp4") {
         val path = call.argument<String>("path")
         val directory = call.argument<String>("directory")
         val name = call.argument<String>("name")
+        val publication = mime != "video/mp4"
         if (path == null || directory == null || name == null || !File(path).isFile) {
-            result.error("invalid_file", "待保存的视频不存在", null)
+            result.error("invalid_file", if (publication) "待保存的图书不存在" else "待保存的视频不存在", null)
             return
         }
         val cancelled = AtomicBoolean(false)
@@ -101,21 +109,23 @@ class VideoDirectoryBridge(private val activity: Activity) {
             try {
                 val resolver = activity.contentResolver
                 val tree = Uri.parse(directory)
+                if (publication) requireDirectoryGrant(resolver, tree)
                 val parent = DocumentsContract.buildDocumentUriUsingTree(tree, DocumentsContract.getTreeDocumentId(tree))
                 val children = DocumentsContract.buildChildDocumentsUriUsingTree(tree, DocumentsContract.getTreeDocumentId(tree))
                 val existing = mutableSetOf<String>()
                 requireNotNull(resolver.query(children, arrayOf(DocumentsContract.Document.COLUMN_DOCUMENT_ID, DocumentsContract.Document.COLUMN_DISPLAY_NAME), null, null, null)).use { cursor ->
                     while (cursor.moveToNext()) {
                         existing.add(cursor.getString(0))
-                        check(cursor.getString(1) != name) { "目标文件已存在" }
+                        if (cursor.getString(1) == name) throw DestinationConflict()
                     }
                 }
-                val target = requireNotNull(DocumentsContract.createDocument(resolver, parent, "video/mp4", name))
-                check(!existing.contains(DocumentsContract.getDocumentId(target)))
+                val target = requireNotNull(DocumentsContract.createDocument(resolver, parent, mime, name))
+                if (existing.contains(DocumentsContract.getDocumentId(target))) throw DestinationConflict()
                 created = target
                 // Recovery uses the journaled random identity; providers must preserve it.
                 requireNotNull(resolver.query(target, arrayOf(DocumentsContract.Document.COLUMN_DISPLAY_NAME), null, null, null)).use { cursor ->
-                    check(cursor.moveToFirst() && cursor.getString(0) == name) { "Provider changed publication identity" }
+                    check(cursor.moveToFirst())
+                    if (cursor.getString(0) != name) throw DestinationConflict()
                 }
                 requireNotNull(resolver.openOutputStream(target, "w")).use { output ->
                     File(path).inputStream().use { input ->
@@ -130,12 +140,40 @@ class VideoDirectoryBridge(private val activity: Activity) {
                 }
                 check(!cancelled.get())
                 activity.runOnUiThread { result.success(target.toString()) }
-            } catch (_: Exception) {
+            } catch (error: Exception) {
                 created?.let { try { DocumentsContract.deleteDocument(activity.contentResolver, it) } catch (_: Exception) {} }
-                activity.runOnUiThread { result.error("save_failed", "保存失败，请检查目录授权和剩余空间", null) }
+                val code = if (publication) publicationFailureCode(error) else "save_failed"
+                activity.runOnUiThread { result.error(code, "保存失败，请检查目录授权和剩余空间", null) }
             } finally { copies.remove(path, cancelled) }
         }.start()
     }
+
+    private fun requireDirectoryGrant(resolver: ContentResolver, tree: Uri) {
+        if (resolver.persistedUriPermissions.none {
+                it.uri == tree && it.isReadPermission && it.isWritePermission
+            }) {
+            throw SecurityException("Writable directory grant is missing")
+        }
+    }
+
+    private fun publicationFailureCode(error: Exception): String {
+        for (cause in generateSequence<Throwable>(error) { it.cause }.take(8)) {
+            when (cause) {
+                is DestinationConflict -> return "publication_destination_conflict"
+                is SecurityException -> return "publication_directory_permission"
+                is ErrnoException -> when (cause.errno) {
+                    OsConstants.EACCES, OsConstants.EPERM -> return "publication_directory_permission"
+                    OsConstants.ENOSPC, OsConstants.EDQUOT -> return "publication_disk_full"
+                    OsConstants.EEXIST -> return "publication_destination_conflict"
+                    else -> Unit
+                }
+                else -> Unit
+            }
+        }
+        return "publication_directory_unavailable"
+    }
+
+    private class DestinationConflict : IllegalStateException()
 
     fun close() {
         pending?.success(null)

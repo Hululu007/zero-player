@@ -38,8 +38,13 @@ final class MediaHttpClient {
 
   void _configureClient(HttpClient client, [SourceCertificate? certificate]) {
     client.connectionTimeout = timeout;
-    client.connectionFactory = (uri, proxy, port) =>
-        targetPolicy.connect(uri, proxy, port, certificate: certificate);
+    client.connectionFactory = (uri, proxy, port) => targetPolicy.connect(
+      uri,
+      proxy,
+      port,
+      certificate: certificate,
+      timeout: timeout,
+    );
     client.findProxy = (_) => 'DIRECT';
     client.autoUncompress = false;
     client.maxConnectionsPerHost = maxConnectionsPerHost;
@@ -75,6 +80,7 @@ final class MediaHttpClient {
     void Function(Uri target)? validateTarget,
     Uri Function(Uri target)? mapRedirect,
     SourceCertificate? certificate,
+    bool followRedirects = true,
   }) async {
     if (!{'GET', 'POST'}.contains(method) ||
         (body != null && (method != 'POST' || body.length > 65536))) {
@@ -115,7 +121,8 @@ final class MediaHttpClient {
         onActivity: onActivity,
         certificate: scoped,
       );
-      if (method != 'GET' ||
+      if (!followRedirects ||
+          method != 'GET' ||
           !{301, 302, 303, 307, 308}.contains(payload.response.statusCode)) {
         return payload;
       }
@@ -239,6 +246,7 @@ final class MediaHttpClient {
           .then(
             (request) {
               if (abandoned) {
+                request.done.ignore();
                 request.abort();
               } else {
                 result.complete(request);

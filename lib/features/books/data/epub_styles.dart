@@ -44,7 +44,10 @@ Map<String, String> safeDeclarations(String text) {
   for (final part in text.split(';')) {
     final colon = part.indexOf(':');
     if (colon < 0) continue;
-    final key = part.substring(0, colon).trim().toLowerCase();
+    final key = switch (part.substring(0, colon).trim().toLowerCase()) {
+      '-epub-writing-mode' => 'writing-mode',
+      final property => property,
+    };
     final value = part.substring(colon + 1).trim();
     if (!_properties.contains(key) ||
         value.length > 256 ||

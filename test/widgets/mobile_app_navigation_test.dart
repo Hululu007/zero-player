@@ -10,6 +10,7 @@ import 'package:zero_player/features/books/presentation/book_reader_page.dart';
 import 'package:zero_player/features/books/presentation/reader_pagination.dart';
 import 'package:zero_player/features/books/presentation/reader_style.dart';
 import 'package:zero_player/features/books/domain/book.dart';
+import 'package:zero_player/features/publications/presentation/publications_page.dart';
 import '../../test_support/mobile_app_fixture.dart';
 
 late MobileAppFixture fixture;
@@ -32,32 +33,121 @@ void main() {
   });
 
   _basicNavigationTests();
-  _desktopReadingNavigationTest();
+  _readingNavigationTests();
   _stackTests();
   _viewportAndExitTests();
   _immersiveRouteTest();
   _discoveryStateTest();
 }
 
-void _desktopReadingNavigationTest() {
-  testWidgets('desktop drawer expands the reading destinations', (
+void _readingNavigationTests() {
+  testWidgets('desktop reading opens books and groups all reading pages', (
     tester,
   ) async {
     await fixture.pump(tester, size: const Size(1100, 820));
     final router = GoRouter.of(tester.element(find.byType(AppShell)));
     await tester.tap(find.byTooltip('展开导航 (Ctrl+M)'));
     await fixture.settle(tester);
+    final books = find.widgetWithText(ListTile, '图书');
+    final novels = find.widgetWithText(ListTile, '网络小说');
+    expect(books, findsNothing);
     expect(find.widgetWithText(ListTile, '网络漫画'), findsNothing);
-    await tester.tap(find.text('阅读'));
+    await tester.tap(
+      find.descendant(
+        of: find.byKey(const PageStorageKey('reading-navigation')),
+        matching: find.byIcon(Icons.expand_more),
+      ),
+    );
     await fixture.settle(tester);
-    expect(find.widgetWithText(ListTile, '网络小说'), findsOneWidget);
+    expect(books, findsOneWidget);
+    expect(tester.getTopLeft(books).dy, lessThan(tester.getTopLeft(novels).dy));
+    await tester.tap(find.text('阅读'));
+    await _waitForPublicationTabs(tester);
+    expect(router.state.uri.path, '/publications');
+    expect(find.byType(PublicationsPage), findsOneWidget);
+    await tester.tap(find.byTooltip('展开导航 (Ctrl+M)'));
+    await fixture.settle(tester);
     expect(find.widgetWithText(ListTile, '网络听书'), findsOneWidget);
     await tester.tap(find.widgetWithText(ListTile, '网络漫画'));
     await fixture.settle(tester);
     expect(router.state.uri.path, '/comics');
     await fixture.finish(tester);
   });
+
+  testWidgets('phone reading opens books first and switches within reading', (
+    tester,
+  ) async {
+    await fixture.pump(tester);
+    final router = GoRouter.of(tester.element(find.byType(AppShell)));
+    final reading = find.widgetWithText(NavigationDestination, '阅读');
+    await tester.tap(reading);
+    await _waitForPublicationTabs(tester);
+    expect(router.state.uri.path, '/publications');
+    expect(find.byType(PublicationsPage), findsOneWidget);
+    expect(
+      tester.widget<NavigationBar>(find.byType(NavigationBar)).selectedIndex,
+      3,
+    );
+
+    await tester.tap(reading);
+    await fixture.settle(tester);
+    final tiles = find.descendant(
+      of: find.byType(BottomSheet),
+      matching: find.byType(ListTile),
+    );
+    expect(
+      tester
+          .widgetList<ListTile>(tiles)
+          .map((tile) => (tile.title! as Text).data),
+      ['图书', '网络小说', '网络漫画', '网络听书'],
+    );
+    expect(tester.widgetList<ListTile>(tiles).first.selected, isTrue);
+    await tester.tap(find.widgetWithText(ListTile, '网络小说'));
+    await fixture.waitFor(
+      tester,
+      () => find.text('书架').hitTestable().evaluate().isNotEmpty,
+    );
+    expect(router.state.uri.path, '/reading');
+    await fixture.finish(tester);
+  });
+
+  testWidgets('TV reading keeps the novel, comic and audiobook entries', (
+    tester,
+  ) async {
+    fixture.services.platform.television = true;
+    await fixture.pump(tester, size: const Size(1100, 820));
+    final router = GoRouter.of(tester.element(find.byType(AppShell)));
+    await tester.tap(find.byTooltip('展开导航 (Ctrl+M)'));
+    await fixture.settle(tester);
+    await tester.tap(find.text('阅读'));
+    await fixture.settle(tester);
+    expect(find.widgetWithText(ListTile, '图书'), findsNothing);
+    expect(find.widgetWithText(ListTile, '网络小说'), findsOneWidget);
+    expect(find.widgetWithText(ListTile, '网络漫画'), findsOneWidget);
+    expect(find.widgetWithText(ListTile, '网络听书'), findsOneWidget);
+    await tester.tap(find.byTooltip('收起导航'));
+    await fixture.settle(tester);
+    router.go('/publications');
+    await fixture.waitFor(
+      tester,
+      () => find.text('书架').hitTestable().evaluate().isNotEmpty,
+    );
+    expect(router.state.uri.path, '/reading');
+    await fixture.finish(tester);
+  });
 }
+
+Future<void> _waitForPublicationTabs(WidgetTester tester) => fixture.waitFor(
+  tester,
+  () => find
+      .descendant(
+        of: find.byType(PublicationsPage),
+        matching: find.byType(TabBar),
+      )
+      .hitTestable()
+      .evaluate()
+      .isNotEmpty,
+);
 
 Future<void> _checkReadingLinks(WidgetTester tester, GoRouter router) async {
   expect(find.byTooltip('导入 EPUB / PDF / TXT').hitTestable(), findsOneWidget);

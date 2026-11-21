@@ -324,12 +324,12 @@ Future<void> showReaderSettings(
               children: [
                 Text('阅读样式', style: Theme.of(context).textTheme.titleLarge),
                 const SizedBox(height: 14),
-                if (!pdf) _turnModeSettings(settings, change, rich: rich),
+                if (!pdf) _turnModeSettings(settings, change),
                 ..._automationSettings(settings, change, pdf: pdf),
                 const SizedBox(height: 16),
                 if (!pdf) ..._paperSettings(context, settings, change),
                 if (!pdf) ..._typography(context, settings, change, fontStore),
-                if (!rich)
+                if (!pdf)
                   SwitchListTile(
                     contentPadding: EdgeInsets.zero,
                     title: const Text('翻页动画'),
@@ -499,31 +499,23 @@ List<Widget> _paperSettings(
 
 Widget _turnModeSettings(
   ReaderPreferences settings,
-  ValueChanged<ReaderPreferences> change, {
-  required bool rich,
-}) => Column(
+  ValueChanged<ReaderPreferences> change,
+) => Column(
   crossAxisAlignment: CrossAxisAlignment.start,
   children: [
-    Text(rich ? '横排 EPUB 翻阅方式' : '翻页方式'),
+    const Text('翻页方式'),
     Wrap(
       spacing: 7,
       children: [
-        for (final mode
-            in rich
-                ? [ReaderTurnMode.slide, ReaderTurnMode.scroll]
-                : ReaderTurnMode.values)
+        for (final mode in ReaderTurnMode.values)
           ChoiceChip(
-            label: Text(
-              rich && mode == ReaderTurnMode.slide ? '分段翻页' : mode.label,
-            ),
-            selected: rich && mode == ReaderTurnMode.slide
-                ? settings.mode != ReaderTurnMode.scroll
-                : settings.mode == mode,
+            label: Text(mode.label),
+            selected: settings.mode == mode,
             onSelected: (_) => change(settings.copyWith(mode: mode)),
           ),
       ],
     ),
-    if (!rich) Text(settings.mode.hint),
+    Text(settings.mode.hint),
   ],
 );
 

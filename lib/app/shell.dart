@@ -218,11 +218,7 @@ final class _AppShellState extends State<AppShell> {
       return false;
     }
     if (!usesCompactNavigation(context, widget.services.platform) &&
-        const {
-          '/reading',
-          '/audiobooks',
-          '/comics',
-        }.contains(widget.location)) {
+        isReadingDestination(widget.location)) {
       return false;
     }
     final delta = notification.scrollDelta ?? 0;
@@ -293,7 +289,8 @@ final class _AppShellState extends State<AppShell> {
     ),
     actions: [
       if (wide) AppFullscreenButton(platform: widget.services.platform),
-      if (isReadingDestination(widget.location))
+      if (isReadingDestination(widget.location) &&
+          widget.location != publicationReadingPath)
         IconButton(
           tooltip: '下载任务',
           icon: const Icon(Icons.download_outlined),
@@ -310,12 +307,13 @@ final class _AppShellState extends State<AppShell> {
             ),
           ),
         ),
-      IconButton(
-        tooltip: '渠道管理',
-        onPressed: () =>
-            showModuleSources(context, widget.services, widget.location),
-        icon: const Icon(Icons.dns_outlined),
-      ),
+      if (widget.location != publicationReadingPath)
+        IconButton(
+          tooltip: '渠道管理',
+          onPressed: () =>
+              showModuleSources(context, widget.services, widget.location),
+          icon: const Icon(Icons.dns_outlined),
+        ),
     ],
   );
 
@@ -348,15 +346,7 @@ final class _AppShellState extends State<AppShell> {
             const SizedBox(height: 24),
             for (final destination in _destinations)
               if (destination == readingDestinations.first)
-                ExpansionTile(
-                  key: const PageStorageKey('reading-navigation'),
-                  initiallyExpanded: isReadingDestination(widget.location),
-                  leading: const Icon(readingIcon),
-                  title: const Text('阅读'),
-                  expandedAlignment: Alignment.centerLeft,
-                  childrenPadding: const EdgeInsets.only(left: 24),
-                  children: readingDestinations.map(_navigationTile).toList(),
-                )
+                _readingMenu()
               else if (!isReadingDestination(destination.$1))
                 _navigationTile(destination),
           ],
@@ -364,6 +354,28 @@ final class _AppShellState extends State<AppShell> {
       ),
     ),
   );
+
+  Widget _readingMenu() {
+    final television = widget.services.platform.television;
+    return ExpansionTile(
+      key: const PageStorageKey('reading-navigation'),
+      initiallyExpanded: isReadingDestination(widget.location),
+      leading: const Icon(readingIcon),
+      title: television
+          ? const Text('阅读')
+          : InkWell(
+              onTap: () => _navigate(readingDestinations.first.$1),
+              child: const Text('阅读'),
+            ),
+      expandedAlignment: Alignment.centerLeft,
+      childrenPadding: const EdgeInsets.only(left: 24),
+      children: [
+        for (final destination in readingDestinations)
+          if (!television || destination.$1 != publicationReadingPath)
+            _navigationTile(destination),
+      ],
+    );
+  }
 
   Widget _navigationTile((String, String, IconData) destination) {
     final (path, label, icon) = destination;
