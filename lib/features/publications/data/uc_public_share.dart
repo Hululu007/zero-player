@@ -4,6 +4,7 @@ import 'dart:io';
 
 import '../../../core/network/cancellation_token.dart';
 import '../domain/publication.dart';
+import 'cloud_shared_file.dart';
 import 'publication_http.dart';
 
 final class UcPublicShare {
@@ -20,34 +21,83 @@ final class UcPublicShare {
     Uri link,
     String? code,
     CancellationToken token,
-  ) async {
+  ) => _inspect(link, code, token, (file, _) => sharedPublication(file));
+
+  Future<List<CloudSharedFile>> inspectResources(
+    Uri link,
+    String? code,
+    CancellationToken token,
+  ) => _inspect(link, code, token, (file, _) => file);
+
+  Future<CloudShareListing> inspectTree(
+    Uri link,
+    String? code,
+    CancellationToken token, {
+    bool preview = false,
+  }) async {
+    var truncated = false;
+    final files = await _inspect(
+      link,
+      code,
+      token,
+      CloudShareItem.new,
+      preview: preview,
+      onLimit: () => truncated = true,
+    );
+    return (files: files, truncated: truncated);
+  }
+
+  Future<List<T>> _inspect<T>(
+    Uri link,
+    String? code,
+    CancellationToken token,
+    T? Function(CloudSharedFile, List<String>) select, {
+    void Function()? onLimit,
+    bool preview = false,
+  }) async {
     final share = _shareId(link);
     final ticket = await _ticket(share, code, token);
-    final pending = Queue.of([('0', 1)]);
+    final pending = Queue.of([('0', 1, const <String>[])]);
     final folders = {'0'};
-    final files = <String, PublicationSharedFile>{};
+    final files = <String, T>{};
     for (
       var request = 0;
-      request < _directoryRequests && pending.isNotEmpty;
+      request < (preview ? 8 : _directoryRequests) && pending.isNotEmpty;
       request++
     ) {
-      final (parent, number) = pending.removeFirst();
+      final (parent, number, path) = pending.removeFirst();
       final rows = await _page(share, ticket, parent, number, token);
       for (final row in rows) {
         final id = row['fid'];
         if (id is! String || !_identifier.hasMatch(id)) continue;
         if (row['dir'] == true) {
-          if (folders.length < _directoryRequests && folders.add(id)) {
-            pending.add((id, 1));
+          if (folders.contains(id)) continue;
+          final folder = publicationLabel(row['file_name']);
+          if (folders.length >= _directoryRequests) {
+            onLimit?.call();
+            continue;
           }
-        } else if (_book(row, parent, id) case final file?) {
+          folders.add(id);
+          pending.add((id, 1, [...path, folder.isEmpty ? id : folder]));
+        } else if (_file(row, parent, id) case final info?) {
+          final file = select(info, path);
+          if (file == null) continue;
           files.putIfAbsent('$parent:$id', () => file);
+          if (preview && files.length == 6) {
+            onLimit?.call();
+            return files.values.toList(growable: false);
+          }
         }
       }
-      if (rows.length == _pageSize && number < _maxPages) {
-        pending.add((parent, number + 1));
+      if (rows.length == _pageSize) {
+        if (number < _maxPages) {
+          pending.add((parent, number + 1, path));
+        } else {
+          onLimit?.call();
+        }
       }
     }
+    if (pending.isNotEmpty) onLimit?.call();
     return files.values.toList(growable: false);
   }
 
@@ -55,14 +105,32 @@ final class UcPublicShare {
     AcquisitionCandidate candidate,
     String? code,
     CancellationToken token,
+  ) => _resolve(candidate.link, candidate.fileId, code, token, (file) {
+    final book = sharedPublication(file);
+    return book != null && candidate.matchesSharedFile(book);
+  });
+
+  Future<PublicationDownload> resolveResource(
+    Uri link,
+    CloudSharedFile file,
+    String? code,
+    CancellationToken token,
+  ) => _resolve(link, file.id, code, token, (current) => current == file);
+
+  Future<PublicationDownload> _resolve(
+    Uri link,
+    String? fileId,
+    String? code,
+    CancellationToken token,
+    bool Function(CloudSharedFile) matches,
   ) async {
-    final parts = candidate.fileId?.split(':');
+    final parts = fileId?.split(':');
     if (parts == null ||
         parts.length != 2 ||
         parts.any((part) => !_identifier.hasMatch(part))) {
       throw const PublicationFailure(PublicationProblem.unsupported);
     }
-    final share = _shareId(candidate.link);
+    final share = _shareId(link);
     final ticket = await _ticket(share, code, token);
     final parent = parts[0];
     final id = parts[1];
@@ -70,11 +138,9 @@ final class UcPublicShare {
       final rows = await _page(share, ticket, parent, number, token);
       final row = rows.where((row) => row['fid'] == id).firstOrNull;
       if (row != null) {
-        final file = _book(row, parent, id);
+        final file = _file(row, parent, id);
         final fileToken = _boundedToken(row['share_fid_token']);
-        if (file == null ||
-            !candidate.matchesSharedFile(file) ||
-            fileToken == null) {
+        if (file == null || !matches(file) || fileToken == null) {
           throw const PublicationFailure(PublicationProblem.invalid);
         }
         return _download(share, ticket, id, fileToken, token);
@@ -84,18 +150,13 @@ final class UcPublicShare {
     throw const PublicationFailure(PublicationProblem.missing);
   }
 
-  PublicationSharedFile? _book(Map row, String parent, String id) {
+  CloudSharedFile? _file(Map row, String parent, String id) {
     final name = publicationLabel(row['file_name']);
-    final format = PublicationFormat.fromName(name);
-    final size = row['size'];
-    if (row['dir'] != false ||
-        format == null ||
-        size is! int ||
-        size <= 0 ||
-        size > format.maxBytes) {
+    final bytes = row['size'];
+    if (row['dir'] != false || name.isEmpty || bytes is! int || bytes < 1) {
       return null;
     }
-    return (name: name, id: '$parent:$id', format: format, bytes: size);
+    return (name: name, id: '$parent:$id', bytes: bytes);
   }
 
   String _shareId(Uri link) {

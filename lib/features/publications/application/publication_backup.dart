@@ -22,6 +22,8 @@ typedef _BackupHolding = ({
   int added,
 });
 
+typedef PublicationRestoreSummary = ({int added, int existing, int missing});
+
 final class PublicationBackup {
   PublicationBackup(this.library, this.reading);
   final PublicationLibrary library;
@@ -100,6 +102,11 @@ final class PublicationBackup {
   }
 
   Future<int> restore(File file) async {
+    final summary = await restoreWithSummary(file);
+    return summary.added + summary.existing;
+  }
+
+  Future<PublicationRestoreSummary> restoreWithSummary(File file) async {
     library.requireImport('');
     final size = await file.length();
     if (size > maxBytes) throw const FormatException('图书备份超过 8 MiB');
@@ -151,7 +158,7 @@ final class PublicationBackup {
     return store.db.atomic(
       () async {
         final restored = <String, Book>{};
-        var count = 0;
+        var added = 0, existing = 0, missing = 0;
         for (final entry in entries) {
           final book = publicationReaderBook(
             entry.digest,
@@ -164,9 +171,14 @@ final class PublicationBackup {
               await library.legacy.isPrivateBook(book.id)) {
             continue;
           }
-          await _restoreEntry(entry);
+          final status = await _restoreEntry(entry);
           restored[entry.digest] = book;
-          count++;
+          if (status.existed) {
+            existing++;
+          } else {
+            added++;
+          }
+          if (!status.resident) missing++;
         }
         for (final MapEntry(key: digest, value: book) in restored.entries) {
           if (positions[digest] case final position?) {
@@ -195,7 +207,7 @@ final class PublicationBackup {
           }
         }
         store.db.beforeCommit(() => library.requireImport(''));
-        return count;
+        return (added: added, existing: existing, missing: missing);
       },
       tables: {
         'publication_files',
@@ -206,15 +218,24 @@ final class PublicationBackup {
     );
   }
 
-  Future<void> _restoreEntry(_BackupHolding entry) async {
+  Future<({bool existed, bool resident})> _restoreEntry(
+    _BackupHolding entry,
+  ) async {
     final existing = (await store.db.rows(
-      'SELECT bytes,format FROM publication_files WHERE digest=?',
+      'SELECT bytes,format,placement FROM publication_files WHERE digest=?',
       [entry.digest],
+    )).firstOrNull;
+    final holding = (await store.db.rows(
+      'SELECT digest FROM publication_shelf WHERE id=?',
+      [entry.id],
     )).firstOrNull;
     if (existing != null &&
         (existing['bytes'] != entry.bytes ||
             existing['format'] != entry.format.name)) {
       throw const FormatException('备份文件的摘要与本地图书记录冲突');
+    }
+    if (holding != null && holding['digest'] != entry.digest) {
+      throw const FormatException('备份书目与本地书目编号冲突');
     }
     await store.db.write(
       'INSERT OR IGNORE INTO publication_files(digest,bytes,format) VALUES(?,?,?)',
@@ -231,6 +252,7 @@ final class PublicationBackup {
         entry.added,
       ],
     );
+    return (existed: holding != null, resident: existing?['placement'] != null);
   }
 
   Future<void> _restoreNote(List<Object?> note) async {

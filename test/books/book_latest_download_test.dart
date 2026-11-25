@@ -87,10 +87,10 @@ void _observedCatalogDownloadTests() {
       expect(task.status, BookDownloadStatus.partial);
       expect(task.chapters, hasLength(1300));
       expect(task.failures, 1);
-      expect(f.calls, hasLength(1300));
+      expect(f.calls, hasLength(1300 + BookDownloadPlan.defaultRetryCount));
       expect(
         f.calls.where((call) => call.startsWith('${f.origin.sourceId}:')),
-        hasLength(1232),
+        hasLength(1232 + BookDownloadPlan.defaultRetryCount),
       );
       final shelf = (await f.books.store.entry(f.target))!;
       expect(shelf.chapters, hasLength(1300));

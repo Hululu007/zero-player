@@ -13,7 +13,10 @@ final class PublicationRangeFixture {
   final Uint8List bytes;
   final requests = <String>[];
   final unsatisfiedRanges = <String, int>{};
+  final interruptedRanges = <String>{};
+  var entryVisits = 0;
   Uri get uri => Uri.parse('http://127.0.0.1:${server.port}/licensed.pdf');
+  Uri get entry => uri.replace(path: '/download');
   AcquisitionCandidate get candidate => AcquisitionCandidate(
     source: 'manual',
     link: uri,
@@ -48,6 +51,11 @@ final class PublicationRangeFixture {
     bool changedWhole,
     bool unknownLength,
   ) async {
+    if (request.uri.path == entry.path) {
+      entryVisits++;
+      await request.response.redirect(uri);
+      return;
+    }
     final range = request.headers.value('range');
     requests.add(range ?? 'all');
     final response = request.response;
@@ -79,6 +87,13 @@ final class PublicationRangeFixture {
       response.headers.chunkedTransferEncoding = true;
     } else {
       response.contentLength = end - start + 1;
+    }
+    if (interruptedRanges.remove(range ?? 'all')) {
+      final socket = await response.detachSocket();
+      socket.add(bytes.sublist(start, start + 1024));
+      await socket.flush();
+      await socket.close();
+      return;
     }
     try {
       for (var offset = start; offset <= end; offset += 256 << 10) {

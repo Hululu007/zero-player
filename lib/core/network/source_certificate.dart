@@ -17,10 +17,16 @@ final class SourceCertificateFailure extends HandshakeException {
 
 /// Request-local selection. The transport opens a separate client when used.
 final class SourceCertificate {
-  const SourceCertificate(this.origin, this.fingerprint, this.active);
+  const SourceCertificate(
+    this.origin,
+    this.fingerprint,
+    this.active, {
+    this.publicRequest,
+  });
 
   final String origin, fingerprint;
   final bool Function() active;
+  final bool Function(Uri, Map<String, String>)? publicRequest;
   static final _key = Object();
   static SourceCertificate? get current =>
       Zone.current[_key] as SourceCertificate?;
@@ -32,31 +38,32 @@ final class SourceCertificate {
       active() &&
       uri.scheme == 'https' &&
       HeaderPolicy.origin(uri) == origin &&
-      headers.keys.every(
-        (key) => const {
-          'accept',
-          'accept-language',
-          'user-agent',
-        }.contains(key.toLowerCase()),
-      ) &&
-      uri.queryParametersAll.keys.every(
-        (key) => const {
-          'page',
-          'p',
-          'pageNum',
-          'pageSize',
-          'offset',
-          'start',
-          'size',
-          'q',
-          'query',
-          'keyword',
-          'search',
-          'category',
-          'sort',
-          'order',
-        }.contains(key),
-      );
+      (publicRequest?.call(uri, headers) == true ||
+          (headers.keys.every(
+                (key) => const {
+                  'accept',
+                  'accept-language',
+                  'user-agent',
+                }.contains(key.toLowerCase()),
+              ) &&
+              uri.queryParametersAll.keys.every(
+                (key) => const {
+                  'page',
+                  'p',
+                  'pageNum',
+                  'pageSize',
+                  'offset',
+                  'start',
+                  'size',
+                  'q',
+                  'query',
+                  'keyword',
+                  'search',
+                  'category',
+                  'sort',
+                  'order',
+                }.contains(key),
+              )));
 
   bool accepts(Uri uri, SourceCertificateFailure failure) =>
       active() &&

@@ -1,5 +1,14 @@
 import 'package:html/dom.dart' as dom;
 
+import '../domain/publication.dart';
+
+final publicationRuleDownloadFields = {
+  for (final format in PublicationFormat.values) ...{
+    format.name,
+    '${format.name}Code',
+  },
+};
+
 final class PublicationRuleOptions {
   const PublicationRuleOptions(
     this.list,
@@ -22,17 +31,10 @@ final class PublicationRuleOptions {
         (next != null &&
             (next is! String || !publicationRuleSelector(next, html: html))) ||
         detail is! Map ||
-        detail.length > 6 ||
+        detail.length > publicationRuleDownloadFields.length ||
         detail.entries.any(
           (entry) =>
-              !const {
-                'epub',
-                'pdf',
-                'zip',
-                'epubCode',
-                'pdfCode',
-                'zipCode',
-              }.contains(entry.key) ||
+              !publicationRuleDownloadFields.contains(entry.key) ||
               entry.value is! String ||
               !publicationRuleSelector(entry.value as String, html: html),
         ) ||
@@ -79,6 +81,8 @@ bool publicationRuleSelector(
                 'data-isbn',
                 'content',
                 'rel',
+                'src',
+                'data-src',
               }.contains(query[1])))) {
     return false;
   }

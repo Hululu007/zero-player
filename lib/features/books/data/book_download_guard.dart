@@ -108,27 +108,26 @@ final class BookDownloadGuard {
         verified[target.sourceId],
         target.sourceId,
       );
-      final originEntry = await store.source(
-        verified[origin.sourceId],
-        origin.sourceId,
-      );
+      final sameSource = target.sourceId == origin.sourceId;
+      final originEntry = sameSource
+          ? targetEntry
+          : await store.source(verified[origin.sourceId], origin.sourceId);
       if (targetEntry == null || originEntry == null || !originEntry.enabled) {
         throw const ContentBlocked();
       }
       final targetFingerprint = bookDownloadSourceFingerprint(
         targetEntry.source,
       );
-      final originFingerprint = bookDownloadSourceFingerprint(
-        originEntry.source,
-      );
+      final originFingerprint = sameSource
+          ? targetFingerprint
+          : bookDownloadSourceFingerprint(originEntry.source);
       final targetEpoch = await store.ensureContentEpoch(
         target.sourceId,
         targetFingerprint,
       );
-      final originEpoch = await store.ensureContentEpoch(
-        origin.sourceId,
-        originFingerprint,
-      );
+      final originEpoch = sameSource
+          ? targetEpoch
+          : await store.ensureContentEpoch(origin.sourceId, originFingerprint);
       evidence = BookDownloadEvidence(
         target: target,
         targetChapter: targetChapter,
@@ -170,6 +169,7 @@ final class BookDownloadGuard {
     }
     final blocked = await store.blockedSources();
     final assessments = await risks.all();
+    final sources = <String, (BookSourceEntry, String, int?)>{};
     for (final side in [
       (
         evidence.target,
@@ -185,13 +185,25 @@ final class BookDownloadGuard {
       ),
     ]) {
       final (book, chapter, fingerprint, epoch) = side;
-      final entry = await store.source(verified[book.sourceId], book.sourceId);
-      if (entry == null ||
-          entry.source.kind != book.kind ||
-          bookDownloadSourceFingerprint(entry.source) != fingerprint ||
-          await store.contentEpoch(book.sourceId) != epoch ||
-          blocked.containsKey(book.sourceId) ||
-          !entryAllowed(entry) ||
+      final sourceId = book.sourceId;
+      var source = sources[sourceId];
+      if (source == null) {
+        final entry = await store.source(verified[sourceId], sourceId);
+        if (entry == null ||
+            blocked.containsKey(sourceId) ||
+            !entryAllowed(entry)) {
+          throw const ContentBlocked();
+        }
+        source = sources[sourceId] = (
+          entry,
+          bookDownloadSourceFingerprint(entry.source),
+          await store.contentEpoch(sourceId),
+        );
+      }
+      final (entry, currentFingerprint, currentEpoch) = source;
+      if (entry.source.kind != book.kind ||
+          currentFingerprint != fingerprint ||
+          currentEpoch != epoch ||
           !bookAllowed(book) ||
           !policy.textAllowed(chapter.title) ||
           _persistedRestriction(entry.source, book, assessments.values)) {

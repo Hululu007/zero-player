@@ -30,7 +30,10 @@ extension _TextReaderMarks on _BookReaderPageState {
     }
   }
 
-  Future<void> _editTextMark(ReadingRange range) async {
+  Future<void> _editTextMark(
+    ReadingRange range,
+    ReadingMarkStyle? style,
+  ) async {
     final digest = _markDigest;
     if (!_ready ||
         !_marksAllowed() ||
@@ -42,11 +45,7 @@ extension _TextReaderMarks on _BookReaderPageState {
       return;
     }
     final quote = _text.substring(range.start, range.end);
-    final whitespace = RegExp(r'\s+');
-    if (quote.replaceAll(whitespace, '') !=
-        _selection.replaceAll(whitespace, '')) {
-      return;
-    }
+    if (!_books.policy.textAllowed(quote)) return;
     final draft = ReadingMark(
       digest: digest,
       section: _index,
@@ -55,16 +54,20 @@ extension _TextReaderMarks on _BookReaderPageState {
     );
     try {
       _stopAutomation();
-      final mark = await editReadingMark(
-        context,
-        _textMarks
-                .where((item) => item.identity == draft.identity)
-                .firstOrNull ??
-            draft,
-        policy: _markPolicy,
-        allowed: _marksAllowed,
-      );
-      if (mounted && mark != null && _marksAllowed()) {
+      final initial =
+          _textMarks
+              .where((item) => item.identity == draft.identity)
+              .firstOrNull ??
+          draft;
+      final mark = style == null
+          ? await editReadingMark(
+              context,
+              initial,
+              policy: _markPolicy,
+              allowed: () => _marksAllowed() && _markDigest == digest,
+            )
+          : initial.copyWith(style: style);
+      if (mounted && mark != null && _marksAllowed() && _markDigest == digest) {
         await _textMarkStore.save(mark);
         await _reloadTextMarks();
       }

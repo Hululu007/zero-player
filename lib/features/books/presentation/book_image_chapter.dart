@@ -53,6 +53,7 @@ class BookImageChapterState extends State<BookImageChapter> {
   late int _page = _initialPage;
   late List<BookChapterSegment> _parts = _makeParts();
   late List<int> _imageNumbers = _numberImages();
+  DialogRoute<void>? _preview;
 
   List<int> _numberImages() {
     var image = 0;
@@ -173,6 +174,12 @@ class BookImageChapterState extends State<BookImageChapter> {
 
   @override
   void dispose() {
+    final preview = _preview;
+    if (preview != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (preview.isActive) preview.navigator?.removeRoute(preview);
+      });
+    }
     _scroll.dispose();
     _pager.dispose();
     super.dispose();
@@ -211,7 +218,47 @@ class BookImageChapterState extends State<BookImageChapter> {
       address: address,
       index: _imageNumbers[index],
       paged: !_scrolling,
+      onZoom: _zoom,
     );
+  }
+
+  void closePreview() {
+    final route = _preview;
+    _preview = null;
+    if (route != null && route.isActive) route.navigator?.removeRoute(route);
+  }
+
+  void _zoom(Uint8List bytes) {
+    if (_preview != null) return;
+    final route = DialogRoute<void>(
+      context: context,
+      builder: (context) => Dialog.fullscreen(
+        child: Stack(
+          children: [
+            InteractiveViewer(
+              minScale: 0.5,
+              maxScale: 5,
+              child: Center(child: Image.memory(bytes, cacheWidth: 2048)),
+            ),
+            Positioned(
+              top: 8,
+              right: 8,
+              child: SafeArea(
+                child: IconButton(
+                  tooltip: '关闭图片',
+                  onPressed: () => Navigator.pop(context),
+                  icon: const Icon(Icons.close),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+    _preview = route;
+    Navigator.of(context, rootNavigator: true).push(route).whenComplete(() {
+      if (identical(_preview, route)) _preview = null;
+    });
   }
 
   @override
@@ -273,12 +320,14 @@ class _ChapterImage extends StatefulWidget {
     required this.address,
     required this.index,
     required this.paged,
+    required this.onZoom,
   });
 
   final ChapterImageLoader loadImage;
   final Uri address;
   final int index;
   final bool paged;
+  final ValueChanged<Uint8List> onZoom;
 
   @override
   State<_ChapterImage> createState() => _ChapterImageState();
@@ -317,34 +366,6 @@ class _ChapterImageState extends State<_ChapterImage> {
     super.dispose();
   }
 
-  void _zoom(Uint8List bytes) {
-    showDialog<void>(
-      context: context,
-      builder: (context) => Dialog.fullscreen(
-        child: Stack(
-          children: [
-            InteractiveViewer(
-              minScale: 0.5,
-              maxScale: 5,
-              child: Center(child: Image.memory(bytes, cacheWidth: 2048)),
-            ),
-            Positioned(
-              top: 8,
-              right: 8,
-              child: SafeArea(
-                child: IconButton(
-                  tooltip: '关闭图片',
-                  onPressed: () => Navigator.pop(context),
-                  icon: const Icon(Icons.close),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) =>
       FutureBuilder<({Uint8List bytes, double aspect})>(
@@ -371,9 +392,9 @@ class _ChapterImageState extends State<_ChapterImage> {
           return Semantics(
             label: '第 ${widget.index} 张章节图片',
             hint: '长按放大图片；点按两侧翻页，中央打开菜单',
-            onLongPress: () => _zoom(bytes),
+            onLongPress: () => widget.onZoom(bytes),
             child: GestureDetector(
-              onLongPress: () => _zoom(bytes),
+              onLongPress: () => widget.onZoom(bytes),
               child: LayoutBuilder(
                 builder: (context, constraints) => Image.memory(
                   bytes,

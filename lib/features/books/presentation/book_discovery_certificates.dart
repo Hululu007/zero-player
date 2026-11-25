@@ -2,11 +2,17 @@ part of 'book_discovery_view.dart';
 
 extension _BookDiscoveryCertificates on _BookDiscoveryViewState {
   String _listingFailure(Exception error) {
+    _siteAccessDenied = false;
     if (error is SourceCertificateFailure) {
       _certificateError = error;
       _temporaryCertificate = null;
       return error.message;
     }
+    _siteAccessDenied =
+        error is RemoteFailure &&
+        error.status == 403 &&
+        _source?.source.endpoint.host == 'czbooks.net';
+    if (_siteAccessDenied) return '小说狂人拒绝应用请求（HTTP 403）';
     return _loadMessage(error);
   }
 
@@ -66,6 +72,24 @@ extension _BookDiscoveryCertificates on _BookDiscoveryViewState {
   Widget? _certificateNotice() {
     final failure = _certificateError;
     final id = _sourceId;
+    final source = _source?.source;
+    if (_siteAccessDenied &&
+        source?.endpoint.host == 'czbooks.net' &&
+        widget.repository.certificateExceptionsAvailable) {
+      return ListTile(
+        leading: const Icon(Icons.open_in_browser),
+        title: const Text('小说狂人 · 网页访问'),
+        trailing: TextButton(
+          onPressed: () {
+            if (widget.repository.certificateExceptionsAvailable &&
+                _source?.source.id == source!.id) {
+              launchUrl(source.endpoint, mode: LaunchMode.externalApplication);
+            }
+          },
+          child: const Text('在浏览器打开'),
+        ),
+      );
+    }
     if (id != null && failure != null) {
       return ListTile(
         leading: const Icon(Icons.gpp_maybe_outlined),

@@ -13,6 +13,7 @@ import 'book_chapter_policy.dart';
 import 'book_latest_aggregation.dart';
 import 'book_catalog_window.dart';
 import 'book_download_source_health.dart';
+import 'book_download_retry.dart';
 import 'book_site_check.dart';
 import 'book_vault.dart';
 
@@ -31,6 +32,7 @@ final class BookDownloadTask extends ChangeNotifier {
   int failures = 0;
   final Map<String, ChapterContentBlocked> blockedChapters = {};
   final Map<String, String> failedChapters = {};
+  final Set<String> missingChapterIds = {};
   bool _stoppedByPolicy = false;
   final _sourceHealth = BookDownloadSourceHealth();
   BookDownloadSourceUnavailable? _sourcePause;
@@ -186,6 +188,10 @@ final class BookDownloadCoordinator extends ChangeNotifier {
       }
       await _loadReasons(task.book, catalog, blockedReasons, failedReasons);
       reasonsLoaded = true;
+      if (plan.chapterIds case final ids?) {
+        task.missingChapterIds.addAll(ids);
+        task.missingChapterIds.removeAll(catalog.map((chapter) => chapter.id));
+      }
       final (range, needsScan) = await _prepareDownload(
         task,
         catalog,
@@ -206,20 +212,27 @@ final class BookDownloadCoordinator extends ChangeNotifier {
         keepPlan,
       );
       token.check();
+      task.missingChapterIds.removeAll(selected.map((chapter) => chapter.id));
       if (task._sourcePause case final refusal?) {
         task.status = BookDownloadStatus.paused;
         task.error = refusal.pauseMessage;
         return;
       }
-      if (scan != null && keepPlan && task.failures != 0) {
+      final missing = task.missingChapterIds.length;
+      if (scan != null && keepPlan && (task.failures != 0 || missing != 0)) {
         await _savePlan(task.book, plan, selected, aggregationPending: false);
       }
-      task.status = task.failures == 0
+      task.status = task.failures == 0 && missing == 0
           ? BookDownloadStatus.completed
+          : selected.isEmpty
+          ? BookDownloadStatus.failed
           : BookDownloadStatus.partial;
-      if (task.failedChapters.isNotEmpty) {
-        task.error = '${task.failedChapters.length} 章下载失败，可继续下载重试';
-      }
+      final messages = [
+        if (missing != 0) '目录缺少 $missing 个目标章节，已保留原下载范围',
+        if (task.failedChapters.isNotEmpty)
+          '${task.failedChapters.length} 章下载失败，可继续下载重试',
+      ];
+      if (messages.isNotEmpty) task.error = messages.join('；');
     } on RequestCancelled {
       task.status = BookDownloadStatus.paused;
       if (task._stoppedByPolicy) task.error = '内容策略已改变，下载已暂停';
@@ -333,16 +346,18 @@ final class BookDownloadCoordinator extends ChangeNotifier {
         (selected?.isNotEmpty ?? false) &&
         selected!.length == ids!.length;
     final needsScan = aggregate && (!prepared || plan.aggregationPending);
-    final range = prepared
-        ? selected
-        : plan.fullBook
+    final range = needsScan
         ? catalog
         : selected ??
-              catalog
-                  .skip(plan.first - 1)
-                  .take(plan.last - plan.first + 1)
-                  .toList();
-    if (range.isEmpty && !needsScan) throw const FormatException('目录中已找不到所选章节');
+              (plan.fullBook
+                  ? catalog
+                  : catalog
+                        .skip(plan.first - 1)
+                        .take(plan.last - plan.first + 1)
+                        .toList());
+    if (range.isEmpty && !needsScan && (ids == null || ids.isEmpty)) {
+      throw const FormatException('目录中已找不到所选章节');
+    }
     await _saveCatalog(
       task,
       catalog,
@@ -366,11 +381,6 @@ final class BookDownloadCoordinator extends ChangeNotifier {
       task.token.check();
       repository.store.db.beforeCommit(task.token.check);
     }
-    await repository.store.saveBook(
-      task.book,
-      chapters: catalog,
-      preserveCatalog: true,
-    );
     if (keepPlan) {
       await _savePlan(
         task.book,
@@ -379,6 +389,11 @@ final class BookDownloadCoordinator extends ChangeNotifier {
         aggregationPending: aggregationPending,
       );
     }
+    await repository.store.saveBook(
+      task.book,
+      chapters: catalog,
+      preserveCatalog: true,
+    );
   }, tables: {'app_meta'});
 
   Future<void> _savePlan(
@@ -386,19 +401,29 @@ final class BookDownloadCoordinator extends ChangeNotifier {
     BookDownloadPlan plan,
     List<BookChapter> selected, {
     required bool aggregationPending,
-  }) => repository.store.writeBookValue(
-    book,
-    'books_download:${book.id}',
-    BookDownloadPlan(
-      plan.first,
-      plan.fullBook ? math.max(plan.first, selected.length) : plan.last,
-      plan.fallback,
-      fullBook: plan.fullBook,
-      aggregateLatest: plan.aggregateLatest,
-      aggregationPending: aggregationPending,
-      chapterIds: selected.map((chapter) => chapter.id).toList(),
-    ).toJson(),
-  );
+  }) {
+    final ids = {
+      ...?plan.chapterIds,
+      for (final chapter in selected) chapter.id,
+    };
+    if (ids.length > bookChapterCatalogLimit) {
+      throw const FormatException('目录更新后超出下载范围上限，已保留原计划');
+    }
+    return repository.store.writeBookValue(
+      book,
+      'books_download:${book.id}',
+      BookDownloadPlan(
+        plan.first,
+        plan.fullBook ? math.max(plan.first, ids.length) : plan.last,
+        plan.fallback && book.kind != BookKind.comic,
+        fullBook: plan.fullBook,
+        aggregateLatest: plan.aggregateLatest,
+        aggregationPending: aggregationPending,
+        retryCount: plan.retryCount,
+        chapterIds: ids.toList(),
+      ).toJson(),
+    );
+  }
 
   _BookAggregateScan _startAggregateScan(BookDownloadTask task) {
     task.aggregationProgress = '正在后台检查当前目录和其他渠道';
@@ -490,7 +515,9 @@ final class BookDownloadCoordinator extends ChangeNotifier {
         ),
       );
       if (next.length == task.chapters.length) {
-        if (selected.isEmpty) throw const FormatException('目录中未找到可下载章节');
+        if (selected.isEmpty && task.missingChapterIds.isEmpty) {
+          throw const FormatException('目录中未找到可下载章节');
+        }
         return selected;
       }
       batch = next.sublist(task.chapters.length);
@@ -633,9 +660,9 @@ final class BookDownloadCoordinator extends ChangeNotifier {
           final reason = bookDownloadFailureReason(error);
           task.failedChapters[chapter.id] = reason;
           failedReasons[chapter.id] = reason;
-          if (error is BookDownloadSourceUnavailable) {
-            task._sourcePause ??= error;
-          }
+          task._sourcePause ??= error is BookDownloadSourceUnavailable
+              ? error
+              : BookDownloadSourceUnavailable.fromThrottle(error);
         }
         task.finished++;
         task._progressChanged();
@@ -682,21 +709,22 @@ final class BookDownloadCoordinator extends ChangeNotifier {
     final book = task.book;
     final token = task.token;
     try {
-      if (downloadChapter case final callback?) {
-        await callback(book, chapter, token);
-      } else {
-        await repository.download(
+      await retryBookChapter(token, plan.retryCount, () {
+        if (downloadChapter case final callback?) {
+          return callback(book, chapter, token);
+        }
+        return repository.download(
           book,
           chapter,
           token,
           sourceHealth: task._sourceHealth,
         );
-      }
+      });
     } on ContentBlocked {
       rethrow;
     } on Exception catch (error) {
       token.check();
-      if (!plan.fallback) rethrow;
+      if (!plan.fallback || book.kind == BookKind.comic) rethrow;
       final editions = await alternatives();
       token.check();
       final routes = [
@@ -712,13 +740,17 @@ final class BookDownloadCoordinator extends ChangeNotifier {
         rethrow;
       }
       try {
-        await repository.download(
-          book,
-          chapter,
+        await retryBookChapter(
           token,
-          matchedAlternatives: routes,
-          tryOriginal: false,
-          sourceHealth: task._sourceHealth,
+          plan.retryCount,
+          () => repository.download(
+            book,
+            chapter,
+            token,
+            matchedAlternatives: routes,
+            tryOriginal: false,
+            sourceHealth: task._sourceHealth,
+          ),
         );
       } on ContentBlocked {
         rethrow;

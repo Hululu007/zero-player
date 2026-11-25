@@ -94,27 +94,29 @@ extension BookStoreImages on BookStore {
     }
   }
 
-  Future<Map<Uri, List<int>>?> offlineImages(
-    Book book,
-    BookChapter chapter,
-  ) async {
-    final addresses = await offlineImageAddresses(book, chapter);
-    if (addresses == null) return null;
-    final images = <Uri, List<int>>{};
-    for (var index = 0; index < addresses.length; index++) {
-      final raw = await readBookValue(
-        book,
-        '${_offlineImagePartPrefix(book, chapter)}$index',
-      );
-      if (raw is! String) return null;
-      try {
-        images[addresses[index]] = base64Decode(raw);
-      } on FormatException {
-        return null;
-      }
-    }
-    return images;
-  }
+  Future<Map<Uri, List<int>>?> offlineImages(Book book, BookChapter chapter) =>
+      db.atomic(() async {
+        final addresses = await offlineImageAddresses(book, chapter);
+        if (addresses == null ||
+            addresses.length > BookResourceLimits.chapterImages ||
+            addresses.length != addresses.toSet().length) {
+          return null;
+        }
+        final images = <Uri, List<int>>{};
+        for (var index = 0; index < addresses.length; index++) {
+          final raw = await readBookValue(
+            book,
+            '${_offlineImagePartPrefix(book, chapter)}$index',
+          );
+          if (raw is! String) return null;
+          try {
+            images[addresses[index]] = base64Decode(raw);
+          } on FormatException {
+            return null;
+          }
+        }
+        return images;
+      });
 
   Future<void> saveOfflineImages(
     Book book,

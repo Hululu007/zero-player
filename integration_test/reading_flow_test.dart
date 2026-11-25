@@ -147,6 +147,7 @@ Future<void> _sudugu(AppServices services, WidgetTester tester) async {
 }
 
 Future<void> _longDirectory(AppServices services, WidgetTester tester) async {
+  const resumeIndex = 6104;
   final book = Book(
     'local',
     BookKind.text,
@@ -155,30 +156,27 @@ Future<void> _longDirectory(AppServices services, WidgetTester tester) async {
     Uri.parse('book:long'),
   );
   final chapters = [
-    for (var i = 1; i <= 900; i++)
+    for (var i = 1; i <= 6205; i++)
       BookChapter('测试章节 $i', Uri.parse('book:long#$i')),
   ];
   await services.books.store.saveBook(
     book,
     chapters: chapters,
-    last: chapters[734],
+    last: chapters[resumeIndex],
   );
   await tester.pumpWidget(
     MaterialApp(
       home: BookDetailPage(services: services, initial: book),
     ),
   );
-  await _waitFor(tester, () => find.byTooltip('章节导航').evaluate().isNotEmpty);
-  await tester.tap(find.byTooltip('章节导航'));
+  final locate = find.byTooltip('定位当前章节');
+  await _waitFor(tester, () => locate.evaluate().isNotEmpty);
+  await tester.tap(locate);
   await tester.pumpAndSettle();
-  await tester.tap(find.text('定位当前章节'));
-  await tester.pumpAndSettle();
-  final current = find.widgetWithText(ListTile, chapters[734].title);
+  final current = find.widgetWithText(ListTile, chapters[resumeIndex].title);
   expect(current.hitTestable(), findsOneWidget);
   expect(tester.widget<ListTile>(current).selected, isTrue);
-  await tester.tap(find.byTooltip('章节导航'));
-  await tester.pumpAndSettle();
-  await tester.tap(find.text('目录回顶'));
+  await tester.tap(find.byTooltip('回到作品简介'));
   await tester.pumpAndSettle();
   final scroll = tester
       .widget<CustomScrollView>(find.byType(CustomScrollView))
@@ -317,6 +315,10 @@ Future<void> _checkBookSearch(
   await tester.pageBack();
   await tester.pumpAndSettle();
 
+  if (find.byType(TextField).evaluate().isEmpty) {
+    await tester.tap(find.text('搜书名、作者或书籍链接'));
+    await tester.pumpAndSettle();
+  }
   await tester.enterText(find.byType(TextField), '维吉尔');
   await tester.testTextInput.receiveAction(TextInputAction.search);
   await tester.pumpAndSettle();

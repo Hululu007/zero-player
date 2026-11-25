@@ -18,6 +18,7 @@ import '../features/radio/presentation/radio_page.dart';
 import '../features/music/presentation/music_page.dart';
 import '../features/books/domain/book.dart';
 import '../features/books/presentation/books_page.dart';
+import '../features/publications/presentation/cloud_resources_page.dart';
 import '../features/publications/presentation/publications_page.dart';
 import '../features/playback/application/playback_controller.dart';
 import '../features/playback/presentation/player_page.dart';
@@ -48,6 +49,9 @@ final class _ProductAppState extends ConsumerState<ProductApp>
   final _shellScaffold = GlobalKey<ScaffoldState>();
   StreamSubscription<String>? _localOpens;
   int _openSequence = 0;
+  String _publicationParent = '/';
+  String _cloudParent = '/';
+  String _lastShellLocation = '/';
   StatusNotifications? _status;
   VoidCallback? _removeStatusHook;
   @override
@@ -71,6 +75,10 @@ final class _ProductAppState extends ConsumerState<ProductApp>
     unawaited(services.subscriptions.refreshDue());
     services.sourceMonitor.start();
     services.bookSiteMonitor.start();
+    if (!services.platform.television) {
+      final publications = services.publications;
+      publications.workflow.enableAutomaticImport(publications.output);
+    }
     if (Platform.isAndroid) {
       _status = StatusNotifications(services);
       _removeStatusHook = services.addCloseHook(() async => _status?.close());
@@ -98,6 +106,13 @@ final class _ProductAppState extends ConsumerState<ProductApp>
     }
     scaffold.closeDrawer();
     return true;
+  }
+
+  Future<void> _desktopBack() async {
+    if (await backDispatcher.invokeCallback(Future.value(false))) return;
+    if (mounted && router.state.uri.path == '/cloud-resources') {
+      router.go(_cloudParent);
+    }
   }
 
   bool _exiting = false;
@@ -145,12 +160,26 @@ final class _ProductAppState extends ConsumerState<ProductApp>
   GoRouter _createRouter() => GoRouter(
     routes: [
       StatefulShellRoute.indexedStack(
-        builder: (context, state, child) => AppShell(
-          scaffoldKey: _shellScaffold,
-          services: services,
-          location: state.uri.path,
-          child: child,
-        ),
+        builder: (context, state, child) {
+          final location = state.uri.toString();
+          if (state.uri.path == '/cloud-resources' &&
+              Uri.parse(_lastShellLocation).path != '/cloud-resources' &&
+              !(Uri.parse(_lastShellLocation).path == publicationReadingPath &&
+                  Uri.parse(_publicationParent).path == '/cloud-resources')) {
+            _cloudParent = _lastShellLocation;
+          }
+          _lastShellLocation = location;
+          if (state.uri.path != publicationReadingPath) {
+            _publicationParent = location;
+          }
+          return AppShell(
+            scaffoldKey: _shellScaffold,
+            services: services,
+            location: state.uri.path,
+            onKeyboardBack: services.platform.android ? null : _desktopBack,
+            child: child,
+          );
+        },
         branches: [
           for (final route in <RouteBase>[
             GoRoute(
@@ -219,6 +248,7 @@ final class _ProductAppState extends ConsumerState<ProductApp>
                 child: MediaLibraryHub(services: services, downloads: true),
               ),
             ),
+            _cloudResourcesRoute(),
             GoRoute(
               path: '/settings',
               builder: (_, state) =>
@@ -232,18 +262,46 @@ final class _ProductAppState extends ConsumerState<ProductApp>
     ],
   );
 
+  GoRoute _cloudResourcesRoute() => GoRoute(
+    path: '/cloud-resources',
+    builder: (_, _) => CloudResourcesPage(
+      module: services.publications,
+      wrapList: (child) => PageListNavigation(child: child),
+      onOpenLibrary: services.platform.television
+          ? null
+          : () => router.go('$publicationReadingPath?tab=library'),
+      onOpenTasks: services.platform.television
+          ? null
+          : () => router.go('$publicationReadingPath?tab=tasks'),
+    ),
+  );
+
   GoRoute _publicationRoute() => GoRoute(
     path: publicationReadingPath,
-    redirect: (_, _) => services.platform.television ? '/reading' : null,
-    builder: (_, _) => ListenableBuilder(
-      listenable: router.routerDelegate,
-      builder: (_, _) => PublicationsPage(
-        module: services.publications,
-        books: services.books,
-        platform: services.platform,
-        visible: router.routerDelegate.state.uri.path == publicationReadingPath,
-      ),
-    ),
+    builder: (_, _) => services.platform.television
+        ? const Center(child: Text('电视端暂不提供出版图书，请在手机或电脑上使用。'))
+        : ListenableBuilder(
+            listenable: router.routerDelegate,
+            builder: (_, _) => PublicationsPage(
+              module: services.publications,
+              books: services.books,
+              platform: services.platform,
+              visible:
+                  router.routerDelegate.state.uri.path ==
+                  publicationReadingPath,
+              entry: switch (router
+                  .routerDelegate
+                  .state
+                  .uri
+                  .queryParameters['tab']) {
+                'library' => PublicationPageEntry.library,
+                'tasks' => PublicationPageEntry.tasks,
+                'sources' => PublicationPageEntry.sources,
+                _ => null,
+              },
+              onBack: () => router.go(_publicationParent),
+            ),
+          ),
   );
 
   List<RouteBase> _standaloneRoutes() => [

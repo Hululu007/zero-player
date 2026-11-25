@@ -35,6 +35,8 @@ void main() {
       '10.0.0.1',
       '172.16.0.1',
       '192.168.1.1',
+      '192.0.0.170',
+      '192.0.2.10',
       '169.254.169.254',
       '100.64.0.1',
       '224.0.0.1',
@@ -53,10 +55,72 @@ void main() {
     }
     expect(NetworkTargetPolicy.isPrivate(InternetAddress('8.8.8.8')), isFalse);
     expect(
+      NetworkTargetPolicy.isPrivate(InternetAddress('192.0.78.144')),
+      isFalse,
+    );
+    expect(
       NetworkTargetPolicy.isPrivate(InternetAddress('2606:4700:4700::1111')),
       isFalse,
     );
   });
+
+  test(
+    'legacy query encoding is scoped to one GET without redirects',
+    () async {
+      final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+      final queries = <String>[];
+      server.listen((request) {
+        queries.add(request.uri.query);
+        request.response.close();
+      });
+      final production = MediaHttpClient();
+      final fixture = MediaHttpClient(allowPrivateNetworks: true);
+      addTearDown(() async {
+        production.close();
+        fixture.close();
+        await server.close(force: true);
+      });
+      final address = Uri.parse(
+        'http://127.0.0.1:${server.port}/search?keyword=%C8%FD',
+      );
+      final policy = HeaderPolicy({address: const {}});
+      await expectLater(
+        production.open(
+          address,
+          policy: policy,
+          followRedirects: false,
+          legacyQueryEncoding: true,
+        ),
+        throwsFormatException,
+      );
+      await expectLater(
+        fixture.open(address, policy: policy, legacyQueryEncoding: true),
+        throwsFormatException,
+      );
+      await expectLater(
+        fixture.open(
+          address.replace(query: 'keyword=%C8%FD%0A'),
+          policy: policy,
+          followRedirects: false,
+          legacyQueryEncoding: true,
+        ),
+        throwsFormatException,
+      );
+      final response = await fixture.open(
+        address,
+        policy: policy,
+        followRedirects: false,
+        legacyQueryEncoding: true,
+      );
+      expect(response.response.statusCode, HttpStatus.ok);
+      await response.body.drain<void>();
+      expect(queries, ['keyword=%C8%FD']);
+      await expectLater(
+        fixture.open(address, policy: policy, followRedirects: false),
+        throwsFormatException,
+      );
+    },
+  );
 
   test(
     'production transport blocks loopback before a request reaches it',

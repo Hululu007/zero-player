@@ -53,6 +53,7 @@ extension BookStoreShelfActions on BookStore {
     required bool includeNotes,
   }) async {
     final private = await isPrivateBook(book.id);
+    if (includeOffline) await _clearRebuiltCatalog(book);
     if (private) {
       await vault.delete('books_shelf:${book.id}');
       await vault.delete('rich_position_${book.id}');
@@ -315,6 +316,8 @@ extension BookStoreShelfActions on BookStore {
     final prefix = encrypted ? BookVault.dataPrefix : '';
     final patterns = [
       'books_shelf:$id',
+      'books_rebuilt_catalog:$id',
+      'books_rebuilt_chapter:$id:*',
       'books_notes:$id',
       'books_marks:$id',
       'rich_position_$id',

@@ -143,22 +143,27 @@ extension _BookRepositoryProbe on BooksRepository {
         throw const FormatException('正文为空、过短或被内容策略拦截');
       }
     } else if (source.kind == BookKind.comic) {
+      final imageResponses = <Uri, Document>{};
       final images = await client.chapterImages(
         source,
         chapter,
         active,
         book: details,
         requestGuard: guard,
+        onImageResponse: (uri, document) => imageResponses[uri] = document,
       );
       if (images.isEmpty) throw const FormatException('章节没有可阅读的图片');
-      final sample = await client.fetch(
-        source,
-        images.first,
-        active,
-        media: true,
-        maxBytes: 4 * 1024 * 1024,
-        requestGuard: guard,
-      );
+      final address = images.first;
+      final sample =
+          imageResponses[address] ??
+          await client.fetchChapterImage(
+            source,
+            address,
+            active,
+            chapter: chapter,
+            maxBytes: BookResourceLimits.imageBytes,
+            requestGuard: guard,
+          );
       if (sample.contentType?.toLowerCase().startsWith('image/') != true) {
         throw const FormatException('章节图片地址未返回图片');
       }

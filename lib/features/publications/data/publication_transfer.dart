@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 import 'dart:math';
+import 'dart:typed_data';
 
 import 'package:crypto/crypto.dart';
 import 'package:path/path.dart' as p;
@@ -10,6 +11,8 @@ import '../../../core/network/media_http_client.dart';
 import '../domain/publication.dart';
 import 'publication_http.dart';
 import 'publication_space.dart';
+import 'publication_website_markup.dart';
+import 'publication_website_target.dart';
 
 typedef TransferProgress = Future<void> Function(int received, int? total);
 typedef _Slice = ({int start, int end});
@@ -35,21 +38,78 @@ final class PublicationTransfer {
   }) async {
     final path = part(id);
     await path.parent.create(recursive: true);
-    final probe = await _open(
-      source.uri,
-      source,
-      token,
-      range: allowRanges ? 'bytes=0-0' : null,
-    );
+    final retained = source.takeResponse;
+    final probeRange =
+        allowRanges &&
+        (!source.preferWhole ||
+            (await space.store.db.rows(
+              'SELECT 1 FROM publication_transfer WHERE task=?',
+              [id],
+            )).isNotEmpty);
+    final probe =
+        retained?.call(token) ??
+        await _open(
+          source.uri,
+          source,
+          token,
+          range: probeRange ? 'bytes=0-0' : null,
+        );
     try {
+      if (retained != null) {
+        try {
+          token.check();
+          validatePublicationAddress(
+            probe.uri,
+            allowLoopback: http.allowLoopback,
+          );
+          http.authorize(probe.uri);
+          source.scope?.call(probe.uri);
+        } catch (_) {
+          await discardPublicationResponse(probe);
+          rethrow;
+        }
+      }
+      if (source.detectGuestQuota &&
+          const {200, 401, 403, 429}.contains(probe.response.statusCode) &&
+          publicationSameWebsite(source.uri, probe.uri) &&
+          publicationWebsiteHtml(
+            probe.response.headers.contentType?.mimeType,
+          )) {
+        throw await _websiteRefusal(probe, source, token);
+      }
       if (source.guest != null &&
           probe.response.headers.contentType?.mimeType == 'text/html') {
         await discardPublicationResponse(probe);
         throw const PublicationFailure(PublicationProblem.challenge);
       }
       int? observedLength;
-      if (!allowRanges || probe.response.statusCode == 200) {
-        await _single(probe, path, id, candidate, token, progress, authorize);
+      final chunkBytes = source.rangeChunkBytes ?? sliceBytes;
+      if (retained != null ||
+          !allowRanges ||
+          probe.response.statusCode == 200) {
+        final etag = source.preferWhole && allowRanges && retained == null
+            ? _strongEtag(probe)
+            : null;
+        await _single(
+          probe,
+          path,
+          id,
+          candidate,
+          token,
+          progress,
+          authorize,
+          reconnect: etag != null && source.rangeTarget?.call(probe.uri) == true
+              ? (start, end) => _openSlice(
+                  source,
+                  probe.uri,
+                  start,
+                  end,
+                  end + 1,
+                  etag,
+                  token,
+                )
+              : null,
+        );
       } else {
         observedLength = await _readProbe(probe, candidate, token);
         final status = probe.response.statusCode;
@@ -57,13 +117,14 @@ final class PublicationTransfer {
         var complete = false;
         if (observedLength != null &&
             etag != null &&
-            observedLength > sliceBytes) {
+            observedLength > chunkBytes) {
           if (status == HttpStatus.requestedRangeNotSatisfiable) {
             complete = await _reuseCompleteRanges(
               path,
               id,
               _rangeIdentity(candidate, probe.uri, etag, observedLength),
               observedLength,
+              chunkBytes,
               token,
               progress,
               authorize,
@@ -97,6 +158,7 @@ final class PublicationTransfer {
             status == HttpStatus.partialContent && observedLength != null
                 ? etag
                 : null,
+            useProbedAddress: source.rangeChunkBytes != null,
           );
           await _single(whole, path, id, candidate, token, progress, authorize);
         }
@@ -104,7 +166,7 @@ final class PublicationTransfer {
       final length = await path.length();
       _validateLength(candidate, length);
       if ((observedLength != null && length != observedLength) ||
-          await detectPublicationFormat(path) != candidate.format) {
+          !candidate.format.accepts(await detectPublicationFormat(path))) {
         throw const PublicationFailure(PublicationProblem.invalid);
       }
       final expected = candidate.digest;
@@ -123,14 +185,67 @@ final class PublicationTransfer {
     }
   }
 
+  Future<PublicationFailure> _websiteRefusal(
+    HttpPayload payload,
+    PublicationDownload download,
+    CancellationToken token,
+  ) async {
+    final fallback = publicationHttpFailure(payload);
+    if (payload.response.headers.value('cf-mitigated') == 'challenge') {
+      await discardPublicationResponse(payload);
+      return fallback.problem == PublicationProblem.invalid
+          ? const PublicationFailure(PublicationProblem.challenge)
+          : fallback;
+    }
+    final String html;
+    try {
+      html = await http.readText(
+        payload,
+        token,
+        maxBytes: 384 << 10,
+        allowGzip: true,
+        scope: download.scope,
+        acceptedStatuses: const {200, 401, 403, 429},
+      );
+    } on FormatException {
+      return fallback;
+    } on PublicationFailure catch (error) {
+      if (error.problem != PublicationProblem.invalid) rethrow;
+      return fallback;
+    }
+    if (download.preferWhole &&
+        payload.response.statusCode == HttpStatus.ok &&
+        html.trim().isEmpty) {
+      return const PublicationFailure(PublicationProblem.emptyResponse);
+    }
+    final page = parsePublicationWebsitePage(
+      html,
+      payload.uri,
+      (uri) => publicationSameWebsite(download.uri, uri),
+    );
+    return page.guestLimited
+        ? PublicationFailure(
+            PublicationProblem.guestLimit,
+            retryAt: fallback.retryAt,
+          )
+        : fallback;
+  }
+
   Future<HttpPayload> _openWhole(
     PublicationDownload source,
     CancellationToken token,
     AcquisitionCandidate candidate,
     Uri probed,
-    String? expectedEtag,
-  ) async {
-    final response = await _open(source.uri, source, token);
+    String? expectedEtag, {
+    required bool useProbedAddress,
+  }) async {
+    // The first request can consume an anonymous download allowance. Reuse the
+    // scoped file URL for the remaining requests and the full-file fallback.
+    final response = await _open(
+      useProbedAddress ? probed : source.uri,
+      source,
+      token,
+    );
     if (response.response.statusCode == 200 && expectedEtag != null) {
       final actual = _strongEtag(response);
       if (response.uri.origin != probed.origin ||
@@ -159,6 +274,8 @@ final class PublicationTransfer {
       referer: source.referer,
       range: range,
       ifRange: etag,
+      rangeTarget: source.rangeTarget,
+      mapRedirect: source.mapRedirect,
     );
     if (source.guest != null && response.response.statusCode == 412) {
       await discardPublicationResponse(response);
@@ -209,8 +326,9 @@ final class PublicationTransfer {
     AcquisitionCandidate candidate,
     CancellationToken token,
     TransferProgress progress,
-    void Function() authorize,
-  ) async {
+    void Function() authorize, {
+    Future<HttpPayload> Function(int start, int end)? reconnect,
+  }) async {
     RandomAccessFile? file;
     var subscribed = false;
     try {
@@ -238,38 +356,62 @@ final class PublicationTransfer {
       var received = 0;
       final notice = Stopwatch()..start();
       subscribed = true;
-      await for (final chunk in response.body) {
-        token.check();
-        authorize();
-        http.authorize(response.uri);
-        final next = received + chunk.length;
-        if (next > maxBytes || (total != null && next > total)) {
-          throw const PublicationFailure(PublicationProblem.invalid);
+      var retries = 0;
+      while (true) {
+        try {
+          final payload = retries == 0
+              ? response
+              : await reconnect!(received, total! - 1);
+          await for (final chunk in payload.body) {
+            token.check();
+            authorize();
+            http.authorize(payload.uri);
+            final next = received + chunk.length;
+            if (next > maxBytes || (total != null && next > total)) {
+              throw const PublicationFailure(PublicationProblem.invalid);
+            }
+            if (next > allocation) {
+              await file.flush();
+              await progress(received, total);
+              allocation = min(
+                maxBytes,
+                max(next, allocation + PublicationSpace.growthWindow),
+              );
+              await space.reserve(
+                id,
+                allocation,
+                used: received,
+                authorize: authorize,
+              );
+            }
+            await file.writeFrom(chunk);
+            received = next;
+            if (notice.elapsedMilliseconds >= 350) {
+              notice.reset();
+              await space.checkpoint(id, received);
+              await progress(received, total);
+            }
+          }
+          if (total != null && received != total) {
+            throw PublicationFailure(
+              reconnect == null
+                  ? PublicationProblem.invalid
+                  : PublicationProblem.network,
+            );
+          }
+          break;
+        } on Exception catch (error) {
+          token.check();
+          if (reconnect == null ||
+              total == null ||
+              received >= total ||
+              error is FileSystemException ||
+              !isPublicationNetworkFailure(error) ||
+              retries >= 2) {
+            rethrow;
+          }
+          retries++;
         }
-        if (next > allocation) {
-          await file.flush();
-          await progress(received, total);
-          allocation = min(
-            maxBytes,
-            max(next, allocation + PublicationSpace.growthWindow),
-          );
-          await space.reserve(
-            id,
-            allocation,
-            used: received,
-            authorize: authorize,
-          );
-        }
-        await file.writeFrom(chunk);
-        received = next;
-        if (notice.elapsedMilliseconds >= 350) {
-          notice.reset();
-          await space.checkpoint(id, received);
-          await progress(received, total);
-        }
-      }
-      if (total != null && received != total) {
-        throw const PublicationFailure(PublicationProblem.invalid);
       }
       await file.flush();
       await space.checkpoint(id, received);
@@ -296,7 +438,7 @@ final class PublicationTransfer {
       path,
       id,
       _rangeIdentity(candidate, uri, etag, length),
-      _plannedRanges(length),
+      _plannedRanges(length, source.rangeChunkBytes ?? sliceBytes),
       token,
     );
     var received =
@@ -374,16 +516,74 @@ final class PublicationTransfer {
     CancellationToken token,
     void Function() authorize,
   ) async {
+    var position = slice.start;
+    Digest? digest;
+    final hash = sha256.startChunkedConversion(
+      _DigestSink((value) => digest = value),
+    );
+    var retries = 0;
+    while (position <= slice.end) {
+      try {
+        final response = await _openSlice(
+          source,
+          uri,
+          position,
+          slice.end,
+          total,
+          etag,
+          token,
+        );
+        await for (final chunk in response.body) {
+          token.check();
+          authorize();
+          if (position + chunk.length > slice.end + 1) throw const _BadRange();
+          await writer.write(position, chunk, token);
+          position += chunk.length;
+          hash.add(chunk);
+        }
+        if (position != slice.end + 1) {
+          if (source.rangeChunkBytes == null) throw const _BadRange();
+          throw const PublicationFailure(PublicationProblem.network);
+        }
+      } on Exception catch (error) {
+        token.check();
+        if (source.rangeChunkBytes == null ||
+            retries++ >= 2 ||
+            error is FileSystemException ||
+            !isPublicationNetworkFailure(error)) {
+          rethrow;
+        }
+      }
+    }
+    hash.close();
+    await writer.flush();
+    token.check();
+    authorize();
+    await space.store.db.write(
+      'INSERT OR REPLACE INTO publication_ranges VALUES(?,?,?)',
+      [id, slice.start, digest.toString()],
+    );
+  }
+
+  Future<HttpPayload> _openSlice(
+    PublicationDownload source,
+    Uri uri,
+    int start,
+    int end,
+    int total,
+    String etag,
+    CancellationToken token,
+  ) async {
     final response = await _open(
       uri,
       source,
       token,
-      range: 'bytes=${slice.start}-${slice.end}',
+      range: 'bytes=$start-$end',
       etag: etag,
     );
-    final size = slice.end - slice.start + 1;
+    final size = end - start + 1;
     if (response.response.statusCode != 206 ||
-        _responseRange(response) != (slice.start, slice.end, total) ||
+        _responseRange(response) != (start, end, total) ||
         _strongEtag(response) != etag ||
         !_binary(response) ||
         response.response.contentLength != size ||
@@ -402,28 +602,7 @@ final class PublicationTransfer {
       }
       throw publicationHttpFailure(response);
     }
-    var position = slice.start;
-    Digest? digest;
-    final hash = sha256.startChunkedConversion(
-      _DigestSink((value) => digest = value),
-    );
-    await for (final chunk in response.body) {
-      token.check();
-      authorize();
-      if (position + chunk.length > slice.end + 1) throw const _BadRange();
-      await writer.write(position, chunk, token);
-      position += chunk.length;
-      hash.add(chunk);
-    }
-    hash.close();
-    if (position != slice.end + 1) throw const _BadRange();
-    await writer.flush();
-    token.check();
-    authorize();
-    await space.store.db.write(
-      'INSERT OR REPLACE INTO publication_ranges VALUES(?,?,?)',
-      [id, slice.start, digest.toString()],
-    );
+    return response;
   }
 
   Future<bool> _reuseCompleteRanges(
@@ -431,6 +610,7 @@ final class PublicationTransfer {
     String id,
     String identity,
     int length,
+    int chunkBytes,
     CancellationToken token,
     TransferProgress progress,
     void Function() authorize,
@@ -439,7 +619,7 @@ final class PublicationTransfer {
       path,
       id,
       identity,
-      _plannedRanges(length),
+      _plannedRanges(length, chunkBytes),
       token,
       repair: false,
     );
@@ -520,12 +700,9 @@ String _rangeIdentity(
   int length,
 ) => publicationId('${candidate.id}\n${uri.origin}${uri.path}\n$etag\n$length');
 
-List<_Slice> _plannedRanges(int length) => [
-  for (var start = 0; start < length; start += PublicationTransfer.sliceBytes)
-    (
-      start: start,
-      end: min(start + PublicationTransfer.sliceBytes, length) - 1,
-    ),
+List<_Slice> _plannedRanges(int length, int chunkBytes) => [
+  for (var start = 0; start < length; start += chunkBytes)
+    (start: start, end: min(start + chunkBytes, length) - 1),
 ];
 
 final class _BadRange implements Exception {
@@ -633,6 +810,26 @@ Future<PublicationFormat?> detectPublicationFormat(File file) async {
     if (bytes.length < 8) return null;
     if (String.fromCharCodes(bytes.take(5)) == '%PDF-') {
       return PublicationFormat.pdf;
+    }
+    if (bytes.length >= 86 &&
+        String.fromCharCodes(bytes.sublist(60, 68)) == 'BOOKMOBI') {
+      final header = ByteData.sublistView(bytes);
+      final records = header.getUint16(76);
+      final offset = header.getUint32(78);
+      if (records < 2 ||
+          offset < 78 + records * 8 ||
+          offset + 40 > await handle.length()) {
+        return null;
+      }
+      await handle.setPosition(offset);
+      final record = await handle.read(40);
+      if (record.length != 40 ||
+          String.fromCharCodes(record.sublist(16, 20)) != 'MOBI') {
+        return null;
+      }
+      return ByteData.sublistView(record).getUint32(36) >= 8
+          ? PublicationFormat.azw3
+          : PublicationFormat.mobi;
     }
     if (bytes.length < 30 ||
         bytes[0] != 0x50 ||

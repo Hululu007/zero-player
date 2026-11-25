@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'dart:async';
 import 'app_services.dart';
+import 'reading_navigation.dart';
 import '../features/books/domain/book.dart';
 import '../features/books/presentation/books_page.dart';
 import '../features/books/presentation/book_download_management_page.dart';
@@ -35,6 +37,24 @@ class _MediaLibraryHubState extends State<MediaLibraryHub> {
     length: 4,
     child: Column(
       children: [
+        if (downloads)
+          Wrap(
+            spacing: 8,
+            children: [
+              if (!services.platform.television)
+                TextButton.icon(
+                  onPressed: () =>
+                      context.go('$publicationReadingPath?tab=tasks'),
+                  icon: const Icon(Icons.menu_book_outlined),
+                  label: const Text('出版图书任务'),
+                ),
+              TextButton.icon(
+                onPressed: () => context.go('/cloud-resources'),
+                icon: const Icon(Icons.cloud_download_outlined),
+                label: const Text('网盘资源下载'),
+              ),
+            ],
+          ),
         const TabBar(
           tabs: [
             Tab(text: '影音'),

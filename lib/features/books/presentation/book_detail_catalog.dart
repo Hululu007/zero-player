@@ -4,12 +4,12 @@ const _catalogPageSize = 120;
 
 extension _BookDetailCatalog on _BookDetailPageState {
   List<BookChapter> get _visibleChapters {
-    final chapters = _reverse ? _chapters.reversed : _chapters;
+    final chapters = _reverse ? _readerCatalog.reversed : _readerCatalog;
     return chapters
         .where(
           (c) =>
               _books.policy.textAllowed(c.title) &&
-              (!_offline || _saved.contains(c.id)) &&
+              (!_offline || _saved.contains(c.id) || isRebuiltBookChapter(c)) &&
               c.title.toLowerCase().contains(_chapterQuery),
         )
         .toList();
@@ -68,7 +68,7 @@ extension _BookDetailCatalog on _BookDetailPageState {
 
   Future<void> _jumpToChapter() async {
     final bookId = _book.id;
-    final ordered = _chapters
+    final ordered = _readerCatalog
         .where((chapter) => _books.policy.textAllowed(chapter.title))
         .toList();
     final index = await showDialog<int>(
@@ -90,7 +90,7 @@ extension _BookDetailCatalog on _BookDetailPageState {
         IconButton(
           tooltip: '跳转章节',
           onPressed:
-              _chapters.any(
+              _readerCatalog.any(
                 (chapter) => _books.policy.textAllowed(chapter.title),
               )
               ? _jumpToChapter

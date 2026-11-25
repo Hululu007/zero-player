@@ -35,6 +35,11 @@ migrate_working_dir/
 /.tools/
 /test_support/generated/
 /artifacts/
+# User data created by Zero Player
+zero-player.sqlite
+zero-player.sqlite-*
+zero-player-backup.json
+图书书库备份.json
 /.workbuddy/
 /tmp/
 /android/.kotlin/

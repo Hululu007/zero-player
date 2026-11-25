@@ -103,6 +103,48 @@ void _epubParsing() {
     expect(() => readRichEpub(ZipEncoder().encode(zip)), throwsFormatException);
     expect(() => readRichEpub(utf8.encode('not a zip')), throwsA(anything));
   });
+  test('EPUB skips declared IDPF fonts and rejects protected content', () {
+    const idpf = 'http://www.idpf.org/2008/embedding';
+    List<int> epub(String path, {String algorithm = idpf}) {
+      final archive = ZipDecoder().decodeBytes(sampleEpub());
+      final opf = utf8.decode(archive.findFile('OEBPS/book.opf')!.content);
+      archive.addFile(
+        ArchiveFile.string(
+          'OEBPS/book.opf',
+          opf.replaceFirst(
+            '</manifest>',
+            '<item id="font" href="font.TTF" media-type="application/vnd.ms-opentype"/></manifest>',
+          ),
+        ),
+      );
+      archive.addFile(ArchiveFile.string('OEBPS/font.TTF', 'opaque font data'));
+      archive.addFile(
+        ArchiveFile.string('META-INF/encryption.xml', '''
+<encryption xmlns="urn:oasis:names:tc:opendocument:xmlns:container"
+  xmlns:enc="http://www.w3.org/2001/04/xmlenc#">
+  <enc:EncryptedData>
+    <enc:EncryptionMethod Algorithm="$algorithm"/>
+    <enc:CipherData><enc:CipherReference URI="$path"/></enc:CipherData>
+  </enc:EncryptedData>
+</encryption>'''),
+      );
+      return ZipEncoder().encode(archive);
+    }
+
+    expect(readRichEpub(epub('OEBPS/font.TTF')).single.text, contains('中文正文'));
+    expect(
+      () => readRichEpub(epub('OEBPS/chapter.xhtml')),
+      throwsFormatException,
+    );
+    expect(
+      () => readRichEpub(epub('OEBPS/picture.png')),
+      throwsFormatException,
+    );
+    expect(
+      () => readRichEpub(epub('OEBPS/font.TTF', algorithm: 'urn:encrypted')),
+      throwsFormatException,
+    );
+  });
   test('EPUB rejects a symlink marked in the ZIP directory', () {
     final bytes = Uint8List.fromList(sampleEpub());
     final zip = ByteData.sublistView(bytes);

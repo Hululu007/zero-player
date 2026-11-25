@@ -8,6 +8,7 @@ import android.app.Service
 import android.content.Context
 import android.content.Intent
 import android.content.pm.ServiceInfo
+import android.net.ConnectivityManager
 import android.os.Build
 import android.os.Handler
 import android.os.IBinder
@@ -53,6 +54,7 @@ internal object PublicationAndroidBridge {
                             .putExtra("root", root.path).putExtra("id", id)
                             .putExtra("code", call.argument<String>("code")?.take(256))
                             .putExtra("codeFor", call.argument<String>("codeFor")?.takeIf(taskId::matches))
+                            .putExtra("baiduAccessToken", call.argument<String>("baiduAccessToken")?.take(512))
                         ContextCompat.startForegroundService(context, command)
                         result.success(null)
                     } catch (_: IllegalStateException) {
@@ -63,7 +65,9 @@ internal object PublicationAndroidBridge {
                 }
                 "pause", "recheck" -> {
                     val service = PublicationDownloadService.current
-                    if (service == null) result.success(null)
+                    if (service == null && call.method == "pause") {
+                        result.error("worker_unavailable", "后台下载服务已停止", null)
+                    } else if (service == null) result.success(null)
                     else service.command(call.method, call.arguments, result)
                 }
                 else -> result.notImplemented()
@@ -130,7 +134,8 @@ class PublicationDownloadService : Service() {
             queued.add(mapOf(
                 "id" to intent.getStringExtra("id"),
                 "code" to intent.getStringExtra("code"),
-                "codeFor" to intent.getStringExtra("codeFor")
+                "codeFor" to intent.getStringExtra("codeFor"),
+                "baiduAccessToken" to intent.getStringExtra("baiduAccessToken")
             ))
             if (engine == null) startEngine()
             flush()
@@ -149,6 +154,7 @@ class PublicationDownloadService : Service() {
             channel.setMethodCallHandler { call, result ->
                 when (call.method) {
                     "root" -> result.success(root)
+                    "isMetered" -> result.success(getSystemService(ConnectivityManager::class.java)?.isActiveNetworkMetered ?: true)
                     "ready" -> {
                         ready = true
                         result.success(null)
@@ -217,7 +223,8 @@ class PublicationDownloadService : Service() {
     internal fun command(method: String, args: Any?, result: MethodChannel.Result? = null) {
         val channel = bridge
         if (!ready || channel == null) {
-            result?.success(null)
+            if (method == "pause") result?.error("worker_starting", "后台下载服务尚未就绪", null)
+            else result?.success(null)
             return
         }
         channel.invokeMethod(method, args, result)
@@ -228,26 +235,38 @@ class PublicationDownloadService : Service() {
         builder.setSmallIcon(android.R.drawable.stat_sys_download)
             .setContentTitle("图书下载").setOngoing(true).setOnlyAlertOnce(true)
             .setVisibility(Notification.VISIBILITY_PRIVATE)
-        val task = tasks.firstOrNull()
-        val received = (task?.get("received") as? Number)?.toLong() ?: 0L
-        val total = (task?.get("total") as? Number)?.toLong() ?: 0L
-        if (total > 0L) {
-            val percent = ((received * 100) / total).toInt().coerceIn(0, 100)
-            builder.setProgress(100, percent, false).setContentText("$percent%")
+        val running = tasks.filter { it["state"] == "resolving" || it["state"] == "downloading" }
+        val progress = if (running.isEmpty()) {
+            tasks.firstOrNull()?.get("status") as? String ?: "正在准备下载"
         } else {
-            builder.setProgress(0, 0, true).setContentText("正在准备下载")
+            running.mapIndexed { index, task ->
+                val received = (task["received"] as? Number)?.toLong() ?: 0L
+                val total = (task["total"] as? Number)?.toLong() ?: 0L
+                val status = if (total > 0L) "${((received * 100) / total).coerceIn(0, 100)}%"
+                    else task["status"] as? String ?: "正在准备"
+                "任务 ${index + 1} · $status"
+            }.joinToString("  ")
         }
+        val paused = tasks.count { it["state"] == "paused" }
+        val failed = tasks.count { it["state"] == "failed" }
+        val summary = buildList {
+            add(progress)
+            if (running.isNotEmpty() && paused > 0) add("已暂停 $paused 个")
+            if (running.isNotEmpty() && failed > 0) add("失败 $failed 个")
+        }.joinToString(" · ")
+        builder.setContentText(summary).setStyle(Notification.BigTextStyle().bigText(summary))
+        if (running.isNotEmpty() || tasks.isEmpty()) builder.setProgress(0, 0, true)
         packageManager.getLaunchIntentForPackage(packageName)?.let {
             builder.setContentIntent(PendingIntent.getActivity(this, NOTICE, it, PendingIntent.FLAG_IMMUTABLE))
         }
-        for (running in tasks.take(2)) {
-            val id = running["id"] as? String ?: continue
-            val generation = (running["generation"] as? Number)?.toInt() ?: continue
+        for ((index, task) in running.take(2).withIndex()) {
+            val id = task["id"] as? String ?: continue
+            val generation = (task["generation"] as? Number)?.toInt() ?: continue
             val pause = Intent(this, PublicationDownloadService::class.java).setAction(PAUSE)
                 .putExtra("id", id).putExtra("generation", generation)
                 .setData(android.net.Uri.parse("publication-pause://$id/$generation"))
             val action = PendingIntent.getService(this, NOTICE, pause, PendingIntent.FLAG_IMMUTABLE)
-            builder.addAction(Notification.Action.Builder(null, "暂停", action).build())
+            builder.addAction(Notification.Action.Builder(null, "暂停任务 ${index + 1}", action).build())
         }
         return builder.build()
     }

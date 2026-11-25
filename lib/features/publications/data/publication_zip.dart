@@ -46,7 +46,7 @@ final class PublicationZip {
     try {
       await _extractOffThread((file.path, entry, target.path, password), token);
       token.check();
-      if (await detectPublicationFormat(target) != entry.format) {
+      if (!entry.format.accepts(await detectPublicationFormat(target))) {
         throw const PublicationFailure(PublicationProblem.invalid);
       }
       success = true;

@@ -1,9 +1,11 @@
 import '../../../../core/network/cancellation_token.dart';
 import '../../../../core/network/document_client.dart';
+import '../../../../core/network/header_policy.dart';
 import '../../domain/book.dart';
 import '../../domain/book_search.dart';
 import '../../domain/legado_source.dart';
 import '../book_request_guard.dart';
+import '../book_resource_limits.dart';
 import 'legado_request.dart';
 import 'kuwo_discovery.dart';
 import 'legado_rule_tokens.dart';
@@ -144,12 +146,18 @@ final class LegadoBookClient {
 
   Future<Document> feedDocument(
     BookSource source,
-    CancellationToken token,
-  ) async {
+    CancellationToken token, {
+    BookRequestGuard? requestGuard,
+  }) async {
     final address = source.legado!.search;
-    final request = await _firstAddress(source, [address], token);
+    final request = await _firstAddress(
+      source,
+      [address],
+      token,
+      requestGuard: requestGuard,
+    );
     if (request == null) throw const FormatException('Legado 订阅未提供可用地址');
-    return _fetch(source, request, token);
+    return _fetch(source, request, token, requestGuard: requestGuard);
   }
 
   Future<List<Book>> books(
@@ -294,10 +302,12 @@ final class LegadoBookClient {
   }) async {
     final articles = source.format == BookFormat.feed;
     final first = articles
-        ? await _firstAddress(source, [
-            source.legado!.search,
-            ...source.legado!.explore,
-          ], token)
+        ? await _firstAddress(
+            source,
+            [source.legado!.search, ...source.legado!.explore],
+            token,
+            requestGuard: requestGuard,
+          )
         : _stored(source, book.uri, book.request);
     if (first == null) return [];
     final chapters = <String, BookChapter>{};
@@ -310,6 +320,7 @@ final class LegadoBookClient {
         source,
         next,
         token,
+        maxBytes: articles ? 2 * 1024 * 1024 : bookChapterCatalogPageBytes,
         requestGuard: requestGuard,
       );
       final result = await _run(
@@ -449,49 +460,87 @@ final class LegadoBookClient {
     CancellationToken token, {
     Book? book,
     BookRequestGuard? requestGuard,
+    void Function(Uri, Document)? onImageResponse,
   }) async {
-    if (RegExp(
-      r'\.(?:png|jpe?g|webp|gif)$',
-      caseSensitive: false,
-    ).hasMatch(chapter.uri.path)) {
-      final uri = source.requestTarget(chapter.uri, media: true);
-      requestGuard?.call(uri, chapter.request);
-      return [uri];
-    }
-    final document = await _fetch(
-      source,
-      _stored(source, chapter.uri, chapter.request),
-      token,
-      requestGuard: requestGuard,
-    );
-    if (document.contentType?.toLowerCase().startsWith('image/') == true) {
-      return [source.requestTarget(document.uri, media: true)];
-    }
-    final result = await _run(
-      LegadoJob(
-        source,
-        document.uri,
-        LegadoOperation.images,
-        input: document.text,
-        book: book,
-        chapter: chapter,
-      ),
-      token,
-      requestGuard: requestGuard,
-    );
+    var next = _stored(source, chapter.uri, chapter.request);
+    final visited = <String>{};
     final images = <Uri>{};
-    for (final address in result.links.take(100)) {
-      Uri image;
-      try {
-        image = source.resolve(document.uri, address, media: true);
-      } on FormatException {
-        // A rule cannot authorize an undeclared media host.
-        continue;
+    for (var page = 1; page <= 10 && visited.add(next.targetKey); page++) {
+      final document = await _fetch(
+        source,
+        next,
+        token,
+        maxBytes: BookResourceLimits.imageBytes,
+        requestGuard: requestGuard,
+      );
+      token.check();
+      if (document.contentType?.toLowerCase().startsWith('image/') == true) {
+        final address = source.requestTarget(document.uri, media: true);
+        requestGuard?.call(address, null);
+        images.add(address);
+        onImageResponse?.call(address, document);
+        break;
       }
-      requestGuard?.call(image, null);
-      images.add(image);
+      final result = await _run(
+        LegadoJob(
+          source,
+          document.uri,
+          LegadoOperation.images,
+          input: document.text,
+          page: page,
+          book: book,
+          chapter: chapter,
+        ),
+        token,
+        requestGuard: requestGuard,
+      );
+      if (result.links.isEmpty) {
+        throw const FormatException('Legado 章节分页未返回可阅读的图片');
+      }
+      for (final link in result.links) {
+        final image = source.resolve(document.uri, link, media: true);
+        requestGuard?.call(image, null);
+        images.add(image);
+        if (images.length > BookResourceLimits.chapterImages) {
+          throw const FormatException('章节图片数量超过限制，未完整获取');
+        }
+      }
+      if (next.uri != document.uri) visited.add(document.uri.toString());
+      final more = result.nextContentLinks
+          .map(
+            (link) =>
+                LegadoRequest.parse(source, document.uri, link, page: page + 1),
+          )
+          .where((link) => !visited.contains(link.targetKey))
+          .firstOrNull;
+      if (more == null) break;
+      if (page == 10) {
+        throw const FormatException('章节分页超过限制，图片未完整获取');
+      }
+      next = more;
+    }
+    if (images.length > BookResourceLimits.chapterImages) {
+      throw const FormatException('章节图片数量超过限制，未完整获取');
     }
     return images.toList();
+  }
+
+  Future<Document> imageDocument(
+    BookSource source,
+    BookChapter chapter,
+    CancellationToken token, {
+    required int maxBytes,
+    BookRequestGuard? requestGuard,
+  }) {
+    final media = isBookImageAddress(chapter.uri);
+    return _fetch(
+      source,
+      _stored(source, chapter.uri, chapter.request, media: media),
+      token,
+      media: media,
+      maxBytes: maxBytes,
+      requestGuard: requestGuard,
+    );
   }
 
   Future<Uri> audio(
@@ -542,6 +591,7 @@ final class LegadoBookClient {
     String query = '',
     int page = 1,
     bool allowDiscoveryNetworkExpansion = true,
+    BookRequestGuard? requestGuard,
   }) async {
     FormatException? invalid;
     for (final address in options.where((address) => address.isNotEmpty)) {
@@ -559,6 +609,7 @@ final class LegadoBookClient {
                 ),
                 token,
                 allowDiscoveryNetworkExpansion: allowDiscoveryNetworkExpansion,
+                requestGuard: requestGuard,
               )).links
             : [address];
         for (final value in links) {
@@ -645,15 +696,22 @@ final class LegadoBookClient {
     CancellationToken token, {
     int maxBytes = 2 * 1024 * 1024,
     bool allowRedirects = true,
+    bool media = false,
     BookRequestGuard? requestGuard,
   }) {
-    final uri = source.requestTarget(request.uri);
+    final uri = source.requestTarget(request.uri, media: media);
     requestGuard?.call(uri, request.targetKey);
+    final sameOrigin =
+        HeaderPolicy.origin(source.endpoint) == HeaderPolicy.origin(uri);
+    final headers = sameOrigin ? request.headers : const <String, String>{};
+    if (!sameOrigin && (request.json != null || request.form != null)) {
+      throw const FormatException('Legado POST 仅支持来源同源地址');
+    }
     if (request.json case final Map<String, Object?> body) {
       return network.postJson(
         uri,
         body,
-        headers: request.headers,
+        headers: headers,
         maxBytes: maxBytes,
         cancellation: token,
       );
@@ -662,7 +720,7 @@ final class LegadoBookClient {
       return network.postForm(
         uri,
         body,
-        headers: request.headers,
+        headers: headers,
         maxBytes: maxBytes,
         cancellation: token,
         encoding: request.encoding,
@@ -670,12 +728,12 @@ final class LegadoBookClient {
     }
     return network.get(
       uri,
-      headers: request.headers,
+      headers: headers,
       maxBytes: maxBytes,
       networkTimeout: const Duration(seconds: 12),
       cancellation: token,
       validateTarget: (target) {
-        source.requestTarget(target);
+        source.requestTarget(target, media: media);
         requestGuard?.call(target, null);
       },
       mapRedirect: allowRedirects
@@ -685,12 +743,18 @@ final class LegadoBookClient {
   }
 }
 
-LegadoRequest _stored(BookSource source, Uri uri, String reference) {
-  final safe = source.requestTarget(uri);
+LegadoRequest _stored(
+  BookSource source,
+  Uri uri,
+  String reference, {
+  bool media = false,
+}) {
+  final safe = source.requestTarget(uri, media: media);
   final request = LegadoRequest.parse(
     source,
     safe,
     reference.isEmpty ? '$safe' : reference,
+    media: media,
   );
   if (request.uri != safe) throw const FormatException('已保存的 Legado 请求地址不一致');
   return request;

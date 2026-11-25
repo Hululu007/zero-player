@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -40,28 +41,119 @@ void main() {
   _discoveryStateTest();
 }
 
+void _publicationNavigationTest() {
+  testWidgets('desktop Escape returns from cloud resources', (tester) async {
+    debugDefaultTargetPlatformOverride = TargetPlatform.windows;
+    addTearDown(() => debugDefaultTargetPlatformOverride = null);
+    await fixture.pump(tester, size: const Size(1100, 820));
+    final router = GoRouter.of(tester.element(find.byType(AppShell)));
+    router.go('/downloads');
+    await fixture.settle(tester);
+    await tester.tap(find.text('网盘资源下载').hitTestable().last);
+    await fixture.settle(tester);
+    expect(router.state.uri.path, '/cloud-resources');
+    await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+    await fixture.settle(tester);
+    expect(router.state.uri.path, '/downloads');
+    await fixture.finish(tester);
+    debugDefaultTargetPlatformOverride = null;
+  });
+
+  testWidgets('Baidu share handoff leads back to the book library', (
+    tester,
+  ) async {
+    await fixture.pump(tester);
+    final router = GoRouter.of(tester.element(find.byType(AppShell)));
+    router.go('/cloud-resources');
+    await fixture.settle(tester);
+    final link = find.widgetWithText(TextField, '网盘分享链接');
+    await tester.enterText(link, 'pan.baidu.com/s/fixture?pwd=ab12');
+    await tester.tap(find.text('解析分享'));
+    await fixture.settle(tester);
+    expect(find.text('打开分享页'), findsOneWidget);
+
+    final library = find.text('前往书库导入已下载的图书');
+    await tester.ensureVisible(library);
+    await tester.tap(library);
+    await _waitForPublicationTabs(tester);
+    await fixture.settle(tester);
+    expect(router.state.uri.queryParameters['tab'], 'library');
+    expect(find.text('管理分组').hitTestable(), findsOneWidget);
+
+    router.go('/cloud-resources');
+    await fixture.settle(tester);
+    router.go('/publications?tab=tasks');
+    await _waitForPublicationTabs(tester);
+    await fixture.settle(tester);
+    final tabs = tester.widget<TabBar>(find.byType(TabBar).first);
+    expect(tabs.controller?.index, 2);
+    await fixture.finish(tester);
+  });
+
+  testWidgets('publications swipes and system back follow the page hierarchy', (
+    tester,
+  ) async {
+    await fixture.pump(tester);
+    final router = GoRouter.of(tester.element(find.byType(AppShell)));
+    router.go('/calendar');
+    await fixture.settle(tester);
+    await tester.tap(find.widgetWithText(NavigationDestination, '阅读'));
+    await fixture.settle(tester);
+    await tester.tap(find.widgetWithText(ListTile, '出版图书'));
+    await _waitForPublicationTabs(tester);
+
+    await tester.fling(find.byType(TabBarView), const Offset(-310, 0), 800);
+    await fixture.settle(tester);
+    expect(find.text('管理分组').hitTestable(), findsOneWidget);
+    await tester.binding.handlePopRoute();
+    await fixture.settle(tester);
+    expect(router.state.uri.path, '/publications');
+    expect(find.byTooltip('搜索图书').hitTestable(), findsOneWidget);
+
+    expect(find.text('渠道聚合'), findsNothing);
+    await tester.tap(find.text('选择渠道'));
+    await fixture.settle(tester);
+    expect(find.byTooltip('定位到当前'), findsOneWidget);
+    await tester.tap(find.text('收藏渠道'));
+    await fixture.settle(tester);
+    await tester.binding.handlePopRoute();
+    await fixture.settle(tester);
+    expect(router.state.uri.path, '/publications');
+    expect(find.text('豆瓣读书 · Top 250').hitTestable(), findsOneWidget);
+
+    final position = tester.getTopRight(find.byType(TabBarView));
+    await tester.flingFrom(
+      position + const Offset(-8, 150),
+      const Offset(-130, 0),
+      750,
+    );
+    await fixture.settle(tester);
+    expect(router.state.uri.path, '/calendar');
+    expect(find.text('退出 Zero Player？'), findsNothing);
+    await fixture.finish(tester);
+  });
+}
+
 void _readingNavigationTests() {
-  testWidgets('desktop reading opens books and groups all reading pages', (
+  _publicationNavigationTest();
+
+  testWidgets('desktop reading expands without changing the current route', (
     tester,
   ) async {
     await fixture.pump(tester, size: const Size(1100, 820));
     final router = GoRouter.of(tester.element(find.byType(AppShell)));
     await tester.tap(find.byTooltip('展开导航 (Ctrl+M)'));
     await fixture.settle(tester);
-    final books = find.widgetWithText(ListTile, '图书');
+    final books = find.widgetWithText(ListTile, '出版图书');
     final novels = find.widgetWithText(ListTile, '网络小说');
     expect(books, findsNothing);
     expect(find.widgetWithText(ListTile, '网络漫画'), findsNothing);
-    await tester.tap(
-      find.descendant(
-        of: find.byKey(const PageStorageKey('reading-navigation')),
-        matching: find.byIcon(Icons.expand_more),
-      ),
-    );
+    await tester.tap(find.text('阅读'));
     await fixture.settle(tester);
     expect(books, findsOneWidget);
     expect(tester.getTopLeft(books).dy, lessThan(tester.getTopLeft(novels).dy));
-    await tester.tap(find.text('阅读'));
+    expect(router.state.uri.path, '/');
+    await tester.tap(books);
     await _waitForPublicationTabs(tester);
     expect(router.state.uri.path, '/publications');
     expect(find.byType(PublicationsPage), findsOneWidget);
@@ -74,23 +166,15 @@ void _readingNavigationTests() {
     await fixture.finish(tester);
   });
 
-  testWidgets('phone reading opens books first and switches within reading', (
+  testWidgets('phone reading opens the submenu before changing route', (
     tester,
   ) async {
     await fixture.pump(tester);
     final router = GoRouter.of(tester.element(find.byType(AppShell)));
     final reading = find.widgetWithText(NavigationDestination, '阅读');
     await tester.tap(reading);
-    await _waitForPublicationTabs(tester);
-    expect(router.state.uri.path, '/publications');
-    expect(find.byType(PublicationsPage), findsOneWidget);
-    expect(
-      tester.widget<NavigationBar>(find.byType(NavigationBar)).selectedIndex,
-      3,
-    );
-
-    await tester.tap(reading);
     await fixture.settle(tester);
+    expect(router.state.uri.path, '/');
     final tiles = find.descendant(
       of: find.byType(BottomSheet),
       matching: find.byType(ListTile),
@@ -99,8 +183,18 @@ void _readingNavigationTests() {
       tester
           .widgetList<ListTile>(tiles)
           .map((tile) => (tile.title! as Text).data),
-      ['图书', '网络小说', '网络漫画', '网络听书'],
+      ['出版图书', '网络小说', '网络漫画', '网络听书'],
     );
+    expect(tester.widgetList<ListTile>(tiles).first.selected, isFalse);
+    await tester.tap(find.widgetWithText(ListTile, '出版图书'));
+    await _waitForPublicationTabs(tester);
+    expect(router.state.uri.path, '/publications');
+    expect(
+      tester.widget<NavigationBar>(find.byType(NavigationBar)).selectedIndex,
+      3,
+    );
+    await tester.tap(reading);
+    await fixture.settle(tester);
     expect(tester.widgetList<ListTile>(tiles).first.selected, isTrue);
     await tester.tap(find.widgetWithText(ListTile, '网络小说'));
     await fixture.waitFor(
@@ -121,7 +215,7 @@ void _readingNavigationTests() {
     await fixture.settle(tester);
     await tester.tap(find.text('阅读'));
     await fixture.settle(tester);
-    expect(find.widgetWithText(ListTile, '图书'), findsNothing);
+    expect(find.widgetWithText(ListTile, '出版图书'), findsNothing);
     expect(find.widgetWithText(ListTile, '网络小说'), findsOneWidget);
     expect(find.widgetWithText(ListTile, '网络漫画'), findsOneWidget);
     expect(find.widgetWithText(ListTile, '网络听书'), findsOneWidget);
@@ -130,9 +224,19 @@ void _readingNavigationTests() {
     router.go('/publications');
     await fixture.waitFor(
       tester,
-      () => find.text('书架').hitTestable().evaluate().isNotEmpty,
+      () => find.textContaining('电视端暂不提供出版图书').evaluate().isNotEmpty,
     );
-    expect(router.state.uri.path, '/reading');
+    expect(router.state.uri.path, '/publications');
+    router.go('/cloud-resources');
+    await fixture.settle(tester);
+    await tester.enterText(
+      find.widgetWithText(TextField, '网盘分享链接'),
+      'pan.baidu.com/s/fixture',
+    );
+    await tester.tap(find.text('解析分享'));
+    await fixture.settle(tester);
+    expect(find.text('打开分享页'), findsOneWidget);
+    expect(find.text('前往书库导入已下载的图书'), findsNothing);
     await fixture.finish(tester);
   });
 }
@@ -177,6 +281,8 @@ void _discoveryStateTest() {
     await tester.runAsync(() async {
       rootBundle.evict('assets/catalogs/books/verified.json');
       await rootBundle.loadString('assets/catalogs/books/verified.json');
+      rootBundle.evict('assets/catalogs/books/website-sources.json');
+      await rootBundle.loadString('assets/catalogs/books/website-sources.json');
       rootBundle.evict('assets/catalogs/books/reviewed-domain-updates.json');
       await rootBundle.loadString(
         'assets/catalogs/books/reviewed-domain-updates.json',

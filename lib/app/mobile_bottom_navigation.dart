@@ -9,10 +9,12 @@ final class MobileBottomNavigation extends StatelessWidget {
     required this.location,
     required this.onNavigate,
     required this.onMore,
+    this.showPublications = true,
   });
   final String location;
   final ValueChanged<String> onNavigate;
   final VoidCallback onMore;
+  final bool showPublications;
   static const _routes = ['/', '/live', '/music'];
 
   Future<void> _openReading(BuildContext context) async {
@@ -27,13 +29,14 @@ final class MobileBottomNavigation extends StatelessWidget {
           padding: EdgeInsets.zero,
           children: [
             for (final (path, label, icon) in readingDestinations)
-              ListTile(
-                leading: Icon(icon),
-                title: Text(label),
-                selected: location == path,
-                trailing: location == path ? const Icon(Icons.check) : null,
-                onTap: () => Navigator.of(sheet).pop(path),
-              ),
+              if (showPublications || path != publicationReadingPath)
+                ListTile(
+                  leading: Icon(icon),
+                  title: Text(label),
+                  selected: location == path,
+                  trailing: location == path ? const Icon(Icons.check) : null,
+                  onTap: () => Navigator.of(sheet).pop(path),
+                ),
           ],
         ),
       ),
@@ -52,7 +55,6 @@ final class MobileBottomNavigation extends StatelessWidget {
       selectedIndex: selected < 0 ? 4 : selected,
       labelBehavior: NavigationDestinationLabelBehavior.onlyShowSelected,
       onDestinationSelected: (index) => switch (index) {
-        3 when selected != 3 => onNavigate(readingDestinations.first.$1),
         3 => _openReading(context),
         4 => onMore(),
         _ => onNavigate(_routes[index]),

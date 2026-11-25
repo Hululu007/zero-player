@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
@@ -18,6 +19,41 @@ final _png = base64Decode(
 
 void main() {
   _policyAndSettingsTests();
+  test('cover requests share a fetch and cancel individual waiters', () async {
+    final root = await Directory.systemTemp.createTemp('book-cover-shared-');
+    addTearDown(() => root.delete(recursive: true));
+    final cache = BookCoverCache(root);
+    final key = cache.key('作品', '作者', Uri.parse('https://fixture.test/cover'));
+    final started = Completer<CancellationToken>();
+    final response = Completer<List<int>>();
+    var fetches = 0;
+    Future<List<int>> obtain(CancellationToken token) => cache.obtain(
+      key,
+      scope: 'source-identity',
+      token: token,
+      fetch: (requestToken) {
+        fetches++;
+        started.complete(requestToken);
+        return response.future;
+      },
+    );
+
+    final first = CancellationToken();
+    final abandoned = expectLater(
+      obtain(first),
+      throwsA(isA<RequestCancelled>()),
+    );
+    final retained = obtain(CancellationToken());
+    final requestToken = await started.future;
+    first.cancel();
+    await abandoned;
+    expect(requestToken.isCancelled, isFalse);
+    response.complete(_png);
+    expect(await retained, _png);
+    await cache.waitForIdle();
+    expect(await obtain(CancellationToken()), _png);
+    expect(fetches, 1);
+  });
   test(
     'cover cache persists, separates identities and obeys cleanup',
     () async {

@@ -2,7 +2,8 @@ part of 'book_reader_page.dart';
 
 extension _ReaderSession on _BookReaderPageState {
   void _advanceAutomatically(double? seconds) {
-    if (!_ready ||
+    if (!_foreground ||
+        !_ready ||
         _controls ||
         _configuring ||
         ModalRoute.of(context)?.isCurrent != true) {
@@ -27,7 +28,10 @@ extension _ReaderSession on _BookReaderPageState {
   }
 
   void _startAutomation() {
-    if (!_ready || _images.isNotEmpty || !_style.autoEnabled) return;
+    if (!_foreground || !_ready || _images.isNotEmpty || !_style.autoEnabled) {
+      return;
+    }
+    _resumeAutomation = false;
     _changeAutomation(true);
     _automation.start(
       scroll: _style.mode == ReaderTurnMode.scroll,
@@ -35,7 +39,12 @@ extension _ReaderSession on _BookReaderPageState {
     );
   }
 
-  void _stopAutomation() {
+  void _restoreAutomation() {
+    if (_resumeAutomation) _startAutomation();
+  }
+
+  void _stopAutomation({bool preserveResume = false}) {
+    if (!preserveResume) _resumeAutomation = false;
     _automation.stop();
     if (_autoRunning && mounted) _changeAutomation(false);
   }

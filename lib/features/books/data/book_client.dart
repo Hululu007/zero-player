@@ -15,7 +15,9 @@ import '../domain/book_search.dart';
 import '../domain/legado_source.dart';
 import 'book_html.dart';
 import 'book_mixed_content.dart';
+import 'book_manga_website.dart';
 import 'book_request_guard.dart';
+import 'book_resource_limits.dart';
 import 'bookan_audio_client.dart';
 import 'lit2go_audio_client.dart';
 import 'legado/legado_client.dart';
@@ -62,9 +64,7 @@ List<Uri> extractBookChapterImages(
   String html,
   String rule,
 ) {
-  final selector = rule
-      .replaceFirst(RegExp(r'^@css:'), '')
-      .replaceFirst(RegExp(r'@(text|ownText|html)$'), '');
+  final selector = bookImageSelector(rule);
   final document = parseBookHtml(html);
   final images = <Uri>{};
   for (final element in bookElements(document, selector)) {
@@ -82,9 +82,10 @@ List<Uri> extractBookChapterImages(
       } on FormatException {
         // Ignore an undeclared image host without expanding network access.
       }
-      if (images.length >= 100) break;
+      if (images.length > BookResourceLimits.chapterImages) {
+        throw const FormatException('章节图片数量超过限制，未完整获取');
+      }
     }
-    if (images.length >= 100) break;
   }
   return images.toList();
 }
@@ -185,6 +186,7 @@ final class BookClient {
     requestGuard?.call(uri, null);
     return network.get(
       uri,
+      headers: {...mangaWebsiteHeaders(source, uri, media: media)},
       cancellation: token,
       maxBytes: maxBytes,
       networkTimeout: Duration(seconds: media ? 90 : 12),
@@ -349,6 +351,17 @@ final class BookClient {
           ? [book]
           : [];
     }
+    if (source.search.isEmpty && source.rules['catalogSearch'] == 'true') {
+      final listing = await discover(
+        source,
+        token,
+        category: category,
+        page: page,
+        allowDiscoveryNetworkExpansion: allowDiscoveryNetworkExpansion,
+      );
+      final match = BookSearchQuery(query, BookSearchField.all);
+      return listing.books.where((book) => match.rank(book) != null).toList();
+    }
     final discovery = query.isEmpty;
     final path = discovery
         ? source.discover
@@ -357,10 +370,15 @@ final class BookClient {
     final target = source.resolve(source.endpoint, path);
     final response = discovery || source.searchForm.isEmpty
         ? await fetch(source, target, token)
-        : await network.postForm(target, {
-            for (final entry in source.searchForm.entries)
-              entry.key: entry.value.replaceAll('{key}', query),
-          }, cancellation: token);
+        : await network.postForm(
+            target,
+            {
+              for (final entry in source.searchForm.entries)
+                entry.key: entry.value.replaceAll('{key}', query),
+            },
+            cancellation: token,
+            encoding: source.searchCharset == 'utf-8' ? utf8 : gbk,
+          );
     return (await _parseHtmlBooks(
       source,
       response,
@@ -579,7 +597,7 @@ final class BookClient {
       return _legado.chapters(source, book, token, requestGuard: requestGuard);
     }
     if (source.format == BookFormat.feed) {
-      return (await _feed(source, token)).$2;
+      return (await _feed(source, token, requestGuard: requestGuard)).$2;
     }
     return _nativeChapters(source, book, token, requestGuard);
   }
@@ -626,6 +644,10 @@ final class BookClient {
       }
       final document = parseBookHtml(response.text);
       final body = bookField(document, source.rules['content']!, long: true);
+      if (source.endpoint.host == 'www.twxs.com.tw' &&
+          (body.startsWith('轉碼失敗') || body.startsWith('转码失败'))) {
+        throw const FormatException('站方转码失败，未返回章节正文');
+      }
       if (body.isEmpty) {
         final selector = source.rules['content']!.replaceFirst(
           RegExp(r'@(?:text|html)$'),
@@ -681,14 +703,10 @@ final class BookClient {
     CancellationToken token, {
     Book? book,
     BookRequestGuard? requestGuard,
+    void Function(Uri, Document)? onImageResponse,
   }) async {
-    if (source.kind == BookKind.audio || source.format != BookFormat.html) {
-      return const [];
-    }
-    if (RegExp(
-      r'\.(?:png|jpe?g|webp|gif)$',
-      caseSensitive: false,
-    ).hasMatch(chapter.uri.path)) {
+    if (source.kind == BookKind.audio) return const [];
+    if (isBookImageAddress(chapter.uri)) {
       final uri = source.requestTarget(chapter.uri, media: true);
       requestGuard?.call(uri, chapter.request);
       return [uri];
@@ -700,31 +718,87 @@ final class BookClient {
         token,
         book: book,
         requestGuard: requestGuard,
+        onImageResponse: onImageResponse,
       );
     }
-    final response = await fetch(
+    if (isMangaWebsite(source)) {
+      return MangaWebsite(
+        network,
+      ).chapterImages(source, chapter, token, requestGuard);
+    }
+    final images = <Uri>{};
+    final visited = <Uri>{};
+    var next = chapter.uri;
+    for (var page = 1; page <= 10 && visited.add(next); page++) {
+      final response = await fetch(
+        source,
+        next,
+        token,
+        maxBytes: BookResourceLimits.imageBytes,
+        requestGuard: requestGuard,
+      );
+      token.check();
+      final responseIsImage =
+          response.contentType?.toLowerCase().startsWith('image/') == true;
+      final found = responseIsImage
+          ? [source.requestTarget(response.uri, media: true)]
+          : extractBookChapterImages(
+              source,
+              response.uri,
+              response.text,
+              source.rules['content'] ?? 'img',
+            );
+      if (found.isEmpty) throw const FormatException('章节分页未返回可阅读的图片');
+      for (final image in found) {
+        requestGuard?.call(image, null);
+        images.add(image);
+        if (images.length > BookResourceLimits.chapterImages) {
+          throw const FormatException('章节图片数量超过限制，未完整获取');
+        }
+      }
+      if (responseIsImage) {
+        onImageResponse?.call(found.single, response);
+        break;
+      }
+      visited.add(response.uri);
+      final more = bookField(
+        parseBookHtml(response.text, keepNavigation: true),
+        source.rules['nextContent'] ?? '',
+      );
+      if (more.isEmpty) break;
+      next = source.resolve(response.uri, more);
+      if (page == 10 && !visited.contains(next)) {
+        throw const FormatException('章节分页超过限制，图片未完整获取');
+      }
+    }
+    return images.toList();
+  }
+
+  Future<Document> fetchChapterImage(
+    BookSource source,
+    Uri image,
+    CancellationToken token, {
+    BookChapter? chapter,
+    required int maxBytes,
+    BookRequestGuard? requestGuard,
+  }) {
+    if (chapter != null && image == chapter.uri && source.legado != null) {
+      return _legado.imageDocument(
+        source,
+        chapter,
+        token,
+        maxBytes: maxBytes,
+        requestGuard: requestGuard,
+      );
+    }
+    return fetch(
       source,
-      chapter.uri,
+      image,
       token,
-      maxBytes: 4 * 1024 * 1024,
+      media: true,
+      maxBytes: maxBytes,
       requestGuard: requestGuard,
     );
-    token.check();
-    if (response.contentType?.toLowerCase().startsWith('image/') == true) {
-      return [source.requestTarget(response.uri, media: true)];
-    }
-    final rule = source.legado?.rules['content'] ?? source.rules['content'];
-    if (rule == null || rule.isEmpty) return const [];
-    final images = extractBookChapterImages(
-      source,
-      response.uri,
-      response.text,
-      rule,
-    );
-    for (final image in images) {
-      requestGuard?.call(image, null);
-    }
-    return images;
   }
 
   Future<Uri> audio(
@@ -816,11 +890,21 @@ final class BookClient {
 
   Future<(Book, List<BookChapter>)> _feed(
     BookSource source,
-    CancellationToken token,
-  ) async {
+    CancellationToken token, {
+    BookRequestGuard? requestGuard,
+  }) async {
     final response = source.legado == null
-        ? await fetch(source, source.endpoint, token)
-        : await _legado.feedDocument(source, token);
+        ? await fetch(
+            source,
+            source.endpoint,
+            token,
+            requestGuard: requestGuard,
+          )
+        : await _legado.feedDocument(source, token, requestGuard: requestGuard);
+    return _parseFeed(source, response);
+  }
+
+  (Book, List<BookChapter>) _parseFeed(BookSource source, Document response) {
     final raw = response.text;
     if (RegExp(r'<!\s*(DOCTYPE|ENTITY)', caseSensitive: false).hasMatch(raw)) {
       throw const FormatException('订阅不能包含 XML 实体或文档类型声明');
@@ -883,6 +967,9 @@ final class BookClient {
             continue;
           }
         }
+      } else if (source.kind == BookKind.comic) {
+        final chapter = _comicFeedChapter(source, response.uri, entry, name);
+        if (chapter != null) items.putIfAbsent(chapter.uri, () => chapter);
       } else {
         final rawBody = [
           field(entry, 'encoded'),
@@ -908,6 +995,45 @@ final class BookClient {
     }
     return (book, items.values.toList());
   }
+}
+
+BookChapter? _comicFeedChapter(
+  BookSource source,
+  Uri base,
+  XmlElement entry,
+  String title,
+) {
+  final enclosures = <String>[];
+  final articles = <String>[];
+  for (final element in entry.childElements) {
+    final name = element.name.local;
+    if (name != 'enclosure' && name != 'link') continue;
+    final link =
+        element.getAttribute('url') ??
+        element.getAttribute('href') ??
+        element.innerText;
+    if (name == 'enclosure' || element.getAttribute('rel') == 'enclosure') {
+      final target = Uri.tryParse(link.trim());
+      if (element.getAttribute('type')?.startsWith('image/') == true ||
+          (target != null && isBookImageAddress(target))) {
+        enclosures.add(link);
+      }
+    } else if (element.getAttribute('rel') case null || 'alternate') {
+      articles.add(link);
+    }
+  }
+  final links = [...enclosures, ...articles];
+  for (final link in links) {
+    if (link.trim().isEmpty) continue;
+    try {
+      final target = base.resolve(link.trim());
+      final uri = source.resolve(base, link, media: isBookImageAddress(target));
+      return BookChapter(title, uri);
+    } on FormatException {
+      continue;
+    }
+  }
+  return null;
 }
 
 String _encodeQuery(BookSource source, String query) => encodeDocumentComponent(

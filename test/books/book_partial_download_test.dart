@@ -14,6 +14,35 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   test('pausing a retry retains prior chapter failures', _pauseRetry);
   test(
+    'resume retains missing target IDs until the catalog restores them',
+    () async {
+      final f = await _Fixture.create();
+      addTearDown(f.close);
+      f.fail = false;
+      final ids = f.chapters.take(2).map((chapter) => chapter.id).toList();
+      final task = f.manager.start(f.book, [
+        f.chapters.first,
+        f.chapters.last,
+      ], BookDownloadPlan(1, 2, false, chapterIds: ids));
+      await task.done;
+      expect(task.status, BookDownloadStatus.partial);
+      expect(task.savedChapterIds, {ids.first});
+      expect(task.failedChapters, isEmpty);
+      expect(task.missingChapterIds, {ids.last});
+      expect(f.calls, ['第一章']);
+      final saved = BookDownloadPlan.fromJson(
+        await f.books.store.read('books_download:${f.book.id}'),
+      )!;
+      expect(saved.chapterIds, ids);
+      f.calls.clear();
+      final retry = f.manager.start(f.book, f.chapters, saved);
+      await retry.done;
+      expect(retry.status, BookDownloadStatus.completed);
+      expect(f.calls, ['第二章']);
+      expect(await f.books.store.read('books_download:${f.book.id}'), isNull);
+    },
+  );
+  test(
     'partial download survives repository restart and retries only missing chapters',
     () async {
       final f = await _Fixture.create();

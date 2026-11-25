@@ -18,6 +18,7 @@ import 'book_shelf_lists.dart';
 part 'book_store_shelf_actions.dart';
 part 'book_store_images.dart';
 part 'book_store_offline.dart';
+part 'book_store_rebuilt_catalog.dart';
 
 final class ProvenBookText {
   const ProvenBookText(this.body, this.evidence, this.segments);
@@ -961,7 +962,8 @@ final class BookStore {
     Future<void> Function() validate,
   ) async {
     final encoded = jsonEncode(value);
-    final hash = sha256.convert(utf8.encode(encoded)).toString();
+    final bytes = utf8.encode(encoded);
+    final hash = sha256.convert(bytes).toString();
     await vault.ensureLoaded();
     await db.atomic(
       () async {
@@ -982,14 +984,8 @@ final class BookStore {
               [key],
             );
             if (existing.isEmpty) {
-              final used =
-                  (await db.rows(
-                        "SELECT COALESCE(SUM(length(CAST(value AS BLOB))),0) AS bytes "
-                        "FROM app_meta WHERE key GLOB 'books_text:*' "
-                        "OR key GLOB 'books_proven_text_record:*'",
-                      )).single['bytes']
-                      as int;
-              if (used + utf8.encode(encoded).length > 96 * 1024 * 1024) {
+              final used = await _offlineTextBytes();
+              if (used + bytes.length > BookResourceLimits.offlineTextBytes) {
                 throw const FormatException('离线正文空间已满');
               }
             }
@@ -1020,6 +1016,14 @@ final class BookStore {
       metadataDomains: {MetadataDomain.books},
     );
   }
+
+  Future<int> _offlineTextBytes() async =>
+      (await db.rows(
+            'SELECT COALESCE(SUM(length(CAST(value AS BLOB))),0) AS bytes '
+            'FROM app_meta INDEXED BY app_meta_book_text_bytes '
+            "WHERE key GLOB 'books_text:*' OR key GLOB 'books_proven_text_record:*'",
+          )).single['bytes']
+          as int;
 
   Future<Map?> _readProven(String type, Book book, BookChapter chapter) async {
     final private = await isPrivateBook(book.id);

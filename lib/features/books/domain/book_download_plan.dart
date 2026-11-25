@@ -9,9 +9,13 @@ final class BookDownloadPlan {
     this.fullBook = false,
     this.aggregateLatest = false,
     this.aggregationPending = false,
+    this.retryCount = defaultRetryCount,
   });
 
+  static const defaultRetryCount = 3;
+  static const maxRetryCount = 5;
   final int first, last;
+  final int retryCount;
   final bool fallback, fullBook, aggregateLatest;
   final bool aggregationPending;
   final List<String>? chapterIds;
@@ -24,6 +28,7 @@ final class BookDownloadPlan {
     fullBook: fullBook,
     aggregateLatest: aggregateLatest,
     aggregationPending: aggregationPending,
+    retryCount: retryCount,
   );
 
   static BookDownloadPlan? fromJson(Object? value) {
@@ -41,6 +46,10 @@ final class BookDownloadPlan {
           fullBook: value['fullBook'] == true,
           aggregateLatest: value['aggregateLatest'] == true,
           aggregationPending: value['aggregationPending'] == true,
+          retryCount: switch (value['retryCount']) {
+            final int count => count.clamp(0, maxRetryCount),
+            _ => defaultRetryCount,
+          },
           chapterIds: ids is List
               ? ids.whereType<String>().take(bookChapterCatalogLimit).toList()
               : null,
@@ -56,6 +65,7 @@ final class BookDownloadPlan {
     'fallback': fallback,
     'fullBook': fullBook,
     'aggregateLatest': aggregateLatest,
+    'retryCount': retryCount,
     if (aggregationPending) 'aggregationPending': true,
     'chapterIds': ?chapterIds,
   };

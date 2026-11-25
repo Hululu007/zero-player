@@ -25,6 +25,7 @@ final class MediaHttpClient {
     bool allowPrivateNetworks = false,
     bool Function(Uri)? allowLanOrigin,
     bool allowLegacyQueryEncoding = false,
+    this.publicHttpsRoute,
   }) : _scheduler =
            scheduler ?? RequestScheduler(globalLimit: 20, playbackReserve: 2),
        _ownsScheduler = scheduler == null,
@@ -36,15 +37,30 @@ final class MediaHttpClient {
     _configureClient(_client);
   }
 
-  void _configureClient(HttpClient client, [SourceCertificate? certificate]) {
+  void _configureClient(
+    HttpClient client, {
+    SourceCertificate? certificate,
+    Uri? legacyQueryTarget,
+  }) {
     client.connectionTimeout = timeout;
-    client.connectionFactory = (uri, proxy, port) => targetPolicy.connect(
-      uri,
-      proxy,
-      port,
-      certificate: certificate,
-      timeout: timeout,
-    );
+    client.connectionFactory = (uri, proxy, port) {
+      Future<ConnectionTask<Socket>> direct() => targetPolicy.connect(
+        uri,
+        proxy,
+        port,
+        certificate: certificate,
+        timeout: timeout,
+        legacyQueryEncoding: uri == legacyQueryTarget,
+      );
+      final route = publicHttpsRoute;
+      if (route == null || proxy != null || uri.scheme != 'https') {
+        return direct();
+      }
+      return route(
+        uri,
+        certificate,
+      ).then((connection) => connection ?? direct());
+    };
     client.findProxy = (_) => 'DIRECT';
     client.autoUncompress = false;
     client.maxConnectionsPerHost = maxConnectionsPerHost;
@@ -55,6 +71,8 @@ final class MediaHttpClient {
   final Duration timeout;
   final int maxConnectionsPerHost;
   final NetworkTargetPolicy targetPolicy;
+  final Future<ConnectionTask<Socket>?> Function(Uri, SourceCertificate?)?
+  publicHttpsRoute;
   final RequestScheduler _scheduler;
   final bool _ownsScheduler;
   HttpClient _client = HttpClient();
@@ -81,12 +99,15 @@ final class MediaHttpClient {
     Uri Function(Uri target)? mapRedirect,
     SourceCertificate? certificate,
     bool followRedirects = true,
+    bool legacyQueryEncoding = false,
   }) async {
     if (!{'GET', 'POST'}.contains(method) ||
-        (body != null && (method != 'POST' || body.length > 65536))) {
+        (body != null && (method != 'POST' || body.length > 65536)) ||
+        (legacyQueryEncoding && (method != 'GET' || followRedirects))) {
       throw const FormatException('不支持的请求方式或请求体过大');
     }
     final initialOrigin = HeaderPolicy.origin(uri);
+    final legacyQueryTarget = legacyQueryEncoding ? uri : null;
     for (var redirects = 0; redirects <= 5; redirects++) {
       cancellation?.check();
       validateTarget?.call(uri);
@@ -95,6 +116,7 @@ final class MediaHttpClient {
         originalOrigin:
             HeaderPolicy.origin(uri) == initialOrigin &&
             policy.containsOrigin(uri),
+        legacyQueryEncoding: uri == legacyQueryTarget,
       );
       final headers = policy.forUri(uri);
       final scoped =
@@ -120,6 +142,7 @@ final class MediaHttpClient {
         cancellation: cancellation,
         onActivity: onActivity,
         certificate: scoped,
+        legacyQueryTarget: uri == legacyQueryTarget ? uri : null,
       );
       if (!followRedirects ||
           method != 'GET' ||
@@ -152,6 +175,7 @@ final class MediaHttpClient {
     required CancellationToken? cancellation,
     required void Function(bool)? onActivity,
     required SourceCertificate? certificate,
+    required Uri? legacyQueryTarget,
   }) async {
     HttpClientRequest? request;
     void Function()? remove;
@@ -161,10 +185,14 @@ final class MediaHttpClient {
       onActivity?.call(true);
       watch.start();
       cancellation?.check();
-      if (certificate != null) {
-        if (!certificate.active()) throw const RequestCancelled();
+      if (certificate != null || legacyQueryTarget != null) {
+        if (certificate?.active() == false) throw const RequestCancelled();
         isolated = HttpClient();
-        _configureClient(isolated, certificate);
+        _configureClient(
+          isolated,
+          certificate: certificate,
+          legacyQueryTarget: legacyQueryTarget,
+        );
       }
       request = await _createRequest(
         isolated ?? _client,

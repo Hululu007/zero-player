@@ -54,13 +54,27 @@ extension BookRepositoryCertificates on BooksRepository {
     String sourceId,
     SourceCertificateFailure? certificate,
     Future<T> Function() request,
+  ) => withTemporarySourceCertificate(sourceId, certificate, request);
+
+  Future<T> withTemporarySourceCertificate<T>(
+    String sourceId,
+    SourceCertificateFailure? certificate,
+    Future<T> Function() request,
   ) => certificate == null || !canConfirmCertificate(sourceId, certificate)
       ? request()
       : SourceCertificate(
           certificate.origin,
           certificate.fingerprint,
           () => canConfirmCertificate(sourceId, certificate),
+          publicRequest: _mangaCertificateRequest(sourceId),
         ).run(request);
+
+  bool Function(Uri, Map<String, String>)? _mangaCertificateRequest(String id) {
+    final source = _sourceAccess.entry(id)?.source;
+    return source != null && isMangaWebsite(source)
+        ? isPublicMangaCertificateRequest
+        : null;
+  }
 
   SourceCertificate? _aggregateCertificate(
     BookSource source,
@@ -78,6 +92,6 @@ extension BookRepositoryCertificates on BooksRepository {
           entry.enabled &&
           _currentSearchEntry(entry) &&
           _searchFingerprint(entry.source) == _searchFingerprint(source);
-    });
+    }, publicRequest: _mangaCertificateRequest(source.id));
   }
 }

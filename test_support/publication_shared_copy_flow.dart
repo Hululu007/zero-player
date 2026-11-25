@@ -124,18 +124,28 @@ Future<void> _verifyRemovedCopy(
   );
   await _tap(tester, shelf);
   await _tap(tester, find.byTooltip('图书操作'));
-  await _tap(tester, find.text('从图书书库移除'));
-  await _wait(tester, find.text('书库还没有图书。'));
+  await _tap(tester, find.text('从书库移除'));
+  await _tap(tester, find.text('移除书目'));
+  await _wait(tester, find.text('书库还没有图书'));
   expect(await retained.readAsBytes(), originalBytes);
   expect((await module.space.usage()).used, usage.used);
 
+  await _tap(tester, find.text('撤销'));
+  await _wait(tester, find.text(title));
+  await _tap(tester, find.byTooltip('图书操作'));
+  await _tap(tester, find.text('从书库移除'));
+  await _tap(tester, find.text('移除书目'));
+  await _wait(tester, find.text('书库还没有图书'));
+
   await _tap(tester, copies);
   await _tap(tester, copy);
+  await _tap(tester, find.text('删除本地副本'));
   await _tap(tester, find.text('取消'));
   expect(await retained.exists(), isTrue);
 
   await _tap(tester, copies);
   await _tap(tester, copy);
+  await _tap(tester, find.text('删除本地副本'));
   await _tap(tester, find.text('确认'));
   await _wait(tester, find.text('已删除本地副本'));
   expect(await retained.exists(), isFalse);

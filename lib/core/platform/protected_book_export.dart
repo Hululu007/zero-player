@@ -34,6 +34,11 @@ final class BookExportValidation {
   }
 }
 
+/// The destination picker was dismissed before any output was written.
+final class BookExportCancelled implements Exception {
+  const BookExportCancelled();
+}
+
 /// A failed cleanup may leave a partially written document at the destination.
 final class BookExportCleanupFailure implements Exception {
   const BookExportCleanupFailure(this.message);
@@ -167,7 +172,7 @@ final class ProtectedBookExport {
   ) async {
     final destination = await _chooseLocation(name);
     _check(token, validate);
-    if (destination == null) throw StateError('已取消保存');
+    if (destination == null) throw const BookExportCancelled();
     final target = File(destination);
     final directory = await target.parent.createTemp('.zero-book-export-');
     try {
@@ -261,7 +266,7 @@ final class ProtectedBookExport {
         rethrow;
       }
       _check(token, validate);
-      if (selected != true) throw StateError('已取消保存');
+      if (selected != true) throw const BookExportCancelled();
       writeStarted = true;
       await _channel.invokeMethod<void>('writeProtectedBookExport', {
         'id': id,

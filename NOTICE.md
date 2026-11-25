@@ -66,13 +66,26 @@ popocoding/awesome-m3u provides radio/cn.m3u: https://github.com/popocoding/awes
 
 assets/brand/logo.jpg was supplied by the project owner. Platform icons and the Android TV banner are derived from that image using tool/generate_brand.py; it is not an upstream library asset.
 
-## EPUB and PDF readers
+## Publication readers
 
 PDF rendering uses pdfrx 2.2.24 and PDFium chromium/7520 from bblanchon/pdfium-binaries. PDFium and bundled third-party notices are included in assets/licenses/pdfium.txt. Fixed archive and binary SHA-256 values are in tool/pdfium_checksums.json. HTML rendering uses flutter_widget_from_html_core under its upstream license.
 
+Kindle container parsing uses [kindle_unpack 0.2.0](https://pub.dev/packages/kindle_unpack/versions/0.2.0), GPL-3.0. The application uses its public format parsers and EPUB packager. The complete dependency license is included in the Flutter license registry and release notices.
+
 ## Publication sources
 
-- The publications module links to the simplified Chinese edition of *The Rust Programming Language*, pinned to revision `2a9740644f678cafbc48786d00b67927fc0e1b3c`. The translation repository carries the MIT license and credits the Rust Chinese community. [Translation and license](https://github.com/KaiserY/trpl-zh-cn/tree/2a9740644f678cafbc48786d00b67927fc0e1b3c)
-- The Chinese *Pro Git* entry links to the publisher's 2.1.79 EPUB and PDF under CC BY-NC-SA 3.0. [Release](https://github.com/progit/progit2-zh/releases/tag/2.1.79) · [Book license](https://git-scm.com/book/zh/v2)
+- The local 苦瓜书盘 index contains title, author, format and original page references from the public classical literature and science fiction catalogues. [古典文学](https://kgbook.com/gudianwenxue/) · [科幻玄幻](https://kgbook.com/kehuanxuanhuan/)
+- The 苦瓜书盘 download entries contain the site's published PDF and MOBI entry paths for [《1984》](https://kgbook.com/waiguowenxue/1007.html).
+- The bundled [导航森林](https://navhub.shenzjd.com/) directory contains public category names, site titles, and destination URLs.
+- The Project Gutenberg search index uses [OpenCC 1.1.9 character mappings](https://github.com/BYVoid/OpenCC/blob/ver.1.1.9/data/dictionary/TSCharacters.txt), Apache-2.0, to match simplified and traditional titles. The application includes the license in assets/licenses/OpenCC.txt.
+- The Aozora Bunko index contains bibliographic metadata from its official [work and contributor list](https://www.aozora.gr.jp/index_pages/person_all.html). Publication pages and work-specific terms are provided by Aozora Bunko. [Aozora Bunko usage guidelines](https://www.aozora.gr.jp/guide/kijyunn.html)
+- The Panda directory contains public navigation labels and destination URLs from [熊猫读书](https://xmsoushu.com/), with locally reviewed access statuses.
+- The bundled Chinese classics indexes contain title, credit, edition, and catalogue identifiers from the [CBETA metadata export](https://github.com/DILA-edu/cbeta-metadata/tree/master/textref) and the [Chinese Text Project bibliography export](https://ctext.org/catalog.pl). Reading links point to the respective projects.
+- The Klib ranking snapshot contains public titles, authors, ratings, and reading links from the [Klib WeRead annotations ranking](https://klib.me/weread/hot/all.html).
+- The Daizhige index contains book labels and reading paths from the official [Daizhige catalogue data tree](https://github.com/daizhige-org/daizhigev20/tree/data). The app opens [Daizhige](https://daizhige.org/directory) for reading.
+- The Shiren index contains titles, directory credits, and links from the [public Shiren poetry directories](https://www.shiren.org/shiku/index.htm). Poems and PDF files are served by Shiren.
+- The Science and Technology Museum index contains factual catalogue metadata and links from the [Science Reading collection](https://www.cdstm.cn/subjects/jzrm/kpydh/). Covers and PDF files remain on the publisher's servers.
+- The Scripta Sinica index contains titles, credits, editions, and reader links from the public [Institute of History and Philology annual catalogues](https://hanchi.ihp.sinica.edu.tw/ihp/newtitle.htm).
+- The Hina shop index contains public product titles, covers, and links from the publisher's [store sitemap](https://www.hinabook.com/store-products-sitemap.xml). The publisher hosts the covers and product pages.
 - Open Textbook Library supplies catalog metadata. The individual editions retain their own license terms. Selected publisher URLs are stored as references and the application fetches the files on request. [Library API](https://open.umn.edu/opentextbooks/api-docs/index.html) · [Think Python publisher](https://greenteapress.com/wp/think-python-2e/) · [Making Games publisher](https://inventwithpython.com/pygame/)
 - Quark, UC and Lanzou sharing adapters are Dart implementations based on observed public request and response behavior. Reference material was the YunX network source at `cc9afe24c9409b239c361263b976f7aad77d1d9e` and the LinkSwift project at `3ebdd12c526d572334cbe1c6e8eb6943d2a7db9b`. The installation contains the application's Dart code and bibliographic references. [YunX](https://github.com/CYQawa/YunX/tree/cc9afe24c9409b239c361263b976f7aad77d1d9e) · [LinkSwift](https://github.com/hmjz100/LinkSwift/tree/3ebdd12c526d572334cbe1c6e8eb6943d2a7db9b)

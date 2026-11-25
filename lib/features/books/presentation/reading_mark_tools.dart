@@ -13,6 +13,18 @@ const readingMarkColors = [
 ];
 const _colorLabels = ['金色', '红色', '绿色', '蓝色', '紫色'];
 
+Iterable<ContextMenuButtonItem> readingMarkMenuItems(
+  void Function(ReadingMarkStyle?) select,
+) sync* {
+  yield ContextMenuButtonItem(label: '添加标注', onPressed: () => select(null));
+  for (final style in ReadingMarkStyle.values) {
+    yield ContextMenuButtonItem(
+      label: style.label,
+      onPressed: () => select(style),
+    );
+  }
+}
+
 Future<ReadingMark?> editReadingMark(
   BuildContext context,
   ReadingMark initial, {

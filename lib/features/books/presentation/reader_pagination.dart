@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import '../domain/reading_mark.dart';
 import 'reader_curl.dart';
 import 'reading_mark_span.dart';
+import 'reading_mark_tools.dart';
 import 'reader_style.dart';
 
 /// Positions from older builds contain only a fraction of the chapter.
@@ -35,10 +36,12 @@ final class _ReadingSlice {
     this.visibleEnd,
     this.top,
     this.height,
-    this.lines,
+    this.linePositions,
   );
-  final int start, end, visibleEnd, lines;
+  final int start, end, visibleEnd;
   final double top, height;
+  final List<({int offset, double top})> linePositions;
+  int get lines => math.max(1, linePositions.length);
 }
 
 final class _ReaderLayout {
@@ -116,14 +119,24 @@ final class _ReaderLayout {
         painter.text = span(start, visibleEnd);
         painter.layout(maxWidth: size.width);
         slices.add(
-          _ReadingSlice(
-            start,
-            end,
-            visibleEnd,
-            top,
-            painter.height,
-            math.max(1, painter.computeLineMetrics().length),
-          ),
+          _ReadingSlice(start, end, visibleEnd, top, painter.height, [
+            for (final line in painter.computeLineMetrics())
+              (
+                offset:
+                    start +
+                    painter
+                        .getLineBoundary(
+                          painter.getPositionForOffset(
+                            Offset(
+                              line.left + line.width / 2,
+                              line.baseline - line.ascent / 2,
+                            ),
+                          ),
+                        )
+                        .start,
+                top: math.max(0.0, line.baseline - line.ascent),
+              ),
+          ]),
         );
         top += painter.height;
         start = end;
@@ -132,7 +145,7 @@ final class _ReaderLayout {
     } finally {
       painter.dispose();
     }
-    if (slices.isEmpty) slices.add(const _ReadingSlice(0, 0, 0, 0, 0, 1));
+    if (slices.isEmpty) slices.add(const _ReadingSlice(0, 0, 0, 0, 0, []));
     totalHeight = top;
   }
 
@@ -191,30 +204,25 @@ final class _ReaderLayout {
 
   double pixelsForOffset(int offset, {bool center = false}) {
     final page = slices[indexForOffset(offset)];
-    final painter = _painter()
-      ..text = span(page.start, page.visibleEnd)
-      ..layout(maxWidth: size.width);
-    try {
-      final caret = painter.getOffsetForCaret(
-        TextPosition(
-          offset: (offset - page.start).clamp(0, page.visibleEnd - page.start),
-        ),
-        Rect.zero,
-      );
-      return (page.top + caret.dy - (center ? size.height * .32 : 0)).clamp(
-        0.0,
-        maxScroll,
-      );
-    } finally {
-      painter.dispose();
+    var lineTop = 0.0;
+    for (final line in page.linePositions) {
+      if (line.offset > offset) break;
+      lineTop = line.top;
     }
+    return (page.top + lineTop - (center ? size.height * .32 : 0)).clamp(
+      0.0,
+      maxScroll,
+    );
   }
 
   int offsetForPixels(double pixels) {
     final page = slices[indexForPixels(pixels)];
-    if (page.height <= 0) return page.start;
-    final fraction = ((pixels - page.top) / page.height).clamp(0.0, 1.0);
-    return page.start + (fraction * (page.visibleEnd - page.start)).round();
+    var offset = page.start;
+    for (final line in page.linePositions) {
+      if (page.top + line.top > pixels) break;
+      offset = line.offset;
+    }
+    return offset;
   }
 
   TextSpan span(
@@ -299,7 +307,7 @@ class ReaderViewport extends StatefulWidget {
   final ValueChanged<String> onSelection;
   final VoidCallback onAnnotate;
   final VoidCallback? onCleanup;
-  final ValueChanged<ReadingRange>? onMark;
+  final void Function(ReadingRange, ReadingMarkStyle?)? onMark;
   final List<ReadingMark> marks;
 
   @override
@@ -667,14 +675,10 @@ class ReaderViewportState extends State<ReaderViewport> {
           if (widget.onMark != null &&
               range != null &&
               range.end - range.start <= 1200)
-            ContextMenuButtonItem(
-              label: '添加标注',
-              onPressed: () {
-                widget.onMark!(range);
-                region.clearSelection();
-                region.hideToolbar();
-              },
-            ),
+            ...readingMarkMenuItems((style) {
+              region.hideToolbar();
+              widget.onMark!(range, style);
+            }),
           if (widget.onCleanup != null)
             ContextMenuButtonItem(
               label: '隐藏或替换',

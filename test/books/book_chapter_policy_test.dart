@@ -4,6 +4,7 @@ import 'package:zero_player/app/app_services.dart';
 import 'package:zero_player/core/persistence/app_database.dart';
 import 'package:zero_player/core/network/cancellation_token.dart';
 import 'package:zero_player/features/books/data/book_chapter_policy.dart';
+import 'package:zero_player/features/books/data/book_detected_replacement.dart';
 import 'package:zero_player/features/books/data/book_comic_access.dart';
 import 'package:zero_player/features/books/data/book_download_coordinator.dart';
 import 'package:zero_player/features/books/domain/book.dart';
@@ -40,6 +41,48 @@ void main() {
   });
   Future<T> verified<T>(Future<T> Function() action) => services.supervision
       .execute(SensitiveOperation.supervision, action, password: password);
+
+  test(
+    'automatic replacements use normalized hits and keep unrelated text',
+    () async {
+      final policy = services.books.chapterPolicy;
+      await verified(
+        () => policy.saveDetected(const BookDetectedReplacement('〔已屏蔽〕')),
+      );
+      const body = '灰色情绪。<色・情> 与 ＰＯＲＮ 字样。';
+      expect(policy.prepare(book, chapter, body), '灰色情绪。<〔已屏蔽〕> 与 〔已屏蔽〕 字样。');
+      final reloaded = BookChapterPolicy(
+        services.books.store,
+        services.contentPolicy,
+      );
+      await reloaded.load();
+      expect(reloaded.prepare(book, chapter, body), '灰色情绪。<〔已屏蔽〕> 与 〔已屏蔽〕 字样。');
+      await expectLater(
+        verified(
+          () => policy.saveDetected(const BookDetectedReplacement('色情')),
+        ),
+        throwsFormatException,
+      );
+    },
+  );
+
+  test('automatic paragraph expansion merges overlapping ranges', () async {
+    final policy = services.books.chapterPolicy;
+    await verified(
+      () => policy.saveDetected(
+        const BookDetectedReplacement(
+          '已屏蔽',
+          paragraph: true,
+          before: 3,
+          after: 3,
+        ),
+      ),
+    );
+    const body =
+        '开篇\r\n\r\n甲\r\n乙\r\n丙\r\n有色情的段落\r\n'
+        '丁\r\n再次情色命中\r\n一\r\n二\r\n三\r\n末尾';
+    expect(policy.prepare(book, chapter, body), '开篇\r\n\r\n已屏蔽\r\n末尾');
+  });
 
   test(
     'diagnostics stay generic and exact chapter approval survives reload',

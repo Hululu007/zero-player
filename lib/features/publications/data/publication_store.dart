@@ -43,6 +43,10 @@ final class PublicationStore {
           }
         }
         await _upgradeLeases();
+        await db.customStatement(
+          "DELETE FROM publication_source_settings WHERE spec IS NULL "
+          "AND id IN ('rust-zh','pro-git')",
+        );
       }, tables: const {});
     } catch (_) {
       _initializing = null;
@@ -91,6 +95,15 @@ final class PublicationStore {
     return (await db.rows(
       'SELECT * FROM publication_tasks ORDER BY created DESC',
     )).map(_task).toList(growable: false);
+  }
+
+  Future<List<AcquisitionTask>> pendingImports() async {
+    await initialize();
+    final rows = await db.rows(
+      "SELECT * FROM publication_tasks WHERE state IN ('downloaded','importing') "
+      'AND problem IS NULL ORDER BY created,id',
+    );
+    return rows.map(_task).toList();
   }
 
   Future<AcquisitionTask?> task(String id) async {
@@ -168,7 +181,11 @@ final class PublicationStore {
     }, tables: {'publication_tasks'});
   }
 
-  Future<AcquisitionTask?> claim(String id, String owner) async {
+  Future<AcquisitionTask?> claim(
+    String id,
+    String owner, {
+    (int, int)? websiteSelection,
+  }) async {
     await initialize();
     return db.atomic(() async {
       final count =
@@ -177,11 +194,23 @@ final class PublicationStore {
               )).single['n']
               as int;
       if (count >= 2) return null;
+      final requiredSelection = websiteSelection == null
+          ? ''
+          : " AND state IN ('failed','paused') AND generation=? AND selected=?";
       await db.write(
         'UPDATE publication_tasks SET owner=?,generation=generation+1,state=?,problem=NULL,space_shortfall=NULL '
         "WHERE id=? AND owner IS NULL AND state IN ('waiting','failed','paused') "
-        'AND COALESCE(retry_at,0)<=?',
-        [owner, 'resolving', id, publicationNow()],
+        'AND COALESCE(retry_at,0)<=?$requiredSelection',
+        [
+          owner,
+          'resolving',
+          id,
+          publicationNow(),
+          if (websiteSelection case (final generation, final selected)) ...[
+            generation,
+            selected,
+          ],
+        ],
       );
       final row = (await db.rows(
         'SELECT * FROM publication_tasks WHERE id=? AND owner=?',
@@ -199,6 +228,69 @@ final class PublicationStore {
     'WHERE id=? AND generation=? AND owner IS NOT NULL',
     [_encodeFailures(failures), task.id, task.generation],
   );
+
+  Future<void> failUnsettledClaim(AcquisitionTask task, String owner) =>
+      db.write(
+        "UPDATE publication_tasks SET owner=NULL,state='failed',problem=? "
+        'WHERE id=? AND generation=? AND owner=?',
+        [
+          PublicationProblem.taskUpdateFailed.name,
+          task.id,
+          task.generation,
+          owner,
+        ],
+      );
+
+  Future<void> failUnclaimedTask(String id) => db.write(
+    "UPDATE publication_tasks SET state='failed',problem=? "
+    "WHERE id=? AND state='waiting' AND problem IS NULL AND owner IS NULL",
+    [PublicationProblem.taskUpdateFailed.name, id],
+  );
+
+  Future<void> replaceCandidate(
+    AcquisitionTask task,
+    AcquisitionCandidate candidate,
+    Future<void> Function() discardTransfer,
+  ) => db.atomic(() async {
+    final row = (await db.rows(
+      'SELECT owner,state,generation FROM publication_tasks WHERE id=?',
+      [task.id],
+    )).firstOrNull;
+    if (row == null ||
+        row['generation'] != task.generation ||
+        row['owner'] != null ||
+        !const {'failed', 'paused', 'waiting'}.contains(row['state'])) {
+      throw const PublicationFailure(PublicationProblem.inUse);
+    }
+    final candidates = [...task.candidates];
+    final key = jsonEncode(candidate.toJson());
+    var index = candidates.indexWhere(
+      (item) => jsonEncode(item.toJson()) == key,
+    );
+    if (index < 0) {
+      if (candidates.length >= 32) {
+        throw const PublicationFailure(PublicationProblem.tooManyCandidates);
+      }
+      index = candidates.length;
+      candidates.add(candidate);
+    }
+    final sameFile = index == task.selected;
+    if (!sameFile) await discardTransfer();
+    await db.write(
+      "UPDATE publication_tasks SET candidates=?,selected=?,generation=generation+1,state='waiting', "
+      'received=?,total=?,problem=NULL,retry_at=NULL,space_shortfall=NULL WHERE id=?',
+      [
+        jsonEncode([
+          for (final item in candidates)
+            item.toJson(includePublishedAccess: true),
+        ]),
+        index,
+        sameFile ? task.received : 0,
+        sameFile ? task.total : null,
+        task.id,
+      ],
+    );
+  }, tables: {'publication_tasks', 'publication_transfer', 'publication_space'});
 
   Future<void> updateTask(
     AcquisitionTask task,

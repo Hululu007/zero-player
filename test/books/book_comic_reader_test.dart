@@ -43,20 +43,24 @@ void main() {
       Uri.parse('https://fixture.test/book'),
     );
     final chapter = BookChapter('第一话', Uri.parse('https://fixture.test/1'));
-    final image = Uri.parse('https://fixture.test/1.png');
-    await tester.runAsync(
-      () => services.books.store.saveOfflineImages(book, chapter, {
-        image: base64Decode(
-          'iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAYAAABytg0kAAAAEUlEQVR4nGP4z8DwH4QZYAwAR8oH+WdZbrcAAAAASUVORK5CYII=',
-        ),
-      }, () async {}),
+    final next = BookChapter('第二话', Uri.parse('https://fixture.test/2'));
+    final bytes = base64Decode(
+      'iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAYAAABytg0kAAAAEUlEQVR4nGP4z8DwH4QZYAwAR8oH+WdZbrcAAAAASUVORK5CYII=',
     );
+    await tester.runAsync(() async {
+      for (final part in [chapter, next]) {
+        await services.books.store.saveOfflineImages(book, part, {
+          part.uri.resolve('${part.uri.path}-1.png'): bytes,
+          part.uri.resolve('${part.uri.path}-2.png'): bytes,
+        }, () async {});
+      }
+    });
     await tester.pumpWidget(
       MaterialApp(
         home: BookReaderPage(
           repository: services.books,
           book: book,
-          chapters: [chapter],
+          chapters: [chapter, next],
           initial: chapter,
         ),
       ),
@@ -89,5 +93,51 @@ void main() {
       greaterThan(0),
     );
     expect(tester.takeException(), isNull);
+
+    await _checkComicNavigationAndRevocation(tester, services, source);
   });
+}
+
+Future<void> _checkComicNavigationAndRevocation(
+  WidgetTester tester,
+  AppServices services,
+  BookSource source,
+) async {
+  await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+  await tester.pump();
+  await tester.pump(const Duration(milliseconds: 250));
+  await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+  await _pumpReader(tester);
+  PageController pager() =>
+      tester.widget<PageView>(find.byType(PageView)).controller!;
+  expect(pager().page, 0);
+  await tester.sendKeyEvent(LogicalKeyboardKey.arrowUp);
+  await _pumpReader(tester);
+  expect(pager().page, 1);
+  await tester.tap(find.byTooltip('阅读菜单'));
+  await tester.pump();
+  expect(find.byTooltip('阅读样式'), findsOneWidget);
+  expect(find.byTooltip('章内查找'), findsNothing);
+  await tester.tapAt(tester.getCenter(find.byType(PageView)));
+  await tester.pump();
+  await tester.longPress(find.byType(RawImage).first);
+  await tester.pumpAndSettle();
+  expect(find.byTooltip('关闭图片'), findsOneWidget);
+  await tester.runAsync(
+    () => services.books.markSourceRisk(source, adult: true),
+  );
+  await tester.pump();
+  await tester.pump(const Duration(milliseconds: 250));
+  expect(find.byTooltip('关闭图片'), findsNothing);
+  expect(find.byType(RawImage), findsNothing);
+}
+
+Future<void> _pumpReader(WidgetTester tester) async {
+  for (var i = 0; i < 4; i++) {
+    await tester.pump(const Duration(milliseconds: 250));
+    await tester.runAsync(
+      () => Future<void>.delayed(const Duration(milliseconds: 30)),
+    );
+  }
+  await tester.pump();
 }

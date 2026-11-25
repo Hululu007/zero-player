@@ -290,11 +290,7 @@ final class PublicationSpace {
           var used = 0;
           await for (final file in entry.list(followLinks: false)) {
             if (file is! File) continue;
-            if (keep &&
-                const {
-                  'book.pdf',
-                  'book.epub',
-                }.contains(p.basename(file.path))) {
+            if (keep && isStagedPublicationBook(p.basename(file.path))) {
               await file.delete();
             } else {
               used += await file.length();
@@ -324,6 +320,13 @@ final class PublicationSpace {
       }
     }
   }
+}
+
+bool isStagedPublicationBook(String name) {
+  final format = PublicationFormat.fromName(name);
+  return format != null &&
+      format != PublicationFormat.zip &&
+      name == 'book.${format.name}';
 }
 
 Future<int> publicationDiskFree(Directory directory) async {

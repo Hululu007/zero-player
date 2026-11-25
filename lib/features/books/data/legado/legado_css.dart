@@ -7,6 +7,7 @@ Iterable<Object?> selectLegadoCss(
   dom.Node node,
   String rule, {
   required bool list,
+  int limit = 5000,
 }) {
   final steps = splitLegadoRule(rule, '@');
   if (steps.length > 12) throw const FormatException('Legado 选择器层数超过限制');
@@ -21,7 +22,7 @@ Iterable<Object?> selectLegadoCss(
       : '';
   Iterable<dom.Node> result = [node];
   for (final step in steps.where((step) => step.isNotEmpty)) {
-    result = result.expand((parent) => _step(parent, step)).take(5000);
+    result = result.expand((parent) => _step(parent, step, limit)).take(limit);
   }
   if (field.isEmpty) return result;
   return result.map((node) => _extract(node, field));
@@ -61,19 +62,17 @@ String _extract(dom.Node node, String field) {
   };
 }
 
-Iterable<dom.Element> _step(dom.Node node, String rule) {
+Iterable<dom.Element> _step(dom.Node node, String rule, int limit) {
   final indexed = RegExp(
     r'^(.*?)(?:\[([!\d,:.\- ]+)\]|([.!])(-?\d+(?:[:.]?-?\d+)*))$',
   ).firstMatch(rule);
   final selector = indexed?[1] ?? rule;
   final base = _css(selector);
-  final candidates =
-      (base == 'children' || base.isEmpty
-              ? node.children
-              : bookElements(node, base))
-          .take(5000)
-          .toList();
-  if (indexed == null) return candidates;
+  final nodes = base == 'children' || base.isEmpty
+      ? node.children
+      : bookElements(node, base, limit: limit);
+  if (indexed == null) return nodes.take(limit);
+  final candidates = nodes.take(limit).toList();
   final indices = indexed[2] ?? indexed[4]!;
   return _indexed(
     candidates,

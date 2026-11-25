@@ -13,7 +13,8 @@ import '../../../core/network/cancellation_token.dart';
 import '../../../core/network/document_client.dart';
 import '../../../core/network/header_policy.dart';
 import '../../../core/network/media_http_client.dart';
-import '../../../core/network/poster_repository.dart';
+import '../../../core/network/windows_public_https_route.dart';
+import '../../../core/network/request_scheduler.dart';
 import '../../../core/network/source_certificate.dart';
 import '../../../core/persistence/app_database.dart';
 import '../../../media/gateway/offline_server.dart';
@@ -33,6 +34,7 @@ import 'book_reading_cleanup.dart';
 import 'reader_fonts.dart';
 import 'book_comic_access.dart';
 import 'book_cover_cache.dart';
+import 'book_manga_website.dart';
 import 'book_download_evidence.dart';
 import 'book_download_guard.dart';
 import 'book_download_source_health.dart';
@@ -56,6 +58,7 @@ import 'book_source_links.dart';
 import 'book_source_import_plan.dart';
 import 'book_source_importer.dart';
 import 'book_store.dart';
+import 'book_catalog_rebuild.dart';
 import 'book_catalog_window.dart';
 import 'local_book_library.dart';
 import 'qidian_catalog.dart';
@@ -124,6 +127,14 @@ final class BooksRepository {
        _http = MediaHttpClient(
          maxConnectionsPerHost: 2,
          allowLegacyQueryEncoding: true,
+         publicHttpsRoute: WindowsPublicHttpsRoute(const {
+           'www.yymanhua.com',
+           'image.yymanhua.com',
+           'cover.yymanhua.com',
+           'www.xmanhua.com',
+           'image.xmanhua.com',
+           'cover.xmanhua.com',
+         }).connect,
        ) {
     localBooks = LocalBookLibrary(
       store: store,
@@ -499,6 +510,7 @@ final class BooksRepository {
         .where(
           (entry) =>
               entry.source.kind == kind &&
+              !supersededBundledBookSource(entry) &&
               !blocked.containsKey(entry.source.id) &&
               (!enabledOnly || comicAccess.allowed(entry.source)) &&
               sourceEntryAllowed(entry),
@@ -872,6 +884,8 @@ final class BooksRepository {
     BookSearchField field = BookSearchField.all,
     List<BookSourceEntry>? availableSources,
     void Function(BookSearchUpdate)? onProgress,
+    void Function(String, Exception)? onSourceFailure,
+    Map<String, SourceCertificateFailure> temporaryCertificates = const {},
   }) => _find(
     kind,
     query,
@@ -888,6 +902,8 @@ final class BooksRepository {
     field: field,
     availableSources: availableSources,
     onProgress: onProgress,
+    onSourceFailure: onSourceFailure,
+    temporaryCertificates: temporaryCertificates,
   );
 
   Future<List<BookChapter>> chapters(
@@ -1197,6 +1213,9 @@ final class BooksRepository {
     if (book.sourceId != 'local') await ensureSourceRiskLoaded();
     requireBook(book, chapter);
     if (await _blocked(book.sourceId)) throw const ContentBlocked();
+    if (isRebuiltBookChapter(chapter)) {
+      return BookCatalogRebuild(this).read(book, chapter, token);
+    }
     if (BookLatestAggregation.isAggregated(chapter)) {
       return _readAggregatedText(book, chapter, token);
     }
@@ -1340,7 +1359,11 @@ final class BooksRepository {
     } on Exception {
       token.check();
       requireBook(book, chapter);
-      if (!automatic || book.sourceId == 'local') rethrow;
+      if (!automatic ||
+          book.sourceId == 'local' ||
+          isRebuiltBookChapter(chapter)) {
+        rethrow;
+      }
       for (final edition in await alternatives(book, token)) {
         final match = matchingChapter(edition.chapters, chapter);
         if (match == null) continue;
@@ -1367,54 +1390,62 @@ final class BooksRepository {
     final uri = qidianBook
         ? qidian.coverUri(book)
         : source!.resolve(book.uri, book.cover, media: true);
-    Future<void> validate() async {
-      token.check();
+    Future<void> validate(CancellationToken cancellation) async {
+      cancellation.check();
       if (!bookAllowed(book) ||
           (qidianBook ? !qidian.allows(book) : !sourceAllowed(source!)) ||
           await _blocked(book.sourceId)) {
         throw const ContentBlocked();
       }
-      token.check();
+      cancellation.check();
     }
 
-    await validate();
+    await validate(token);
     final key = coverCache.key(book.title, book.author, uri);
-    final generation = coverCache.generation;
-    List<int>? cached;
-    try {
-      cached = await coverCache.read(key);
-    } on FileSystemException {
-      // Optional cache failure must not hide a valid cover.
-    }
-    await validate();
-    if (cached != null) return cached;
-    final bytes = qidianBook
-        ? await qidian.cover(book, token)
-        : (await client.fetch(
-            source!,
-            uri,
-            token,
-            media: true,
-            maxBytes: 2 * 1024 * 1024,
-          )).bytes;
-    token.check();
-    await validate();
-    if (isPosterPayload(bytes)) {
-      unawaited(
-        coverCache
-            .write(key, bytes, generation)
-            .onError((Object _, StackTrace _) {}),
-      );
-    }
-    token.check();
+    final bytes = await coverCache.obtain(
+      key,
+      scope: (book.id, _sourceConfigurationRevision),
+      token: token,
+      fetch: (cancellation) async {
+        await validate(cancellation);
+        final bytes = await withRequestPriority(
+          RequestPriority.background,
+          () async {
+            if (qidianBook) return qidian.cover(book, cancellation);
+            return (await client.fetch(
+              source!,
+              uri,
+              cancellation,
+              media: true,
+              maxBytes: 2 * 1024 * 1024,
+            )).bytes;
+          },
+        );
+        await validate(cancellation);
+        return bytes;
+      },
+    );
+    await validate(token);
     return bytes;
   }
+
+  Future<Map<Uri, List<int>>> offlineComicForExport(
+    Book book,
+    BookChapter chapter,
+    CancellationToken token,
+  ) => _offlineComicForExport(book, chapter, token);
 
   Future<List<Uri>> chapterImages(
     Book book,
     BookChapter chapter,
-    CancellationToken token,
-  ) => _guardedChapterImages(book, chapter, token);
+    CancellationToken token, {
+    void Function(Uri, Document)? onImageResponse,
+  }) => _guardedChapterImages(
+    book,
+    chapter,
+    token,
+    onImageResponse: onImageResponse,
+  );
 
   Future<List<Uri>> imageAddressesInText(
     Book book,
@@ -1449,12 +1480,14 @@ final class BooksRepository {
     CancellationToken token, {
     BookChapter? chapter,
     int maxBytes = BookResourceLimits.imageBytes,
+    Document? imageResponse,
   }) => _guardedChapterImageBytes(
     book,
     image,
     token,
     chapter: chapter,
     maxBytes: maxBytes,
+    imageResponse: imageResponse,
   );
 
   Future<void> download(

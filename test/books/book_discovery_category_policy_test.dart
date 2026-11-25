@@ -7,6 +7,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:zero_player/app/app_services.dart';
 import 'package:zero_player/core/network/cancellation_token.dart';
 import 'package:zero_player/core/persistence/app_database.dart';
+import 'package:zero_player/core/platform/protected_book_export.dart';
+import 'package:zero_player/features/books/data/book_offline_export.dart';
 import 'package:zero_player/core/persistence/installation_metadata.dart';
 import 'package:zero_player/features/books/data/books_repository.dart';
 import 'package:zero_player/features/books/data/book_import.dart';
@@ -31,6 +33,7 @@ void main() {
   _inFlightPolicyTests();
   _nonLegadoTargetTests();
   _comicTargetTests();
+  _comicIntegrityTests();
   _comicBudgetTests();
   _audioTargetTests();
   _mediaProbeTargetTests();
@@ -928,6 +931,7 @@ Future<void> _withFixture(Future<void> Function(_Fixture) body) async {
   final nextLinks = <String, String>{};
   final redirects = <String, String>{};
   final pages = <String, String>{};
+  final referers = <String, String?>{};
   final media = <String, (ContentType, List<int>)>{};
   final shuyinNavigation = <Map<String, String>>[];
   final formRequests = <Map<String, String>>[];
@@ -958,6 +962,9 @@ Future<void> _withFixture(Future<void> Function(_Fixture) body) async {
         await request.response.close();
         return;
       }
+      referers[request.uri.path] = request.headers.value(
+        HttpHeaders.refererHeader,
+      );
       final redirect = redirects[request.uri.path];
       if (redirect != null) {
         request.response.statusCode = 302;
@@ -1017,6 +1024,7 @@ Future<void> _withFixture(Future<void> Function(_Fixture) body) async {
               nextLinks,
               redirects,
               pages,
+              referers,
               media,
               shuyinNavigation,
               formRequests,
@@ -1053,6 +1061,7 @@ final class _Fixture {
     this.nextLinks,
     this.redirects,
     this.pages,
+    this.referers,
     this.media,
     this.shuyinNavigation,
     this.formRequests,
@@ -1063,6 +1072,7 @@ final class _Fixture {
   final Map<String, String> nextLinks;
   final Map<String, String> redirects;
   final Map<String, String> pages;
+  final Map<String, String?> referers;
   final Map<String, (ContentType, List<int>)> media;
   final List<Map<String, String>> shuyinNavigation, formRequests;
   BooksRepository get repo => services.books;

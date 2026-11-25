@@ -5,6 +5,7 @@ import 'package:zero_player/core/network/cancellation_token.dart';
 import 'package:zero_player/core/network/media_http_client.dart';
 import 'package:zero_player/core/persistence/app_database.dart';
 import 'package:zero_player/features/publications/data/publication_http.dart';
+import 'package:zero_player/features/publications/data/publication_rule_examples.dart';
 import 'package:zero_player/features/publications/data/publication_share.dart';
 import 'package:zero_player/features/publications/data/publication_sources.dart';
 import 'package:zero_player/features/publications/data/publication_store.dart';
@@ -35,6 +36,95 @@ PublicationEdition _book(String url, {PublicationSource? source}) =>
     ).single;
 
 void main() {
+  test(
+    'version 2 HTML supports row attributes and Kindle downloads in detail',
+    () {
+      final source = PublicationSource.configure({
+        'name': 'Kindle catalogue',
+        'version': 2,
+        'kind': 'htmlSearch',
+        'endpoint': 'https://catalog.example/books',
+        'rows': 'a.book',
+        'field': {'title': 'a', 'page': 'a@href', 'cover': 'img@data-src'},
+        'detail': {'azw3': 'p.download'},
+      });
+      final book = configuredPublicationRows(
+        source,
+        '<a class="book" href="/detail?id=42">Reading example'
+        '<img data-src="/cover.jpg"></a>',
+      ).single;
+      expect(book.title, 'Reading example');
+      expect(book.page?.queryParameters['id'], '42');
+      expect(book.cover?.path, '/cover.jpg');
+      final copy = configuredDetailCandidates(
+        source,
+        '<p class="download"><a href="/books/reading.azw3">AZW3</a></p>',
+        book.page!,
+      ).single;
+      expect(copy.format, PublicationFormat.azw3);
+      expect(copy.link.path, '/books/reading.azw3');
+    },
+  );
+
+  test(
+    'Open Logic Project uses the same rules for catalogue and PDF details',
+    () {
+      final source = PublicationSource.configure(openLogicProjectRule);
+      final rows = configuredPublicationRows(
+        source,
+        '<h3><a href="https://slc.openlogicproject.org/">Sets, Logic, Computation</a></h3>'
+        '<h3><a href="courses/what-if/">What If?</a></h3>'
+        '<h3>Sample Texts</h3>',
+      );
+      expect(rows.length, 2);
+      final page = rows.first.page!;
+      expect(page.host, 'slc.openlogicproject.org');
+      final files = configuredDetailCandidates(
+        source,
+        '<a href="sets-print.pdf">Print</a><a href="slc-screen.pdf">Screen</a>',
+        page,
+      );
+      expect(files.single.link, page.resolve('slc-screen.pdf'));
+      expect(
+        configuredDetailCandidates(
+          source,
+          '<a href="https://elsewhere.example/false-screen.pdf">PDF</a>',
+          page,
+        ),
+        isEmpty,
+      );
+    },
+  );
+
+  test(
+    'a directory-only source cannot resolve an injected file candidate',
+    () async {
+      final source = builtinPublicationSources.singleWhere(
+        (item) => item.id == 'alltool-public-catalogue',
+      );
+      final transport = MediaHttpClient();
+      addTearDown(transport.close);
+      final resolver = PublicationShareResolver(
+        PublicationHttp(transport, authorize: (_) {}),
+      );
+      final candidate = AcquisitionCandidate(
+        source: source.id,
+        format: PublicationFormat.pdf,
+        link: Uri.https('alltool.top', '/book/example.pdf'),
+      );
+      await expectLater(
+        resolver.resolve(candidate, source, null, CancellationToken()),
+        throwsA(
+          isA<PublicationFailure>().having(
+            (error) => error.problem,
+            'problem',
+            PublicationProblem.unsupported,
+          ),
+        ),
+      );
+    },
+  );
+
   test('an opt-in HTTPS upgrade applies only to the configured source origin', () {
     final source = PublicationSource.configure({
       'version': 2,

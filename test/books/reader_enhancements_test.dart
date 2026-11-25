@@ -102,6 +102,75 @@ void main() {
     _readerGestureTest(mode);
   }
   _fallbackTest();
+  _scrollRestoreTest();
+}
+
+void _scrollRestoreTest() {
+  testWidgets('scroll restores the actual first visible line of mixed text', (
+    tester,
+  ) async {
+    const style = TextStyle(fontSize: 20, height: 1.5);
+    final text = List.filled(
+      28,
+      [
+        '短行',
+        '中英文 mixed width with a deliberately long English sentence',
+        '尾',
+        'End of the section',
+      ].join('\n'),
+    ).join('\n');
+    var progress = readerProgress(0);
+    Future<void> open(ReaderProgress initial) => tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: Builder(
+            builder: (context) {
+              return ReaderViewport(
+                key: UniqueKey(),
+                text: text,
+                titleLength: 0,
+                style: style,
+                palette: const ReaderPreferences().paper.palette(
+                  Theme.of(context).colorScheme,
+                ),
+                mode: ReaderTurnMode.scroll,
+                animate: false,
+                texture: false,
+                margin: 20,
+                initial: initial,
+                onProgress: (value) => progress = value,
+                canCross: (_) => false,
+                onBoundary: (_) {},
+                onSelection: (_) {},
+                onAnnotate: () {},
+              );
+            },
+          ),
+        ),
+      ),
+    );
+    await open(progress);
+    final view = find.byType(ListView);
+    final painter = TextPainter(
+      text: TextSpan(text: text, style: style),
+      textDirection: TextDirection.ltr,
+    )..layout(maxWidth: tester.getSize(view).width);
+    final line = painter.computeLineMetrics()[5];
+    final top = line.baseline - line.ascent;
+    final cursor = painter.getPositionForOffset(
+      Offset(line.left + line.width / 2, top + line.ascent / 2),
+    );
+    final expected = painter.getLineBoundary(cursor).start;
+    painter.dispose();
+    tester.widget<ListView>(view).controller!.jumpTo(top + 2);
+    await tester.pump();
+    expect(progress.offset, expected);
+    final saved = progress;
+    await open(saved);
+    await tester.pump();
+    expect(tester.widget<ListView>(view).controller!.offset, closeTo(top, 1));
+    expect(progress.offset, expected);
+  });
 }
 
 Future<void> _saveTestNote(

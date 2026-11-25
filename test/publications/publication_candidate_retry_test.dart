@@ -2,7 +2,9 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:archive/archive.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:zero_player/app/app_services.dart';
 import 'package:zero_player/core/network/media_http_client.dart';
 import 'package:zero_player/core/persistence/app_database.dart';
 import 'package:zero_player/features/publications/application/publication_acquisitions.dart';
@@ -40,6 +42,123 @@ void main() {
     final saved = (await store.task(id))!.failures.single;
     expect(saved.at, checked);
     expect(saved.retryAt, isNull);
+  });
+  test('replacing a share keeps the task and the original failure', () async {
+    final store = PublicationStore(AppDatabase.memory());
+    addTearDown(store.db.close);
+    final id = await store.addTask(
+      _manual,
+      [_published],
+      preflightFailure: const PublicationFailure(PublicationProblem.missing),
+    );
+    final failed = (await store.task(id))!;
+    final replacement = AcquisitionCandidate(
+      source: 'manual',
+      link: Uri.https('example.net', '/replacement.pdf'),
+      format: PublicationFormat.pdf,
+    );
+    var discarded = 0;
+    Future<void> discard() async {
+      discarded++;
+    }
+
+    await store.replaceCandidate(failed, replacement, discard);
+    final updated = (await store.task(id))!;
+    expect(await store.tasks(), hasLength(1));
+    expect(updated.edition.id, failed.edition.id);
+    expect(updated.candidate.id, replacement.id);
+    expect(updated.failures, failed.failures);
+    expect(updated.candidates.first.id, _published.id);
+    expect(discarded, 1);
+    await expectLater(
+      store.replaceCandidate(failed, replacement, discard),
+      throwsA(isA<PublicationFailure>()),
+    );
+    expect(discarded, 1);
+  });
+  test(
+    'a failed final database update releases the acquisition owner',
+    () async {
+      final root = await Directory.systemTemp.createTemp('unsettled-download-');
+      addTearDown(() => root.delete(recursive: true));
+      final pdf = samplePdf();
+      final server = await _listen((request) async {
+        request.response
+          ..headers.contentType = ContentType('application', 'pdf')
+          ..contentLength = pdf.length
+          ..add(pdf);
+        await request.response.close();
+      });
+      final database = File('${root.path}/tasks.sqlite');
+      final store = PublicationStore(AppDatabase(database));
+      final id = await store.addTask(_manual, [_candidate(server, 'test.pdf')]);
+      await store.db.write("""
+      CREATE TRIGGER fail_download_result BEFORE UPDATE ON publication_tasks
+      WHEN NEW.state='downloaded' OR
+        (NEW.state='failed' AND NEW.problem!='taskUpdateFailed')
+      BEGIN SELECT RAISE(ABORT, 'fixture update failure'); END
+    """);
+      await _download(store, root, id);
+      final reopened = PublicationStore(AppDatabase(database));
+      addTearDown(reopened.db.close);
+      final task = (await reopened.task(id))!;
+      expect(task.state, AcquisitionState.failed);
+      expect(task.problem, PublicationProblem.taskUpdateFailed);
+      final owner = await reopened.db.rows(
+        'SELECT owner FROM publication_tasks WHERE id=?',
+        [id],
+      );
+      expect(owner.single['owner'], isNull);
+    },
+  );
+  test('a completed ebook is imported without a publications page', () async {
+    final root = await Directory.systemTemp.createTemp('automatic-import-');
+    addTearDown(() => root.delete(recursive: true));
+    final services = AppServices.scoped(
+      root,
+      AppDatabase.memory(),
+      allowPrivateNetworks: true,
+    );
+    addTearDown(services.close);
+    await services.supervision.load();
+    await services.settings.load();
+    final module = services.publications;
+    module.workflow.enableAutomaticImport(module.output);
+    final mime = 'application/epub+zip'.codeUnits;
+    final archive = Archive()
+      ..addFile(ArchiveFile.noCompress('mimetype', mime.length, mime));
+    for (final file in ZipDecoder().decodeBytes(sampleEpub()).files) {
+      archive.addFile(file);
+    }
+    final epub = ZipEncoder().encode(archive);
+    final server = await _listen((request) async {
+      request.response
+        ..headers.contentType = ContentType('application', 'epub+zip')
+        ..contentLength = epub.length
+        ..add(epub);
+      await request.response.close();
+    });
+    final candidate = AcquisitionCandidate(
+      source: 'manual',
+      link: Uri.parse('http://127.0.0.1:${server.port}/auto.epub'),
+      format: PublicationFormat.epub,
+    );
+    final id = await module.workflow.add(
+      _manual.withCandidates([candidate]),
+      PublicationFormat.epub,
+    );
+    final deadline = DateTime.now().add(const Duration(seconds: 10));
+    var task = (await module.store.task(id))!;
+    while (task.state != AcquisitionState.complete &&
+        task.problem == null &&
+        DateTime.now().isBefore(deadline)) {
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+      task = (await module.store.task(id))!;
+    }
+    expect(task.state, AcquisitionState.complete, reason: '${task.problem}');
+    final book = (await module.library.holdings()).single;
+    expect(book.edition.id, _manual.id);
+    expect(book.resident, isTrue);
   });
 }
 

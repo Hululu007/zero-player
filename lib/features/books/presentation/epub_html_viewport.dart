@@ -419,6 +419,11 @@ class EpubHtmlViewportState extends State<EpubHtmlViewport>
           'overflow': 'auto',
           'font-family': 'monospace',
         },
+        'img' => {'vertical-align': 'bottom'},
+        'div'
+            when element.text.trim().isEmpty &&
+                element.querySelector('img') != null =>
+          {'vertical-align': 'bottom'},
         'div' when element.parent?.localName == 'body' && prefs.justify => {
           'text-align': 'justify',
         },

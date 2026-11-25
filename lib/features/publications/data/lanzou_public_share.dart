@@ -5,6 +5,7 @@ import 'package:html/parser.dart' as html;
 
 import '../../../core/network/cancellation_token.dart';
 import '../domain/publication.dart';
+import 'cloud_shared_file.dart';
 import 'publication_http.dart';
 import 'publication_share_provider.dart';
 
@@ -123,24 +124,44 @@ final class LanzouPublicShare {
     AcquisitionCandidate candidate,
     String? code,
     CancellationToken token,
+  ) => _resolve(
+    candidate.link,
+    candidate.fileId,
+    code,
+    token,
+    (file) =>
+        PublicationFormat.fromName(file.name) == candidate.format &&
+        (candidate.sharedFileName == null ||
+            file.name == candidate.sharedFileName),
+  );
+
+  Future<PublicationDownload> resolveResource(
+    Uri link,
+    CloudSharedFile file,
+    String? code,
+    CancellationToken token,
+  ) => _resolve(
+    link,
+    file.id,
+    code,
+    token,
+    (current) => current.name == file.name,
+  );
+
+  Future<PublicationDownload> _resolve(
+    Uri link,
+    String? id,
+    String? code,
+    CancellationToken token,
+    bool Function(LanzouFile) matches,
   ) async {
-    final guest = GuestShareSession((uri) => uri.host == candidate.link.host);
-    final files = await _inspect(
-      candidate.link,
-      code,
-      token,
-      guest,
-      requested: candidate.fileId,
-    );
-    final selected = files
-        .where((file) => file.id == candidate.fileId)
-        .firstOrNull;
+    final guest = GuestShareSession((uri) => uri.host == link.host);
+    final files = await _inspect(link, code, token, guest, requested: id);
+    final selected = files.where((file) => file.id == id).firstOrNull;
     if (selected == null) {
       throw const PublicationFailure(PublicationProblem.missing);
     }
-    if (PublicationFormat.fromName(selected.name) != candidate.format ||
-        (candidate.sharedFileName != null &&
-            selected.name != candidate.sharedFileName)) {
+    if (!matches(selected)) {
       throw const PublicationFailure(PublicationProblem.invalid);
     }
     return resolveFile(selected, code, token, guest: guest);

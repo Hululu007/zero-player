@@ -16,7 +16,6 @@ import '../data/publication_share.dart';
 import '../data/publication_space.dart';
 import '../data/publication_store.dart';
 import '../data/publication_transfer.dart';
-import '../domain/acquisition_task.dart';
 import '../domain/publication.dart';
 import 'publication_acquisitions.dart';
 import 'publication_discovery.dart';
@@ -84,7 +83,7 @@ final class _AndroidWorker {
   late final runner = PublicationAcquisitions(
     store,
     discovery,
-    PublicationShareResolver(http),
+    PublicationShareResolver(http, catalogueFor: discovery.catalogueFor),
     transfer,
     (value) {
       if (!publicationAcquisitionAllowed(policy, value)) {
@@ -92,10 +91,12 @@ final class _AndroidWorker {
       }
     },
     reloadPolicy: _checkPolicy,
+    checkDownload: _checkMetered,
     activity: () => unawaited(_notify()),
   );
   late String _policyFence;
   bool _closed = false;
+  final _started = <String>{};
 
   Future<void> initialize() async {
     final before = await _fence();
@@ -125,6 +126,17 @@ final class _AndroidWorker {
     }
   }
 
+  Future<void> _checkMetered() async {
+    final allowed =
+        (await db.rows(
+          "SELECT value FROM settings WHERE key='allowMetered'",
+        )).firstOrNull?['value'] ==
+        'true';
+    if (!allowed && await bridge.invokeMethod<bool>('isMetered') != false) {
+      throw const PublicationFailure(PublicationProblem.metered);
+    }
+  }
+
   Future<Object?> handle(MethodCall call) async {
     if (_closed) return null;
     switch (call.method) {
@@ -132,10 +144,12 @@ final class _AndroidWorker {
         return !runner.busy;
       case 'start':
         final args = call.arguments as Map;
+        _started.add(args['id'] as String);
         runner.start(
           args['id'] as String,
           code: args['code'] as String?,
           codeFor: args['codeFor'] as String?,
+          baiduAccessToken: args['baiduAccessToken'] as String?,
         );
         await _notify();
       case 'pause':
@@ -181,13 +195,14 @@ final class _AndroidWorker {
       'busy': runner.busy,
       'tasks': [
         for (final task in tasks)
-          if (task.state == AcquisitionState.resolving ||
-              task.state == AcquisitionState.downloading)
+          if (_started.contains(task.id))
             {
               'id': task.id,
               'generation': task.generation,
               'received': task.received,
               'total': task.total,
+              'state': task.state.name,
+              'status': task.problem?.label ?? task.state.label,
             },
       ],
     });

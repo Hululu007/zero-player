@@ -21,6 +21,13 @@ enum FailureKind {
   storage,
 }
 
+final _documentRetriesDisabled = Object();
+
+/// A caller that owns retry and backoff for a logical operation can avoid
+/// multiplying its attempts with the default retries on each GET.
+Future<T> withoutDocumentRetries<T>(Future<T> Function() action) =>
+    runZoned(action, zoneValues: {_documentRetriesDisabled: true});
+
 final class RemoteFailure implements Exception {
   const RemoteFailure(this.kind, this.message, {this.status, this.retryAfter});
   final FailureKind kind;
@@ -162,6 +169,7 @@ final class DocumentClient {
               failure.kind == FailureKind.timeout ||
               {429, 502, 503, 504}.contains(failure.status);
           if (!transient ||
+              Zone.current[_documentRetriesDisabled] == true ||
               attempt >= 1 ||
               token.isCancelled ||
               (failure.retryAfter != null &&

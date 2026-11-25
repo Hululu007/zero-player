@@ -2,7 +2,96 @@ import 'package:flutter/material.dart';
 
 import '../../supervision/presentation/sensitive_action.dart';
 import '../data/book_chapter_policy.dart';
+import '../data/book_detected_replacement.dart';
 import '../data/books_repository.dart';
+
+Future<void> editDetectedReplacement(
+  BuildContext context,
+  BooksRepository books,
+) => _verified(context, books, () async {
+  await books.chapterPolicy.load();
+  if (!context.mounted) return;
+  final current = books.chapterPolicy.detectedForReview();
+  var text = current?.text ?? '〔已屏蔽〕';
+  var paragraph = current?.paragraph ?? false;
+  var before = current?.before ?? 0, after = current?.after ?? 0;
+  final result = await _guardedDialog<({BookDetectedReplacement? rule})>(
+    context,
+    books,
+    requireConfigured: false,
+    builder: (context) => StatefulBuilder(
+      builder: (context, update) => AlertDialog(
+        title: const Text('自动替换检测到的内容'),
+        scrollable: true,
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextFormField(
+              initialValue: text,
+              maxLength: 1000,
+              maxLines: 3,
+              decoration: const InputDecoration(labelText: '替换为（留空即隐藏）'),
+              onChanged: (value) => text = value,
+            ),
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: const Text('替换命中段落'),
+              subtitle: const Text('关闭时仅替换检测到的文字'),
+              value: paragraph,
+              onChanged: (value) => update(() => paragraph = value),
+            ),
+            if (paragraph) ...[
+              _paragraphOffset(
+                '向前扩展段数',
+                before,
+                (value) => update(() => before = value),
+              ),
+              _paragraphOffset(
+                '向后扩展段数',
+                after,
+                (value) => update(() => after = value),
+              ),
+            ],
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('取消'),
+          ),
+          if (current != null)
+            TextButton(
+              onPressed: () => Navigator.pop(context, (rule: null)),
+              child: const Text('停用自动替换'),
+            ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, (
+              rule: BookDetectedReplacement(
+                text,
+                paragraph: paragraph,
+                before: before,
+                after: after,
+              ),
+            )),
+            child: const Text('保存并应用'),
+          ),
+        ],
+      ),
+    ),
+  );
+  if (result != null) await books.chapterPolicy.saveDetected(result.rule);
+}, requireConfigured: false);
+
+Widget _paragraphOffset(String label, int count, ValueChanged<int> update) =>
+    DropdownButtonFormField<int>(
+      initialValue: count,
+      decoration: InputDecoration(labelText: label),
+      items: [
+        for (var value = 0; value <= BookDetectedReplacement.maxOffset; value++)
+          DropdownMenuItem(value: value, child: Text('$value 段')),
+      ],
+      onChanged: (value) => update(value!),
+    );
 
 Future<bool> reviewBlockedChapter(
   BuildContext context,
@@ -103,6 +192,10 @@ Future<void> showBookTextReplacements(
               children: [
                 const Text(
                   '适用于在线小说与 TXT 的正文阅读、下载校验和文本导出。按顺序匹配字面关键词（忽略英文大小写），替换匹配词或所在段落，原文保留；替换后仍执行内容过滤。段落以换行分隔。EPUB／PDF 保留原有格式与过滤。',
+                ),
+                TextButton(
+                  onPressed: () => editDetectedReplacement(context, books),
+                  child: const Text('设置自动替换检测到的内容'),
                 ),
                 for (final (index, rule) in rules.indexed)
                   ListTile(
@@ -214,11 +307,12 @@ Future<BookTextReplacement?> _editRule(
 Future<void> _verified(
   BuildContext context,
   BooksRepository books,
-  Future<void> Function() action,
-) async {
+  Future<void> Function() action, {
+  bool requireConfigured = true,
+}) async {
   try {
     await books.policy.supervision.load();
-    if (!books.policy.supervision.configured) {
+    if (requireConfigured && !books.policy.supervision.configured) {
       throw const FormatException('请先在监管模式中设置密码');
     }
     if (!context.mounted) return;
@@ -227,7 +321,7 @@ Future<void> _verified(
       books.policy.supervision,
       SensitiveOperation.supervision,
       () async {
-        books.chapterPolicy.requireReview();
+        if (requireConfigured) books.chapterPolicy.requireReview();
         await action();
       },
       explanation: '验证后可查看命中词并管理本章误报或文本替换；不关闭成人过滤。',
@@ -245,8 +339,9 @@ Future<T?> _guardedDialog<T>(
   BuildContext context,
   BooksRepository books, {
   required WidgetBuilder builder,
+  bool requireConfigured = true,
 }) async {
-  books.chapterPolicy.requireReview();
+  if (requireConfigured) books.chapterPolicy.requireReview();
   final session = books.policy.supervision.createSession(
     SensitiveOperation.supervision,
   );

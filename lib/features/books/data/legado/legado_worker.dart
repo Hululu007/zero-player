@@ -8,6 +8,7 @@ import '../../../../core/network/cancellation_token.dart';
 import '../../domain/book.dart';
 import '../../domain/legado_source.dart';
 import '../book_html.dart';
+import '../book_resource_limits.dart';
 import 'legado_discovery.dart';
 import 'legado_request.dart';
 import 'legado_rule_tokens.dart';
@@ -71,6 +72,7 @@ final class LegadoPage {
     this.books = const [],
     this.chapters = const [],
     this.links = const [],
+    this.nextContentLinks = const [],
     this.content = '',
     this.categories = const [],
     this.matches = false,
@@ -78,6 +80,7 @@ final class LegadoPage {
   final List<Book> books;
   final List<BookChapter> chapters;
   final List<String> links;
+  final List<String> nextContentLinks;
   final String content;
   final List<LegadoCategory> categories;
   final bool matches;
@@ -94,7 +97,9 @@ Future<LegadoPage> runLegadoJob(LegadoJob job, CancellationToken token) async {
   receiver.listen(complete);
   final unlink = token.listen(() => complete(const RequestCancelled()));
   final timer = Timer(
-    const Duration(seconds: 5),
+    job.operation == LegadoOperation.toc
+        ? const Duration(seconds: 10)
+        : const Duration(seconds: 5),
     () => complete(const FormatException('Legado 规则处理超时')),
   );
   Isolate? worker;
@@ -144,6 +149,9 @@ final class _LegadoEvaluation {
         book: job.book,
         chapter: job.chapter,
         documents: job.documents,
+        listLimit: job.operation == LegadoOperation.toc
+            ? bookChapterCatalogLimit + 1
+            : 5000,
       );
 
   final LegadoJob job;
@@ -306,15 +314,13 @@ final class _LegadoEvaluation {
     final reverse = selector.startsWith('-');
     if (reverse || selector.startsWith('+')) selector = selector.substring(1);
     final rows = evaluator.elements(selector, root);
-    if (rows.length > 4000) {
-      throw const FormatException('该来源单页目录超过 4000 项，未完整加载');
+    if (rows.length > bookChapterCatalogLimit) {
+      throw const FormatException('单页目录超过 $bookChapterCatalogLimit 项，未完整加载');
     }
     final result = <String, BookChapter>{};
     for (final row in reverse ? rows.reversed : rows) {
       final title = bookLabel(_field('chapterTitle', row));
       if (title.isEmpty || _optional('chapterVolume', row) == 'true') continue;
-      final media =
-          source.kind == BookKind.audio && (rules['content'] ?? '').isEmpty;
       final explicit = (rules['chapterUrl'] ?? '').isNotEmpty;
       final link = _link('chapterUrl', row);
       final request = _request(
@@ -328,7 +334,9 @@ final class _LegadoEvaluation {
                   ? job.book!.request
                   : '${job.uri}'
             : link,
-        media: media,
+        media:
+            source.kind == BookKind.audio && (rules['content'] ?? '').isEmpty,
+        comicChapter: source.kind == BookKind.comic,
       );
       if (request == null) continue;
       result.putIfAbsent(
@@ -351,7 +359,11 @@ final class _LegadoEvaluation {
       if (title.isEmpty) continue;
       final media =
           source.kind == BookKind.audio && (rules['content'] ?? '').isEmpty;
-      final request = _request(_link('articleLink', row), media: media);
+      final request = _request(
+        _link('articleLink', row),
+        media: media,
+        comicChapter: source.kind == BookKind.comic,
+      );
       if (request == null) continue;
       final description =
           (rules['content'] ?? '').isEmpty && source.kind == BookKind.text
@@ -404,10 +416,19 @@ final class _LegadoEvaluation {
   LegadoPage _images() {
     final rule = rules['content'] ?? '';
     if (rule.isEmpty) return const LegadoPage();
-    final addresses = <String>{};
+    final addresses = <Uri, String>{};
     void add(String? value) {
       final address = value?.trim() ?? '';
-      if (address.isNotEmpty && addresses.length < 100) addresses.add(address);
+      if (address.isEmpty) return;
+      try {
+        final uri = source.resolve(job.uri, address, media: true);
+        addresses.putIfAbsent(uri, () => address);
+      } on FormatException {
+        return;
+      }
+      if (addresses.length > BookResourceLimits.chapterImages) {
+        throw const FormatException('章节图片数量超过限制，未完整获取');
+      }
     }
 
     void addElement(dom.Element element) {
@@ -431,16 +452,17 @@ final class _LegadoEvaluation {
       } else if (value is String) {
         final trimmed = value.trim();
         if (trimmed.startsWith('[')) {
+          Object? decoded;
           try {
-            final decoded = jsonDecode(trimmed);
-            if (decoded is List) {
-              for (final item in decoded.take(100)) {
-                if (item is String) add(item);
-              }
-              return;
-            }
+            decoded = jsonDecode(trimmed);
           } on FormatException {
             // Continue with HTML or a direct media address.
+          }
+          if (decoded is List) {
+            for (final item in decoded.whereType<String>()) {
+              add(item);
+            }
+            return;
           }
         }
         if (trimmed.contains('<img')) {
@@ -459,8 +481,7 @@ final class _LegadoEvaluation {
     if (selectorRule.endsWith('@html') || selectorRule.endsWith('@all')) {
       final selector = selectorRule.substring(0, selectorRule.lastIndexOf('@'));
       final hasReplacement = splitLegadoRule(rule, '##').length > 1;
-      for (final element
-          in evaluator.elements(selector, evaluator.root).take(100)) {
+      for (final element in evaluator.elements(selector, evaluator.root)) {
         if (element is dom.Element &&
             (!hasReplacement || element.localName == 'img')) {
           addElement(element);
@@ -468,10 +489,13 @@ final class _LegadoEvaluation {
       }
     }
 
-    for (final value in evaluator.rawValues(rule, evaluator.root).take(100)) {
+    for (final value in evaluator.rawValues(rule, evaluator.root)) {
       addValue(value);
     }
-    return LegadoPage(links: addresses.toList());
+    return LegadoPage(
+      links: addresses.values.toList(),
+      nextContentLinks: _links('nextContent', evaluator.root),
+    );
   }
 
   Object? _details(Object? root) =>
@@ -519,7 +543,11 @@ final class _LegadoEvaluation {
         .toList();
   }
 
-  LegadoRequest? _request(String value, {bool media = false}) {
+  LegadoRequest? _request(
+    String value, {
+    bool media = false,
+    bool comicChapter = false,
+  }) {
     if (value.isEmpty) return null;
     try {
       return LegadoRequest.parse(
@@ -528,7 +556,10 @@ final class _LegadoEvaluation {
         value,
         key: job.query,
         page: job.page,
-        media: media,
+        media:
+            media ||
+            (comicChapter &&
+                isBookImageAddress(job.uri.resolve(legadoAddressPart(value)))),
       );
     } on FormatException {
       return null;

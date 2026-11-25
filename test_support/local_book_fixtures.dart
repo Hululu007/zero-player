@@ -1,5 +1,43 @@
 import 'dart:convert';
+import 'dart:typed_data';
 import 'package:archive/archive.dart';
+
+Uint8List sampleKindle({bool kf8 = false, bool protected = false}) {
+  final text = utf8.encode(
+    '<html><body><h1>第一章</h1><p>电子书格式测试正文</p>'
+    '<mbp:pagebreak/><h1>第二章</h1><p>续读位置示例</p></body></html>',
+  );
+  final title = utf8.encode('Kindle 格式示例');
+  const firstRecord = 96;
+  const recordHeader = 280;
+  final source = Uint8List(
+    firstRecord + recordHeader + title.length + text.length,
+  );
+  final data = ByteData.sublistView(source);
+  source.setRange(60, 68, ascii.encode('BOOKMOBI'));
+  data.setUint16(76, 2);
+  data.setUint32(78, firstRecord);
+  final textOffset = firstRecord + recordHeader + title.length;
+  data.setUint32(86, textOffset);
+  data.setUint16(firstRecord, 1);
+  data.setUint32(firstRecord + 4, text.length);
+  data.setUint16(firstRecord + 8, 1);
+  data.setUint16(firstRecord + 10, 4096);
+  data.setUint16(firstRecord + 12, protected ? 2 : 0);
+  const mobi = firstRecord + 16;
+  source.setRange(mobi, mobi + 4, ascii.encode('MOBI'));
+  data.setUint32(mobi + 4, recordHeader - 16);
+  data.setUint32(mobi + 12, 65001);
+  data.setUint32(mobi + 20, kf8 ? 8 : 6);
+  data.setUint32(mobi + 68, recordHeader);
+  data.setUint32(mobi + 72, title.length);
+  for (final offset in [92, 152, 176, 232, 236]) {
+    data.setUint32(mobi + offset, 0xffffffff);
+  }
+  source.setRange(firstRecord + recordHeader, textOffset, title);
+  source.setRange(textOffset, source.length, text);
+  return source;
+}
 
 List<int> samplePdf({String? secondPageText}) {
   const text = 'BT /F1 24 Tf 50 700 Td (Hello Technical Book) Tj ET';

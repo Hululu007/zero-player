@@ -83,6 +83,47 @@ void main() {
     'reopening a task reuses intact ranges and replaces a damaged range',
     () => _resumeRanges(root, transfer.http),
   );
+  test('a scoped small range reconnects at the last received byte', () async {
+    final fake = await PublicationRangeFixture.start();
+    addTearDown(fake.close);
+    const chunk = 1 << 20;
+    fake.interruptedRanges.add('bytes=0-${chunk - 1}');
+    final part = await transfer.download(
+      publicationId('reconnect within a range'),
+      fake.candidate,
+      PublicationDownload(fake.entry, rangeChunkBytes: chunk),
+      CancellationToken(),
+      (_, _) async {},
+      () {},
+    );
+    expect(await part.readAsBytes(), fake.bytes);
+    expect(fake.entryVisits, 1);
+    expect(fake.requests, contains('bytes=1024-${chunk - 1}'));
+  });
+
+  test(
+    'a publisher download starts with a whole request and resumes its bytes',
+    () async {
+      final fake = await PublicationRangeFixture.start();
+      addTearDown(fake.close);
+      fake.interruptedRanges.add('all');
+      final part = await transfer.download(
+        publicationId('resume whole publisher file'),
+        fake.candidate,
+        PublicationDownload(
+          fake.entry,
+          preferWhole: true,
+          rangeTarget: (uri) => uri == fake.uri,
+        ),
+        CancellationToken(),
+        (_, _) async {},
+        () {},
+      );
+      expect(await part.readAsBytes(), fake.bytes);
+      expect(fake.entryVisits, 1);
+      expect(fake.requests, ['all', 'bytes=1024-${fake.bytes.length - 1}']);
+    },
+  );
 
   test(
     'incorrect slice headers cause a fresh single-stream download',

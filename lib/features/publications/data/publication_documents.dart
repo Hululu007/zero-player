@@ -4,6 +4,7 @@ import 'package:path/path.dart' as p;
 import 'package:pdfrx/pdfrx.dart';
 
 import '../../../core/network/cancellation_token.dart';
+import '../../books/data/kindle_book.dart';
 import '../../books/data/local_book.dart';
 import '../../books/data/rich_book.dart';
 import '../../books/domain/book.dart';
@@ -15,6 +16,7 @@ typedef DocumentAdmission = ({
   List<String> chapters,
   bool hasText,
   bool password,
+  List<RichSection>? richSections,
 });
 
 Future<DocumentAdmission> admitPublication(
@@ -25,6 +27,7 @@ Future<DocumentAdmission> admitPublication(
   required void Function(String text) authorize,
   String? password,
   bool scan = true,
+  bool prepareReader = false,
 }) async {
   final size = await file.length();
   if (size <= 0 || size > format.maxBytes) {
@@ -48,7 +51,35 @@ Future<DocumentAdmission> admitPublication(
       chapters: book.sections.map((section) => section.title).toList(),
       hasText: true,
       password: false,
+      richSections: null,
     );
+  }
+  if (format.isKindle) {
+    try {
+      final book = await readKindleBookOffThread(
+        await readLocalBookBytes(file),
+      );
+      token.check();
+      final title = book.title.isEmpty
+          ? bookLabel(p.basenameWithoutExtension(filename))
+          : book.title;
+      authorize('$title ${book.author}');
+      for (final section in book.sections) {
+        token.check();
+        authorize(section.title);
+        authorize(section.text);
+      }
+      return (
+        title: title,
+        author: book.author,
+        chapters: book.sections.map((section) => section.title).toList(),
+        hasText: book.sections.any((section) => section.text.trim().isNotEmpty),
+        password: false,
+        richSections: prepareReader ? book.sections : null,
+      );
+    } on KindleProtected {
+      throw const PublicationFailure(PublicationProblem.ebookProtection);
+    }
   }
   if (format != PublicationFormat.pdf) {
     throw const PublicationFailure(PublicationProblem.unsupported);
@@ -108,6 +139,7 @@ Future<DocumentAdmission> _scanPdf(
       chapters: List.generate(document.pages.length, (i) => '第 ${i + 1} 页'),
       hasText: hasText,
       password: offeredPassword,
+      richSections: null,
     );
   } on PdfPasswordException {
     throw const PublicationFailure(PublicationProblem.pdfPassword);

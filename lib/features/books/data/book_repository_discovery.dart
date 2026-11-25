@@ -32,6 +32,8 @@ extension _BookRepositoryDiscovery on BooksRepository {
     BookSearchField field = BookSearchField.all,
     List<BookSourceEntry>? availableSources,
     void Function(BookSearchUpdate)? onProgress,
+    void Function(String, Exception)? onSourceFailure,
+    Map<String, SourceCertificateFailure> temporaryCertificates = const {},
   }) async {
     await ensureSourceRiskLoaded();
     if (!kindAllowed(kind)) throw const ContentBlocked();
@@ -85,6 +87,8 @@ extension _BookRepositoryDiscovery on BooksRepository {
       address,
       field,
       onProgress,
+      onSourceFailure: onSourceFailure,
+      temporaryCertificates: temporaryCertificates,
       certificatePins:
           sourceId == null &&
               certificateExceptionsAvailable &&
@@ -155,6 +159,8 @@ extension _BookRepositoryDiscovery on BooksRepository {
     BookSearchField field,
     void Function(BookSearchUpdate)? onProgress, {
     required Map<String, List<String>> certificatePins,
+    required Map<String, SourceCertificateFailure> temporaryCertificates,
+    void Function(String, Exception)? onSourceFailure,
   }) async {
     final results = <String, List<Book>>{};
     final match = address == null && query.trim().isNotEmpty
@@ -187,7 +193,10 @@ extension _BookRepositoryDiscovery on BooksRepository {
               interactive,
             );
             final certificate = _aggregateCertificate(source, certificatePins);
-            final found = await (certificate == null
+            final temporary = temporaryCertificates[source.id];
+            final found = await (temporary != null
+                ? withTemporarySourceCertificate(source.id, temporary, search)
+                : certificate == null
                 ? search()
                 : certificate.run(search));
             latencyMs = watch.elapsedMilliseconds;
@@ -213,6 +222,7 @@ extension _BookRepositoryDiscovery on BooksRepository {
           failed++;
           failure = true;
           certificateFailed = error is SourceCertificateFailure;
+          if (!token.isCancelled) onSourceFailure?.call(source.id, error);
         }
         token.check();
         if (books.isNotEmpty) results[source.id] = books;

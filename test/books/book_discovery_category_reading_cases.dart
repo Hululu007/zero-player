@@ -963,6 +963,322 @@ void _mediaProbeTargetTests() {
   });
 }
 
+final _integrityPng = base64Decode(
+  'iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAYAAABytg0kAAAAEUlEQVR4nGP4z8DwH4QZYAwAR8oH+WdZbrcAAAAASUVORK5CYII=',
+);
+(ContentType, List<int>) get _integrityImage =>
+    (ContentType('image', 'png'), _integrityPng);
+
+void _comicIntegrityTests() {
+  _comicPaginationTests();
+  _comicSourceRequestTests();
+  _comicRepairTest();
+  _comicExportTests();
+}
+
+void _comicPaginationTests() {
+  for (final legado in [false, true]) {
+    test(
+      'comic pagination and distinct image budget (Legado: $legado)',
+      () async {
+        await _withFixture((f) async {
+          final source = BookSource.fromJson({
+            'name': '分页漫画',
+            'url': 'https://comic-pages.example/',
+            'kind': 'comic',
+            'format': legado ? 'html' : 'featured',
+            'featured': [
+              {'title': '普通作品', 'url': '/book/1'},
+            ],
+            if (legado)
+              'legado': {
+                'rules': {
+                  'chapters': '.chapter',
+                  'chapterTitle': '@text',
+                  'chapterUrl': '@href',
+                  'content': 'img@src',
+                  'nextContent': 'a.next@href',
+                },
+              }
+            else
+              'rules': {
+                'chapters': '.chapter',
+                'chapterTitle': '@text',
+                'chapterUrl': '@href',
+                'content': 'img@src',
+                'nextContent': 'a.next@href',
+              },
+          });
+          await f.install(source);
+          final book = source.featured.single;
+          f.pages['/book/1'] = '<a class="chapter" href="/chapter">第一话</a>';
+          f.pages['/chapter'] =
+              '<img src="/one.png"><a class="next" href="/more">下一页</a>';
+          f.pages['/more'] =
+              '<img src="/two.png"><a class="next" href="/chapter">上一页</a>';
+          f.media['/one.png'] = f.media['/two.png'] = _integrityImage;
+          final token = CancellationToken();
+          final chapter = (await f.repo.chapters(book, token)).single;
+          final images = await f.repo.chapterImages(book, chapter, token);
+          expect(images.map((uri) => uri.path), ['/one.png', '/two.png']);
+          await f.repo.download(book, chapter, token);
+          expect(
+            await f.repo.store.offlineImageAddresses(book, chapter),
+            images,
+          );
+
+          final limit = BookChapter(
+            '图片数量边界',
+            source.endpoint.resolve('/limit'),
+          );
+          String pageWithImages(int count) => List.generate(
+            count,
+            (i) => '<img src="/distinct/$i.png">',
+          ).join();
+          f.pages['/limit'] = pageWithImages(100);
+          expect(
+            await f.repo.chapterImages(book, limit, token),
+            hasLength(100),
+          );
+          f.pages['/limit'] = pageWithImages(101);
+          await expectLater(
+            f.repo.download(book, limit, token),
+            throwsFormatException,
+          );
+          expect(await f.repo.store.offlineImageAddresses(book, limit), isNull);
+          await _checkIncompleteComicPages(f, source, book, token);
+        });
+      },
+    );
+  }
+}
+
+Future<void> _checkIncompleteComicPages(
+  _Fixture f,
+  BookSource source,
+  Book book,
+  CancellationToken token,
+) async {
+  for (var i = 0; i < 10; i++) {
+    f.pages['/page-$i'] =
+        '<img src="/one.png">'
+        '<a class="next" href="/page-${i + 1}">下一页</a>';
+  }
+  final chapter = BookChapter('分页超限', source.endpoint.resolve('/page-0'));
+  await expectLater(
+    f.repo.download(book, chapter, token),
+    throwsA(
+      isA<FormatException>().having(
+        (error) => error.message,
+        'message',
+        contains('分页超过限制'),
+      ),
+    ),
+  );
+  expect(f.requests.any((request) => request.$2.path == '/page-10'), isFalse);
+  f.pages['/page-0'] =
+      '<img src="/one.png">'
+      '<a class="next" href="https://undeclared.example/page">下一页</a>';
+  await expectLater(
+    f.repo.download(book, chapter, token),
+    throwsFormatException,
+  );
+  expect(await f.repo.store.offlineImageAddresses(book, chapter), isNull);
+}
+
+void _comicSourceRequestTests() {
+  test('a comic feed uses its declared image enclosure', () async {
+    await _withFixture((f) async {
+      final source = BookSource.fromJson({
+        'name': '漫画订阅',
+        'url': 'https://comic-feed.example/feed',
+        'kind': 'comic',
+        'format': 'feed',
+        'mediaHosts': ['cdn.example'],
+      });
+      await f.install(source);
+      f.pages['/feed'] = '''
+        <rss version="2.0"><channel><title>普通连载</title>
+        <item><title>第一话</title><link>https://comic-feed.example/article</link>
+        <enclosure url="https://cdn.example/feed-image.png" type="image/png"/>
+        </item></channel></rss>
+      ''';
+      final token = CancellationToken();
+      final book = (await f.repo.client.books(source, '', token)).single;
+      final chapter = (await f.repo.chapters(book, token)).single;
+      final images = await f.repo.chapterImages(book, chapter, token);
+      expect(images, [Uri.parse('https://cdn.example/feed-image.png')]);
+      f.media['/feed-image.png'] = _integrityImage;
+      await f.repo.download(book, chapter, token);
+      expect(await f.repo.store.offlineImageAddresses(book, chapter), images);
+      expect(
+        f.requests.any((request) => request.$2.path == '/article'),
+        isFalse,
+      );
+    });
+  });
+
+  test(
+    'Legado preserves requests for image chapters and limits media host scope',
+    () async {
+      await _withFixture((f) async {
+        final source = BookSource.fromJson({
+          'name': '直链漫画',
+          'url': 'https://comic-requests.example/',
+          'kind': 'comic',
+          'format': 'html',
+          'mediaHosts': ['cdn.example'],
+          'legado': {
+            'rules': {
+              'chapters': '.chapter',
+              'chapterTitle': '@text',
+              'chapterUrl': '@href',
+              'content': 'img@src',
+            },
+          },
+        });
+        await f.install(source);
+        final book = _mediaBook(source);
+        f.pages['/book/1'] = '''
+        <a class="chapter" href='/signed,{"method":"POST","body":"page=1","headers":{"Referer":"https://comic-requests.example/reader"}}'>一</a>
+        <a class="chapter" href='https://cdn.example/two.png,{"headers":{"Referer":"https://comic-requests.example/reader"}}'>二</a>
+        <a class="chapter" href="https://cdn.example/navigation">三</a>
+        <a class="chapter" href="https://undeclared.example/four.png">四</a>
+      ''';
+        f.media['/signed'] = f.media['/two.png'] = _integrityImage;
+        final token = CancellationToken();
+        final catalog = await f.repo.chapters(book, token);
+        expect(catalog.map((c) => c.title), ['一', '二']);
+        for (final chapter in catalog) {
+          await f.repo.download(book, chapter, token);
+        }
+        expect(
+          f.requests.where((record) => record.$2.path == '/signed').single.$1,
+          'POST',
+        );
+        expect(f.referers['/signed'], 'https://comic-requests.example/reader');
+        expect(f.referers.containsKey('/two.png'), isTrue);
+        expect(f.referers['/two.png'], isNull);
+      });
+    },
+  );
+}
+
+void _comicRepairTest() {
+  test(
+    'repair fetches a fresh manifest and preserves damaged data until commit',
+    () async {
+      await _withFixture((f) async {
+        final source = _mediaSource('comic-repair.example', BookKind.comic);
+        await f.install(source);
+        final book = _mediaBook(source);
+        final chapter = BookChapter('第一话', source.endpoint.resolve('/chapter'));
+        final expired = source.endpoint.resolve('/expired.png');
+        final current = source.endpoint.resolve('/current.png');
+        final store = f.repo.store;
+        await store.saveOfflineImages(book, chapter, {
+          expired: _integrityPng,
+        }, () async {});
+        await store.write(
+          'books_image_data:${book.id}:${chapter.id}:0',
+          base64Encode([1, 2, 3]),
+        );
+        final token = CancellationToken();
+        f.pages['/chapter'] = '<img src="$current">';
+        await expectLater(
+          f.repo.download(book, chapter, token),
+          throwsFormatException,
+        );
+        expect(await store.offlineImageAddresses(book, chapter), [expired]);
+        expect(await store.offlineImageBytes(book, chapter, expired), [
+          1,
+          2,
+          3,
+        ]);
+        f.media[current.path] = _integrityImage;
+        await f.repo.download(book, chapter, token);
+        expect(await store.offlineImages(book, chapter), {
+          current: _integrityPng,
+        });
+        expect(f.requests.any((request) => request.$2 == expired), isFalse);
+      });
+    },
+  );
+}
+
+void _comicExportTests() {
+  for (final condition in [
+    'restricted',
+    'corrupt',
+    'missing',
+    'undownloaded',
+  ]) {
+    test('offline comic export handles $condition images', () async {
+      await _withFixture((f) async {
+        final source = _mediaSource('comic-export.example', BookKind.comic);
+        await f.install(source);
+        final book = _mediaBook(source);
+        final available = BookChapter('已下载', source.endpoint.resolve('/one'));
+        final chapter = BookChapter('待核对', source.endpoint.resolve('/two'));
+        final address = source.endpoint.resolve(
+          condition == 'restricted' ? '/adult' : '/2.png',
+        );
+        final store = f.repo.store;
+        await store.saveOfflineImages(book, available, {
+          source.endpoint.resolve('/1.png'): _integrityPng,
+        }, () async {});
+        if (condition != 'undownloaded') {
+          await store.saveOfflineImages(book, chapter, {
+            address: _integrityPng,
+          }, () async {});
+          final key = 'books_image_data:${book.id}:${chapter.id}:0';
+          if (condition == 'corrupt') {
+            await store.write(key, base64Encode([1, 2, 3]));
+          }
+          if (condition == 'missing') await store.write(key, null);
+        }
+        final target = File(
+          '${f.services.books.documents.parent.path}/export.zip',
+        );
+        final output = ProtectedBookExport(
+          android: false,
+          temporaryDirectory: () async => f.services.books.documents.parent,
+          chooseLocation: (_) async => target.absolute.path,
+        );
+        final token = CancellationToken();
+        final operation = BookOfflineExport(
+          f.repo,
+          output: output,
+        ).save(book, [available, chapter], token, visible: () => true);
+        if (condition == 'undownloaded') {
+          addTearDown(() async {
+            if (await target.exists()) await target.delete();
+          });
+          expect(await operation, 1);
+          expect(
+            ZipDecoder().decodeBytes(await target.readAsBytes()).files,
+            hasLength(2),
+          );
+        } else {
+          await expectLater(
+            operation,
+            condition == 'restricted'
+                ? throwsA(isA<ContentBlocked>())
+                : throwsFormatException,
+          );
+          expect(await target.exists(), isFalse);
+          if (condition == 'restricted') {
+            await expectLater(
+              f.repo.chapterImages(book, chapter, token),
+              throwsA(isA<ContentBlocked>()),
+            );
+          }
+        }
+      });
+    });
+  }
+}
+
 void _comicBudgetTests() {
   test(
     'comic download stops requesting images at the raw chapter budget',

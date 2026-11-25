@@ -2,12 +2,14 @@ import 'dart:async';
 
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/network/cancellation_token.dart';
 import '../../../core/network/document_client.dart';
 import '../../../core/network/source_certificate.dart';
 import '../../supervision/presentation/sensitive_action.dart';
 import '../data/book_store.dart';
+import '../data/book_source_groups.dart';
 import '../data/books_repository.dart';
 import '../data/qidian_catalog.dart';
 import '../data/book_site_check.dart';
@@ -18,10 +20,12 @@ import 'book_category_picker.dart';
 import 'book_cover.dart';
 import 'book_links.dart';
 import 'book_source_favorite.dart';
+import 'book_source_group_picker.dart';
 import 'qidian_book_preview.dart';
 import 'qidian_browser_import.dart';
 
 part 'book_discovery_certificates.dart';
+part 'book_discovery_channel_picker.dart';
 part 'book_discovery_toolbar.dart';
 
 final class BookDiscoveryView extends StatefulWidget {
@@ -36,14 +40,24 @@ final class BookDiscoveryView extends StatefulWidget {
     required this.onSourceFavorite,
     required this.onManage,
     this.initialSourceId,
+    this.sourceGroups = const [],
+    this.onGroupSearch,
   });
 
   final BooksRepository repository;
   final BookKind kind;
   final List<BookSourceEntry>? sources;
+  final List<BookSourceGroup> sourceGroups;
   final bool active;
   final void Function(Book, {bool direct}) onOpen;
   final void Function(String query, String? sourceId, bool favorites) onSearch;
+  final void Function(
+    String query,
+    String groupId,
+    bool favorites, {
+    Book? preferred,
+  })?
+  onGroupSearch;
   final void Function(String id, bool favorite) onSourceFavorite;
   final VoidCallback onManage;
   final String? initialSourceId;
@@ -62,6 +76,7 @@ final class _BookDiscoveryViewState extends State<BookDiscoveryView> {
   final _failures = <String>{};
   final _certificateFailures = <String>{};
   SourceCertificateFailure? _certificateError, _temporaryCertificate;
+  bool _siteAccessDenied = false;
   final _resultOrder = <String>[];
   final _recommended = <Book>[];
   final _qidianSections = <String, LegadoCategory>{};
@@ -70,6 +85,8 @@ final class _BookDiscoveryViewState extends State<BookDiscoveryView> {
   bool _qidianImported = false;
   CancellationToken? _token;
   late String? _sourceId = widget.initialSourceId;
+  String? _groupId;
+  late List<BookSourceGroup> _groups = widget.sourceGroups;
   bool _pickedSource = false;
   String? _categorySource, _error;
   bool _favorites = false, _busy = false, _needsLoad = true;
@@ -79,12 +96,14 @@ final class _BookDiscoveryViewState extends State<BookDiscoveryView> {
   Set<String> _hidden = {};
   bool get _showQidian =>
       _sourceId == null &&
+      _groupId == null &&
       !_aggregate &&
       !_channelsOnly &&
       widget.kind == BookKind.text &&
       widget.repository.qidian.allowed;
   String get _directKey => 'books_discovery_direct:${widget.kind.name}';
   String get _preferenceKey => 'books_discovery_hidden:${widget.kind.name}';
+  String get _groupKey => 'books_discovery_group:${widget.kind.name}';
   static const _aggregateKey = 'books_discovery_aggregate:text';
   int _page = 1, _completed = 0, _total = 0, _duplicatePages = 0;
   String? _next, _moreError;
@@ -95,8 +114,20 @@ final class _BookDiscoveryViewState extends State<BookDiscoveryView> {
   late String _policySnapshot;
 
   List<BookSourceEntry> _enabled = const [];
-  BookSourceEntry? get _source =>
-      _enabled.where((entry) => entry.source.id == _sourceId).firstOrNull;
+  BookSourceEntry? get _source => _enabled
+      .where((entry) => entry.source.id == _sourceId && _inSelectedGroup(entry))
+      .firstOrNull;
+
+  BookSourceGroup? get _group => _groups
+      .where(
+        (group) =>
+            group.id == _groupId &&
+            widget.repository.policy.textAllowed(group.name),
+      )
+      .firstOrNull;
+
+  bool _inSelectedGroup(BookSourceEntry entry) =>
+      _groupId == null || _group?.sourceIds.contains(entry.source.id) == true;
 
   @override
   void initState() {
@@ -115,10 +146,15 @@ final class _BookDiscoveryViewState extends State<BookDiscoveryView> {
       final aggregate =
           widget.kind == BookKind.text &&
           await widget.repository.store.read(_aggregateKey) == true;
+      final group = await widget.repository.store.read(_groupKey);
       if (!mounted) return;
       if (value is List) _hidden = value.whereType<String>().toSet();
       _direct = direct == true;
       _aggregate = aggregate;
+      if (widget.initialSourceId == null && group is String) {
+        _groupId = group;
+        _sourceId = null;
+      }
     } on Exception {
       // Use defaults if the saved display preference cannot be read.
     } finally {
@@ -135,10 +171,12 @@ final class _BookDiscoveryViewState extends State<BookDiscoveryView> {
       _policySnapshot = bookSitePolicySnapshot(widget.repository.policy);
       widget.repository.policy.addListener(_discoveryPolicyChanged);
     }
-    if (!identical(widget.sources, oldWidget.sources)) {
+    if (!identical(widget.sources, oldWidget.sources) ||
+        !identical(widget.sourceGroups, oldWidget.sourceGroups)) {
       final before = _source?.source;
       final showedQidian = _showQidian;
       final previous = _discoverySources;
+      _groups = widget.sourceGroups;
       _updateSources();
       final current = _discoverySources;
       if (widget.sources != null &&
@@ -171,6 +209,7 @@ final class _BookDiscoveryViewState extends State<BookDiscoveryView> {
     if (_source case final entry?) return [entry];
     final eligible = _enabled.where(
       (entry) =>
+          _inSelectedGroup(entry) &&
           !_hidden.contains(entry.source.id) &&
           (!_favorites || entry.favorite) &&
           entry.source.hasDiscovery,
@@ -185,6 +224,7 @@ final class _BookDiscoveryViewState extends State<BookDiscoveryView> {
     if (widget.sources != null && _source == null) {
       _sourceId =
           !_pickedSource &&
+              _groupId == null &&
               widget.initialSourceId == null &&
               widget.kind == BookKind.comic
           ? enabled
@@ -219,6 +259,7 @@ final class _BookDiscoveryViewState extends State<BookDiscoveryView> {
     _token?.cancel();
     setState(() {
       _busy = false;
+      _updateSources();
       _resetCategories();
       _resetPaging();
       _results.clear();
@@ -239,6 +280,7 @@ final class _BookDiscoveryViewState extends State<BookDiscoveryView> {
       _needsLoad = false;
       _error = null;
       _certificateError = null;
+      _siteAccessDenied = false;
       _resetPaging();
       _qidianCachedAt = null;
       _qidianImported = false;
@@ -420,7 +462,7 @@ final class _BookDiscoveryViewState extends State<BookDiscoveryView> {
     final added = fetched.where((book) => _seenBooks.add(book.id)).toList();
     books.addAll(added);
     _duplicatePages = added.isEmpty ? _duplicatePages + 1 : 0;
-    _next = _seenPages.contains(next) || _duplicatePages >= 2 ? null : next;
+    _next = _seenPages.contains(next) ? null : next;
     _page++;
   }
 
@@ -500,6 +542,7 @@ final class _BookDiscoveryViewState extends State<BookDiscoveryView> {
     final showTop = _scroll.hasClients && _scroll.offset > 500;
     if (mounted && showTop != _showTop) setState(() => _showTop = showTop);
     if (widget.active &&
+        _duplicatePages < 2 &&
         _next != null &&
         _moreError == null &&
         _error == null &&
@@ -590,6 +633,7 @@ final class _BookDiscoveryViewState extends State<BookDiscoveryView> {
           ]),
           builder: (context, _) {
             final visible = _enabled
+                .where(_inSelectedGroup)
                 .where(widget.repository.sourceEntryAllowed)
                 .toList();
             return AlertDialog(
@@ -656,6 +700,7 @@ final class _BookDiscoveryViewState extends State<BookDiscoveryView> {
         ]),
         builder: (context, _) => _ChannelPicker(
           entries: _enabled
+              .where(_inSelectedGroup)
               .where(widget.repository.sourceEntryAllowed)
               .toList(),
           selected: _sourceId,
@@ -676,11 +721,44 @@ final class _BookDiscoveryViewState extends State<BookDiscoveryView> {
     if (query.isEmpty) return;
     FocusManager.instance.primaryFocus?.unfocus();
     if (_searchOpen) setState(() => _searchOpen = false);
+    final groupId = _groupId;
+    final groupSearch = widget.onGroupSearch;
+    if (_sourceId == null && groupId != null && groupSearch != null) {
+      groupSearch(query, groupId, _favorites);
+      return;
+    }
     widget.onSearch(
       query,
       _sourceId,
       _sourceId == null && !_showQidian && _favorites,
     );
+  }
+
+  Future<void> _pickGroup() async {
+    final choice = await pickBookSourceGroup(
+      context,
+      widget.repository,
+      _groups,
+      _groupId,
+      manage: widget.onManage,
+    );
+    if (!mounted ||
+        choice == null ||
+        (choice.id == _groupId && _sourceId == null)) {
+      return;
+    }
+    setState(() {
+      _groupId = choice.id;
+      _pickedSource = true;
+      _sourceId = null;
+      _temporaryCertificate = null;
+      _channelsOnly = false;
+      _resetCategories();
+    });
+    unawaited(
+      widget.repository.store.write(_groupKey, _groupId).onError((_, _) {}),
+    );
+    unawaited(_load());
   }
 
   void _openSearch() {
@@ -857,7 +935,7 @@ final class _BookDiscoveryViewState extends State<BookDiscoveryView> {
       if (widget.repository.qidian.allowed)
         ChoiceChip(
           label: const Text('起点精选'),
-          selected: !_aggregate,
+          selected: _showQidian,
           onSelected: (_) => _changeAggregate(false),
         ),
       ChoiceChip(
@@ -900,8 +978,16 @@ final class _BookDiscoveryViewState extends State<BookDiscoveryView> {
   );
 
   void _changeAggregate(bool value) {
-    if (_aggregate == value) return;
-    setState(() => _aggregate = value);
+    if (_aggregate == value && (value || _groupId == null)) return;
+    setState(() {
+      _aggregate = value;
+      if (!value) _groupId = null;
+    });
+    if (!value) {
+      unawaited(
+        widget.repository.store.write(_groupKey, null).onError((_, _) {}),
+      );
+    }
     unawaited(
       widget.repository.store.write(_aggregateKey, value).onError((_, _) {}),
     );
@@ -980,9 +1066,9 @@ final class _BookDiscoveryViewState extends State<BookDiscoveryView> {
           (entry) =>
               _results[entry.source.id]?.any(widget.repository.bookAllowed) ==
                   true &&
-              (source != null ||
-                  (!_hidden.contains(entry.source.id) &&
-                      (!_favorites || entry.favorite))),
+              _inSelectedGroup(entry) &&
+              !_hidden.contains(entry.source.id) &&
+              (!_favorites || entry.favorite),
         )
         .toList();
     if (sections.isEmpty) return [_empty(gutter)];
@@ -1041,6 +1127,8 @@ final class _BookDiscoveryViewState extends State<BookDiscoveryView> {
             ? TextButton(onPressed: _loadMore, child: Text('$_moreError · 重试'))
             : _next == null
             ? const Text('没有更多作品')
+            : _duplicatePages >= 2
+            ? TextButton(onPressed: _loadMore, child: const Text('继续加载下一页'))
             : const SizedBox.shrink(),
       ),
     ),
@@ -1050,6 +1138,7 @@ final class _BookDiscoveryViewState extends State<BookDiscoveryView> {
     final channels = _enabled
         .where(
           (entry) =>
+              _inSelectedGroup(entry) &&
               !_hidden.contains(entry.source.id) &&
               (!_favorites || entry.favorite),
         )
@@ -1113,6 +1202,8 @@ final class _BookDiscoveryViewState extends State<BookDiscoveryView> {
         _error ??
         (_busy
             ? '正在加载作品…'
+            : _groupId != null && !_enabled.any(_inSelectedGroup)
+            ? '当前分组没有启用的渠道'
             : _enabled.isEmpty
             ? '启用书源后即可在这里找书'
             : _favorites &&
@@ -1283,130 +1374,17 @@ final class _BookDiscoveryViewState extends State<BookDiscoveryView> {
     final recommendation = book.sourceId == qidianRecommendationId;
     if (recommendation && !widget.repository.qidian.allows(book)) return;
     if (!recommendation && !widget.repository.bookAllowed(book)) return;
-    widget.onOpen(
-      book,
-      direct: !recommendation && _direct && (_sourceId != null || _aggregate),
-    );
-  }
-}
-
-final class _ChannelPicker extends StatefulWidget {
-  const _ChannelPicker({required this.entries, required this.selected});
-  final List<BookSourceEntry> entries;
-  final String? selected;
-
-  @override
-  State<_ChannelPicker> createState() => _ChannelPickerState();
-}
-
-final class _ChannelPickerState extends State<_ChannelPicker> {
-  String _query = '';
-  static const _rowHeight = 72.0;
-  late final _scroll = ScrollController(
-    initialScrollOffset: _selectedOffset(widget.entries),
-  );
-
-  double _selectedOffset(List<BookSourceEntry> entries) {
-    final index = entries.indexWhere(
-      (entry) => entry.source.id == widget.selected,
-    );
-    return index < 0 ? 0 : index * _rowHeight;
-  }
-
-  void _jump(double offset) {
-    if (_scroll.hasClients) {
-      _scroll.jumpTo(offset.clamp(0, _scroll.position.maxScrollExtent));
+    final groupId = _groupId;
+    final groupSearch = widget.onGroupSearch;
+    final direct =
+        !recommendation &&
+        _direct &&
+        (_sourceId != null || _aggregate || groupId != null);
+    if (!direct && groupId != null && groupSearch != null) {
+      groupSearch(book.title, groupId, _favorites, preferred: book);
+      return;
     }
-  }
-
-  @override
-  void dispose() {
-    _scroll.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final sources = widget.entries
-        .where(
-          (entry) =>
-              '${entry.source.name} ${entry.source.endpoint.host} ${entry.group}'
-                  .toLowerCase()
-                  .contains(_query),
-        )
-        .toList();
-    return AlertDialog(
-      title: const Text('选择渠道'),
-      content: SizedBox(
-        width: 480,
-        height: MediaQuery.sizeOf(context).height * .49,
-        child: Column(
-          children: [
-            TextField(
-              decoration: const InputDecoration(
-                prefixIcon: Icon(Icons.search),
-                hintText: '筛选渠道',
-              ),
-              onChanged: (value) =>
-                  setState(() => _query = value.trim().toLowerCase()),
-            ),
-            if (_query.isEmpty)
-              ListTile(
-                leading: const Icon(Icons.hub_outlined),
-                selected: widget.selected == null,
-                title: const Text('回到推荐与聚合'),
-                onTap: () => Navigator.pop(context, (id: null as String?)),
-              ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                IconButton(
-                  tooltip: '定位当前渠道',
-                  onPressed: widget.selected == null
-                      ? null
-                      : () => _jump(_selectedOffset(sources)),
-                  icon: const Icon(Icons.my_location),
-                ),
-                IconButton(
-                  tooltip: '返回顶部',
-                  onPressed: () => _jump(0),
-                  icon: const Icon(Icons.vertical_align_top),
-                ),
-              ],
-            ),
-            Expanded(
-              child: ListView.builder(
-                controller: _scroll,
-                itemExtent: _rowHeight,
-                itemCount: sources.length,
-                itemBuilder: (context, index) {
-                  final entry = sources[index];
-                  final source = entry.source;
-                  return ListTile(
-                    selected: widget.selected == source.id,
-                    leading: Icon(
-                      entry.favorite ? Icons.star : Icons.auto_stories_outlined,
-                    ),
-                    title: Text(
-                      source.name,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    subtitle: Text(
-                      '${source.endpoint.host}${source.hasDiscovery ? '' : ' · 需搜索或输入链接'}',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    onTap: () =>
-                        Navigator.pop(context, (id: source.id as String?)),
-                  );
-                },
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
+    widget.onOpen(book, direct: direct);
   }
 }
 

@@ -61,6 +61,11 @@ final class AppDatabase extends GeneratedDatabase {
     beforeOpen: (_) async {
       await customStatement('PRAGMA foreign_keys = ON');
       await customStatement('PRAGMA busy_timeout = 5000');
+      await customStatement(
+        'CREATE INDEX IF NOT EXISTS app_meta_book_text_bytes '
+        'ON app_meta(length(CAST(value AS BLOB))) '
+        "WHERE key GLOB 'books_text:*' OR key GLOB 'books_proven_text_record:*'",
+      );
     },
   );
 

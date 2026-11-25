@@ -58,4 +58,18 @@ const publicationSchema = [
     isbn TEXT NOT NULL, data TEXT NOT NULL, PRIMARY KEY(source,id))''',
   '''CREATE TABLE IF NOT EXISTS publication_preferences(
     key TEXT PRIMARY KEY, value TEXT NOT NULL)''',
+  '''CREATE TABLE IF NOT EXISTS publication_website_accounts(
+    id TEXT PRIMARY KEY, source TEXT NOT NULL, origin TEXT NOT NULL,
+    name TEXT NOT NULL)''',
+  '''CREATE TABLE IF NOT EXISTS publication_groups(
+    id TEXT PRIMARY KEY, name TEXT NOT NULL)''',
+  '''CREATE TABLE IF NOT EXISTS publication_shelf_details(
+    holding TEXT PRIMARY KEY REFERENCES publication_shelf(id) ON DELETE CASCADE,
+    group_id TEXT REFERENCES publication_groups(id) ON DELETE SET NULL,
+    finished INTEGER NOT NULL DEFAULT 0)''',
+  '''CREATE TABLE IF NOT EXISTS publication_book_lists(
+    id TEXT PRIMARY KEY, name TEXT NOT NULL, source TEXT)''',
+  '''CREATE TABLE IF NOT EXISTS publication_list_items(
+    list_id TEXT NOT NULL REFERENCES publication_book_lists(id) ON DELETE CASCADE,
+    id TEXT NOT NULL, data TEXT NOT NULL, PRIMARY KEY(list_id,id))''',
 ];

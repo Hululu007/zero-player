@@ -4,13 +4,16 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:crypto/crypto.dart';
+import 'package:file_selector_platform_interface/file_selector_platform_interface.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:zero_player/core/network/cancellation_token.dart';
 import 'package:zero_player/core/network/media_http_client.dart';
 import 'package:zero_player/core/persistence/app_database.dart';
+import 'package:zero_player/features/publications/application/cloud_resource_download.dart';
 import 'package:zero_player/features/publications/application/publication_acquisitions.dart';
 import 'package:zero_player/features/publications/application/publication_discovery.dart';
 import 'package:zero_player/features/publications/data/publication_http.dart';
+import 'package:zero_player/features/publications/data/publication_lunarora_catalogue.dart';
 import 'package:zero_player/features/publications/data/publication_share.dart';
 import 'package:zero_player/features/publications/data/publication_sources.dart';
 import 'package:zero_player/features/publications/data/publication_space.dart';
@@ -28,6 +31,79 @@ const _secondSlice = 'bytes=$_sliceBytes-${2 * _sliceBytes - 1}';
 const _lastSlice = 'bytes=${2 * _sliceBytes}-${(9 << 20) - 1}';
 
 void main() {
+  test(
+    'resource save checks capacity before guest download and preserves existing files',
+    _verifyCloudDownload,
+  );
+  test(
+    'folder batch uses one directory and retains files saved before a conflict',
+    _verifyCloudBatch,
+  );
+  test('a Lanzou share can save a bounded response with no size', () async {
+    final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+    addTearDown(() => server.close(force: true));
+    final directory = await Directory.systemTemp.createTemp('cloud-no-size-');
+    addTearDown(() => directory.delete(recursive: true));
+    final original = HttpClient()..findProxy = (_) => 'DIRECT';
+    addTearDown(() => original.close(force: true));
+    final previous = FileSelectorPlatform.instance;
+    FileSelectorPlatform.instance = _CloudPicker(directory.path);
+    addTearDown(() => FileSelectorPlatform.instance = previous);
+    final contents = utf8.encode('fixture without length');
+    server.listen((request) async {
+      await request.drain<void>();
+      final response = request.response;
+      switch (request.uri.path) {
+        case '/iSample':
+          response.headers.contentType = ContentType.html;
+          response.write(
+            '<title>sample.txt</title><script>var sign="sample"; '
+            'var websignkey="fixture"; var api="/ajaxm.php"; downprocess();</script>',
+          );
+        case '/ajaxm.php':
+          response.headers.contentType = ContentType.json;
+          response.write(
+            jsonEncode({
+              'zt': 1,
+              'dom': 'https://www.lanzou.com',
+              'url': 'fixture',
+            }),
+          );
+        case '/file/fixture':
+          response.headers.contentType = ContentType.text;
+          response.headers.chunkedTransferEncoding = true;
+          response.add(contents);
+        default:
+          response.statusCode = HttpStatus.notFound;
+      }
+      await response.close();
+    });
+    await HttpOverrides.runZoned(
+      () async {
+        final network = MediaHttpClient();
+        addTearDown(network.close);
+        final tool = CloudResourceDownload(
+          PublicationShareResolver(PublicationHttp(network, authorize: (_) {})),
+          (_) {},
+        );
+        final share = Uri.https('www.lanzou.com', '/iSample');
+        final file = (await tool.inspect(share, null)).single;
+        expect(file.bytes, isNull);
+        final sizes = <int>[];
+        final saved = await tool.save(
+          share,
+          null,
+          file,
+          (_, total) => sizes.add(total),
+        );
+        expect(await File(saved!).readAsBytes(), contents);
+        expect(sizes.first, -1);
+        expect(sizes.last, contents.length);
+      },
+      createHttpClient: (_) =>
+          _LocalClient(original, server.port, hosts: const {'www.lanzou.com'}),
+    );
+  });
   test(
     'confirmed fallback uses its own published code rather than a supplied code for another link',
     _verifyCodeBoundary,
@@ -100,6 +176,254 @@ void main() {
       );
     },
   );
+}
+
+Future<void> _verifyCloudDownload() async {
+  final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+  addTearDown(() => server.close(force: true));
+  final originalClient = HttpClient()..findProxy = (_) => 'DIRECT';
+  addTearDown(() => originalClient.close(force: true));
+  final directory = await Directory.systemTemp.createTemp(
+    'cloud-resource-test-',
+  );
+  addTearDown(() => directory.delete(recursive: true));
+  final picker = FileSelectorPlatform.instance;
+  final fixturePicker = _CloudPicker(directory.path);
+  FileSelectorPlatform.instance = fixturePicker;
+  addTearDown(() => FileSelectorPlatform.instance = picker);
+  final contents = utf8.encode('fixture audio');
+  const filename = 'sample.mp3';
+  const oversized = 'oversized.mp4';
+  var downloads = 0;
+  server.listen((request) async {
+    await request.drain<void>();
+    final response = request.response;
+    final Object? data = switch (request.uri.path) {
+      '/1/clouddrive/share/sharepage/token' => {'stoken': 'fixture-ticket'},
+      '/1/clouddrive/share/sharepage/detail' => {
+        'list': [
+          {
+            'fid': 'sample',
+            'file_name': filename,
+            'size': contents.length,
+            'share_fid_token': 'file-ticket',
+          },
+          {
+            'fid': 'large',
+            'file_name': oversized,
+            'size': 1 << 60,
+            'share_fid_token': 'other-ticket',
+          },
+        ],
+      },
+      '/1/clouddrive/file/download' => [
+        {'fid': 'sample', 'download_url': 'https://$_cdn/sample.mp3'},
+      ],
+      _ => null,
+    };
+    if (data != null) {
+      if (request.uri.path.endsWith('/file/download')) {
+        downloads++;
+        response.cookies.add(
+          Cookie('__pugs', 'cloud-test')
+            ..domain = 'quark.cn'
+            ..path = '/'
+            ..secure = true,
+        );
+      }
+      response.headers.contentType = ContentType.json;
+      response.write(jsonEncode({'code': 0, 'status': 200, 'data': data}));
+    } else if (request.uri.path == '/sample.mp3') {
+      response.headers.contentType = ContentType('audio', 'mpeg');
+      response.contentLength = contents.length;
+      response.add(contents);
+    } else {
+      response.statusCode = HttpStatus.notFound;
+    }
+    await response.close();
+  });
+  await HttpOverrides.runZoned(() async {
+    final network = MediaHttpClient();
+    addTearDown(network.close);
+    final resolver = PublicationShareResolver(
+      PublicationHttp(network, authorize: (_) {}),
+    );
+    var metered = true;
+    final tool = CloudResourceDownload(
+      resolver,
+      (_) {},
+      checkDownload: () async {
+        if (metered) throw const PublicationFailure(PublicationProblem.metered);
+      },
+    );
+    final share = Uri.https('pan.quark.cn', '/s/fixture');
+    final files = await tool.inspect(share, 'ABCD');
+    expect(files.map((file) => file.name), [filename, oversized]);
+    await expectLater(
+      tool.save(share, 'ABCD', files.first, (_, _) {}),
+      throwsA(
+        isA<PublicationFailure>().having(
+          (error) => error.problem,
+          'problem',
+          PublicationProblem.metered,
+        ),
+      ),
+    );
+    expect(fixturePicker.uses, 0);
+    metered = false;
+    expect(await resolver.inspect(share, null, CancellationToken()), isEmpty);
+    await expectLater(
+      tool.save(share, 'ABCD', files.last, (_, _) {}),
+      throwsA(
+        isA<PublicationFailure>().having(
+          (error) => error.problem,
+          'problem',
+          PublicationProblem.diskFull,
+        ),
+      ),
+    );
+    expect(downloads, 0);
+    expect(await directory.list().toList(), isEmpty);
+    final path = await tool.save(share, 'ABCD', files.first, (_, _) {});
+    expect(await File(path!).readAsBytes(), contents);
+    await expectLater(
+      tool.save(share, 'ABCD', files.first, (_, _) {}),
+      throwsA(
+        isA<PublicationFailure>().having(
+          (error) => error.problem,
+          'problem',
+          PublicationProblem.destinationConflict,
+        ),
+      ),
+    );
+    expect(downloads, 1);
+    expect((await directory.list().toList()).single.path, path);
+  }, createHttpClient: (_) => _LocalClient(originalClient, server.port));
+}
+
+Future<void> _verifyCloudBatch() async {
+  final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+  final original = HttpClient()..findProxy = (_) => 'DIRECT';
+  addTearDown(() => server.close(force: true));
+  addTearDown(() => original.close(force: true));
+  final target = await Directory.systemTemp.createTemp('cloud-batch-test-');
+  addTearDown(() => target.delete(recursive: true));
+  final previous = FileSelectorPlatform.instance;
+  final picker = _CloudPicker(target.path);
+  FileSelectorPlatform.instance = picker;
+  addTearDown(() => FileSelectorPlatform.instance = previous);
+
+  final nested = await Directory(
+    '${target.path}/Resources/Nested',
+  ).create(recursive: true);
+  final existing = await File(
+    '${nested.path}/notes.txt',
+  ).writeAsString('existing');
+  final contents = utf8.encode('fixture audio');
+  final file = {
+    'fid': 'sample',
+    'file_name': 'sample.mp3',
+    'size': contents.length,
+    'share_fid_token': 'file-ticket',
+  };
+  Map<String, Object> folder(String id, String name) => {
+    'fid': id,
+    'file_name': name,
+    'dir': true,
+  };
+  server.listen((request) async {
+    final body = await utf8.decoder.bind(request).join();
+    final fid = request.uri.path.endsWith('/file/download')
+        ? ((jsonDecode(body) as Map)['fids'] as List).single
+        : null;
+    final response = request.response;
+    final Object? data = switch (request.uri.path) {
+      '/1/clouddrive/share/sharepage/token' => {'stoken': 'fixture-ticket'},
+      '/1/clouddrive/share/sharepage/detail' => {
+        'list': switch (request.uri.queryParameters['pdir_fid']) {
+          '0' => [folder('resources', 'Resources')],
+          'resources' => [file, folder('nested', 'Nested')],
+          'nested' => [
+            {...file, 'fid': 'notes', 'file_name': 'notes.txt'},
+          ],
+          _ => const [],
+        },
+      },
+      '/1/clouddrive/file/download' => [
+        {'fid': fid, 'download_url': 'https://$_cdn/sample.mp3'},
+      ],
+      _ => null,
+    };
+    if (data != null) {
+      if (request.uri.path.endsWith('/file/download')) {
+        response.cookies.add(
+          Cookie('__pugs', 'cloud-test')
+            ..domain = 'quark.cn'
+            ..path = '/'
+            ..secure = true,
+        );
+      }
+      response.headers.contentType = ContentType.json;
+      response.write(jsonEncode({'code': 0, 'status': 200, 'data': data}));
+    } else if (request.uri.path == '/sample.mp3') {
+      response.headers.contentType = ContentType('audio', 'mpeg');
+      response.contentLength = contents.length;
+      response.add(contents);
+    } else {
+      response.statusCode = HttpStatus.notFound;
+    }
+    await response.close();
+  });
+
+  await HttpOverrides.runZoned(() async {
+    final network = MediaHttpClient();
+    addTearDown(network.close);
+    final service = CloudResourceDownload(
+      PublicationShareResolver(PublicationHttp(network, authorize: (_) {})),
+      (_) {},
+    );
+    final share = Uri.https('pan.quark.cn', '/s/fixture');
+    final tree = await service.inspectTree(share, null);
+    expect(tree.truncated, isFalse);
+    expect(tree.files.map((item) => item.folders), [
+      ['Resources'],
+      ['Resources', 'Nested'],
+    ]);
+    final result = (await service.saveBatch(share, null, tree.files, (_) {}))!;
+    expect(picker.uses, 1);
+    expect(result.saved, [tree.files.first]);
+    expect(
+      (result.failure as PublicationFailure).problem,
+      PublicationProblem.destinationConflict,
+    );
+    expect(await existing.readAsString(), 'existing');
+    expect(
+      await File('${target.path}/Resources/sample.mp3').readAsBytes(),
+      contents,
+    );
+    await existing.delete();
+    final remaining = tree.files
+        .where((item) => !result.saved.contains(item))
+        .toList();
+    final retried = (await service.saveBatch(share, null, remaining, (_) {}))!;
+    expect(retried.failure, isNull);
+    expect(await existing.readAsBytes(), contents);
+  }, createHttpClient: (_) => _LocalClient(original, server.port));
+}
+
+final class _CloudPicker extends FileSelectorPlatform {
+  _CloudPicker(this.path);
+  final String path;
+  int uses = 0;
+
+  @override
+  Future<String?> getDirectoryPath({
+    String? initialDirectory,
+    String? confirmButtonText,
+  }) async {
+    uses++;
+    return path;
+  }
 }
 
 Future<void> _verifyCodeBoundary() async {
@@ -205,28 +529,51 @@ Future<void> _verifyRefresh(_GuestFixture fixture) async {
     PublicationSpace(store, root, freeBytes: (_) async => 4 << 30),
   );
   final digest = sha256.convert(fixture.current).toString();
-  final id = await store.addTask(
-    const PublicationEdition(
-      id: 'guest-refresh-fixture',
-      title: 'Field Manual',
-    ),
-    [
-      AcquisitionCandidate(
-        source: 'manual',
-        link: Uri.https('pan.quark.cn', '/s/fixture'),
-        fileId: '0:fixture-file',
-        format: PublicationFormat.pdf,
-        bytes: fixture.current.length,
-        digest: digest,
-      ),
+  final resolver = PublicationShareResolver(http);
+  final discovery = PublicationDiscovery(store, http, (_) => true);
+  addTearDown(discovery.close);
+  final edition = parseLunaroraSearch({
+    'apiVersion': '2',
+    'contentLanguage': 'zh-CN',
+    'count': 1,
+    'results': [
+      {
+        'type': 'Book',
+        'catalogId': '9787020161171',
+        'bookUrl': 'https://lunarora.com/book/9787020161171',
+        'title': 'Field Manual',
+        'authorsText': '',
+        'hasDownloadLinks': true,
+        'downloadLinks': [
+          {'provider': 'quark', 'url': 'https://pan.quark.cn/s/fixture'},
+        ],
+      },
     ],
-  );
+  }).single;
+  final resource = edition.resources.single;
+  final file = (await resolver.inspect(
+    resource.link,
+    resource.code,
+    CancellationToken(),
+  )).single;
+  final id = await store.addTask(edition, [
+    AcquisitionCandidate(
+      source: resource.source,
+      page: edition.page,
+      link: resource.link,
+      fileId: file.id,
+      sharedFileName: file.name,
+      format: file.format,
+      bytes: file.bytes,
+      digest: digest,
+    ),
+  ]);
   final done = Completer<void>();
   late final PublicationAcquisitions runner;
   runner = PublicationAcquisitions(
     store,
-    PublicationDiscovery(store, http, (_) => true),
-    PublicationShareResolver(http),
+    discovery,
+    resolver,
     transfer,
     (_) {},
     activity: () {
@@ -390,16 +737,19 @@ final class _GuestFixture {
 
 /// Test-only routing. The real share adapter still sees the HTTPS origins.
 final class _LocalClient implements HttpClient {
-  _LocalClient(this.client, this.port);
+  _LocalClient(
+    this.client,
+    this.port, {
+    this.hosts = const {'drive-pc.quark.cn', _cdn},
+  });
 
   final HttpClient client;
   final int port;
+  final Set<String> hosts;
 
   @override
   Future<HttpClientRequest> openUrl(String method, Uri uri) {
-    if (uri.scheme != 'https' ||
-        uri.port != 443 ||
-        !const {'drive-pc.quark.cn', _cdn}.contains(uri.host)) {
+    if (uri.scheme != 'https' || uri.port != 443 || !hosts.contains(uri.host)) {
       throw const SocketException('Request outside the guest fixture');
     }
     return client.openUrl(

@@ -71,7 +71,7 @@ final class PublicationOutput {
           await _exporter.saveFile(
             ready.file,
             _name(entry),
-            _mime(entry.format),
+            entry.format.mimeType,
             cancellation: token,
             validate: () => _requireOpen(ready),
             publication: (
@@ -113,7 +113,7 @@ final class PublicationOutput {
               destination,
               name,
               cancellation: token,
-              publicationMime: _mime(holding.format),
+              publicationMime: holding.format.mimeType,
             );
       } on PlatformException catch (error) {
         throw PublicationFailure(switch (error.code) {
@@ -193,8 +193,4 @@ final class PublicationOutput {
         .replaceFirst(RegExp(r'[. ]+$'), '');
     return '${title.isEmpty ? '图书' : title}$suffix.${item.format.name}';
   }
-
-  String _mime(PublicationFormat format) => format == PublicationFormat.pdf
-      ? 'application/pdf'
-      : 'application/epub+zip';
 }

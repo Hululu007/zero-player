@@ -136,7 +136,24 @@ Iterable<dom.Element> _selectStep(dom.Node node, String rule) {
       : const [];
 }
 
-String _field(dom.Node node, String rule, {required bool long}) {
+String bookImageSelector(String rule) => rule
+    .split('||')
+    .map(
+      (alternative) => alternative
+          .split('&&')
+          .map(
+            (part) => _bookFieldRule(
+              part
+                  .trim()
+                  .replaceFirst(RegExp(r'^@css:'), '')
+                  .replaceFirst(RegExp(r'@html$'), ''),
+            ).$1,
+          )
+          .join('&&'),
+    )
+    .join('||');
+
+(String, String) _bookFieldRule(String rule) {
   const operations = {
     'text',
     'ownText',
@@ -153,7 +170,11 @@ String _field(dom.Node node, String rule, {required bool long}) {
   final suffix = separator == -1 ? '' : rule.substring(separator + 1);
   final explicit = operations.contains(suffix);
   final selector = explicit ? rule.substring(0, separator) : rule;
-  final field = explicit ? suffix : 'text';
+  return (selector, explicit ? suffix : 'text');
+}
+
+String _field(dom.Node node, String rule, {required bool long}) {
+  final (selector, field) = _bookFieldRule(rule);
   if (field == 'next') {
     return bookElements(node, 'a[href]')
             .take(5000)

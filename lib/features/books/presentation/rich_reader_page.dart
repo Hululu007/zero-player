@@ -37,6 +37,7 @@ class RichReaderPage extends StatefulWidget {
     this.initial,
     this.platform,
     this.document,
+    this.preparedSections,
   });
   final BooksRepository repository;
   final Book book;
@@ -44,6 +45,7 @@ class RichReaderPage extends StatefulWidget {
   final BookChapter? initial;
   final PlatformServices? platform;
   final RichDocumentAccess? document;
+  final List<RichSection>? preparedSections;
   @override
   State<RichReaderPage> createState() => _RichReaderState();
 }
@@ -177,15 +179,10 @@ class _RichReaderState extends State<RichReaderPage>
       final chapters =
           document?.chapters ?? saved?.chapters ?? const <BookChapter>[];
       if (chapters.isEmpty) throw const FormatException('电子书目录为空');
-      final sections = _isPdf
-          ? null
-          : await readRichEpubOffThread(
-              await readLocalBookBytes(widget.file),
-              internalLinks: true,
-            );
+      final sections = await _sectionsForReading();
       if (!mounted || _error != null) return;
       if (sections != null && sections.length != chapters.length) {
-        throw const FormatException('EPUB 文件与已导入目录不一致');
+        throw const FormatException('电子书文件与已导入目录不一致');
       }
       if (!await _contentAllowed(chapters, sections)) {
         if (mounted && _error == null) {
@@ -258,6 +255,15 @@ class _RichReaderState extends State<RichReaderPage>
         setState(() => _error = '无法打开电子书，文件可能损坏或格式不受支持');
       }
     }
+  }
+
+  Future<List<RichSection>?> _sectionsForReading() async {
+    if (_isPdf) return null;
+    return widget.preparedSections ??
+        await readRichEpubOffThread(
+          await readLocalBookBytes(widget.file),
+          internalLinks: true,
+        );
   }
 
   Future<bool> _contentAllowed(
@@ -1213,23 +1219,21 @@ class _RichReaderState extends State<RichReaderPage>
   ).showSnackBar(const SnackBar(content: Text('无法读取或保存标注')));
 
   ReadingMark? _selectedMark() {
-    if (!_markAllowed() || _selection.isEmpty) return null;
+    if (!_markAllowed()) return null;
     final range =
         _html.currentState?.selectedRange ??
         _vertical.currentState?.selectedRange;
     final source = _epubSource?.text;
     if (source == null ||
         range == null ||
+        range.start < 0 ||
+        range.end <= range.start ||
         range.end > source.length ||
         range.end - range.start > 1200) {
       return null;
     }
     final quote = source.substring(range.start, range.end);
-    final whitespace = RegExp(r'\s+');
-    if (quote.replaceAll(whitespace, '') !=
-        _selection.replaceAll(whitespace, '')) {
-      return null;
-    }
+    if (!widget.repository.policy.textAllowed(quote)) return null;
     final draft = ReadingMark(
       digest: widget.book.uri.path,
       section: _index,
@@ -1247,15 +1251,23 @@ class _RichReaderState extends State<RichReaderPage>
     widget.repository.store.vault,
   ]);
 
-  Future<void> _editMark(ReadingMark initial) async {
+  Future<void> _editMark(ReadingMark initial, [ReadingMarkStyle? style]) async {
+    bool allowed() =>
+        _markAllowed() &&
+        initial.digest == widget.book.uri.path &&
+        widget.repository.policy.textAllowed(initial.quote);
+    if (!allowed()) return;
     try {
-      final mark = await editReadingMark(
-        context,
-        initial,
-        policy: _markPolicy,
-        allowed: _markAllowed,
-      );
-      if (!mounted || mark == null || !_markAllowed()) return;
+      _stop();
+      final mark = style == null
+          ? await editReadingMark(
+              context,
+              initial,
+              policy: _markPolicy,
+              allowed: allowed,
+            )
+          : initial.copyWith(style: style);
+      if (!mounted || mark == null || !allowed()) return;
       await _markStore.save(mark);
       if (mounted) await _refreshMarks();
     } on Exception {
@@ -1306,14 +1318,10 @@ class _RichReaderState extends State<RichReaderPage>
       anchors: region.contextMenuAnchors,
       buttonItems: [
         if (mark != null)
-          ContextMenuButtonItem(
-            label: '添加标注',
-            onPressed: () {
-              region.clearSelection();
-              region.hideToolbar();
-              unawaited(_editMark(mark));
-            },
-          ),
+          ...readingMarkMenuItems((style) {
+            region.hideToolbar();
+            unawaited(_editMark(mark, style));
+          }),
         if (_selection.isNotEmpty && widget.document?.isAllowed() == true)
           ContextMenuButtonItem(
             label: '添加摘录',
@@ -1345,28 +1353,23 @@ class _RichReaderState extends State<RichReaderPage>
     if (a != null && b != null && a.page.pageNumber == b.page.pageNumber) {
       final range = a.page.getRangeFromAB(a.index, b.index);
       if (range.text.isNotEmpty && range.text.length <= 1200) {
-        items.insert(
+        final draft = ReadingMark(
+          digest: widget.book.uri.path,
+          section: range.pageNumber - 1,
+          range: (start: range.start, end: range.end),
+          quote: range.text,
+        );
+        final mark =
+            _marks
+                .where((item) => item.identity == draft.identity)
+                .firstOrNull ??
+            draft;
+        items.insertAll(
           0,
-          ContextMenuButtonItem(
-            label: '添加标注',
-            onPressed: () async {
-              if (!_markAllowed()) return;
-              final draft = ReadingMark(
-                digest: widget.book.uri.path,
-                section: range.pageNumber - 1,
-                range: (start: range.start, end: range.end),
-                quote: range.text,
-              );
-              await selection.clearTextSelection();
-              if (!mounted || !_markAllowed()) return;
-              await _editMark(
-                _marks
-                        .where((item) => item.identity == draft.identity)
-                        .firstOrNull ??
-                    draft,
-              );
-            },
-          ),
+          readingMarkMenuItems((style) {
+            params.dismissContextMenu();
+            unawaited(_editMark(mark, style));
+          }),
         );
       }
     }

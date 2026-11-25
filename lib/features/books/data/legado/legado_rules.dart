@@ -21,6 +21,7 @@ final class LegadoRules {
     this.book,
     this.chapter,
     this.documents = const {},
+    this.listLimit = 5000,
   });
 
   final BookSource source;
@@ -30,6 +31,7 @@ final class LegadoRules {
   final Book? book;
   final BookChapter? chapter;
   final Map<String, String> documents;
+  final int listLimit;
   late final Object? root = _parse(input);
 
   List<Object?> elements(String rule, Object? value) {
@@ -37,7 +39,7 @@ final class LegadoRules {
       rule,
       value,
       list: true,
-    ).where((item) => item != null).take(5000).toList();
+    ).where((item) => item != null).take(listLimit).toList();
   }
 
   List<Object?> rawValues(String rule, Object? value) => _evaluate(
@@ -144,7 +146,7 @@ final class LegadoRules {
     final selected = _select(expression, value, list: list, depth: depth);
     if (parts.length == 1 || parts[1].isEmpty) return selected;
     return selected
-        .take(5000)
+        .take(list ? listLimit : 5000)
         .map(
           (item) => _replace(
             _asText(item),
@@ -167,7 +169,7 @@ final class LegadoRules {
     if (selector.isNotEmpty) {
       final results = _evaluate(selector, value, list: list, depth: depth + 1);
       if (list) {
-        selected = results.take(5000).toList();
+        selected = results.take(listLimit).toList();
       } else {
         final budget = LegadoScriptBudget();
         final output = StringBuffer();
@@ -229,7 +231,7 @@ final class LegadoRules {
         value is List ||
         rule.startsWith(r'$.') ||
         rule.startsWith(r'$[')) {
-      return _json(rule, value);
+      return _json(rule, value, list ? listLimit : 5000);
     }
     if (lower.startsWith('@xpath:') ||
         rule.startsWith('/') ||
@@ -248,16 +250,22 @@ final class LegadoRules {
       return [rule];
     }
     if (rule.startsWith(':')) {
-      return _regex(
-        rule.substring(1),
-      ).allMatches(_asText(value)).take(5000).map((match) => match[0]);
+      return _regex(rule.substring(1))
+          .allMatches(_asText(value))
+          .take(list ? listLimit : 5000)
+          .map((match) => match[0]);
     }
     final node = value is dom.Node ? value : parseBookHtml(_asText(value));
     final selector = rule.replaceFirst(
       RegExp(r'^(?:@css:|@@)', caseSensitive: false),
       '',
     );
-    return selectLegadoCss(node, selector, list: list);
+    return selectLegadoCss(
+      node,
+      selector,
+      list: list,
+      limit: list ? listLimit : 5000,
+    );
   }
 
   Iterable<Object?> _combined(
@@ -274,7 +282,7 @@ final class LegadoRules {
             (item) =>
                 item != null && (item is! String || item.trim().isNotEmpty),
           )
-          .take(5000)
+          .take(list ? listLimit : 5000)
           .toList();
       if (results.isEmpty) continue;
       if (operator == '||') {
@@ -317,7 +325,7 @@ Object? _parse(String input) {
   return parseBookHtml(input);
 }
 
-Iterable<Object?> _json(String rule, Object? value) {
+Iterable<Object?> _json(String rule, Object? value, int limit) {
   var path = rule
       .replaceFirst(RegExp(r'^@json:', caseSensitive: false), '')
       .trim();
@@ -329,7 +337,7 @@ Iterable<Object?> _json(String rule, Object? value) {
   if (target is dom.Node) return const [];
   return JsonPath(
     path,
-  ).read(target).take(5000).expand((match) => _values(match.value));
+  ).read(target).take(limit).expand((match) => _values(match.value));
 }
 
 Iterable<Object?> _xpath(String rule, Object? value) {

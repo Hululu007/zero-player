@@ -20,17 +20,36 @@ import 'package:zero_player/features/books/domain/reading_mark.dart';
 import 'package:zero_player/features/books/presentation/rich_reader_page.dart';
 import 'package:zero_player/features/publications/application/publication_android_worker.dart';
 import 'package:zero_player/features/publications/application/publication_output.dart';
+import 'package:zero_player/features/publications/data/publication_alltool_catalogue.dart';
+import 'package:zero_player/features/publications/data/publication_archive_catalogue.dart';
 import 'package:zero_player/features/publications/data/publication_documents.dart';
+import 'package:zero_player/features/publications/data/publication_dushupai_catalogue.dart';
+import 'package:zero_player/features/publications/data/publication_gallica_catalogue.dart';
+import 'package:zero_player/features/publications/data/publication_gutenberg_catalogue.dart';
+import 'package:zero_player/features/publications/data/publication_haodoo_catalogue.dart';
+import 'package:zero_player/features/publications/data/publication_kgbook_catalogue.dart';
+import 'package:zero_player/features/publications/data/publication_lunarora_catalogue.dart';
+import 'package:zero_player/features/publications/data/publication_obp_catalogue.dart';
+import 'package:zero_player/features/publications/data/publication_openstax_catalogue.dart';
 import 'package:zero_player/features/publications/data/publication_rule_examples.dart';
+import 'package:zero_player/features/publications/data/publication_sobooks_catalogue.dart';
+import 'package:zero_player/features/publications/data/publication_standard_ebooks_catalogue.dart';
+import 'package:zero_player/features/publications/data/publication_tadoku_catalogue.dart';
+import 'package:zero_player/features/publications/data/publication_tokyo_hong_catalogue.dart';
+import 'package:zero_player/features/publications/data/publication_treasure_catalogue.dart';
+import 'package:zero_player/features/publications/data/publication_tstrs_catalogue.dart';
 import 'package:zero_player/features/publications/data/publication_transfer.dart';
+import 'package:zero_player/features/publications/data/publication_wikisource_catalogue.dart';
 import 'package:zero_player/features/publications/data/publication_zip.dart';
 import 'package:zero_player/features/publications/domain/acquisition_task.dart';
 import 'package:zero_player/features/publications/domain/publication.dart';
 import 'package:zero_player/features/publications/presentation/publications_page.dart';
 
 import '../test_support/local_book_fixtures.dart';
+import '../test_support/publication_archive_fixture.dart';
 import '../test_support/publication_catalogue_fixture.dart';
 import '../test_support/publication_pdf_admission_flow.dart';
+import '../test_support/publication_epub_acceptance.dart';
 import '../test_support/publication_publisher_pdf_search.dart';
 import '../test_support/publication_space_flow.dart';
 import '../test_support/publication_shared_copy_flow.dart';
@@ -42,7 +61,21 @@ Future<void> publicationBackgroundMain() =>
 
 const _evidence = String.fromEnvironment('PUBLICATION_EVIDENCE');
 const _online = bool.fromEnvironment('RUN_PUBLICATIONS_ONLINE');
+const _builtInOnline = bool.fromEnvironment('RUN_PUBLICATION_BUILTINS_ONLINE');
+const _channelOnline = bool.fromEnvironment('RUN_PUBLICATION_CHANNELS_ONLINE');
+const _remainingOnline = bool.fromEnvironment(
+  'RUN_PUBLICATION_REMAINING_ONLINE',
+);
 const _authorOnline = bool.fromEnvironment('PUBLICATION_AUTHOR_ONLINE');
+const _gutenbergOnline = bool.fromEnvironment('RUN_GUTENBERG_MIRROR_ONLINE');
+const _redChamberOnline = bool.fromEnvironment('RUN_RED_CHAMBER_ONLINE');
+const _obpDistributionOnline = bool.fromEnvironment(
+  'RUN_OBP_DISTRIBUTION_ONLINE',
+);
+const _obpReconnect = bool.fromEnvironment('RUN_OBP_ANDROID_RECONNECT');
+const _obpEpubBytes = 5135710;
+const _obpEpubDigest =
+    '2acf6c73502d98d659cd539c757b1c74d10ee71204b0f22669adfdade9d97aad';
 const _timeoutProbe = bool.fromEnvironment('PUBLICATION_TIMEOUT_PROBE');
 const _publisherPdf = String.fromEnvironment('PUBLICATION_PUBLISHER_PDF');
 const _publisherBlocked = bool.fromEnvironment('PUBLICATION_PUBLISHER_BLOCKED');
@@ -72,6 +105,47 @@ const _downloadTimeout = Duration(seconds: 95);
 
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
+  if (_obpReconnect) {
+    testWidgets(
+      'Android retains a verified publication range across network loss',
+      _obpDownloadReconnect,
+      skip: !Platform.isAndroid,
+      timeout: const Timeout(Duration(minutes: 8)),
+    );
+    return;
+  }
+  if (_obpDistributionOnline) {
+    testWidgets(
+      'Open Book Publishers downloads both formats and restores PDF position',
+      _obpDistributionDownload,
+      timeout: const Timeout(Duration(minutes: 6)),
+    );
+    return;
+  }
+  if (_redChamberOnline) {
+    testWidgets(
+      'simplified Red Chamber query downloads the EPUB and applies admission',
+      _redChamberDownload,
+      timeout: const Timeout(Duration(minutes: 5)),
+    );
+    return;
+  }
+  if (_gutenbergOnline) {
+    testWidgets(
+      'Gutenberg official mirror discovers and searches a public edition',
+      _gutenbergMirrorDownload,
+      timeout: const Timeout(Duration(minutes: 5)),
+    );
+    return;
+  }
+  if (_remainingOnline) {
+    _remainingChannelTests();
+    return;
+  }
+  if (_channelOnline) {
+    _channelContinuationTests();
+    return;
+  }
   registerPublicationPdfAdmissionTests(_withServices);
   testWidgets(
     'local PDF opens from the separate shelf and keeps version notes',
@@ -92,24 +166,13 @@ void main() {
     _epubReader,
   );
   testWidgets(
-    'returning to books checks due sources and shows how to restore a pause',
+    'opening source management checks due sources and restores a pause',
     (tester) => withPublicationCatalogue(
       (fixture) => _withServices(
         (services) =>
             verifyPublicationSourceMaintenance(tester, services, fixture),
       ),
     ),
-  );
-  testWidgets(
-    'official EPUB from a title search downloads and opens',
-    (tester) => _officialDownload(
-      tester,
-      'Rust 程序设计语言',
-      PublicationFormat.epub,
-      'c7b1f9d5abaf7cca57d7f0ce28823734fa8ebd5de5d516db127bf0145b8cf132',
-    ),
-    skip: !_online,
-    timeout: const Timeout(Duration(minutes: 3)),
   );
   testWidgets(
     _authorOnline
@@ -130,6 +193,86 @@ void main() {
     skip: !_online,
     timeout: const Timeout(Duration(minutes: 3)),
   );
+  testWidgets(
+    'Open Logic Project rule example downloads and opens an official PDF',
+    _openLogicProjectDownload,
+    skip: !_builtInOnline,
+    timeout: const Timeout(Duration(minutes: 4)),
+  );
+  testWidgets(
+    'Internet Archive Gutenberg fixture discovers and opens the original',
+    (tester) => withPublicationArchiveFixture(
+      (digest) => _archiveGutenbergDownload(tester, expectedDigest: digest),
+    ),
+    // The Android download worker uses a separate isolate.
+    skip: !Platform.isWindows,
+  );
+  testWidgets(
+    'Internet Archive Gutenberg source downloads and opens a public original',
+    _archiveGutenbergDownload,
+    skip: !_builtInOnline,
+    timeout: const Timeout(Duration(minutes: 3)),
+  );
+  testWidgets(
+    'Shuge source opens a licensed public storage PDF',
+    _shugeDownload,
+    skip: !_builtInOnline,
+    timeout: const Timeout(Duration(minutes: 6)),
+  );
+  testWidgets(
+    'OpenStax catalogue finds an official textbook PDF and opens it',
+    _openStaxDownload,
+    skip: !_builtInOnline,
+    timeout: const Timeout(Duration(minutes: 4)),
+  );
+  testWidgets(
+    'Tadoku catalogue finds a licensed Japanese PDF and opens it',
+    _tadokuDownload,
+    skip: !_builtInOnline,
+    timeout: const Timeout(Duration(minutes: 3)),
+  );
+  for (final (id, host) in const [
+    (alltoolSource, 'alltool.top'),
+    (kgbookSource, 'kgbook.com'),
+    (tstrsSource, 'tstrs.me'),
+  ]) {
+    testWidgets(
+      'Public directory from $host discovers and filters metadata',
+      (_) => _publicDirectory(id, host),
+      skip: !_builtInOnline,
+    );
+  }
+  for (final (source, name, query, url) in const [
+    (
+      lunaroraSource,
+      'Lunarora',
+      'python',
+      'https://lunarora.com/book/9787115474810',
+    ),
+    (
+      dushupaiSource,
+      'Dushupai',
+      'python',
+      'https://www.dushupai.com/book-content-18908.html',
+    ),
+    (
+      tokyoHongSource,
+      'Tokyo Hong',
+      '司馬溫公切韻',
+      'https://kanseki.ioc.u-tokyo.ac.jp/kanzi/user/query_detail_im.php?nu=A582100',
+    ),
+  ]) {
+    testWidgets(
+      '$name searches its public catalogue',
+      (_) => _remoteCatalogueSearch(source, query, Uri.parse(url)),
+      skip: !_builtInOnline,
+    );
+    testWidgets(
+      '$name discovers public book metadata',
+      (_) => _remoteCatalogueDiscovery(source),
+      skip: !_builtInOnline,
+    );
+  }
   _cloudShareTests();
   _androidTests();
   testWidgets(
@@ -162,6 +305,433 @@ void main() {
     'a blocked candidate falls back only to the confirmed edition',
     (_) => _withServices(_sameEdition, allowPrivate: true),
   );
+}
+
+Future<void> _gutenbergMirrorDownload(WidgetTester tester) => _withServices((
+  services,
+) async {
+  final discovery = services.publications.discovery;
+  await _useOnlyBuiltIn(services, gutenbergPublicationSource);
+  final browsed =
+      (await discovery.search('', CancellationToken()).toList()).single;
+  expect(browsed.problem, isNull);
+  expect(browsed.editions.expand((book) => book.candidates), isNotEmpty);
+  final matches =
+      (await discovery
+              .search("Alice's Adventures in Wonderland", CancellationToken())
+              .toList())
+          .single;
+  expect(matches.problem, isNull);
+  final edition = matches.editions.singleWhere(
+    (book) => book.page?.path == '/ebooks/928',
+  );
+  expect(edition.candidates.single.link.host, 'gutenberg.pglaf.org');
+  await _fetchAndOpen(
+    tester,
+    services,
+    edition,
+    PublicationFormat.epub,
+    expectedDigest: null,
+  );
+  await _openPublicationReader(tester, services, edition.title);
+});
+
+Future<void> _redChamberDownload(WidgetTester _) => _withServices((
+  services,
+) async {
+  await _useOnlyBuiltIn(services, gutenbergPublicationSource);
+  final module = services.publications;
+  final result = await module.discovery
+      .search('《红楼梦》', CancellationToken(), maxPages: 1)
+      .single;
+  expect(result.problem, isNull);
+  final work = result.editions.singleWhere(
+    (book) => book.page?.path == '/ebooks/24264',
+  );
+  expect(work.title, '紅樓夢');
+  final id = await module.workflow.add(work, PublicationFormat.epub);
+  final task = await _taskWhen(
+    services,
+    id,
+    (item) =>
+        item.state == AcquisitionState.downloaded ||
+        item.state == AcquisitionState.failed,
+    timeout: const Duration(minutes: 3),
+  );
+  expect(task.state, AcquisitionState.downloaded, reason: '${task.problem}');
+  final downloaded = module.workflow.transfer.part(id);
+  expect(await detectPublicationFormat(downloaded), PublicationFormat.epub);
+  debugPrint(
+    'Red Chamber transfer ${await downloaded.length()} bytes '
+    '${await publicationFileDigest(downloaded, CancellationToken())}',
+  );
+  await expectLater(
+    module.workflow.finish(task),
+    throwsA(
+      isA<PublicationFailure>().having(
+        (failure) => failure.problem,
+        'problem',
+        PublicationProblem.blocked,
+      ),
+    ),
+  );
+  expect((await module.store.task(id))?.problem, PublicationProblem.blocked);
+  expect(await module.library.holdings(), isEmpty);
+});
+
+Future<PublicationEdition> _obpEpubEdition(AppServices services) async {
+  final matches =
+      (await services.publications.discovery
+              .search('The Classic Short Story', CancellationToken())
+              .toList())
+          .single;
+  expect(matches.problem, isNull);
+  final edition = matches.editions.singleWhere(
+    (book) => book.page?.path == '/books/10.11647/obp.0039',
+  );
+  expect(edition.isbn, '9781909254770');
+  expect(edition.license, 'CC BY');
+  expect(
+    edition.candidates.map((copy) => copy.format),
+    unorderedEquals([PublicationFormat.pdf, PublicationFormat.epub]),
+  );
+  return edition;
+}
+
+Future<void> _obpDownloadReconnect(WidgetTester tester) => _withServices((
+  services,
+) async {
+  await _useOnlyBuiltIn(services, obpPublicationSource);
+  final edition = await _obpEpubEdition(services);
+  final module = services.publications;
+  debugPrint('Publication reconnect ready ${services.root.path}');
+  await _waitForReconnectSignal(services, 'start');
+  final id = await module.workflow.add(edition, PublicationFormat.epub);
+  final partial = await _taskWhen(
+    services,
+    id,
+    (task) =>
+        task.state == AcquisitionState.downloading &&
+        task.received > 0 &&
+        task.received < _obpEpubBytes,
+    timeout: const Duration(seconds: 120),
+  );
+  expect(partial.total, _obpEpubBytes);
+  Future<List<Map<String, Object?>>> checkpoints() => module.store.db.rows(
+    'SELECT rowid, start, digest FROM publication_ranges WHERE task=? '
+    'ORDER BY start',
+    [id],
+  );
+
+  final saved = (await checkpoints()).single;
+  debugPrint('Publication reconnect cut ${partial.received}/${partial.total}');
+  final failed = await _taskWhen(
+    services,
+    id,
+    (task) => task.state == AcquisitionState.failed,
+    timeout: const Duration(seconds: 110),
+  );
+  expect(
+    failed.problem,
+    anyOf(PublicationProblem.network, PublicationProblem.timeout),
+  );
+  expect(failed.received, partial.received);
+  expect(await checkpoints(), [saved]);
+  debugPrint('Publication reconnect retry ${failed.problem?.name}');
+  await _waitForReconnectSignal(services, 'online');
+  await module.workflow.start(id);
+  final resumed = await _taskWhen(
+    services,
+    id,
+    (task) =>
+        task.state == AcquisitionState.downloaded ||
+        task.state == AcquisitionState.failed,
+    afterGeneration: failed.generation,
+    timeout: const Duration(seconds: 150),
+  );
+  expect(
+    resumed.state,
+    AcquisitionState.downloaded,
+    reason: resumed.problem?.label,
+  );
+  expect(resumed.received, _obpEpubBytes);
+  final complete = await checkpoints();
+  expect(complete, hasLength(2));
+  // A replacement checkpoint would have a different rowid even for the same bytes.
+  expect(complete.singleWhere((row) => row['start'] == saved['start']), saved);
+  await _verifyDownloadedBook(
+    tester,
+    services,
+    id,
+    expectedDigest: _obpEpubDigest,
+  );
+  await _openPublicationReader(tester, services, edition.title);
+  debugPrint(
+    'Publication reconnect verified ${partial.received}/${resumed.received}',
+  );
+});
+
+Future<void> _waitForReconnectSignal(AppServices services, String stage) async {
+  final signal = File('${services.root.path}/reconnect-$stage');
+  final deadline = DateTime.now().add(const Duration(seconds: 100));
+  while (!await signal.exists()) {
+    if (DateTime.now().isAfter(deadline)) {
+      throw StateError('No emulator signal for publication reconnect: $stage');
+    }
+    await Future<void>.delayed(const Duration(milliseconds: 150));
+  }
+}
+
+Future<void> _obpDistributionDownload(WidgetTester tester) => _withServices((
+  services,
+) async {
+  final module = services.publications;
+  await _useOnlyBuiltIn(services, obpPublicationSource);
+  final browsed =
+      (await module.discovery
+              .search('', CancellationToken(), maxPages: 1)
+              .toList())
+          .single;
+  expect(browsed.problem, isNull);
+  expect(browsed.editions.expand((book) => book.candidates), isNotEmpty);
+  final edition = await _obpEpubEdition(services);
+  await _fetchAndOpen(
+    tester,
+    services,
+    edition,
+    PublicationFormat.epub,
+    expectedDigest: _obpEpubDigest,
+  );
+  await _openPublicationReader(
+    tester,
+    services,
+    edition.title,
+    verifyEpub: (reopen) =>
+        verifyPublicationEpubAcceptance(tester, services, reopen),
+  );
+  final pdfMatches =
+      (await module.discovery
+              .search('978-1-78374-037-6', CancellationToken())
+              .toList())
+          .single;
+  expect(pdfMatches.problem, isNull);
+  final pdf = pdfMatches.editions.single;
+  expect(pdf.page?.path, '/books/10.11647/obp.0043');
+  for (var attempt = 0; attempt < 2; attempt++) {
+    await _fetchAndOpen(
+      tester,
+      services,
+      pdf,
+      PublicationFormat.pdf,
+      expectedDigest:
+          '0c0e0b5559787a4a4645102effa9da60ef9344fd34268b4f5ddb8d27aa686e6b',
+    );
+  }
+  await _openPublicationReader(
+    tester,
+    services,
+    pdf.title,
+    checkPdfProgress: true,
+  );
+  expect(
+    (await module.library.holdings()).map((book) => book.format),
+    unorderedEquals([PublicationFormat.pdf, PublicationFormat.epub]),
+  );
+});
+
+void _remainingChannelTests() {
+  testWidgets(
+    'Standard Ebooks discovers releases and downloads a public search result',
+    _standardEbooksDownload,
+    timeout: const Timeout(Duration(minutes: 4)),
+  );
+  testWidgets(
+    'Open Book Publishers discovers KBART books and filters by ISBN',
+    (_) async {
+      await _remoteCatalogueDiscovery(obpPublicationSource);
+      await _remoteCatalogueSearch(
+        obpPublicationSource,
+        '978-1-80064-404-5',
+        Uri.https('www.openbookpublishers.com', '/books/10.11647/obp.0290'),
+      );
+    },
+  );
+  testWidgets(
+    'SoBooks discovers entries and filters the public directory',
+    (_) => _publicDirectory(sobooksPublicationSource, 'sobooks.cc'),
+  );
+  testWidgets('BnF SRU discovers and searches public Gallica editions', (
+    _,
+  ) async {
+    await _remoteCatalogueDiscovery(gallicaPublicationSource);
+    await _remoteCatalogueSearch(
+      gallicaPublicationSource,
+      'Dépit amoureux',
+      Uri.https('gallica.bnf.fr', '/ark:/12148/bpt6k9688417m'),
+    );
+  });
+}
+
+Future<void> _standardEbooksDownload(WidgetTester tester) =>
+    _withServices((services) async {
+      final module = services.publications;
+      await _useOnlyBuiltIn(services, standardEbooksPublicationSource);
+      final discovered =
+          (await module.discovery
+                  .search('', CancellationToken(), maxPages: 1)
+                  .toList())
+              .single;
+      expect(discovered.problem, isNull);
+      expect(discovered.editions.expand((book) => book.candidates), isNotEmpty);
+      final matches =
+          (await module.discovery
+                  .search('Sir Nigel', CancellationToken(), maxPages: 1)
+                  .toList())
+              .single;
+      expect(matches.problem, isNull);
+      final edition = matches.editions.singleWhere(
+        (book) => book.page?.path == '/ebooks/arthur-conan-doyle/sir-nigel',
+      );
+      expect(edition.author, 'Arthur Conan Doyle');
+      expect(edition.candidates.single.format, PublicationFormat.epub);
+      await _fetchAndOpen(
+        tester,
+        services,
+        edition,
+        PublicationFormat.epub,
+        expectedDigest: null,
+      );
+      await _openPublicationReader(tester, services, edition.title);
+    });
+
+void _channelContinuationTests() {
+  testWidgets(
+    'Wikisource OPDS discovers, searches, downloads and opens an EPUB',
+    _wikisourceDownload,
+    timeout: const Timeout(Duration(minutes: 4)),
+  );
+  testWidgets(
+    'Open Logic Project rule example downloads and opens an official PDF',
+    _openLogicProjectDownload,
+    timeout: const Timeout(Duration(minutes: 4)),
+  );
+  testWidgets(
+    'Treasure Chest discovers books and filters the public index',
+    (_) => _publicDirectory(treasurePublicationSource, 'jbiaojerry.github.io'),
+  );
+  testWidgets(
+    'Haodoo discovers and searches the public store catalogue',
+    (_) => _publicDirectory(haodooPublicationSource, 'haodoo.org'),
+  );
+  testWidgets(
+    'Mobi Books v2 rule discovers and searches public records',
+    (_) => _ruleDirectory(
+      mobiPublicationRule,
+      '伊势物语',
+      Uri.https('www.mobitushu.cn', '/wenxue/28857.html'),
+    ),
+  );
+  if (Platform.isAndroid) _androidTests();
+}
+
+Future<void> _ruleDirectory(
+  Map<String, Object?> rule,
+  String query,
+  Uri page,
+) => _withServices((services) async {
+  final discovery = services.publications.discovery;
+  await discovery.saveConfig(jsonEncode(rule));
+  final source = (await discovery.sources())
+      .singleWhere((item) => item.source.name == rule['name'])
+      .source;
+  await discovery.setEnabled(source, true);
+  final discovered =
+      (await discovery.search('', CancellationToken()).toList()).single;
+  expect(discovered.problem, isNull);
+  expect(discovered.editions, isNotEmpty);
+  final matched =
+      (await discovery.search(query, CancellationToken()).toList()).single;
+  expect(matched.problem, isNull);
+  expect(matched.editions.map((book) => book.page), contains(page));
+  expect(
+    [
+      ...discovered.editions,
+      ...matched.editions,
+    ].expand((book) => book.candidates),
+    isEmpty,
+  );
+});
+
+Future<void> _wikisourceDownload(WidgetTester tester) =>
+    _withServices((services) async {
+      final module = services.publications;
+      await _useOnlyBuiltIn(services, wikisourcePublicationSource);
+      final discovered =
+          (await module.discovery
+                  .search('', CancellationToken(), maxPages: 1)
+                  .toList())
+              .single;
+      expect(discovered.problem, isNull);
+      expect(discovered.editions, isNotEmpty);
+      final matches =
+          (await module.discovery
+                  .search('Charles Francis Adams', CancellationToken())
+                  .toList())
+              .single;
+      expect(matches.problem, isNull);
+      final edition = matches.editions.singleWhere(
+        (book) => book.page?.pathSegments.last == "'Tis_Sixty_Years_Since",
+      );
+      expect(edition.edition, '1913');
+      expect(edition.candidates.single.format, PublicationFormat.epub);
+      await _fetchAndOpen(
+        tester,
+        services,
+        edition,
+        PublicationFormat.epub,
+        expectedDigest: null,
+      );
+      await _openPublicationReader(tester, services, edition.title);
+    });
+
+Future<void> _openPublicationReader(
+  WidgetTester tester,
+  AppServices services,
+  String title, {
+  bool checkPdfProgress = false,
+  Future<void> Function(Future<void> Function() reopen)? verifyEpub,
+}) async {
+  Future<void> read() async {
+    await tester.tap(find.text(title).first);
+    await _until(
+      tester,
+      () => find.byType(RichReaderPage).evaluate().isNotEmpty,
+    );
+    await _until(tester, () => find.byTooltip('阅读菜单').evaluate().isNotEmpty);
+  }
+
+  await tester.pumpWidget(_publicationApp(services));
+  await _until(tester, () => find.text('书库').evaluate().isNotEmpty);
+  await tester.tap(find.text('书库'));
+  await tester.pumpAndSettle();
+  await read();
+  await verifyEpub?.call(read);
+  if (checkPdfProgress) {
+    final next = find.byTooltip('下一页');
+    await _until(tester, () => next.evaluate().isNotEmpty);
+    await tester.tap(next.last);
+    final secondPage = find.textContaining(RegExp(r'^2 / \d+$'));
+    await _until(tester, () => secondPage.evaluate().isNotEmpty);
+    tester.state<NavigatorState>(find.byType(Navigator).first).pop();
+    await tester.pumpAndSettle();
+    await read();
+    await _until(tester, () => secondPage.evaluate().isNotEmpty);
+    debugPrint(
+      'Publication ${Platform.operatingSystem} PDF reopened on page 2',
+    );
+  }
+  await tester.pumpWidget(const SizedBox());
+  await tester.pumpAndSettle();
 }
 
 typedef _CatalogueSample = ({
@@ -756,6 +1326,249 @@ Future<void> _officialDownload(
   );
 });
 
+Future<void> _archiveGutenbergDownload(
+  WidgetTester tester, {
+  String expectedDigest =
+      'c9b33c2c4826ba8666fbd6ecfca98ba65eee3a629e75cb030b1100ca884df2c3',
+}) => _withServices((services) async {
+  final module = services.publications;
+  await module.workflow.initialize();
+  final sources = await module.discovery.sources();
+  for (final status in sources) {
+    if (status.enabled) await module.discovery.setEnabled(status.source, false);
+  }
+  final source = sources
+      .singleWhere((status) => status.source.id == 'internet-archive-gutenberg')
+      .source;
+  await module.discovery.setEnabled(source, true);
+  const title = archiveFixtureTitle;
+  final results = await module.discovery
+      .search(title, CancellationToken(), maxPages: 1)
+      .toList();
+  if (results.single.problem != null) {
+    await ArchiveGutenbergCatalogue(
+      module.discovery.http,
+    ).search(title, CancellationToken(), maxPages: 1, allowed: (_) => true);
+  }
+  expect(results.single.problem, isNull);
+  final edition = results.single.editions.singleWhere(
+    (item) => item.page?.path == '/details/$archiveFixtureId',
+  );
+  await _fetchAndOpen(
+    tester,
+    services,
+    edition,
+    PublicationFormat.epub,
+    expectedDigest: expectedDigest,
+  );
+  await tester.pumpWidget(_publicationApp(services));
+  await _until(tester, () => find.text('书库').evaluate().isNotEmpty);
+  await tester.tap(find.text('书库'));
+  await tester.pumpAndSettle();
+  await tester.tap(find.text(edition.title).first);
+  await _until(tester, () => find.byTooltip('阅读菜单').evaluate().isNotEmpty);
+  await tester.pumpWidget(const SizedBox());
+  await tester.pumpAndSettle();
+});
+
+Future<void> _shugeDownload(WidgetTester tester) => _withServices((
+  services,
+) async {
+  final module = services.publications;
+  await module.workflow.initialize();
+  final sources = await module.discovery.sources();
+  for (final status in sources) {
+    if (status.enabled) await module.discovery.setEnabled(status.source, false);
+  }
+  final source = sources
+      .singleWhere((status) => status.source.id == 'shuge-open')
+      .source;
+  await module.discovery.setEnabled(source, true);
+  final browsed = await module.discovery
+      .search('', CancellationToken(), maxPages: 1)
+      .toList();
+  expect(browsed.single.problem, isNull);
+  expect(browsed.single.editions, isNotEmpty);
+  final matches = await module.discovery
+      .search('鲁班木经匠家镜', CancellationToken(), maxPages: 1)
+      .toList();
+  expect(matches.single.problem, isNull);
+  final edition = matches.single.editions.singleWhere(
+    (edition) =>
+        edition.candidates.any((candidate) => candidate.fileId == 'SJ00000771'),
+  );
+  expect(edition.license, 'CC BY 4.0');
+  expect(edition.candidates.single.bytes, 56834720);
+  await _fetchAndOpen(
+    tester,
+    services,
+    edition,
+    PublicationFormat.pdf,
+    expectedDigest:
+        'bfadba08c2314f05b76d56f6b4953ff7ba5d0dc9f4ff4044e204eaa027017183',
+    expectedText: false,
+    downloadTimeout: const Duration(minutes: 4),
+  );
+});
+
+Future<void> _useOnlyBuiltIn(AppServices services, String sourceId) async {
+  final module = services.publications;
+  await module.workflow.initialize();
+  final sources = await module.discovery.sources();
+  for (final status in sources) {
+    final enabled = status.source.id == sourceId;
+    if (enabled != status.enabled) {
+      await module.discovery.setEnabled(status.source, enabled);
+    }
+  }
+}
+
+Future<void> _openStaxDownload(WidgetTester tester) => _withServices((
+  services,
+) async {
+  final module = services.publications;
+  await _useOnlyBuiltIn(services, openStaxSource);
+  final browsed = await module.discovery
+      .search('', CancellationToken(), maxPages: 1)
+      .toList();
+  expect(browsed.single.problem, isNull);
+  expect(browsed.single.editions, isNotEmpty);
+  final matches = await module.discovery
+      .search('979-8-90095-013-6', CancellationToken())
+      .toList();
+  expect(matches.single.problem, isNull);
+  final edition = matches.single.editions.single;
+  expect(edition.title, 'Business Law I Essentials 2e');
+  expect(edition.license, 'CC BY-NC-SA 4.0');
+  expect(edition.candidates.single.link.host, 'assets.openstax.org');
+  final authors = await module.discovery
+      .search('Mirande Valbrune', CancellationToken())
+      .toList();
+  expect(authors.single.editions.map((item) => item.id), contains(edition.id));
+  await _fetchAndOpen(
+    tester,
+    services,
+    edition,
+    PublicationFormat.pdf,
+    expectedDigest:
+        '6e7b5db71416d923ae0007154edad4288c98f8efcb2f93870fb6e4ab31baad4f',
+  );
+});
+
+Future<void> _tadokuDownload(WidgetTester tester) =>
+    _withServices((services) async {
+      final module = services.publications;
+      await _useOnlyBuiltIn(services, tadokuSource);
+      final browsed = await module.discovery
+          .search('', CancellationToken(), maxPages: 1)
+          .toList();
+      expect(browsed.single.problem, isNull);
+      expect(browsed.single.editions, isNotEmpty);
+      final matches = await module.discovery
+          .search('花と色', CancellationToken(), maxPages: 1)
+          .toList();
+      expect(matches.single.problem, isNull);
+      final edition = matches.single.editions.singleWhere(
+        (item) => item.page?.path == '/japanese/book/2746/',
+      );
+      expect(edition.license, 'CC BY-NC-ND 4.0');
+      expect(
+        edition.candidates.single.link.path,
+        endsWith('w0001e-hanatoiro-v2.pdf'),
+      );
+      await _fetchAndOpen(
+        tester,
+        services,
+        edition,
+        PublicationFormat.pdf,
+        expectedDigest:
+            '5896fa9a4e6af50bb01c222352c4469863bde5fed83c424a9423ddd5008f412a',
+      );
+    });
+
+Future<void> _publicDirectory(String id, String host) => _withServices((
+  services,
+) async {
+  final discovery = services.publications.discovery;
+  await _useOnlyBuiltIn(services, id);
+  final browsed = await discovery
+      .search('', CancellationToken(), maxPages: 1)
+      .toList();
+  expect(browsed.single.problem, isNull);
+  final edition = browsed.single.editions.first;
+  expect(edition.page?.host, host);
+  expect(browsed.single.editions.expand((item) => item.candidates), isEmpty);
+  final matches = await discovery
+      .search(edition.title, CancellationToken(), maxPages: 1)
+      .toList();
+  expect(matches.single.problem, isNull);
+  expect(matches.single.editions.map((item) => item.id), contains(edition.id));
+  expect(matches.single.editions.expand((item) => item.candidates), isEmpty);
+});
+
+Future<void> _remoteCatalogueDiscovery(String source) => _withServices((
+  services,
+) async {
+  final discovery = services.publications.discovery;
+  await _useOnlyBuiltIn(services, source);
+  final browsed = await discovery
+      .search('', CancellationToken(), maxPages: 1)
+      .toList();
+  expect(browsed.single.problem, isNull);
+  expect(browsed.single.editions, isNotEmpty);
+  expect(browsed.single.editions.expand((item) => item.candidates), isEmpty);
+});
+
+Future<void> _remoteCatalogueSearch(String source, String query, Uri page) =>
+    _withServices((services) async {
+      final discovery = services.publications.discovery;
+      await _useOnlyBuiltIn(services, source);
+      final matches = await discovery
+          .search(query, CancellationToken(), maxPages: 1)
+          .toList();
+      expect(matches.single.problem, isNull);
+      expect(matches.single.editions.map((item) => item.page), contains(page));
+      expect(
+        matches.single.editions.expand((item) => item.candidates),
+        isEmpty,
+      );
+    });
+
+Future<void> _openLogicProjectDownload(WidgetTester tester) =>
+    _withServices((services) async {
+      final module = services.publications;
+      await module.workflow.initialize();
+      final name = openLogicProjectRule['name'] as String;
+      await module.discovery.saveConfig(jsonEncode(openLogicProjectRule));
+      final source = (await module.discovery.sources())
+          .singleWhere((item) => item.source.name == name)
+          .source;
+      expect(source.toSpec()['version'], 2);
+      await module.discovery.setEnabled(source, true);
+      final discoveries = await module.discovery
+          .search('', CancellationToken(), maxPages: 1)
+          .toList();
+      expect(discoveries.single.problem, isNull);
+      expect(discoveries.single.editions.length, greaterThanOrEqualTo(6));
+      debugPrint('Open Logic Project catalogue returned six official editions');
+      final matches = await module.discovery
+          .search('Set Theory: An Open Introduction', CancellationToken())
+          .toList();
+      expect(matches.single.problem, isNull);
+      final edition = matches.single.editions.single;
+      expect(
+        edition.candidates.single.link,
+        Uri.https('st.openlogicproject.org', '/settheory-screen.pdf'),
+      );
+      await _fetchAndOpen(
+        tester,
+        services,
+        edition,
+        PublicationFormat.pdf,
+        expectedDigest: null,
+      );
+    });
+
 Future<void> _greenTeaPressDownload(WidgetTester tester) => _withServices((
   services,
 ) async {
@@ -915,27 +1728,12 @@ Future<void> _publicShareDownload(
         ..sort((a, b) => a.bytes!.compareTo(b.bytes!));
   expect(matching, isNotEmpty);
   final file = matching.first;
-  final id = publicationId('share:$link:${file.id}');
-  final edition = PublicationEdition(
-    id: id,
-    title: file.name.substring(0, file.name.lastIndexOf('.')),
-    page: link,
-    candidates: [
-      AcquisitionCandidate(
-        source: 'manual',
-        link: link,
-        format: file.format,
-        bytes: file.bytes,
-        fileId: file.id,
-      ),
-    ],
-  );
-  await _fetchAndOpen(
+  final id = await module.workflow.addSharedFile(link, file, code: shareCode);
+  expect((await module.store.task(id))?.candidate.sharedFileName, file.name);
+  await _verifyDownloadedBook(
     tester,
     services,
-    edition,
-    file.format,
-    shareCode: shareCode,
+    id,
     expectedDigest: digest.isEmpty ? null : digest,
     expectedText: expectedText,
     downloadTimeout: downloadTimeout,
@@ -1249,8 +2047,9 @@ Future<AcquisitionTask> _taskWhen(
   String id,
   bool Function(AcquisitionTask) accepts, {
   int? afterGeneration,
+  Duration timeout = const Duration(seconds: 35),
 }) async {
-  final deadline = DateTime.now().add(const Duration(seconds: 35));
+  final deadline = DateTime.now().add(timeout);
   while (DateTime.now().isBefore(deadline)) {
     final task = await services.publications.store.task(id);
     if (task != null &&

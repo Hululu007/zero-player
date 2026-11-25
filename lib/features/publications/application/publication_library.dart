@@ -51,12 +51,18 @@ final class PublicationLibrary {
     }
   }
 
-  Future<List<PublicationHolding>> holdings() => _holdings(unlisted: false);
+  Future<List<PublicationHolding>> holdings() async =>
+      (await shelfVisibility()).entries;
 
-  Future<List<PublicationHolding>> unlistedCopies() =>
-      _holdings(unlisted: true);
+  Future<({List<PublicationHolding> entries, int hidden})> shelfVisibility() =>
+      _holdings(unlisted: false);
 
-  Future<List<PublicationHolding>> _holdings({required bool unlisted}) async {
+  Future<List<PublicationHolding>> unlistedCopies() async =>
+      (await _holdings(unlisted: true)).entries;
+
+  Future<({List<PublicationHolding> entries, int hidden})> _holdings({
+    required bool unlisted,
+  }) async {
     await store.initialize();
     final books = {
       for (final entry in [
@@ -71,11 +77,14 @@ final class PublicationLibrary {
           WHERE active.digest=f.digest AND active.removed=0)'''
         : 's.removed=0';
     final rows = await store.db.rows('''
-      SELECT s.id,s.edition,s.digest,s.kept,s.added,f.legacy_id,f.placement,f.format,f.bytes
+      SELECT s.id,s.edition,s.digest,s.kept,s.added,
+        f.legacy_id,f.placement,f.format,f.bytes,f.last_read,d.group_id,d.finished
       FROM publication_shelf s JOIN publication_files f ON f.digest=s.digest
+      LEFT JOIN publication_shelf_details d ON d.holding=s.id
       WHERE $selection ORDER BY s.added DESC,s.id''');
     final results = <PublicationHolding>[];
     final copies = <String>{};
+    var hidden = 0;
     for (final row in rows) {
       final format = PublicationFormat.values.byName(row['format'] as String);
       final digest = row['digest'] as String;
@@ -89,10 +98,14 @@ final class PublicationLibrary {
       final book =
           attached ??
           publicationReaderBook(digest, format, edition.title, edition.author);
-      if (!await _canOpen(book)) continue;
+      final private = await legacy.isPrivateBook(book.id);
+      if (private && (!legacy.vault.unlocked || unlisted)) continue;
+      if (!bookAllowed(book)) {
+        hidden++;
+        continue;
+      }
       if (unlisted &&
-          (await legacy.isPrivateBook(book.id) ||
-              (_usesLegacyCopy(row) && await _hasLegacyOwner(book)) ||
+          ((_usesLegacyCopy(row) && await _hasLegacyOwner(book)) ||
               !copies.add(digest))) {
         continue;
       }
@@ -106,11 +119,14 @@ final class PublicationLibrary {
           resident: row['placement'] != null,
           kept: row['kept'] == 1,
           added: row['added'] as int,
+          lastRead: row['last_read'] as int,
+          groupId: row['group_id'] as String?,
+          finished: row['finished'] == 1,
           legacyId: id,
         ),
       );
     }
-    return results;
+    return (entries: results, hidden: hidden);
   }
 
   Future<List<Book>> legacyBooks() async {
@@ -386,12 +402,16 @@ final class PublicationLibrary {
     check('${edition?.title ?? name} ${edition?.author ?? ''}');
     final bytes = await file.length();
     final digest = await publicationFileDigest(file, token);
-    if (await detectPublicationFormat(file) != format) {
+    final detected = await detectPublicationFormat(file);
+    if (detected == null || !format.accepts(detected)) {
       throw const PublicationFailure(PublicationProblem.invalid);
     }
+    // MOBI and AZW can contain identical bytes. Key the managed suffix
+    // by the document version so importing another alias reuses the copy.
+    final storedFormat = detected;
     final admission = await admitPublication(
       file,
-      format,
+      storedFormat,
       name,
       token,
       authorize: check,
@@ -406,7 +426,7 @@ final class PublicationLibrary {
         );
     final book = publicationReaderBook(
       digest,
-      format,
+      storedFormat,
       selected.title,
       selected.author,
     );
@@ -418,7 +438,7 @@ final class PublicationLibrary {
       book,
       selected,
       digest,
-      format,
+      storedFormat,
       bytes,
       owner,
       downloaded,
@@ -651,6 +671,7 @@ final class PublicationLibrary {
         authorize: check,
         password: password,
         scan: !cached,
+        prepareReader: holding.format.isKindle,
       );
       final checked = (
         title: admission.title,
@@ -658,6 +679,7 @@ final class PublicationLibrary {
         chapters: admission.chapters,
         hasText: cached ? saved[1] == true : admission.hasText,
         password: admission.password,
+        richSections: admission.richSections,
       );
       check(book.title);
       await store.db.write(
@@ -711,10 +733,33 @@ final class PublicationLibrary {
   File _legacyFile(String id, PublicationFormat format) =>
       File(p.join(legacyDocuments.path, '$id.${format.name}'));
 
-  Future<void> remove(PublicationHolding entry) => store.db.write(
-    'UPDATE publication_shelf SET removed=1 WHERE id=?',
-    [entry.id],
-  );
+  Future<void> remove(PublicationHolding entry) => _setRemoved(entry, true);
+
+  Future<void> restoreRemoved(PublicationHolding entry) =>
+      _setRemoved(entry, false);
+
+  Future<void> _setRemoved(PublicationHolding entry, bool removed) async {
+    requireImport('${entry.edition.title} ${entry.edition.author}');
+    final book = publicationReaderBook(
+      entry.digest,
+      entry.format,
+      entry.edition.title,
+      entry.edition.author,
+    );
+    final legacyId = entry.legacyId;
+    if (!await _canOpen(book) ||
+        (legacyId != null &&
+            !legacy.vault.unlocked &&
+            await legacy.isPrivateBook(legacyId))) {
+      throw const PublicationFailure(PublicationProblem.blocked);
+    }
+    requireImport('${entry.edition.title} ${entry.edition.author}');
+    await store.db.write(
+      'UPDATE publication_shelf SET removed=? WHERE id=? AND digest=?',
+      [removed ? 1 : 0, entry.id, entry.digest],
+    );
+  }
+
   Future<void> setKept(PublicationHolding entry, bool value) => store.db.write(
     'UPDATE publication_shelf SET kept=? WHERE id=?',
     [value ? 1 : 0, entry.id],
@@ -794,11 +839,8 @@ final class PublicationLibrary {
       final digest = row['digest'] as String;
       final format = PublicationFormat.values.byName(row['format'] as String);
       final stagedName = row['staged_name'] as String;
-      if (!const {
-        'download.part',
-        'book.pdf',
-        'book.epub',
-      }.contains(stagedName)) {
+      if (stagedName != 'download.part' &&
+          !isStagedPublicationBook(stagedName)) {
         continue;
       }
       final stage = File(p.join(space.taskDirectory(id).path, stagedName));

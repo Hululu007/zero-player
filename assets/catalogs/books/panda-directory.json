@@ -1,0 +1,3487 @@
+{
+  "version": 1,
+  "reviewed": "2026-11-23",
+  "groups": [
+    {
+      "id": "hot",
+      "name": "热门推荐",
+      "entries": [
+        {
+          "name": "熊猫电子书转换",
+          "original": "https://convert.xmsoushu.com",
+          "status": "auxiliary"
+        },
+        {
+          "name": "苦瓜书盘",
+          "original": "https://kgbook.com",
+          "probe": {
+            "failure": "timeout"
+          },
+          "status": "native",
+          "source": "kgbook-public-catalogue"
+        },
+        {
+          "name": "热点图书",
+          "original": "http://www.happydot.top/",
+          "probe": {
+            "failure": "HandshakeException"
+          },
+          "status": "unavailable"
+        },
+        {
+          "name": "静思书屋",
+          "original": "https://book.tinynews.org/",
+          "probe": {
+            "status": 200,
+            "mime": "text/html",
+            "searchForm": true,
+            "title": "主页- 静思书屋 免费图书 epub pdf  mobi txt 电子书 下载",
+            "cataloguePaths": 25
+          },
+          "note": "全站搜索后核验数字编号的图书详情。可打开《国家神道与日本人》，《斯通纳》详情仍跳回首页。原站获取页的检索结果未经验证为实际电子书。",
+          "status": "native",
+          "source": "panda-tinynews"
+        },
+        {
+          "name": "读书小站",
+          "original": "https://ibooks.org.cn/",
+          "probe": {
+            "status": 200,
+            "mime": "text/html"
+          },
+          "note": "使用书籍作者分类识别书目，支持作者检索。",
+          "status": "native",
+          "source": "panda-ibooks"
+        },
+        {
+          "name": "读书派",
+          "original": "https://www.dushupai.com/",
+          "probe": {
+            "status": 200,
+            "mime": "text/html",
+            "searchForm": true
+          },
+          "status": "native",
+          "source": "dushupai-public-catalogue"
+        },
+        {
+          "name": "古登堡计划",
+          "original": "https://www.gutenberg.org/browse/languages/zh",
+          "status": "native",
+          "source": "project-gutenberg-mirror"
+        },
+        {
+          "name": "看好书",
+          "original": "https://http561856124.wordpress.com/",
+          "probe": {
+            "status": 200,
+            "mime": "text/html"
+          },
+          "note": "查询公开书单，从图书文件标题提取书目和站方公布的城通分享。",
+          "status": "native",
+          "source": "panda-kanhaoshu"
+        },
+        {
+          "name": "书舟搜索",
+          "original": "https://www.shuzhou.cc/",
+          "probe": {
+            "status": 206,
+            "mime": "text/html",
+            "title": "书舟搜索"
+          },
+          "note": "站方公开搜索接口返回书名和发布的网盘分享。支持书名及明确署名匹配。",
+          "status": "native",
+          "source": "panda-shuzhou"
+        },
+        {
+          "name": "书格",
+          "original": "https://new.shuge.org/",
+          "probe": {
+            "status": 301,
+            "mime": "text/html",
+            "redirectHost": "www.shuge.org"
+          },
+          "status": "native",
+          "source": "shuge-open"
+        },
+        {
+          "name": "千秋书在",
+          "original": "https://www.qqszz.net/",
+          "probe": {
+            "status": 301,
+            "mime": "text/html",
+            "redirectHost": "www.35ppt.com",
+            "redirectScheme": "https"
+          },
+          "note": "旧域名跳转至同名千秋书在现行站 www.35ppt.com。公开全站书目和原站游客页发布的网盘入口。",
+          "status": "native",
+          "source": "panda-qianqiu"
+        },
+        {
+          "name": "偶书",
+          "original": "https://obook.cc/",
+          "probe": {
+            "status": 200,
+            "mime": "text/html",
+            "title": "偶书 - 偶遇小驻，发现好书"
+          },
+          "note": "公开书单首页可访问。复查站方 Halo 公开搜索接口超时，保留原站入口。",
+          "status": "website",
+          "website": "https://obook.cc/"
+        },
+        {
+          "name": "IT图书网",
+          "original": "https://ittushu.net",
+          "probe": {
+            "failure": "HttpException"
+          },
+          "status": "unavailable"
+        },
+        {
+          "name": "鸠摩搜书",
+          "original": "https://www.jiumodiary.com/",
+          "probe": {
+            "status": 200,
+            "mime": "text/html",
+            "searchForm": true,
+            "title": "Jiumo Search 鸠摩搜索 - 文档搜索引擎"
+          },
+          "note": "首页提示需要通过站方公众号取得验证码，或由用户完成微信验证。",
+          "status": "website",
+          "website": "https://www.jiumodiary.com/"
+        }
+      ]
+    },
+    {
+      "id": "book-search",
+      "name": "书籍搜索",
+      "entries": [
+        {
+          "name": "小兔搜书",
+          "original": "https://ss.yesky.online/",
+          "probe": {
+            "failure": "SocketException"
+          },
+          "status": "unavailable"
+        },
+        {
+          "name": "24h 搜书网",
+          "original": "https://24hbook.com/",
+          "probe": {
+            "failure": "FormatException"
+          },
+          "status": "unavailable"
+        },
+        {
+          "name": "SaltyLeo 的书架",
+          "original": "https://book.tstrs.me/search",
+          "status": "native",
+          "source": "tstrs-catalogue"
+        },
+        {
+          "name": "书葵",
+          "original": "https://www.shukui.net/",
+          "probe": {
+            "status": 206,
+            "mime": "text/html",
+            "searchForm": true
+          },
+          "note": "主库和从库均可检索，原站详情保留站方提供的获取方式。",
+          "status": "native",
+          "source": "panda-shukui"
+        },
+        {
+          "name": "TheFuture书籍搜索",
+          "original": "http://bks.thefuture.top/",
+          "probe": {
+            "failure": "TimeoutException"
+          },
+          "status": "unavailable"
+        }
+      ]
+    },
+    {
+      "id": "novel",
+      "name": "小说搜索",
+      "entries": [
+        {
+          "name": "502book",
+          "original": "https://www.502book.com/",
+          "probe": {
+            "failure": "timeout"
+          },
+          "status": "unavailable"
+        },
+        {
+          "name": "Owllook",
+          "original": "http://www.owlook.com.cn/",
+          "probe": {
+            "status": 200,
+            "mime": "text/html",
+            "searchForm": true,
+            "title": "owllook - 网络小说搜索引擎 - 最简洁清新的搜索阅读体验"
+          },
+          "status": "website",
+          "website": "https://www.owlook.com.cn/"
+        },
+        {
+          "name": "拨云搜索",
+          "original": "https://www.boyunso.com/",
+          "probe": {
+            "failure": "SocketException"
+          },
+          "status": "unavailable"
+        },
+        {
+          "name": "SoDu",
+          "original": "http://www.soduzw.com/",
+          "probe": {
+            "failure": "SocketException"
+          },
+          "status": "unavailable"
+        },
+        {
+          "name": "BookLink.Me",
+          "original": "https://booklink.me/",
+          "probe": {
+            "status": 206,
+            "mime": "text/html",
+            "searchForm": true,
+            "title": "BookLink.Me:最有爱的小说搜索引擎",
+            "cataloguePaths": 12
+          },
+          "note": "公开小说索引分别提供书名、作者检索及章节详情。",
+          "status": "native",
+          "source": "panda-booklink"
+        }
+      ]
+    },
+    {
+      "id": "cool-sites",
+      "name": "酷站",
+      "entries": [
+        {
+          "name": "熊猫速读",
+          "original": "http://qread.xmsoushu.com",
+          "status": "auxiliary"
+        },
+        {
+          "name": "熊猫学吧",
+          "original": "http://learn.xmsoushu.com",
+          "status": "auxiliary"
+        },
+        {
+          "name": "PDF电子书下载网",
+          "original": "https://www.pdfdz.com/",
+          "probe": {
+            "failure": "SocketException"
+          },
+          "status": "unavailable"
+        },
+        {
+          "name": "藏书馆",
+          "original": "https://www.zglibrary.com/",
+          "probe": {
+            "status": 200,
+            "mime": "text/html",
+            "title": "藏书馆官网 - 集电子书藏书、借书、读书、购书、荐书于一体的在线阅读私人图书馆",
+            "cataloguePaths": 1
+          },
+          "note": "使用公开全部书目 272 页，按题名和书目署名离线检索，保留逐书详情和封面。借阅由原站处理。",
+          "status": "native",
+          "source": "panda-zglibrary"
+        },
+        {
+          "name": "黑基百科",
+          "original": "https://www.yn521.cn/",
+          "probe": {
+            "failure": "timeout"
+          },
+          "status": "unavailable"
+        },
+        {
+          "name": "DIY你的私人电子书",
+          "original": "https://bookn.net/zh/",
+          "probe": {
+            "status": 200,
+            "mime": "text/html",
+            "title": "Loading..."
+          },
+          "status": "website",
+          "website": "https://bookn.net/zh/"
+        },
+        {
+          "name": "爱学习",
+          "original": "http://ixuexila.com/",
+          "status": "auxiliary"
+        },
+        {
+          "name": "爱摸鱼",
+          "original": "https://imoyukik.com/",
+          "status": "auxiliary"
+        },
+        {
+          "name": "微信阅读排行榜",
+          "original": "http://klib.me/weread/hot/all.html",
+          "probe": {
+            "status": 206,
+            "mime": "text/html"
+          },
+          "note": "完整公开总榜生成 116 条离线书目。详情使用实测的 HTTPS 地址。",
+          "status": "native",
+          "source": "panda-klib-ranking"
+        },
+        {
+          "name": "中少快乐阅读",
+          "original": "http://202.96.31.36:8888/reading/moremagazines/baozhi",
+          "status": "invalid"
+        },
+        {
+          "name": "图书馆的无限回廊",
+          "original": "https://epub.love/wp/",
+          "probe": {
+            "status": 200,
+            "mime": "text/html",
+            "title": "Loading..."
+          },
+          "status": "website",
+          "website": "https://epub.love/wp/"
+        },
+        {
+          "name": "魔笔小说",
+          "original": "https://www.mobinovels.com/",
+          "probe": {
+            "failure": "SocketException"
+          },
+          "status": "unavailable"
+        },
+        {
+          "name": "民国中文报纸集",
+          "original": "https://gpa.eastview.com/crl/lqrcn/?a=p&p=home&e=-------zh-25--1--img-txIN----------",
+          "probe": {
+            "status": 206,
+            "mime": "text/html",
+            "searchForm": true,
+            "title": "晚清和民国时期中文报纸集"
+          },
+          "status": "website",
+          "website": "https://gpa.eastview.com/crl/lqrcn/?a=p&p=home&e=-------zh-25--1--img-txIN----------"
+        },
+        {
+          "name": "中华珍宝馆",
+          "original": "https://ltfc.net/",
+          "probe": {
+            "status": 301,
+            "mime": "text/html",
+            "redirectHost": "g2.ltfc.net",
+            "redirectScheme": "https"
+          },
+          "status": "changedDomain"
+        },
+        {
+          "name": "中华连环画",
+          "original": "http://wx.zhlhh.com/zhejianglib",
+          "probe": {
+            "status": 200,
+            "mime": "text/html",
+            "title": "浙江图书馆•连环画"
+          },
+          "note": "浙江图书馆连环画入口可打开。匿名搜索对站方推荐词、书名及作者均返回零条，保留馆方入口。",
+          "status": "website",
+          "website": "https://wx.zhlhh.com/zhejianglib"
+        },
+        {
+          "name": "大辞海",
+          "original": "http://www.dacihai.com.cn/index.html",
+          "probe": {
+            "failure": "timeout"
+          },
+          "status": "unavailable"
+        },
+        {
+          "name": "人物志",
+          "original": "https://www.renwuzhi.org/",
+          "probe": {
+            "failure": "timeout"
+          },
+          "status": "unavailable"
+        },
+        {
+          "name": "99藏书馆",
+          "original": "http://www.99csw.com/index.php",
+          "probe": {
+            "status": 403,
+            "mime": "text/html",
+            "verification": true,
+            "title": "Just a moment..."
+          },
+          "note": "公开书目可核对。当前环境的桌面、移动端及 read 子站遇到站方验证或连接失败。此次桌面和 read 子站图书目录均返回 403。",
+          "status": "limited"
+        },
+        {
+          "name": "中国诗人资料馆",
+          "original": "http://www.shiren.org/",
+          "probe": {
+            "status": 200,
+            "mime": "text/html",
+            "searchForm": true,
+            "title": "中国诗人资料馆-诗歌资料|现代诗歌|当代诗歌|古典诗歌|诗词|唐诗|宋词|外国诗歌",
+            "documentPaths": 1
+          },
+          "note": "六个古典、现代、国际诗库目录可离线检索。支持原站阅读及同站公布的 PDF。",
+          "status": "native",
+          "source": "panda-shiren"
+        },
+        {
+          "name": "麻省理工开放文献",
+          "original": "https://ocw.mit.edu/index.htm",
+          "probe": {
+            "status": 301,
+            "redirectHost": "ocw.mit.edu",
+            "redirectScheme": "https"
+          },
+          "note": "用 MIT Learn 公开检索查课程名称和讲师。课程公开下载页可检出讲义、作业及考试 PDF。",
+          "status": "native",
+          "source": "panda-mit-ocw"
+        },
+        {
+          "name": "爱看影视",
+          "original": "http://ikaning.com/",
+          "status": "auxiliary"
+        },
+        {
+          "name": "中国历史照片",
+          "original": "https://www.hpcbristol.net/",
+          "status": "auxiliary"
+        },
+        {
+          "name": "书啦圈",
+          "original": "https://shulaquan.com/",
+          "probe": {
+            "failure": "timeout"
+          },
+          "status": "unavailable"
+        },
+        {
+          "name": "蒋介石资料数据库",
+          "original": "http://cksdb.cadal.edu.cn/",
+          "probe": {
+            "failure": "SocketException"
+          },
+          "status": "unavailable"
+        },
+        {
+          "name": "博物馆导航",
+          "original": "http://106.14.223.230/bwg123.html",
+          "status": "invalid"
+        },
+        {
+          "name": "香港旧报纸书库",
+          "original": "https://mmis.hkpl.gov.hk/zh/old-hk-collection",
+          "probe": {
+            "status": 301,
+            "mime": "text/html",
+            "redirectHost": "sls.hkpl.gov.hk",
+            "redirectScheme": "https"
+          },
+          "status": "changedDomain"
+        },
+        {
+          "name": "书享家",
+          "original": "http://shuxiangjia.cn/",
+          "probe": {
+            "failure": "timeout"
+          },
+          "status": "unavailable"
+        },
+        {
+          "name": "懂得",
+          "original": "https://www.idongde.com/",
+          "status": "auxiliary"
+        },
+        {
+          "name": "书链",
+          "original": "http://xue.bookln.cn/",
+          "probe": {
+            "status": 206,
+            "mime": "text/html",
+            "title": "书链"
+          },
+          "note": "公开配套资源书目接口支持书名、作者、封面和出版者。配套文件由原站提供。",
+          "status": "native",
+          "source": "panda-bookln"
+        },
+        {
+          "name": "物联网资源下载站",
+          "original": "https://ihpm.cn/",
+          "status": "auxiliary"
+        },
+        {
+          "name": "搜漫",
+          "original": "https://www.soman.com/",
+          "probe": {
+            "failure": "timeout"
+          },
+          "status": "unavailable"
+        },
+        {
+          "name": "中少绘本",
+          "original": "http://banan.huiben.61read.com/",
+          "probe": {
+            "failure": "SourceCertificateFailure"
+          },
+          "status": "unavailable"
+        },
+        {
+          "name": "OA图书馆",
+          "original": "https://www.oalib.com/",
+          "probe": {
+            "status": 200,
+            "mime": "text/html",
+            "searchForm": true,
+            "title": "Open Access Library (OALib)"
+          },
+          "note": "全站聚合检索需要站方验证。应用接入公开的自有期刊检索，并核对期刊出版方公布的 PDF。",
+          "status": "native",
+          "source": "panda-oalib"
+        },
+        {
+          "name": "国家中小学网络平台",
+          "original": "https://ykt.eduyun.cn/ykt/sjykt/index.html",
+          "probe": {
+            "failure": "timeout"
+          },
+          "note": "教育部确认旧平台升级为国家中小学智慧教育平台。接入官方公开四分卷教材索引，原站详情请求在本机返回 403。",
+          "status": "native",
+          "source": "panda-smartedu"
+        },
+        {
+          "name": "爱思想",
+          "original": "http://www.aisixiang.com/",
+          "probe": {
+            "status": 200,
+            "mime": "text/html",
+            "searchForm": true,
+            "title": "爱思想"
+          },
+          "note": "接入全站学术文章搜索，按标题和作者分别检索并核验文章题名与署名，原站可阅览。",
+          "status": "native",
+          "source": "panda-aisixiang"
+        },
+        {
+          "name": "Koodo",
+          "original": "https://koodo.960960.xyz/zh",
+          "status": "auxiliary"
+        },
+        {
+          "name": "故宫数字文物库",
+          "original": "https://digicol.dpm.org.cn/",
+          "probe": {
+            "status": 200,
+            "mime": "text/html",
+            "searchForm": true,
+            "title": "故宫博物院数字文物库"
+          },
+          "status": "website",
+          "website": "https://digicol.dpm.org.cn/"
+        },
+        {
+          "name": "浮世绘",
+          "original": "https://ja.ukiyo-e.org/",
+          "status": "auxiliary"
+        },
+        {
+          "name": "USEUM",
+          "original": "https://useum.org/",
+          "status": "auxiliary"
+        },
+        {
+          "name": "夏泽网",
+          "original": "http://nianjian.xiaze.com/",
+          "probe": {
+            "failure": "timeout"
+          },
+          "status": "unavailable"
+        },
+        {
+          "name": "医学微视",
+          "original": "https://www.mvyxws.com/",
+          "status": "auxiliary"
+        },
+        {
+          "name": "地图窝",
+          "original": "http://www.onegreen.net/",
+          "status": "auxiliary"
+        },
+        {
+          "name": "古音小鏡",
+          "original": "http://www.kaom.net/index.php",
+          "probe": {
+            "failure": "timeout"
+          },
+          "status": "unavailable"
+        },
+        {
+          "name": "中国数字科技馆",
+          "original": "https://www.cdstm.cn/",
+          "probe": {
+            "status": 206,
+            "mime": "text/html",
+            "title": "中国数字科技馆"
+          },
+          "note": "科普阅读荟的四个官方图书系列可离线检索，包含书名、作者、ISBN 与原站公布的 PDF。",
+          "status": "native",
+          "source": "panda-cdstm"
+        },
+        {
+          "name": "科学文库",
+          "original": "https://book.sciencereading.cn/shop/main/Login/shopFrame.do",
+          "probe": {
+            "status": 200,
+            "mime": "text/html"
+          },
+          "note": "公开全库检索返回书名、作者、ISBN 和官方详情，阅读权限由原站处理。",
+          "status": "native",
+          "source": "panda-science-reading"
+        },
+        {
+          "name": "高教书苑",
+          "original": "https://ebook.hep.com.cn/ebooks/index.html#/",
+          "probe": {
+            "failure": "timeout"
+          },
+          "note": "旧路径失效时，使用同站现行入口与公开全站检索。按书名或署名复筛。详情与阅览由高教书苑提供。",
+          "status": "native",
+          "source": "panda-hep"
+        },
+        {
+          "name": "天地图",
+          "original": "https://www.tianditu.gov.cn/",
+          "status": "auxiliary"
+        },
+        {
+          "name": "阿酷导航",
+          "original": "https://www.a.cool/",
+          "probe": {
+            "status": 301,
+            "mime": "text/html",
+            "redirectHost": "a.cool",
+            "redirectScheme": "https"
+          },
+          "status": "website",
+          "website": "https://www.a.cool/"
+        },
+        {
+          "name": "库问搜索",
+          "original": "http://www.koovin.com/",
+          "probe": {
+            "failure": "timeout"
+          },
+          "status": "unavailable"
+        },
+        {
+          "name": "词典分享站",
+          "original": "https://dictionary-share.herokuapp.com/",
+          "status": "auxiliary"
+        },
+        {
+          "name": "瑞文网·教材",
+          "original": "https://www.ruiwen.com/jiaocai/",
+          "probe": {
+            "status": 206,
+            "mime": "text/html",
+            "title": "教材_电子课本_瑞文网"
+          },
+          "note": "12 个公开目录可读取到四科教材书目。样本逐页阅读依赖原站图床，跨科目检查的图片返回 404，保留目录入口。",
+          "status": "website",
+          "website": "https://www.ruiwen.com/jiaocai/"
+        },
+        {
+          "name": "文津搜索",
+          "original": "http://find.nlc.cn/",
+          "probe": {
+            "failure": "timeout"
+          },
+          "status": "unavailable"
+        },
+        {
+          "name": "心晴",
+          "original": "http://www.ixinqing.com/",
+          "probe": {
+            "failure": "SourceCertificateFailure"
+          },
+          "status": "unavailable"
+        },
+        {
+          "name": "发现中国",
+          "original": "https://www.ageeye.cn/",
+          "status": "auxiliary"
+        },
+        {
+          "name": "JCJC",
+          "original": "http://cuobiezi.net/public_index",
+          "status": "auxiliary"
+        },
+        {
+          "name": "搜读",
+          "original": "http://www.sodu3.com/",
+          "probe": {
+            "status": 200,
+            "mime": "text/html",
+            "title": "Loading..."
+          },
+          "status": "website",
+          "website": "https://www.sodu3.com/"
+        },
+        {
+          "name": "马克思主义文库",
+          "original": "https://www.marxists.org/chinese/index.html",
+          "probe": {
+            "failure": "timeout"
+          },
+          "note": "公开网页可核对中文目录和 PDF 文库。应用所在环境直连主站及复查的官方镜像均未获得可验证响应。",
+          "status": "unavailable"
+        },
+        {
+          "name": "知妖",
+          "original": "https://www.cbaigui.com/",
+          "probe": {
+            "status": 200,
+            "mime": "text/html",
+            "title": "纪妖（原名知妖）"
+          },
+          "status": "website",
+          "website": "https://www.cbaigui.com/"
+        },
+        {
+          "name": "淘链客",
+          "original": "http://www.toplinks.cc/s/",
+          "probe": {
+            "failure": "timeout"
+          },
+          "status": "unavailable"
+        },
+        {
+          "name": "361图书馆",
+          "original": "https://361tsg.cn/",
+          "probe": {
+            "status": 206,
+            "mime": "text/html",
+            "title": "361图书馆-CN站！ - 永久发布页"
+          },
+          "note": "旧域名发布页明确指向 361tsg.top。现行站支持全站搜索，网盘领取及站方权限要求在原站处理。",
+          "status": "native",
+          "source": "panda-361-library"
+        },
+        {
+          "name": "大学数字图书馆国际合作计划",
+          "original": "http://cadal.edu.cn/index/home#page1",
+          "probe": {
+            "status": 200,
+            "mime": "text/html",
+            "title": "大学数字图书馆国际合作计划"
+          },
+          "note": "使用站方公开馆藏检索，按题名及作者查找古籍、民国图书和当代图书等。可直接打开馆藏书目，阅览与借阅由原站管理。",
+          "status": "native",
+          "source": "panda-cadal"
+        },
+        {
+          "name": "liulangcat",
+          "original": "http://liulangcat.com/index.php",
+          "probe": {
+            "failure": "SourceCertificateFailure"
+          },
+          "status": "unavailable"
+        },
+        {
+          "name": "汉典",
+          "original": "https://www.zdic.net/",
+          "probe": {
+            "status": 301,
+            "mime": "text/html",
+            "redirectHost": "zdic.net",
+            "redirectScheme": "https"
+          },
+          "status": "website",
+          "website": "https://www.zdic.net/"
+        },
+        {
+          "name": "什么值得读",
+          "original": "http://www.shenmezhidedu.com/",
+          "probe": {
+            "status": 404,
+            "mime": "text/html"
+          },
+          "status": "unavailable"
+        },
+        {
+          "name": "世界汉学家数据库",
+          "original": "http://www.hanxuejia.net/",
+          "probe": {
+            "failure": "SocketException"
+          },
+          "status": "unavailable"
+        },
+        {
+          "name": "精校藏书",
+          "original": "https://jingjiaocangshu.cn/",
+          "probe": {
+            "failure": "SourceCertificateFailure"
+          },
+          "status": "unavailable"
+        },
+        {
+          "name": "联图云光盘",
+          "original": "http://discx.yuntu.io/",
+          "probe": {
+            "failure": "timeout"
+          },
+          "status": "unavailable"
+        },
+        {
+          "name": "梦远书城",
+          "original": "http://www.my2852.com/",
+          "probe": {
+            "failure": "SocketException"
+          },
+          "status": "unavailable"
+        },
+        {
+          "name": "绘本下载",
+          "original": "http://bbs.ibabyzone.cn/showtype-15-153.html",
+          "probe": {
+            "failure": "SourceCertificateFailure"
+          },
+          "status": "unavailable"
+        },
+        {
+          "name": "易阅通",
+          "original": "https://www.cnpereading.com/",
+          "probe": {
+            "status": 200,
+            "mime": "text/html",
+            "title": "中图易阅通"
+          },
+          "note": "使用站方公开全站图书检索。支持书名、作者和 ISBN，阅览与订阅权限由原站管理。",
+          "status": "native",
+          "source": "panda-cnpereading"
+        },
+        {
+          "name": "爱洋葱",
+          "original": "http://www.iyangcong.com/",
+          "probe": {
+            "status": 404,
+            "mime": "text/html"
+          },
+          "status": "unavailable"
+        },
+        {
+          "name": "书入法",
+          "original": "http://www.shurufa.me/",
+          "probe": {
+            "status": 200,
+            "mime": "text/html",
+            "searchForm": true
+          },
+          "status": "website",
+          "website": "https://www.shurufa.me/"
+        },
+        {
+          "name": "必看网",
+          "original": "https://www.biikan.com/",
+          "probe": {
+            "failure": "SocketException"
+          },
+          "status": "unavailable"
+        },
+        {
+          "name": "拨云",
+          "original": "https://www.boyunso.com/",
+          "probe": {
+            "failure": "SocketException"
+          },
+          "status": "unavailable"
+        },
+        {
+          "name": "全國古籍普查登記基本數據庫",
+          "original": "http://202.96.31.78/xlsworkbench/publish",
+          "status": "invalid"
+        },
+        {
+          "name": "两小无猜",
+          "original": "http://www.lxwc.com.cn/",
+          "probe": {
+            "failure": "timeout"
+          },
+          "status": "unavailable"
+        },
+        {
+          "name": "中国历代人物图像数据库",
+          "original": "http://diglweb.zjlib.cn:8081/zjtsg/mingren/index.htm",
+          "status": "invalid"
+        },
+        {
+          "name": "抗日战争与近代中日关系文献数据平台",
+          "original": "http://www.modernhistory.org.cn/",
+          "probe": {
+            "status": 206,
+            "mime": "text/html"
+          },
+          "note": "用站方公开检索查文献题名及责任者，按文献类型打开原站详情。原站下载要求登录。",
+          "status": "native",
+          "source": "panda-modernhistory"
+        },
+        {
+          "name": "田间小站",
+          "original": "https://www.tianfateng.cn/",
+          "probe": {
+            "failure": "SocketException"
+          },
+          "status": "unavailable"
+        },
+        {
+          "name": "全历史",
+          "original": "https://www.allhistory.com/",
+          "probe": {
+            "status": 200,
+            "mime": "text/html",
+            "title": "全历史"
+          },
+          "status": "website",
+          "website": "https://www.allhistory.com/"
+        },
+        {
+          "name": "FreeMdict",
+          "original": "https://freemdict.com/",
+          "status": "auxiliary"
+        },
+        {
+          "name": "台大公开取用电子书",
+          "original": "http://ebooks.lib.ntu.edu.tw/Home/ListBooks",
+          "probe": {
+            "failure": "SocketException"
+          },
+          "status": "unavailable"
+        },
+        {
+          "name": "family search",
+          "original": "https://familysearch.org/",
+          "status": "auxiliary"
+        },
+        {
+          "name": "台湾华文电子书库",
+          "original": "http://taiwanebook.ncl.edu.tw/",
+          "probe": {
+            "status": 302,
+            "mime": "text/html",
+            "redirectHost": "taiwanebook.ncl.edu.tw",
+            "redirectScheme": "https"
+          },
+          "note": "公开馆藏全库检索与书目详情，阅览资格由原站控制。",
+          "status": "native",
+          "source": "panda-taiwan-ebook"
+        },
+        {
+          "name": "好读",
+          "original": "https://haodoo.net/",
+          "probe": {
+            "failure": "timeout"
+          },
+          "note": "好读二代官网确认与好读旧站的关系。映射到现有 haodoo.org 适配器，免费 EPUB 由原站结账页提供。",
+          "status": "native",
+          "source": "haodoo-public-catalogue"
+        },
+        {
+          "name": "世界数字图书馆",
+          "original": "https://www.wdl.org/zh/",
+          "probe": {
+            "status": 403,
+            "mime": "text/html",
+            "verification": true,
+            "title": "Just a moment..."
+          },
+          "status": "limited"
+        }
+      ]
+    },
+    {
+      "id": "kindle",
+      "name": "kindle电子书",
+      "entries": [
+        {
+          "name": "传硕公版书",
+          "original": "https://www.7sebook.com/",
+          "probe": {
+            "status": 308,
+            "mime": "text/html",
+            "redirectHost": "www.wenshuoge.com",
+            "redirectScheme": "https"
+          },
+          "status": "changedDomain"
+        },
+        {
+          "name": "书里乐",
+          "original": "http://wx.zhlhh.com/zhejianglib",
+          "probe": {
+            "status": 200,
+            "mime": "text/html",
+            "title": "浙江图书馆•连环画"
+          },
+          "note": "浙江图书馆连环画入口可打开。匿名搜索对站方推荐词、书名及作者均返回零条，保留馆方入口。",
+          "status": "website",
+          "website": "https://wx.zhlhh.com/zhejianglib"
+        },
+        {
+          "name": "书乐里",
+          "original": "https://www.sulery.com/",
+          "probe": {
+            "failure": "timeout"
+          },
+          "status": "unavailable"
+        },
+        {
+          "name": "sobooks",
+          "original": "https://sobooks.cc/",
+          "probe": {
+            "status": 200,
+            "mime": "text/html",
+            "searchForm": true
+          },
+          "status": "native",
+          "source": "sobooks-public-catalogue"
+        },
+        {
+          "name": "推书阁",
+          "original": "http://www.tuishuge.com/",
+          "probe": {
+            "failure": "timeout"
+          },
+          "status": "unavailable"
+        },
+        {
+          "name": "书伴",
+          "original": "https://bookfere.com/",
+          "probe": {
+            "status": 200,
+            "mime": "text/html",
+            "searchForm": true,
+            "title": "书伴 – 你的电子书伴侣"
+          },
+          "status": "website",
+          "website": "https://bookfere.com/"
+        },
+        {
+          "name": "Bookle",
+          "original": "http://www.x5v.net/",
+          "probe": {
+            "status": 200,
+            "mime": "text/html"
+          },
+          "note": "Bookle 旧地址显示域名出售提示，未提供图书目录。",
+          "status": "changedPurpose"
+        },
+        {
+          "name": "可可观察",
+          "original": "http://book.cocotao.cn/",
+          "probe": {
+            "failure": "timeout"
+          },
+          "status": "unavailable"
+        },
+        {
+          "name": "100万册书打包下载",
+          "original": "http://www.dbkdcd.com/",
+          "probe": {
+            "failure": "timeout"
+          },
+          "status": "unavailable"
+        },
+        {
+          "name": "IT图书",
+          "original": "https://ittushu.com/",
+          "probe": {
+            "failure": "SocketException"
+          },
+          "status": "unavailable"
+        },
+        {
+          "name": "跪读网",
+          "original": "https://orzbooks.com/",
+          "probe": {
+            "failure": "timeout"
+          },
+          "status": "unavailable"
+        },
+        {
+          "name": "33文库",
+          "original": "http://www.33file.com/",
+          "probe": {
+            "failure": "timeout"
+          },
+          "status": "unavailable"
+        },
+        {
+          "name": "XX资源网",
+          "original": "https://xxurls.com/",
+          "probe": {
+            "failure": "timeout"
+          },
+          "status": "unavailable"
+        },
+        {
+          "name": "78书库",
+          "original": "http://www.78books.com/",
+          "probe": {
+            "failure": "timeout"
+          },
+          "status": "unavailable"
+        },
+        {
+          "name": "多读",
+          "original": "http://www.duodu.cc/",
+          "probe": {
+            "status": 302,
+            "mime": "text/html",
+            "redirectHost": "ww17.duodu.cc",
+            "redirectScheme": "https"
+          },
+          "status": "changedDomain"
+        },
+        {
+          "name": "爱书小站",
+          "original": "https://www.aishuchao.com/",
+          "probe": {
+            "failure": "SocketException"
+          },
+          "status": "unavailable"
+        },
+        {
+          "name": "琳宝书屋",
+          "original": "https://linbaoshuwu.com/",
+          "probe": {
+            "failure": "HttpException"
+          },
+          "status": "unavailable"
+        },
+        {
+          "name": "519电子书",
+          "original": "https://book.519.best/",
+          "probe": {
+            "failure": "HttpException"
+          },
+          "status": "unavailable"
+        },
+        {
+          "name": "在线IT电子书",
+          "original": "https://itbook.download/",
+          "probe": {
+            "failure": "SourceCertificateFailure"
+          },
+          "status": "unavailable"
+        },
+        {
+          "name": "沉金书屋",
+          "original": "https://www.chenjin5.com/books/",
+          "probe": {
+            "status": 404
+          },
+          "status": "unavailable"
+        },
+        {
+          "name": "火岸电子书",
+          "original": "https://huoan.net/",
+          "probe": {
+            "status": 200,
+            "mime": "text/html",
+            "title": "Loading..."
+          },
+          "status": "website",
+          "website": "https://huoan.net/"
+        },
+        {
+          "name": "电子书根据地",
+          "original": "http://www.66books.cn/",
+          "probe": {
+            "failure": "FormatException"
+          },
+          "status": "unavailable"
+        },
+        {
+          "name": "相识电子书",
+          "original": "http://www.xiangshi123.com/",
+          "probe": {
+            "failure": "timeout"
+          },
+          "status": "unavailable"
+        },
+        {
+          "name": "电子书",
+          "original": "http://www.dzs.so/",
+          "probe": {
+            "failure": "SocketException"
+          },
+          "status": "unavailable"
+        },
+        {
+          "name": "花卷妈",
+          "original": "http://huajuanma.com/dianzishu/",
+          "probe": {
+            "failure": "SourceCertificateFailure"
+          },
+          "status": "unavailable"
+        },
+        {
+          "name": "逗分享",
+          "original": "http://book.idoubi.net/",
+          "probe": {
+            "status": 200,
+            "mime": "text/html",
+            "searchForm": true,
+            "title": "蚂蚁影视_蚂蚁影院,手机电影网,高清影视大全,vip电影院",
+            "cataloguePaths": 29
+          },
+          "note": "实测当前已改作影视站，未找到导航所指图书分享服务。",
+          "status": "changedPurpose"
+        },
+        {
+          "name": "读书达人",
+          "original": "http://www.dushudaren.com/",
+          "probe": {
+            "failure": "SourceCertificateFailure"
+          },
+          "status": "unavailable"
+        },
+        {
+          "name": "静然书屋",
+          "original": "https://books.andrewjr.workers.dev/0:/",
+          "probe": {
+            "failure": "timeout"
+          },
+          "status": "unavailable"
+        },
+        {
+          "name": "书山有路",
+          "original": "http://www.ssylu.com/",
+          "probe": {
+            "failure": "HttpException"
+          },
+          "status": "unavailable"
+        },
+        {
+          "name": "壹书",
+          "original": "http://www.onebooks.cn/",
+          "probe": {
+            "failure": "SocketException"
+          },
+          "status": "unavailable"
+        },
+        {
+          "name": "微米电子书分享",
+          "original": "https://www.dzsfx.com/",
+          "probe": {
+            "status": 200,
+            "mime": "text/html",
+            "title": "飞速直播-飞速直播nba在线观看|飞速直播nba无插件直播|飞速直播NBA直播吧足球直播"
+          },
+          "note": "前一次页面显示体育直播；本轮首页和查询均返回 403，未查到原电子书服务。",
+          "status": "changedPurpose"
+        },
+        {
+          "name": "rejoice博客",
+          "original": "http://www.rejoiceblog.com/",
+          "probe": {
+            "status": 404,
+            "mime": "text/html"
+          },
+          "status": "unavailable"
+        },
+        {
+          "name": "锐读网",
+          "original": "https://www.readuu.com/",
+          "probe": {
+            "failure": "HandshakeException"
+          },
+          "status": "unavailable"
+        },
+        {
+          "name": "精品电子书",
+          "original": "https://dylanbai8.github.io/ideahub/#X:/%E7%B2%BE%E5%93%81%E8%B5%84%E6%BA%90",
+          "probe": {
+            "status": 206,
+            "mime": "text/html",
+            "title": "精品电子书"
+          },
+          "status": "website",
+          "website": "https://dylanbai8.github.io/ideahub/#X:/%E7%B2%BE%E5%93%81%E8%B5%84%E6%BA%90"
+        },
+        {
+          "name": "技术电子书",
+          "original": "http://jsebook.com/",
+          "probe": {
+            "status": 429
+          },
+          "status": "limited"
+        },
+        {
+          "name": "周读（新）",
+          "original": "http://www.newireadweek.com/",
+          "probe": {
+            "failure": "SocketException"
+          },
+          "status": "unavailable"
+        },
+        {
+          "name": "freembook",
+          "original": "https://freembook.com/",
+          "probe": {
+            "failure": "timeout"
+          },
+          "status": "unavailable"
+        },
+        {
+          "name": "书栈网",
+          "original": "https://www.bookstack.cn/",
+          "probe": {
+            "status": 200,
+            "mime": "text/html",
+            "searchForm": true
+          },
+          "note": "公开书籍搜索、封面及书目页。目录未提供可用的作者字段。",
+          "status": "native",
+          "source": "panda-bookstack"
+        },
+        {
+          "name": "码农电子书",
+          "original": "https://book.mzh.ren/",
+          "probe": {
+            "failure": "timeout"
+          },
+          "status": "unavailable"
+        },
+        {
+          "name": "SaltTiger",
+          "original": "https://salttiger.com/",
+          "probe": {
+            "status": 200,
+            "mime": "text/html",
+            "searchForm": true
+          },
+          "note": "公开技术书目及站方公布的百度网盘入口。",
+          "status": "native",
+          "source": "panda-salttiger"
+        },
+        {
+          "name": "我的黄金屋",
+          "original": "http://goldroom.top/book/",
+          "probe": {
+            "failure": "SocketException"
+          },
+          "status": "unavailable"
+        },
+        {
+          "name": "每日书单",
+          "original": "https://shudan.vip/",
+          "probe": {
+            "failure": "HttpException"
+          },
+          "status": "unavailable"
+        },
+        {
+          "name": "风陵渡书屋",
+          "original": "http://www.eybook.com/",
+          "probe": {
+            "failure": "timeout"
+          },
+          "status": "unavailable"
+        },
+        {
+          "name": "掌上书苑",
+          "original": "https://www.soepub.com/",
+          "probe": {
+            "failure": "FormatException"
+          },
+          "status": "unavailable"
+        },
+        {
+          "name": "我爱书籍",
+          "original": "http://www.52book.me/",
+          "probe": {
+            "status": 200,
+            "mime": "text/html",
+            "title": "Loading..."
+          },
+          "status": "website",
+          "website": "https://www.52book.me/"
+        },
+        {
+          "name": "Moreread",
+          "original": "http://moreread.me",
+          "probe": {
+            "status": 200,
+            "mime": "text/html",
+            "searchForm": true
+          },
+          "note": "公开书目检索，样本详情跳转至登录页。",
+          "status": "native",
+          "source": "panda-moreread"
+        },
+        {
+          "name": "辣豆瓣",
+          "original": "http://ladouban.com/",
+          "probe": {
+            "failure": "HttpException"
+          },
+          "status": "unavailable"
+        },
+        {
+          "name": "E书公社",
+          "original": "http://1ebook.store",
+          "probe": {
+            "status": 302,
+            "mime": "text/html",
+            "redirectHost": "2026-10-10.urldance.com",
+            "redirectScheme": "https"
+          },
+          "status": "changedDomain"
+        },
+        {
+          "name": "书堆",
+          "original": "http://www.werebook.com/",
+          "probe": {
+            "failure": "timeout"
+          },
+          "status": "unavailable"
+        },
+        {
+          "name": "电子书基地",
+          "original": "http://www.dzs.so/",
+          "probe": {
+            "failure": "SocketException"
+          },
+          "status": "unavailable"
+        },
+        {
+          "name": "芒果读书",
+          "original": "http://diumx.com",
+          "probe": {
+            "status": 301,
+            "mime": "text/html",
+            "redirectHost": "www.diumx.com",
+            "redirectScheme": "http"
+          },
+          "status": "changedDomain"
+        },
+        {
+          "name": "mlook",
+          "original": "https://www.mlook.mobi/member/login",
+          "probe": {
+            "failure": "timeout"
+          },
+          "status": "unavailable"
+        },
+        {
+          "name": "图书网",
+          "original": "http://www.ziliaoh.com/",
+          "probe": {
+            "status": 200,
+            "mime": "text/html",
+            "searchForm": true,
+            "title": "籽粒影音-在线动漫-高清电影-热播电视剧-影视大全免费在线观看"
+          },
+          "note": "导航标为图书网，实测首页是影视聚合页。",
+          "status": "changedPurpose"
+        },
+        {
+          "name": "书单",
+          "original": "https://ebooklist.mobi/",
+          "probe": {
+            "status": 200,
+            "mime": "text/html",
+            "searchForm": true
+          },
+          "note": "电子书搜索和详情可访问。逐书读取站方公开发布的夸克及百度网盘入口。",
+          "status": "native",
+          "source": "panda-ebooklist"
+        },
+        {
+          "name": "书宅网",
+          "original": "http://www.bookzhai.com/",
+          "probe": {
+            "failure": "timeout"
+          },
+          "status": "unavailable"
+        },
+        {
+          "name": "Nmod",
+          "original": "https://www.nmod.net/",
+          "probe": {
+            "failure": "timeout"
+          },
+          "status": "unavailable"
+        },
+        {
+          "name": "淘书党",
+          "original": "https://www.taoshudang.com/",
+          "probe": {
+            "status": 200,
+            "mime": "text/html",
+            "searchForm": true
+          },
+          "note": "原站恢复可访问。全站检索支持书名、作者及详情页。",
+          "status": "native",
+          "source": "panda-taoshudang"
+        },
+        {
+          "name": "点书网",
+          "original": "http://www.gezhongshu.com/forum.php",
+          "probe": {
+            "status": 404,
+            "mime": "text/html"
+          },
+          "status": "unavailable"
+        },
+        {
+          "name": "读书小站",
+          "original": "http://ibooks.org.cn/",
+          "probe": {
+            "status": 200,
+            "mime": "text/html"
+          },
+          "note": "使用书籍作者分类识别书目，支持作者检索。",
+          "status": "native",
+          "source": "panda-ibooks"
+        },
+        {
+          "name": "KDBooks",
+          "original": "https://www.kdlbook.cn/",
+          "probe": {
+            "failure": "HttpException"
+          },
+          "status": "unavailable"
+        },
+        {
+          "name": "zure",
+          "original": "https://zure.fun/",
+          "probe": {
+            "status": 200,
+            "mime": "text/html"
+          },
+          "note": "当前首页显示域名在售。",
+          "status": "changedPurpose"
+        },
+        {
+          "name": "sobooks",
+          "original": "http://sobooks.net/",
+          "probe": {
+            "status": 206,
+            "mime": "text/html"
+          },
+          "note": "旧入口页面明确指向 sobooks.cc，复用已有 SoBooks 适配器。",
+          "status": "native",
+          "source": "sobooks-public-catalogue"
+        },
+        {
+          "name": "走读派",
+          "original": "http://www.zoudupai.com/",
+          "probe": {
+            "failure": "SourceCertificateFailure"
+          },
+          "status": "unavailable"
+        },
+        {
+          "name": "Kindle伴侣",
+          "original": "https://kindlefere.com/",
+          "status": "auxiliary"
+        }
+      ]
+    },
+    {
+      "id": "pdf",
+      "name": "PDF电子书",
+      "entries": [
+        {
+          "name": "100万册书打包下载",
+          "original": "http://www.dbkdcd.com/",
+          "probe": {
+            "failure": "timeout"
+          },
+          "status": "unavailable"
+        },
+        {
+          "name": "PDF电子书下载网",
+          "original": "https://www.pdfdz.com/",
+          "probe": {
+            "failure": "SocketException"
+          },
+          "status": "unavailable"
+        },
+        {
+          "name": "电脑小百科",
+          "original": "http://www.pc1999.com/forum-39-1.html",
+          "probe": {
+            "status": 404,
+            "mime": "text/html"
+          },
+          "status": "unavailable"
+        },
+        {
+          "name": "筑果文库",
+          "original": "https://bbs.zhuguo.net/portal.php",
+          "probe": {
+            "failure": "SourceCertificateFailure"
+          },
+          "status": "unavailable"
+        },
+        {
+          "name": "资源书吧",
+          "original": "http://www.nziyuan.com/",
+          "probe": {
+            "failure": "SourceCertificateFailure"
+          },
+          "status": "unavailable"
+        },
+        {
+          "name": "IT图书",
+          "original": "https://ittushu.com",
+          "probe": {
+            "failure": "SocketException"
+          },
+          "status": "unavailable"
+        },
+        {
+          "name": "图书库",
+          "original": "http://www.tbookk.com/",
+          "probe": {
+            "failure": "FormatException"
+          },
+          "status": "unavailable"
+        },
+        {
+          "name": "全索引",
+          "original": "http://www.ctfile.cn/",
+          "probe": {
+            "failure": "SourceCertificateFailure"
+          },
+          "status": "unavailable"
+        },
+        {
+          "name": "书行万里",
+          "original": "https://www.gpdf.net/",
+          "probe": {
+            "failure": "HttpException"
+          },
+          "status": "unavailable"
+        },
+        {
+          "name": "三无书舍",
+          "original": "https://swpdf.com/",
+          "probe": {
+            "status": 200,
+            "mime": "text/html"
+          },
+          "note": "原网址显示域名在售。",
+          "status": "changedPurpose"
+        },
+        {
+          "name": "古丽PDF资源网",
+          "original": "https://www.guligirl.com/",
+          "probe": {
+            "failure": "timeout"
+          },
+          "status": "unavailable"
+        },
+        {
+          "name": "敏学网",
+          "original": "http://www.minxue.net/",
+          "probe": {
+            "failure": "SocketException"
+          },
+          "status": "unavailable"
+        },
+        {
+          "name": "PDF",
+          "original": "http://www.pdfzn.com/",
+          "probe": {
+            "failure": "SocketException"
+          },
+          "status": "unavailable"
+        },
+        {
+          "name": "慧眼看",
+          "original": "http://www.huiyankan.com/",
+          "probe": {
+            "status": 200,
+            "mime": "text/html",
+            "searchForm": true
+          },
+          "note": "原站恢复可访问。公开推荐书目提供题名和详情链接。",
+          "status": "native",
+          "source": "panda-huiyankan"
+        },
+        {
+          "name": "逸度机电云",
+          "original": "http://ydjdy.com/",
+          "probe": {
+            "failure": "timeout"
+          },
+          "status": "unavailable"
+        },
+        {
+          "name": "七维学习空间",
+          "original": "https://www.xuexi1234567.com/",
+          "probe": {
+            "status": 403,
+            "mime": "text/html",
+            "title": "403 Forbidden"
+          },
+          "status": "limited"
+        },
+        {
+          "name": "PDF资源网",
+          "original": "http://pdf.018zy.com/",
+          "probe": {
+            "failure": "SocketException"
+          },
+          "status": "unavailable"
+        },
+        {
+          "name": "维京小屋",
+          "original": "https://vikingcabin.com/",
+          "probe": {
+            "failure": "timeout"
+          },
+          "status": "unavailable"
+        },
+        {
+          "name": "101藏书馆",
+          "original": "http://www.101vv.com/",
+          "probe": {
+            "failure": "timeout"
+          },
+          "status": "unavailable"
+        },
+        {
+          "name": "书行天下",
+          "original": "https://www.sxpdf.com/",
+          "probe": {
+            "failure": "timeout"
+          },
+          "status": "unavailable"
+        },
+        {
+          "name": "雅书",
+          "original": "https://yabook.org/",
+          "probe": {
+            "status": 403,
+            "mime": "text/html"
+          },
+          "status": "limited"
+        },
+        {
+          "name": "一格小站",
+          "original": "https://yigeplus.xyz/",
+          "probe": {
+            "status": 200,
+            "mime": "text/html",
+            "title": "Loading..."
+          },
+          "status": "website",
+          "website": "https://yigeplus.xyz/"
+        },
+        {
+          "name": "西东网",
+          "original": "http://xidong.net/",
+          "probe": {
+            "failure": "timeout"
+          },
+          "status": "unavailable"
+        },
+        {
+          "name": "Hipad",
+          "original": "http://www.hi-pda.com/forum/forumdisplay.php?fid=59",
+          "probe": {
+            "status": 200,
+            "mime": "text/html",
+            "title": "Loading..."
+          },
+          "status": "website",
+          "website": "https://www.hi-pda.com/forum/forumdisplay.php?fid=59"
+        },
+        {
+          "name": "爱问共享",
+          "original": "http://ishare.iask.sina.com.cn/",
+          "probe": {
+            "failure": "SourceCertificateFailure"
+          },
+          "status": "unavailable"
+        },
+        {
+          "name": "脚本之家",
+          "original": "http://www.jb51.net/books/",
+          "probe": {
+            "status": 200,
+            "mime": "text/html",
+            "searchForm": true,
+            "title": "计算机免费书籍,电子书,pdf电子书,电子书籍,网络书籍,电脑书籍下载,编程书籍,编程电子书下载 - 脚本之家",
+            "cataloguePaths": 72
+          },
+          "note": "索引公开目录列出的 57 个分类、205 页书目，跨分类搜索。作者匹配以目录明确署名为准。原站详情公布的网盘分享可识别，网页交互下载保留原站入口。",
+          "status": "native",
+          "source": "panda-jb51"
+        },
+        {
+          "name": "我要读PDF",
+          "original": "http://www.51dupdf.com",
+          "probe": {
+            "status": 200,
+            "mime": "text/html",
+            "searchForm": true,
+            "title": "免费PDF电子图书下载-我要读PDF论坛"
+          },
+          "note": "导航标为 PDF 论坛，实测站点已是聚合外链的网络小说网页。",
+          "status": "changedPurpose"
+        },
+        {
+          "name": "PDF电子书下载",
+          "original": "http://www.anysafer.com/",
+          "probe": {
+            "status": 200,
+            "mime": "text/html",
+            "searchForm": true,
+            "title": "蚂蚁养花指南 - 专业养花知识百科"
+          },
+          "note": "导航标为 PDF 电子书，实测站点已是养花知识网站。",
+          "status": "changedPurpose"
+        },
+        {
+          "name": "PDF之家",
+          "original": "http://www.pdfzj.cn/",
+          "probe": {
+            "failure": "timeout"
+          },
+          "status": "unavailable"
+        }
+      ]
+    },
+    {
+      "id": "foreign",
+      "name": "外文电子书",
+      "entries": [
+        {
+          "name": "d-pdf",
+          "original": "https://d-pdf.com/",
+          "probe": {
+            "status": 200,
+            "mime": "text/html",
+            "searchForm": true,
+            "title": "D-PDF | Download Free PDF Books",
+            "cataloguePaths": 14
+          },
+          "note": "公开英文书目支持书名、作者检索并返回原站 PDF 下载页面。",
+          "status": "native",
+          "source": "panda-dpdf"
+        },
+        {
+          "name": "Akniga",
+          "original": "https://akniga.org",
+          "probe": {
+            "status": 429,
+            "mime": "text/html"
+          },
+          "status": "limited"
+        },
+        {
+          "name": "Epdf",
+          "original": "https://epdf.tips/en/",
+          "probe": {
+            "failure": "timeout"
+          },
+          "status": "unavailable"
+        },
+        {
+          "name": "Tadoku",
+          "original": "https://tadoku.org/japanese/",
+          "status": "native",
+          "source": "tadoku-free"
+        },
+        {
+          "name": "Zulu-ebooks",
+          "original": "https://zulu-ebooks.com/",
+          "probe": {
+            "status": 206,
+            "mime": "text/html",
+            "searchForm": true
+          },
+          "note": "公开检索和作者元数据，逐书核对站方公布的 PDF、EPUB 和 MOBI 入口。",
+          "status": "native",
+          "source": "panda-zulu-ebooks"
+        },
+        {
+          "name": "Digbib",
+          "original": "digbib.org/",
+          "status": "invalid"
+        },
+        {
+          "name": "Vorleser",
+          "original": "https://www.vorleser.net/",
+          "probe": {
+            "status": 200,
+            "mime": "text/html",
+            "title": "vorleser.net • Hörbücher, die zu dir passen! | vorleser.net"
+          },
+          "note": "公开德语有声书全库检索，按书名、作者过滤，识别逐书公布的 PDF 文本。音频在原站。",
+          "status": "native",
+          "source": "panda-vorleser"
+        },
+        {
+          "name": "Gallica",
+          "original": "https://gallica.bnf.fr/accueil/fr/content/accueil-fr?mode=desktop",
+          "status": "native",
+          "source": "bnf-gallica-public-catalogue"
+        },
+        {
+          "name": "OLL",
+          "original": "http://oll.libertyfund.org/Home3/index.php",
+          "probe": {
+            "status": 403,
+            "mime": "text/html",
+            "title": "ERROR: The request could not be satisfied"
+          },
+          "status": "limited"
+        },
+        {
+          "name": "滨大在线阅读",
+          "original": "http://digital.library.upenn.edu/books/",
+          "note": "已核对宾大现行在线书目域名 onlinebooks.library.upenn.edu。",
+          "status": "native",
+          "source": "upenn-online-books"
+        },
+        {
+          "name": "Calameo",
+          "original": "https://en.calameo.com/",
+          "probe": {
+            "failure": "timeout"
+          },
+          "status": "unavailable"
+        },
+        {
+          "name": "Worldofmagazine",
+          "original": "https://www.worldofmagazine.com/",
+          "probe": {
+            "status": 301,
+            "mime": "text/html",
+            "redirectHost": "worldofmagazine.com",
+            "redirectScheme": "https"
+          },
+          "note": "旧地址跳转至经营矿石礼品的 WonderDig 商店。",
+          "status": "changedPurpose"
+        },
+        {
+          "name": "Mg4f",
+          "original": "https://mg4f.com/",
+          "probe": {
+            "status": 200,
+            "mime": "text/html",
+            "title": "Loading..."
+          },
+          "status": "website",
+          "website": "https://mg4f.com/"
+        },
+        {
+          "name": "Ebookee",
+          "original": "https://www.ebookee.biz/",
+          "probe": {
+            "status": 302,
+            "mime": "text/plain",
+            "redirectHost": "forsale.dynadot.com",
+            "redirectScheme": "https"
+          },
+          "status": "changedDomain"
+        },
+        {
+          "name": "Mags",
+          "original": "https://www.mags.guru/",
+          "probe": {
+            "status": 301,
+            "mime": "text/html",
+            "redirectHost": "www.magsguru.com",
+            "redirectScheme": "https"
+          },
+          "status": "changedDomain"
+        },
+        {
+          "name": "Freemagazines",
+          "original": "https://freemagazines.top/",
+          "probe": {
+            "status": 200,
+            "mime": "text/html",
+            "title": "Free Magazines PDF: Download Latest Issues Online"
+          },
+          "note": "公开杂志全站标题检索、封面和逐期详情。可识别详情中发布的 EasyUpload PDF 预览，预览和下载由外部站点处理。",
+          "status": "native",
+          "source": "panda-freemagazines"
+        },
+        {
+          "name": "Magazinelib",
+          "original": "https://magazinelib.com/",
+          "probe": {
+            "status": 200,
+            "mime": "text/html"
+          },
+          "status": "website",
+          "website": "https://magazinelib.com/"
+        },
+        {
+          "name": "Booksee",
+          "original": "https://en.booksee.org/",
+          "probe": {
+            "failure": "timeout"
+          },
+          "status": "unavailable"
+        },
+        {
+          "name": "BookFI",
+          "original": "http://en.bookfi.net/",
+          "probe": {
+            "failure": "HandshakeException"
+          },
+          "status": "unavailable"
+        },
+        {
+          "name": "Zvdd",
+          "original": "https://www.zvdd.de/startseite/",
+          "probe": {
+            "status": 503,
+            "mime": "text/html"
+          },
+          "status": "unavailable"
+        },
+        {
+          "name": "ebook3000",
+          "original": "http://www.ebook3000.com/",
+          "probe": {
+            "failure": "HttpException"
+          },
+          "status": "unavailable"
+        },
+        {
+          "name": "Openstax",
+          "original": "https://openstax.org/",
+          "probe": {
+            "status": 206,
+            "mime": "text/html"
+          },
+          "status": "native",
+          "source": "openstax-textbooks"
+        },
+        {
+          "name": "青空文库",
+          "original": "https://www.aozora.gr.jp/",
+          "probe": {
+            "status": 206,
+            "mime": "text/html",
+            "searchForm": true
+          },
+          "note": "已接入官方 CSV 书目，按书名和作者离线查询，跳转原站阅读。",
+          "status": "native",
+          "source": "aozora-bunko"
+        },
+        {
+          "name": "Get Free e-Books",
+          "original": "https://www.getfreeebooks.com/",
+          "probe": {
+            "status": 301,
+            "mime": "text/html",
+            "redirectHost": "getfreeebooks.com",
+            "redirectScheme": "https"
+          },
+          "status": "website",
+          "website": "https://www.getfreeebooks.com/"
+        },
+        {
+          "name": "HathiTrust Digital Library",
+          "original": "https://www.hathitrust.org/",
+          "probe": {
+            "failure": "timeout"
+          },
+          "status": "unavailable"
+        },
+        {
+          "name": "Planet eBook",
+          "original": "https://www.planetebook.com/",
+          "probe": {
+            "status": 200,
+            "mime": "text/html"
+          },
+          "note": "已验证作者目录与原站 EPUB、PDF、MOBI 入口。",
+          "status": "native",
+          "source": "planet-ebook-classics"
+        },
+        {
+          "name": "Ebookee",
+          "original": "https://ebookee.org/",
+          "probe": {
+            "failure": "HttpException"
+          },
+          "status": "unavailable"
+        },
+        {
+          "name": "Project Gutenberg",
+          "original": "https://www.gutenberg.org/",
+          "probe": {
+            "status": 503,
+            "mime": "text/html"
+          },
+          "status": "native",
+          "source": "project-gutenberg-mirror"
+        }
+      ]
+    },
+    {
+      "id": "comic",
+      "name": "杂志漫画",
+      "entries": [
+        {
+          "name": "老生常谈云媒体",
+          "original": "https://laosheng.top/fly/",
+          "probe": {
+            "status": 206,
+            "mime": "text/html",
+            "title": "⛅️中国新闻云媒体，党和人民在一起"
+          },
+          "status": "website",
+          "website": "https://laosheng.top/fly/"
+        },
+        {
+          "name": "连载漫画",
+          "original": "https://www.lianzaimanhua.com/",
+          "probe": {
+            "failure": "HttpException"
+          },
+          "status": "unavailable"
+        },
+        {
+          "name": "参考网",
+          "original": "https://www.fx361.com/",
+          "probe": {
+            "status": 302,
+            "mime": "text/html",
+            "redirectHost": "www.fx361.com",
+            "redirectScheme": "https"
+          },
+          "status": "website",
+          "website": "https://www.fx361.com/"
+        },
+        {
+          "name": "八点一刻",
+          "original": "https://www.badianyike.com/",
+          "probe": {
+            "failure": "HttpException"
+          },
+          "status": "unavailable"
+        },
+        {
+          "name": "报刊杂志大全",
+          "original": "http://www.53bk.com/baokan/",
+          "probe": {
+            "failure": "SocketException"
+          },
+          "status": "unavailable"
+        },
+        {
+          "name": "3GUI",
+          "original": "http://www.3gui.com/",
+          "probe": {
+            "status": 200,
+            "mime": "text/html",
+            "title": "3G资源网 - 创意素材库"
+          },
+          "status": "website",
+          "website": "https://www.3gui.com/"
+        },
+        {
+          "name": "fives",
+          "original": "http://new-qk.lifves.com/",
+          "probe": {
+            "status": 200,
+            "mime": "text/html",
+            "title": "api文档"
+          },
+          "note": "现行页面是初见通用 API 文档，未找到原有杂志或网盘查询服务。",
+          "status": "changedPurpose"
+        },
+        {
+          "name": "Magazinepdf",
+          "original": "https://freemagazinepdf.com/",
+          "probe": {
+            "status": 301,
+            "mime": "text/html",
+            "redirectHost": "iamchaild.com",
+            "redirectScheme": "https"
+          },
+          "note": "旧地址跳转到第三方域名，未证实为 Freemagazines 同站迁移。",
+          "status": "changedDomain"
+        },
+        {
+          "name": "外刊屋",
+          "original": "http://www.waikanwu.com/",
+          "probe": {
+            "failure": "SourceCertificateFailure"
+          },
+          "status": "unavailable"
+        },
+        {
+          "name": "私人图书馆",
+          "original": "http://srtsg.com/",
+          "probe": {
+            "failure": "timeout"
+          },
+          "status": "unavailable"
+        },
+        {
+          "name": "Kindle漫画小站",
+          "original": "https://kindlemh.cc/",
+          "probe": {
+            "failure": "SocketException"
+          },
+          "status": "unavailable"
+        },
+        {
+          "name": "漫不同",
+          "original": "http://www.manbutong.com",
+          "probe": {
+            "failure": "HttpException"
+          },
+          "status": "unavailable"
+        },
+        {
+          "name": "知道漫画补档",
+          "original": "https://kindle.smgzd.com/",
+          "probe": {
+            "status": 200,
+            "mime": "text/html",
+            "searchForm": true,
+            "title": "kindle知道漫画补档专区 - kindle漫画/mobi漫画/电纸书漫画下载"
+          },
+          "note": "使用漫画区 Kindle 版入口的 163 页公开总目录，跨漫画分类按标题查找，保留站方帖子地址。样本帖子需要浏览器验证。",
+          "status": "native",
+          "source": "panda-kindle-comics"
+        },
+        {
+          "name": "金灵异精品漫画",
+          "original": "http://www.jinfopai.com/",
+          "probe": {
+            "failure": "HandshakeException"
+          },
+          "status": "unavailable"
+        },
+        {
+          "name": "漫画MOBI网",
+          "original": "http://www.manhuamobi.com",
+          "probe": {
+            "failure": "HttpException"
+          },
+          "status": "unavailable"
+        },
+        {
+          "name": "KONO",
+          "original": "https://www.thekono.com/",
+          "probe": {
+            "status": 206,
+            "mime": "text/html",
+            "title": "Kono 電子雜誌 - 電子雜誌新體驗，輕鬆閱讀不設限"
+          },
+          "status": "website",
+          "website": "https://www.thekono.com/"
+        },
+        {
+          "name": "高清杂志",
+          "original": "http://gqzzw.com/",
+          "probe": {
+            "status": 404,
+            "mime": "text/html"
+          },
+          "status": "unavailable"
+        },
+        {
+          "name": "kindle漫画",
+          "original": "http://www.kindlecomic.net/",
+          "probe": {
+            "failure": "SocketException"
+          },
+          "status": "unavailable"
+        },
+        {
+          "name": "MOX",
+          "original": "https://mox.moe/",
+          "probe": {
+            "status": 302,
+            "mime": "text/html",
+            "redirectHost": "kzz.moe",
+            "redirectScheme": "https"
+          },
+          "status": "changedDomain"
+        }
+      ]
+    },
+    {
+      "id": "ancient",
+      "name": "数字古籍",
+      "entries": [
+        {
+          "name": "识典古籍",
+          "original": "https://shidianguji.com/",
+          "probe": {
+            "status": 301,
+            "mime": "text/html",
+            "redirectHost": "www.shidianguji.com",
+            "redirectScheme": "https"
+          },
+          "note": "解析站方公开搜索网页中的推荐书目与全文命中来源，按题名或作者过滤。原站提供完整书库。",
+          "status": "native",
+          "source": "panda-shidian"
+        },
+        {
+          "name": "白云深处人家",
+          "original": "http://www.homeinmists.com/index.htm",
+          "probe": {
+            "failure": "timeout"
+          },
+          "status": "unavailable"
+        },
+        {
+          "name": "古典目录导航",
+          "original": "https://ihparchive.ihp.sinica.edu.tw/ihpacbc/ihpacbkm?.5b9f01CD7C004000000000000800000E00000000010020001303D3d79",
+          "probe": {
+            "status": 200,
+            "mime": "text/html"
+          },
+          "note": "导航中的古典目录链接返回站方 CGI 状态错误，公开入口另返回浏览器跳转页。",
+          "status": "website",
+          "website": "https://ihparchive.ihp.sinica.edu.tw/ihpacbc/ihpacbkm?.5b9f01CD7C004000000000000800000E00000000010020001303D3d79"
+        },
+        {
+          "name": "拓片典藏",
+          "original": "https://ndweb.iis.sinica.edu.tw/~oracle/",
+          "probe": {
+            "status": 206,
+            "mime": "text/html",
+            "title": "Access Restricted | ASCDC"
+          },
+          "status": "website",
+          "website": "https://ndweb.iis.sinica.edu.tw/~oracle/"
+        },
+        {
+          "name": "甲骨文数位典藏",
+          "original": "https://ndweb.iis.sinica.edu.tw/~oracle/",
+          "probe": {
+            "status": 206,
+            "mime": "text/html",
+            "title": "Access Restricted | ASCDC"
+          },
+          "status": "website",
+          "website": "https://ndweb.iis.sinica.edu.tw/~oracle/"
+        },
+        {
+          "name": "汉籍电子文献资料库",
+          "original": "http://hanchi.ihp.sinica.edu.tw/ihp/hanji.htm",
+          "probe": {
+            "status": 206,
+            "mime": "text/html",
+            "title": "漢籍全文資料庫"
+          },
+          "note": "2013 至 2026 年公开年度书目可按书名和作者离线检索，逐书打开原站阅读器。",
+          "status": "native",
+          "source": "panda-hanji"
+        },
+        {
+          "name": "故宫名画记",
+          "original": "https://minghuaji.dpm.org.cn/",
+          "probe": {
+            "status": 200,
+            "mime": "text/html",
+            "searchForm": true,
+            "title": "故宫名画记"
+          },
+          "status": "website",
+          "website": "https://minghuaji.dpm.org.cn/"
+        },
+        {
+          "name": "考古资料库",
+          "original": "https://ndweb.iis.sinica.edu.tw/archaeo3/System/pages/searchSP.jsp",
+          "probe": {
+            "status": 206,
+            "mime": "text/html",
+            "title": "Access Restricted | ASCDC"
+          },
+          "status": "website",
+          "website": "https://ndweb.iis.sinica.edu.tw/archaeo3/System/pages/searchSP.jsp"
+        },
+        {
+          "name": "中医古籍",
+          "original": "http://zhongyi.shufaji.com/",
+          "probe": {
+            "failure": "timeout"
+          },
+          "status": "unavailable"
+        },
+        {
+          "name": "数字多宝阁",
+          "original": "https://www.dpm.org.cn/shuziduobaoge.html",
+          "probe": {
+            "status": 200,
+            "mime": "text/html",
+            "searchForm": true,
+            "title": "数字多宝阁"
+          },
+          "status": "website",
+          "website": "https://www.dpm.org.cn/shuziduobaoge.html"
+        },
+        {
+          "name": "汉字全息应用系统",
+          "original": "https://qxk.bnu.edu.cn/#/",
+          "probe": {
+            "status": 206,
+            "mime": "text/html",
+            "title": "汉字全息资源应用系统"
+          },
+          "status": "website",
+          "website": "https://qxk.bnu.edu.cn/#/"
+        },
+        {
+          "name": "说文解字",
+          "original": "http://szsw.bnu.edu.cn/",
+          "probe": {
+            "status": 206,
+            "mime": "text/html",
+            "title": "《说文解字》研究与应用平台"
+          },
+          "status": "website",
+          "website": "https://szsw.bnu.edu.cn/"
+        },
+        {
+          "name": "小学堂",
+          "original": "https://xiaoxue.iis.sinica.edu.tw/",
+          "probe": {
+            "status": 206,
+            "mime": "text/html"
+          },
+          "status": "website",
+          "website": "https://xiaoxue.iis.sinica.edu.tw/"
+        },
+        {
+          "name": "中华古籍资源库",
+          "original": "http://www.nlc.cn/pcab/zy/zhgj_zyk/",
+          "probe": {
+            "status": 206,
+            "mime": "text/html",
+            "title": "中国古籍保护网"
+          },
+          "status": "website",
+          "website": "https://www.nlc.cn/pcab/zy/zhgj_zyk/"
+        },
+        {
+          "name": "江苏地区老报纸数据库",
+          "original": "http://www2.jslib.org.cn/was5/web/laobaozhi.htm",
+          "probe": {
+            "failure": "timeout"
+          },
+          "status": "unavailable"
+        },
+        {
+          "name": "内阁大库档案",
+          "original": "https://newarchive.ihp.sinica.edu.tw/mcttp/",
+          "probe": {
+            "status": 206,
+            "mime": "text/html",
+            "title": "內閣大庫檔案"
+          },
+          "status": "website",
+          "website": "https://newarchive.ihp.sinica.edu.tw/mcttp/"
+        },
+        {
+          "name": "中国历代墓志数据库",
+          "original": "http://csid.zju.edu.cn/tomb/#",
+          "probe": {
+            "failure": "HandshakeException"
+          },
+          "status": "unavailable"
+        },
+        {
+          "name": "湖湘文库",
+          "original": "http://www.huxiangwenku.cn/navigation.do",
+          "probe": {
+            "status": 206,
+            "mime": "text/html",
+            "title": "湖湘文库 - 探索千年文化智慧"
+          },
+          "note": "使用公开书目与全站图书检索，按书名或作者精确筛选并打开原站详情。",
+          "status": "native",
+          "source": "panda-huxiangwenku"
+        },
+        {
+          "name": "近代史数位资料库",
+          "original": "http://mhdb.mh.sinica.edu.tw/",
+          "probe": {
+            "failure": "timeout"
+          },
+          "status": "unavailable"
+        },
+        {
+          "name": "双红堂文库",
+          "original": "http://hong.ioc.u-tokyo.ac.jp/index.html",
+          "status": "native",
+          "source": "tokyo-hong-catalogue"
+        },
+        {
+          "name": "古书网",
+          "original": "http://d.gushu.net.cn/",
+          "probe": {
+            "failure": "HandshakeException"
+          },
+          "status": "unavailable"
+        },
+        {
+          "name": "汉典重光",
+          "original": "https://wenyuan.aliyun.com/home",
+          "probe": {
+            "status": 502,
+            "mime": "text/html"
+          },
+          "status": "unavailable"
+        },
+        {
+          "name": "乐观博物馆",
+          "original": "http://www.lgbowu.com/",
+          "status": "auxiliary"
+        },
+        {
+          "name": "光明之门",
+          "original": "http://www.gmzm.org/",
+          "probe": {
+            "failure": "timeout"
+          },
+          "status": "unavailable"
+        },
+        {
+          "name": "中国近代报刊数据库",
+          "original": "https://www.cnbksy.com/home",
+          "probe": {
+            "status": 412,
+            "mime": "text/html"
+          },
+          "status": "unavailable"
+        },
+        {
+          "name": "唐河图书馆馆藏古籍资源库",
+          "original": "http://39.106.82.98:8066/guji/92.html#",
+          "status": "invalid"
+        },
+        {
+          "name": "典籍导航",
+          "original": "https://www.2345daohang.com/",
+          "probe": {
+            "status": 200,
+            "mime": "text/html",
+            "title": "2345daohang.com"
+          },
+          "note": "现有首页显示域名出售提示。",
+          "status": "changedPurpose"
+        },
+        {
+          "name": "太极书馆",
+          "original": "http://www.8bei8.com/",
+          "probe": {
+            "failure": "timeout"
+          },
+          "status": "unavailable"
+        },
+        {
+          "name": "诸子百家",
+          "original": "https://ctext.org/search.pl?if=gb&remap=gb",
+          "probe": {
+            "status": 206,
+            "mime": "text/html",
+            "verification": true
+          },
+          "note": "公开书目数据可离线检索。官方链接解析可定位原书，原站正文可能要求人机验证。",
+          "status": "native",
+          "source": "panda-ctext"
+        },
+        {
+          "name": "寒泉",
+          "original": "http://skqs.lib.ntnu.edu.tw/dragon/",
+          "probe": {
+            "status": 403,
+            "mime": "text/html",
+            "title": "IIS 10.0 詳細錯誤 - 403.503 - Forbidden"
+          },
+          "status": "limited"
+        },
+        {
+          "name": "中华古籍全录",
+          "original": "http://guji.artx.cn/",
+          "probe": {
+            "failure": "timeout"
+          },
+          "status": "unavailable"
+        },
+        {
+          "name": "殆知阁",
+          "original": "http://www.daizhige.org/",
+          "probe": {
+            "status": 301,
+            "mime": "text/html",
+            "redirectHost": "daizhige.org",
+            "redirectScheme": "https"
+          },
+          "note": "使用站方 Git 仓库公开古籍书目，离线查询各藏的书名，多卷书进入原站总览。",
+          "status": "native",
+          "source": "panda-daizhige"
+        },
+        {
+          "name": "台湾师大善本古籍",
+          "original": "http://da.lib.ntnu.edu.tw/rarebook/ug-0.jsp",
+          "probe": {
+            "failure": "timeout"
+          },
+          "status": "unavailable"
+        },
+        {
+          "name": "奎章阁",
+          "original": "https://www.kuizhangge.cn/",
+          "probe": {
+            "status": 301,
+            "mime": "text/html",
+            "redirectHost": "www.wenxianxue.cn",
+            "redirectScheme": "https"
+          },
+          "status": "changedDomain"
+        },
+        {
+          "name": "古籍馆",
+          "original": "https://www.gujiguan.com/index.aspx",
+          "probe": {
+            "status": 404,
+            "mime": "text/html"
+          },
+          "note": "旧 index.aspx 返回 404，现行同域古籍资源知识平台支持公开字段检索。应用显示实际版本和责任者，原站选择版本及登录阅览。",
+          "status": "native",
+          "source": "panda-gujiguan"
+        },
+        {
+          "name": "爱如生论坛",
+          "original": "http://forum.er07.com/",
+          "probe": {
+            "failure": "timeout"
+          },
+          "status": "unavailable"
+        },
+        {
+          "name": "中华电子佛典协会",
+          "original": "http://www.cbeta.org/",
+          "probe": {
+            "status": 301,
+            "mime": "text/html",
+            "redirectHost": "cbeta.org",
+            "redirectScheme": "https"
+          },
+          "note": "中華電子佛典的公开书目可离线检索。CBETA Online 提供阅览。",
+          "status": "native",
+          "source": "panda-cbeta"
+        },
+        {
+          "name": "汉川草庐",
+          "original": "http://www.sidneyluo.net/index.html",
+          "probe": {
+            "failure": "SourceCertificateFailure"
+          },
+          "status": "unavailable"
+        },
+        {
+          "name": "搜韵",
+          "original": "https://sou-yun.cn/index.aspx",
+          "probe": {
+            "status": 200,
+            "mime": "text/html",
+            "searchForm": true,
+            "title": "搜韵-诗词门户网站"
+          },
+          "note": "可查诗词，古籍检索进入站方链接的第三方登录验证。",
+          "status": "website",
+          "website": "https://sou-yun.cn/index.aspx"
+        },
+        {
+          "name": "书格",
+          "original": "https://shuge.org/",
+          "probe": {
+            "status": 301,
+            "mime": "text/html",
+            "redirectHost": "www.shuge.org"
+          },
+          "status": "native",
+          "source": "shuge-open"
+        }
+      ]
+    },
+    {
+      "id": "audio",
+      "name": "有声书",
+      "entries": [
+        {
+          "name": "荔枝FM",
+          "original": "https://www.lizhi.fm/",
+          "probe": {
+            "status": 200,
+            "mime": "text/html",
+            "title": "荔枝FM - 人人都是播客"
+          },
+          "status": "website",
+          "website": "https://www.lizhi.fm/"
+        },
+        {
+          "name": "蜻蜓FM",
+          "original": "https://www.qingting.fm/",
+          "probe": {
+            "status": 302,
+            "mime": "text/html",
+            "redirectHost": "www.qtfm.cn",
+            "redirectScheme": "https"
+          },
+          "status": "changedDomain"
+        },
+        {
+          "name": "喜马拉雅",
+          "original": "https://www.ximalaya.com/",
+          "probe": {
+            "status": 206,
+            "mime": "text/html",
+            "searchForm": true,
+            "title": "喜马拉雅-国内专业音频分享平台,随时随地,听我想听！"
+          },
+          "status": "website",
+          "website": "https://www.ximalaya.com/"
+        },
+        {
+          "name": "听书宝",
+          "original": "http://m.tingshubao.com/list/1-1.html",
+          "probe": {
+            "failure": "SocketException"
+          },
+          "status": "unavailable"
+        },
+        {
+          "name": "一夜听",
+          "original": "https://www.yiyeting.com/",
+          "probe": {
+            "failure": "HttpException"
+          },
+          "status": "unavailable"
+        },
+        {
+          "name": "陌生人",
+          "original": "https://www.moofm.com/",
+          "probe": {
+            "status": 200,
+            "mime": "text/html",
+            "searchForm": true
+          },
+          "status": "website",
+          "website": "https://www.moofm.com/"
+        },
+        {
+          "name": "得到主义",
+          "original": "https://www.gotist.com/",
+          "probe": {
+            "failure": "timeout"
+          },
+          "status": "unavailable"
+        },
+        {
+          "name": "心理FM",
+          "original": "http://fm.xinli001.com/99398030",
+          "probe": {
+            "status": 200,
+            "mime": "text/html"
+          },
+          "status": "website",
+          "website": "https://fm.xinli001.com/99398030"
+        },
+        {
+          "name": "天天评书网",
+          "original": "https://www.pingshu365.com/",
+          "probe": {
+            "status": 206,
+            "mime": "text/html",
+            "searchForm": true,
+            "title": "天天评书网 - 评书,有声小说,相声"
+          },
+          "note": "沿用全站名称搜索，按书名或站方作者署名过滤。逐书页由原站提供音频。",
+          "status": "native",
+          "source": "panda-pingshu365"
+        },
+        {
+          "name": "评书网",
+          "original": "http://www.zgpingshu.com/",
+          "probe": {
+            "status": 200,
+            "mime": "text/html"
+          },
+          "status": "website",
+          "website": "https://www.zgpingshu.com/"
+        },
+        {
+          "name": "评书吧",
+          "original": "http://www.pingshu8.com/",
+          "probe": {
+            "status": 200,
+            "mime": "text/html"
+          },
+          "status": "website",
+          "website": "https://www.pingshu8.com/"
+        },
+        {
+          "name": "我爱评书网",
+          "original": "http://www.5ips.net/",
+          "probe": {
+            "failure": "SocketException"
+          },
+          "status": "unavailable"
+        },
+        {
+          "name": "听东方",
+          "original": "http://www.tingdongfang.com/",
+          "probe": {
+            "failure": "TimeoutException"
+          },
+          "status": "unavailable"
+        },
+        {
+          "name": "天方听书",
+          "original": "http://www.tingbook.com/",
+          "probe": {
+            "status": 206,
+            "mime": "text/html",
+            "title": "天方听书"
+          },
+          "status": "website",
+          "website": "https://www.tingbook.com/"
+        },
+        {
+          "name": "56听书",
+          "original": "http://www.ting56.com/",
+          "probe": {
+            "failure": "HandshakeException"
+          },
+          "status": "unavailable"
+        },
+        {
+          "name": "有声小说吧",
+          "original": "http://www.ysxs8.com/",
+          "probe": {
+            "failure": "timeout"
+          },
+          "status": "unavailable"
+        },
+        {
+          "name": "酷听",
+          "original": "http://www.kting.cn/home",
+          "probe": {
+            "failure": "SocketException"
+          },
+          "status": "unavailable"
+        },
+        {
+          "name": "听中国",
+          "original": "https://www.tingchina.com/",
+          "probe": {
+            "status": 200,
+            "mime": "text/html",
+            "title": "新直播-nba直播|世界杯|欧洲杯|英超在线观看_免费NBA直播高清视频直播【新体育直播】"
+          },
+          "note": "实测已改作体育赛事直播网站。",
+          "status": "changedPurpose"
+        },
+        {
+          "name": "懒人听书",
+          "original": "http://www.lrts.me/",
+          "probe": {
+            "status": 301,
+            "mime": "text/html",
+            "redirectHost": "www.lanrentingshu.com",
+            "redirectScheme": "https"
+          },
+          "status": "changedDomain"
+        }
+      ]
+    },
+    {
+      "id": "culture",
+      "name": "书店·文化机构",
+      "entries": [
+        {
+          "name": "读客文化",
+          "original": "http://www.dookbook.com/index.php",
+          "probe": {
+            "status": 206,
+            "mime": "text/html"
+          },
+          "note": "官方精选书目含题名、封面及站方发布的豆瓣/当当详情。按作者查站方作家目录及代表作。",
+          "status": "native",
+          "source": "panda-dookbook"
+        },
+        {
+          "name": "三联书店",
+          "original": "http://www.sdxjpc.com/main/",
+          "probe": {
+            "failure": "timeout"
+          },
+          "status": "unavailable"
+        },
+        {
+          "name": "后浪",
+          "original": "https://www.hinabook.com/",
+          "probe": {
+            "status": 200,
+            "mime": "text/html"
+          },
+          "note": "官方商店当前公开 7 个具体图书商品，支持离线书名匹配。商品页未公布可提取的作者字段。",
+          "status": "native",
+          "source": "panda-hinabook"
+        },
+        {
+          "name": "凤凰联动",
+          "original": "http://www.fonghong.cn/",
+          "probe": {
+            "status": 206,
+            "mime": "text/html",
+            "title": "北京凤凰联动文化传媒"
+          },
+          "status": "website",
+          "website": "https://www.fonghong.cn/"
+        },
+        {
+          "name": "新经典",
+          "original": "https://www.readinglife.com/",
+          "probe": {
+            "status": 200,
+            "mime": "text/html"
+          },
+          "note": "官方四类精选书目提供书名与封面。按作者检索查询站方作家目录和对应作家代表作。",
+          "status": "native",
+          "source": "panda-thinkingdom"
+        },
+        {
+          "name": "三辉图书",
+          "original": "http://www.sanhuibooks.com/",
+          "probe": {
+            "failure": "SourceCertificateFailure"
+          },
+          "status": "unavailable"
+        },
+        {
+          "name": "万圣书园",
+          "original": "http://www.allsagesbooks.com/",
+          "probe": {
+            "failure": "timeout"
+          },
+          "status": "unavailable"
+        },
+        {
+          "name": "商务印书馆",
+          "original": "http://www.cp.com.cn/",
+          "probe": {
+            "status": 206,
+            "mime": "text/html"
+          },
+          "note": "公开出版目录，实测可按书名检索并打开官方详情。",
+          "status": "native",
+          "source": "panda-commercial-press"
+        },
+        {
+          "name": "活字文化",
+          "original": "http://www.mtype.cn/",
+          "probe": {
+            "failure": "timeout"
+          },
+          "status": "unavailable"
+        },
+        {
+          "name": "中华书局",
+          "original": "http://www.zhbc.com.cn/zhsj/fg/home/home.html",
+          "probe": {
+            "failure": "timeout"
+          },
+          "status": "unavailable"
+        },
+        {
+          "name": "读库",
+          "original": "http://www.duku.cn/",
+          "probe": {
+            "status": 200,
+            "mime": "text/html",
+            "title": "读库 - DUKU"
+          },
+          "note": "官网介绍读库 App 仅对会员开放，公开网页指向其店铺。",
+          "status": "website",
+          "website": "https://www.duku.cn/"
+        },
+        {
+          "name": "思南书局",
+          "original": "https://www.sinanmansions.com/humanistic-map/bookstore.html",
+          "probe": {
+            "status": 412,
+            "mime": "text/html"
+          },
+          "status": "unavailable"
+        },
+        {
+          "name": "猫的天空之城",
+          "original": "http://www.momibook.com/",
+          "probe": {
+            "status": 206,
+            "mime": "text/html",
+            "title": "首页-企业官网"
+          },
+          "status": "website",
+          "website": "https://www.momibook.com/"
+        },
+        {
+          "name": "青苑书店",
+          "original": "http://www.qybook.cn/index.asp",
+          "probe": {
+            "failure": "SourceCertificateFailure"
+          },
+          "status": "unavailable"
+        },
+        {
+          "name": "言又几",
+          "original": "http://www.yanjiyou.com/",
+          "probe": {
+            "status": 200,
+            "mime": "text/html",
+            "searchForm": true,
+            "title": "神马影院-电影免费观看完整版_动漫新番在线看2026最新电影推荐"
+          },
+          "note": "导航标为言又几书店，实测首页是影视聚合页。",
+          "status": "changedPurpose"
+        },
+        {
+          "name": "方所",
+          "original": "http://www.fangsuo.com/",
+          "probe": {
+            "status": 301,
+            "mime": "text/html",
+            "redirectHost": "fangsuo.com",
+            "redirectScheme": "https"
+          },
+          "status": "website",
+          "website": "https://www.fangsuo.com/"
+        },
+        {
+          "name": "单向空间",
+          "original": "http://www.owspace.com/",
+          "probe": {
+            "status": 206,
+            "mime": "text/html",
+            "title": "单向空间"
+          },
+          "status": "website",
+          "website": "https://www.owspace.com/"
+        },
+        {
+          "name": "理想国",
+          "original": "http://www.ilixiangguo.com/",
+          "probe": {
+            "status": 200,
+            "mime": "text/html",
+            "searchForm": true
+          },
+          "note": "公开出版目录与作者，站内搜索结果筛出具体图书。",
+          "status": "native",
+          "source": "panda-imaginist"
+        }
+      ]
+    },
+    {
+      "id": "tools",
+      "name": "实用工具",
+      "entries": [
+        {
+          "name": "熊猫PDF工具",
+          "original": "https://pdf.xmsoushu.com/",
+          "status": "auxiliary"
+        },
+        {
+          "name": "Gridzzly",
+          "original": "http://gridzzly.com",
+          "status": "auxiliary"
+        },
+        {
+          "name": "电子书转格式",
+          "original": "http://cloudconvert.com",
+          "status": "auxiliary"
+        },
+        {
+          "name": "ePub转Kindle",
+          "original": "https://epub2kindle.com/zh/",
+          "status": "auxiliary"
+        },
+        {
+          "name": "docsmall",
+          "original": "https://docsmall.com",
+          "status": "auxiliary"
+        },
+        {
+          "name": "创客贴",
+          "original": "http://www.chuangkit.com",
+          "status": "auxiliary"
+        },
+        {
+          "name": "Dimmy.club",
+          "original": "http://dimmy.club",
+          "status": "auxiliary"
+        },
+        {
+          "name": "BrowserFrame",
+          "original": "http://browserframe.com",
+          "status": "auxiliary"
+        },
+        {
+          "name": "Flourish",
+          "original": "http://flourish.studio",
+          "status": "auxiliary"
+        },
+        {
+          "name": "PDF派",
+          "original": "http://www.pdfpai.com",
+          "status": "auxiliary"
+        },
+        {
+          "name": "RemoveBG",
+          "original": "http://www.removebg.com",
+          "status": "auxiliary"
+        },
+        {
+          "name": "Kapwing",
+          "original": "http://www.kapwing.com",
+          "status": "auxiliary"
+        },
+        {
+          "name": "crx4Chrome",
+          "original": "http://crx4chrome.com",
+          "status": "auxiliary"
+        },
+        {
+          "name": "mdnice",
+          "original": "http://mdnice.com",
+          "status": "auxiliary"
+        }
+      ]
+    },
+    {
+      "id": "gallery",
+      "name": "免费图库",
+      "entries": [
+        {
+          "name": "Unsplash",
+          "original": "https://unsplash.com",
+          "status": "auxiliary"
+        },
+        {
+          "name": "Pixabay",
+          "original": "http://pixabay.com",
+          "status": "auxiliary"
+        },
+        {
+          "name": "Pexels",
+          "original": "http://www.pexels.com",
+          "status": "auxiliary"
+        },
+        {
+          "name": "VisualHunt",
+          "original": "http://www.wanmen.org",
+          "status": "auxiliary"
+        },
+        {
+          "name": "pngimg",
+          "original": "http://www.pngimg.com",
+          "status": "auxiliary"
+        },
+        {
+          "name": "SSYER",
+          "original": "https://www.ssyer.com",
+          "status": "auxiliary"
+        },
+        {
+          "name": "Undraw",
+          "original": "https://undraw.io/illustrations",
+          "status": "auxiliary"
+        }
+      ]
+    },
+    {
+      "id": "learning",
+      "name": "在线学习",
+      "entries": [
+        {
+          "name": "国图公开课",
+          "original": "http://open.nlc.cn/onlineedu/client/index.htm",
+          "status": "auxiliary"
+        },
+        {
+          "name": "网易云课堂",
+          "original": "https://study.163.com",
+          "status": "auxiliary"
+        },
+        {
+          "name": "网易公开课",
+          "original": "https://open.163.com",
+          "status": "auxiliary"
+        },
+        {
+          "name": "中国大学MOOC",
+          "original": "http://www.icourse163.org",
+          "status": "auxiliary"
+        },
+        {
+          "name": "好大学在线",
+          "original": "http://www.cnmooc.org/home/index.mooc",
+          "status": "auxiliary"
+        },
+        {
+          "name": "万门大学",
+          "original": "http://www.wanmen.org",
+          "status": "auxiliary"
+        },
+        {
+          "name": "慕课网",
+          "original": "https://www.imooc.com",
+          "status": "auxiliary"
+        },
+        {
+          "name": "Coursera",
+          "original": "https://www.coursera.org",
+          "status": "auxiliary"
+        },
+        {
+          "name": "Udemy",
+          "original": "https://www.udemy.com",
+          "status": "auxiliary"
+        },
+        {
+          "name": "edX",
+          "original": "https://www.edx.org",
+          "status": "auxiliary"
+        },
+        {
+          "name": "Udacity",
+          "original": "http://cn.udacity.com",
+          "status": "auxiliary"
+        },
+        {
+          "name": "TED",
+          "original": "http://www.ted.com",
+          "status": "auxiliary"
+        },
+        {
+          "name": "可汗学院",
+          "original": "https://www.khanacademy.org",
+          "status": "auxiliary"
+        }
+      ]
+    },
+    {
+      "id": "translate",
+      "name": "翻译工具",
+      "entries": [
+        {
+          "name": "金山词霸翻译",
+          "original": "https://www.iciba.com/fy",
+          "status": "auxiliary"
+        },
+        {
+          "name": "微软在线翻译",
+          "original": "https://cn.bing.com/translator/?mkt=zh-CN",
+          "status": "auxiliary"
+        },
+        {
+          "name": "有道在线翻译",
+          "original": "https://fanyi.youdao.com/",
+          "status": "auxiliary"
+        },
+        {
+          "name": "海词在线翻译",
+          "original": "https://fanyi.dict.cn/",
+          "status": "auxiliary"
+        },
+        {
+          "name": "腾讯翻译君",
+          "original": "https://fanyi.qq.com/",
+          "status": "auxiliary"
+        },
+        {
+          "name": "阿里翻译",
+          "original": "https://translate.alibaba.com/",
+          "status": "auxiliary"
+        },
+        {
+          "name": "搜狗翻译",
+          "original": "https://fanyi.sogou.com/text",
+          "status": "auxiliary"
+        },
+        {
+          "name": "剑桥翻译",
+          "original": "https://dictionary.cambridge.org/zhs/translate/",
+          "status": "auxiliary"
+        },
+        {
+          "name": "彩云小译",
+          "original": "https://fanyi.caiyunapp.com/#/",
+          "status": "auxiliary"
+        },
+        {
+          "name": "小牛翻译",
+          "original": "https://niutrans.com/trans?type=text",
+          "status": "auxiliary"
+        },
+        {
+          "name": "有道词典",
+          "original": "https://www.youdao.com/",
+          "status": "auxiliary"
+        },
+        {
+          "name": "金山词霸",
+          "original": "https://www.iciba.com",
+          "status": "auxiliary"
+        },
+        {
+          "name": "海词词典",
+          "original": "https://dict.cn/",
+          "status": "auxiliary"
+        },
+        {
+          "name": "在线牛津词典",
+          "original": "https://global.oup.com",
+          "status": "auxiliary"
+        },
+        {
+          "name": "剑桥词典",
+          "original": "https://dictionary.cambridge.org/zhs/",
+          "status": "auxiliary"
+        },
+        {
+          "name": "WordReference词典",
+          "original": "https://www.wordreference.com/zhen/",
+          "status": "auxiliary"
+        }
+      ]
+    },
+    {
+      "id": "broken",
+      "name": "回收站",
+      "entries": [
+        {
+          "name": "知搜",
+          "original": "http://zhiso.cc/",
+          "probe": {
+            "status": 200,
+            "mime": "text/html",
+            "title": "Loading..."
+          },
+          "status": "archived"
+        },
+        {
+          "name": "书云",
+          "original": "https://openelib.org/",
+          "probe": {
+            "failure": "HttpException"
+          },
+          "status": "archived"
+        },
+        {
+          "name": "三秋书屋",
+          "original": "https://www.sanqiu.mobi",
+          "probe": {
+            "status": 200,
+            "mime": "text/html",
+            "title": "Loading..."
+          },
+          "status": "archived"
+        },
+        {
+          "name": "有益读",
+          "original": "https://www.youyidu.xyz/",
+          "probe": {
+            "failure": "SocketException"
+          },
+          "status": "archived"
+        },
+        {
+          "name": "书堆阅读",
+          "original": "https://www.werebook.com/",
+          "probe": {
+            "failure": "timeout"
+          },
+          "status": "archived"
+        },
+        {
+          "name": "搜书网",
+          "original": "https://www.soushu.vip/",
+          "probe": {
+            "failure": "timeout"
+          },
+          "status": "archived"
+        },
+        {
+          "name": "知识库",
+          "original": "https://book.zhishikoo.com/",
+          "probe": {
+            "failure": "timeout"
+          },
+          "status": "archived"
+        },
+        {
+          "name": "西边云",
+          "original": "http://xibianyun.com/book/",
+          "probe": {
+            "failure": "SourceCertificateFailure"
+          },
+          "status": "archived"
+        },
+        {
+          "name": "阅读秀",
+          "original": "https://www.yueduxiu.vip/",
+          "probe": {
+            "failure": "SocketException"
+          },
+          "status": "archived"
+        },
+        {
+          "name": "天浪书屋",
+          "original": "https://www.tianlangbooks.com/",
+          "probe": {
+            "failure": "HttpException"
+          },
+          "status": "archived"
+        },
+        {
+          "name": "无名图书",
+          "original": "https://www.book123.info/",
+          "probe": {
+            "failure": "timeout"
+          },
+          "status": "archived"
+        },
+        {
+          "name": "爱悦读",
+          "original": "https://www.iyd.wang/",
+          "probe": {
+            "failure": "HttpException"
+          },
+          "status": "archived"
+        }
+      ]
+    }
+  ]
+}

@@ -57,6 +57,7 @@ final class _ListKeyboardNavigationState extends State<ListKeyboardNavigation> {
   bool _key(KeyEvent event) {
     if (!mounted ||
         event is KeyUpEvent ||
+        !TickerMode.valuesOf(context).enabled ||
         !widget.controller.hasClients ||
         widget.controller.positions.length != 1 ||
         ModalRoute.of(context)?.isCurrent == false) {

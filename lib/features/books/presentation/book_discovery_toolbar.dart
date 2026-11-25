@@ -176,7 +176,7 @@ extension _BookDiscoveryToolbar on _BookDiscoveryViewState {
                       const SizedBox(width: 8),
                       Flexible(
                         child: Text(
-                          source?.name ?? (_aggregate ? '聚合渠道' : '精选推荐'),
+                          source?.name ?? (_showQidian ? '精选推荐' : '聚合渠道'),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -230,6 +230,11 @@ extension _BookDiscoveryToolbar on _BookDiscoveryViewState {
             (item) => bookCategoryAllowed(widget.repository.policy, item),
           ))
             _categoryBar(compact: compact),
+          if (_groupId != null)
+            Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: Text(_group?.name ?? '当前分组'),
+            ),
           if (source == null && widget.kind == BookKind.text && !_channelsOnly)
             _recommendationControls(),
         ],
@@ -238,6 +243,13 @@ extension _BookDiscoveryToolbar on _BookDiscoveryViewState {
   }
 
   List<Widget> _browseActions(BookSource? source) => [
+    IconButton(
+      tooltip: '按分组发现',
+      isSelected: _groupId != null,
+      icon: const Icon(Icons.folder_outlined),
+      selectedIcon: const Icon(Icons.folder_open),
+      onPressed: _pickGroup,
+    ),
     if (source == null && !_showQidian)
       IconButton(
         tooltip: '选择发现渠道',

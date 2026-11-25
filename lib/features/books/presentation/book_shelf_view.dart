@@ -2,12 +2,21 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
+import '../../../core/network/cancellation_token.dart';
+import '../../../core/platform/protected_book_export.dart';
+import '../data/book_catalog_rebuild.dart';
+import '../data/book_download_coordinator.dart';
+import '../data/book_offline_export.dart';
 import '../data/book_shelf_lists.dart';
 import '../data/book_store.dart';
 import '../data/books_repository.dart';
 import '../domain/book.dart';
+import 'book_batch_actions.dart';
 import 'book_cover.dart';
+import 'book_rebuild_dialog.dart';
 import 'book_vault_dialogs.dart';
+
+part 'book_shelf_batch.dart';
 
 const _labels = {
   ShelfListKind.group: '分组',
@@ -33,6 +42,7 @@ class BookShelfView extends StatefulWidget {
     this.cancelDownload,
     this.pauseDownload,
     this.onOpenPrivate,
+    this.downloads,
   });
   final BooksRepository repository;
   final BookKind kind;
@@ -49,6 +59,7 @@ class BookShelfView extends StatefulWidget {
   final Future<void> Function(Book)? cancelDownload;
   final Future<void> Function(Book)? pauseDownload;
   final VoidCallback? onOpenPrivate;
+  final BookDownloadCoordinator? downloads;
 
   @override
   State<BookShelfView> createState() => _BookShelfViewState();
@@ -63,6 +74,25 @@ class _BookShelfViewState extends State<BookShelfView> {
   String _type = '';
   Set<String> _offlineIds = {};
   int _offlineSequence = 0;
+  bool _selecting = false, _batchBusy = false;
+  final _selection = <String>{};
+  CancellationToken? _maintenance;
+
+  void _changeSelection(VoidCallback change) => setState(change);
+
+  @override
+  void dispose() {
+    _maintenance?.cancel();
+    super.dispose();
+  }
+
+  bool _bookVisible(Book book) {
+    final vault = widget.repository.store.vault;
+    return widget.repository.bookAllowed(book) &&
+        vault.isPrivate(book.id) == widget.private &&
+        (!widget.private || vault.unlocked);
+  }
+
   BookShelfLists get _store => BookShelfLists(
     widget.repository.store,
     widget.kind,
@@ -80,6 +110,8 @@ class _BookShelfViewState extends State<BookShelfView> {
   void didUpdateWidget(covariant BookShelfView oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (!identical(widget.entries, oldWidget.entries)) {
+      final current = widget.entries.map((entry) => entry.book.id).toSet();
+      _selection.retainAll(current);
       if (_type.isNotEmpty &&
           !widget.entries.any((entry) => _bookType(entry.book) == _type)) {
         _type = '';
@@ -263,8 +295,12 @@ class _BookShelfViewState extends State<BookShelfView> {
   }
 
   Future<void> _bookAction(BookShelfEntry entry, String action) async {
-    if (!widget.repository.bookAllowed(entry.book)) return;
+    if (!_bookVisible(entry.book)) return;
     switch (action) {
+      case 'export':
+        await _maintain(entry, rebuild: false);
+      case 'rebuild':
+        await _maintain(entry, rebuild: true);
       case 'lists':
         await _assign(entry.book);
       case 'history':
@@ -283,6 +319,54 @@ class _BookShelfViewState extends State<BookShelfView> {
         await _confirmRemove(entry.book);
       case 'delete':
         await _confirmDelete(entry.book);
+    }
+  }
+
+  Future<void> _maintain(BookShelfEntry entry, {required bool rebuild}) async {
+    if (_maintenance != null) return;
+    final token = _maintenance = CancellationToken();
+    final books = widget.repository;
+    final book = entry.book;
+    bool visible() => mounted && _bookVisible(book);
+    try {
+      if (rebuild) {
+        final service = BookCatalogRebuild(books);
+        final rules = await service.rules(book);
+        if (!mounted || !_bookVisible(book)) return;
+        final selected = await showChapterRebuildRules(context, rules);
+        if (selected == null || !visible()) return;
+        final current = await books.store.entry(book) ?? entry;
+        final result = await service.rebuild(
+          current,
+          selected,
+          token,
+          available: () => visible() && widget.downloads?.active(book) == null,
+        );
+        if (visible()) _toast('已重建 ${result.length} 章');
+      } else {
+        final current = await books.store.entry(book) ?? entry;
+        final rebuilt = await BookCatalogRebuild(books).catalog(book);
+        final count = await BookOfflineExport(books).save(
+          book,
+          rebuilt.isEmpty ? current.chapters : rebuilt,
+          token,
+          visible: visible,
+        );
+        if (visible()) _toast('已导出 $count 章');
+      }
+    } on BookExportCancelled {
+      return;
+    } on BookExportCleanupFailure catch (error) {
+      if (mounted) _toast(error.message);
+    } on BookExportInterrupted catch (error) {
+      if (mounted) _toast(error.message);
+    } on FormatException catch (error) {
+      if (visible()) _toast(error.message);
+    } catch (_) {
+      if (visible()) _toast('无法完成离线操作，请检查离线内容和访问权限');
+    } finally {
+      token.cancel();
+      _maintenance = null;
     }
   }
 
@@ -560,6 +644,7 @@ class _BookShelfViewState extends State<BookShelfView> {
               padding: const EdgeInsets.fromLTRB(14, 8, 14, 6),
               child: _toolbar(list, compact: compact),
             ),
+            if (!widget.historyMode) _batchBar(entries),
             if (widget.checking) const LinearProgressIndicator(minHeight: 2),
             Expanded(
               child: entries.isEmpty
@@ -780,11 +865,17 @@ class _BookShelfViewState extends State<BookShelfView> {
         .firstOrNull;
     final latest = entry.chapters.lastOrNull;
     return ListTile(
-      leading: SizedBox(
-        width: 40,
-        height: 54,
-        child: BookCover(book: book, repository: widget.repository),
-      ),
+      selected: _selecting && _selection.contains(book.id),
+      leading: _selecting
+          ? Checkbox(
+              value: _selection.contains(book.id),
+              onChanged: _batchBusy ? null : (_) => _toggleBook(book),
+            )
+          : SizedBox(
+              width: 40,
+              height: 54,
+              child: BookCover(book: book, repository: widget.repository),
+            ),
       title: Text(book.title, maxLines: 2, overflow: TextOverflow.ellipsis),
       subtitle: Text(
         [
@@ -798,28 +889,46 @@ class _BookShelfViewState extends State<BookShelfView> {
         maxLines: 2,
         overflow: TextOverflow.ellipsis,
       ),
-      onTap: () => widget.onOpen(book),
-      trailing: PopupMenuButton<String>(
-        tooltip: '书架操作',
-        onSelected: (action) => _bookAction(entry, action),
-        itemBuilder: (_) => [
-          if (entry.last != null)
-            const PopupMenuItem(value: 'history', child: Text('删除阅读历史')),
-          const PopupMenuItem(value: 'lists', child: Text('归入分组、集合或书单')),
-          if (book.sourceId != 'local')
-            PopupMenuItem(
-              value: 'follow',
-              child: Text(entry.following ? '取消追更' : '加入追更'),
+      onTap: _batchBusy
+          ? null
+          : _selecting
+          ? () => _toggleBook(book)
+          : () => widget.onOpen(book),
+      trailing: _selecting
+          ? null
+          : PopupMenuButton<String>(
+              tooltip: '书架操作',
+              onSelected: (action) => _bookAction(entry, action),
+              itemBuilder: (_) => [
+                if (book.kind != BookKind.audio &&
+                    (book.sourceId != 'local' || _bookType(book) == 'TXT'))
+                  PopupMenuItem(
+                    value: 'export',
+                    child: Text(
+                      book.kind == BookKind.comic ? '导出离线漫画' : '导出离线章节',
+                    ),
+                  ),
+                if (book.kind == BookKind.text &&
+                    (book.sourceId != 'local' || _bookType(book) == 'TXT') &&
+                    entry.chapters.isNotEmpty)
+                  const PopupMenuItem(value: 'rebuild', child: Text('重建离线目录')),
+                if (entry.last != null)
+                  const PopupMenuItem(value: 'history', child: Text('删除阅读历史')),
+                const PopupMenuItem(value: 'lists', child: Text('归入分组、集合或书单')),
+                if (book.sourceId != 'local')
+                  PopupMenuItem(
+                    value: 'follow',
+                    child: Text(entry.following ? '取消追更' : '加入追更'),
+                  ),
+                const PopupMenuDivider(),
+                if (widget.private)
+                  const PopupMenuItem(value: 'unprivate', child: Text('移出私密书架'))
+                else
+                  const PopupMenuItem(value: 'private', child: Text('移入私密书架')),
+                const PopupMenuItem(value: 'remove', child: Text('从书架移除')),
+                const PopupMenuItem(value: 'delete', child: Text('删除')),
+              ],
             ),
-          const PopupMenuDivider(),
-          if (widget.private)
-            const PopupMenuItem(value: 'unprivate', child: Text('移出私密书架'))
-          else
-            const PopupMenuItem(value: 'private', child: Text('移入私密书架')),
-          const PopupMenuItem(value: 'remove', child: Text('从书架移除')),
-          const PopupMenuItem(value: 'delete', child: Text('删除')),
-        ],
-      ),
     );
   }
 }

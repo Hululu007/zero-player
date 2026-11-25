@@ -21,17 +21,15 @@ extension _BookRepositoryBuiltinCatalog on BooksRepository {
   }
 
   Future<List<BookSource>> _loadBuiltins() async {
-    final data =
-        jsonDecode(
-              await rootBundle.loadString(
-                'assets/catalogs/books/verified.json',
-              ),
-            )
-            as List;
-    final builtins = data
-        .cast<Map>()
-        .map((s) => BookSource.fromJson(s, builtin: true))
-        .toList();
+    final assets = await Future.wait([
+      rootBundle.loadString('assets/catalogs/books/verified.json'),
+      rootBundle.loadString('assets/catalogs/books/website-sources.json'),
+    ]);
+    final builtins = [
+      for (final asset in assets)
+        for (final row in (jsonDecode(asset) as List).cast<Map>())
+          BookSource.fromJson(row, builtin: true),
+    ];
     builtins.addAll(
       await loadReviewedBookDomains(
         store,

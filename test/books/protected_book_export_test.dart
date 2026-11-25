@@ -103,6 +103,26 @@ void desktopExportTests(Directory Function() root) {
     },
   );
 
+  test('dismissing the save picker reports a distinct cancellation', () async {
+    final source = File(p.join(root().path, 'source'))
+      ..writeAsStringSync('book');
+    final transfer = ProtectedBookExport(
+      android: false,
+      chooseLocation: (_) async => null,
+    );
+    await expectLater(
+      transfer.saveFile(
+        source,
+        'book.txt',
+        'text/plain',
+        cancellation: CancellationToken(),
+        validate: () {},
+      ),
+      throwsA(isA<BookExportCancelled>()),
+    );
+    expect(root().listSync().single.path, source.path);
+  });
+
   test('policy is checked after the desktop selector returns', () async {
     final source = File(p.join(root().path, 'source'))
       ..writeAsStringSync('book');

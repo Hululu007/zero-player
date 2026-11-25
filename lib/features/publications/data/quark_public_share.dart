@@ -4,6 +4,7 @@ import 'dart:io';
 
 import '../../../core/network/cancellation_token.dart';
 import '../domain/publication.dart';
+import 'cloud_shared_file.dart';
 import 'publication_http.dart';
 
 typedef _QuarkPage = ({List<Map> rows, bool more});
@@ -23,35 +24,83 @@ final class QuarkPublicShare {
     Uri link,
     String? code,
     CancellationToken token,
-  ) async {
+  ) => _inspect(link, code, token, (file, _) => sharedPublication(file));
+
+  Future<List<CloudSharedFile>> inspectResources(
+    Uri link,
+    String? code,
+    CancellationToken token,
+  ) => _inspect(link, code, token, (file, _) => file);
+
+  Future<CloudShareListing> inspectTree(
+    Uri link,
+    String? code,
+    CancellationToken token, {
+    bool preview = false,
+  }) async {
+    var truncated = false;
+    final files = await _inspect(
+      link,
+      code,
+      token,
+      CloudShareItem.new,
+      preview: preview,
+      onLimit: () => truncated = true,
+    );
+    return (files: files, truncated: truncated);
+  }
+
+  Future<List<T>> _inspect<T>(
+    Uri link,
+    String? code,
+    CancellationToken token,
+    T? Function(CloudSharedFile, List<String>) select, {
+    void Function()? onLimit,
+    bool preview = false,
+  }) async {
     final id = _shareId(link);
     final ticket = await _ticket(id, code, token);
-    final folders = Queue.of([('0', 1)]);
+    final folders = Queue.of([('0', 1, const <String>[])]);
     final seen = {'0'};
-    final files = <PublicationSharedFile>[];
+    final files = <T>[];
     for (
       var requests = 0;
-      requests < _directoryBudget && folders.isNotEmpty;
+      requests < (preview ? 8 : _directoryBudget) && folders.isNotEmpty;
       requests++
     ) {
-      final (parent, index) = folders.removeFirst();
+      final (parent, index, path) = folders.removeFirst();
       final page = await _page(id, ticket, parent, index, token);
       for (final row in page.rows) {
         final fid = row['fid'];
         if (fid is! String || !_fid.hasMatch(fid)) continue;
         if (row['dir'] == true) {
-          if (seen.length < _directoryBudget && seen.add(fid)) {
-            folders.add((fid, 1));
+          if (seen.contains(fid)) continue;
+          final folder = publicationLabel(row['file_name']);
+          if (seen.length >= _directoryBudget) {
+            onLimit?.call();
+            continue;
           }
-        } else if (_book(row, parent, fid) case final file?) {
+          seen.add(fid);
+          folders.add((fid, 1, [...path, folder.isEmpty ? fid : folder]));
+        } else if (_file(row, parent, fid) case final info?) {
+          final file = select(info, path);
+          if (file == null) continue;
           files.add(file);
-          if (files.length >= 600) return files;
+          if (files.length >= (preview ? 6 : 600)) {
+            onLimit?.call();
+            return files;
+          }
         }
       }
-      if (page.more && index < _maxPagesPerFolder) {
-        folders.add((parent, index + 1));
+      if (page.more) {
+        if (index < _maxPagesPerFolder) {
+          folders.add((parent, index + 1, path));
+        } else {
+          onLimit?.call();
+        }
       }
     }
+    if (folders.isNotEmpty) onLimit?.call();
     return files;
   }
 
@@ -59,14 +108,32 @@ final class QuarkPublicShare {
     AcquisitionCandidate candidate,
     String? code,
     CancellationToken token,
+  ) => _resolve(candidate.link, candidate.fileId, code, token, (file) {
+    final book = sharedPublication(file);
+    return book != null && candidate.matchesSharedFile(book);
+  });
+
+  Future<PublicationDownload> resolveResource(
+    Uri link,
+    CloudSharedFile file,
+    String? code,
+    CancellationToken token,
+  ) => _resolve(link, file.id, code, token, (current) => current == file);
+
+  Future<PublicationDownload> _resolve(
+    Uri link,
+    String? fileId,
+    String? code,
+    CancellationToken token,
+    bool Function(CloudSharedFile) matches,
   ) async {
-    final parts = candidate.fileId?.split(':');
+    final parts = fileId?.split(':');
     if (parts == null ||
         parts.length != 2 ||
         parts.any((part) => !_fid.hasMatch(part))) {
       throw const PublicationFailure(PublicationProblem.unsupported);
     }
-    final id = _shareId(candidate.link);
+    final id = _shareId(link);
     final ticket = await _ticket(id, code, token);
     final parent = parts[0];
     final fid = parts[1];
@@ -74,11 +141,11 @@ final class QuarkPublicShare {
       final page = await _page(id, ticket, parent, index, token);
       final row = page.rows.where((row) => row['fid'] == fid).firstOrNull;
       if (row != null) {
-        final book = _book(row, parent, fid);
+        final file = _file(row, parent, fid);
         final fileTicket = row['share_fid_token'];
         if (row['dir'] == true ||
-            book == null ||
-            !candidate.matchesSharedFile(book) ||
+            file == null ||
+            !matches(file) ||
             !_isTicket(fileTicket)) {
           throw const PublicationFailure(PublicationProblem.invalid);
         }
@@ -89,17 +156,13 @@ final class QuarkPublicShare {
     throw const PublicationFailure(PublicationProblem.missing);
   }
 
-  PublicationSharedFile? _book(Map row, String parent, String fid) {
+  CloudSharedFile? _file(Map row, String parent, String fid) {
     final name = publicationLabel(row['file_name']);
-    final format = PublicationFormat.fromName(name);
     final bytes = row['size'];
-    if (format == null ||
-        bytes is! int ||
-        bytes < 1 ||
-        bytes > format.maxBytes) {
+    if (row['dir'] == true || name.isEmpty || bytes is! int || bytes < 1) {
       return null;
     }
-    return (name: name, id: '$parent:$fid', format: format, bytes: bytes);
+    return (name: name, id: '$parent:$fid', bytes: bytes);
   }
 
   String _shareId(Uri link) {

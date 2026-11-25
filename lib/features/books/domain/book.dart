@@ -21,6 +21,13 @@ enum BookKind { text, audio, comic }
 
 enum BookFormat { html, feed, featured, shuyin, bookan, ximalaya, lit2go }
 
+final _bookImagePath = RegExp(
+  r'\.(?:png|jpe?g|webp|gif)$',
+  caseSensitive: false,
+);
+
+bool isBookImageAddress(Uri uri) => _bookImagePath.hasMatch(uri.path);
+
 String bookLabel(Object? value, [int limit = 160]) {
   final text = value is String
       ? value
@@ -64,7 +71,8 @@ Uri legacyBookUri(Uri uri, {bool legacyQueryEncoding = false}) => publicBookUri(
   legacyQueryEncoding: legacyQueryEncoding,
 );
 
-const bookChapterCatalogLimit = 12000;
+const bookChapterCatalogLimit = 24000;
+const bookChapterCatalogPageBytes = 8 * 1024 * 1024;
 const bookChapterPageLimit = 320;
 
 final class BookSource {
@@ -129,16 +137,16 @@ final class BookSource {
             (kind != BookKind.audio ||
                 endpoint.toString() != 'https://etc.usf.edu/lit2go/books/')) ||
         !const {'utf-8', 'gbk', 'gb2312', 'gb18030'}.contains(searchCharset) ||
-        (searchForm.isNotEmpty && searchCharset != 'utf-8') ||
         (directAudio && kind != BookKind.audio) ||
         (format == BookFormat.featured && featured.isEmpty) ||
         (legado == null &&
             format == BookFormat.html &&
-            (search.isEmpty ||
-                (!search.contains('{key}') &&
-                    !searchForm.values.any(
-                      (value) => value.contains('{key}'),
-                    )) ||
+            (!(rules['catalogSearch'] == 'true' && hasDiscovery) &&
+                    (search.isEmpty ||
+                        (!search.contains('{key}') &&
+                            !searchForm.values.any(
+                              (value) => value.contains('{key}'),
+                            ))) ||
                 (!jsonCatalog.containsKey('search') &&
                     [
                       'list',
@@ -212,6 +220,7 @@ final class BookSource {
   bool get hasSearch =>
       format != BookFormat.html ||
       search.isNotEmpty ||
+      (rules['catalogSearch'] == 'true' && hasDiscovery) ||
       (legado?.search.isNotEmpty ?? false);
 
   bool acceptsBookAddress(Uri uri) =>

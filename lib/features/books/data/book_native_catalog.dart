@@ -26,7 +26,13 @@ extension _NativeBookCatalog on BookClient {
       final batch = pages.skip(cursor).take(2).toList();
       final responses = await Future.wait([
         for (final address in batch)
-          fetch(source, address, token, requestGuard: requestGuard),
+          fetch(
+            source,
+            address,
+            token,
+            maxBytes: bookChapterCatalogPageBytes,
+            requestGuard: requestGuard,
+          ),
       ]);
       for (final response in responses) {
         token.check();
@@ -65,17 +71,24 @@ extension _NativeBookCatalog on BookClient {
     dom.Document document,
     Map<Uri, BookChapter> chapters,
   ) {
-    for (final row in bookElements(
+    final rows = bookElements(
       document,
       source.rules['chapters']!,
       limit: bookChapterCatalogLimit + 1,
-    )) {
+    );
+    if (rows.length > bookChapterCatalogLimit) {
+      throw const FormatException('单页目录超过 $bookChapterCatalogLimit 项，未完整加载');
+    }
+    for (final row in rows) {
       final title = bookLabel(bookField(row, source.rules['chapterTitle']!));
       final link = bookField(row, source.rules['chapterUrl']!);
       if (title.isEmpty || link.isEmpty) continue;
       final Uri uri;
       try {
-        uri = source.resolve(base, link, media: source.directAudio);
+        final image =
+            source.kind == BookKind.comic &&
+            isBookImageAddress(base.resolve(link));
+        uri = source.resolve(base, link, media: source.directAudio || image);
       } on FormatException {
         continue;
       }

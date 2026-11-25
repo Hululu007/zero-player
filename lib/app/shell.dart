@@ -25,6 +25,7 @@ const _destinations = [
   ...readingDestinations,
   ('/history', '记录', Icons.history),
   ('/downloads', '下载', Icons.download_outlined),
+  ('/cloud-resources', '网盘资源下载', Icons.cloud_download_outlined),
   ('/local', '本地', Icons.video_file_outlined),
   ('/settings', '设置', Icons.settings_outlined),
 ];
@@ -36,11 +37,13 @@ final class AppShell extends StatefulWidget {
     required this.location,
     required this.child,
     required this.scaffoldKey,
+    this.onKeyboardBack,
   });
   final AppServices services;
   final String location;
   final Widget child;
   final GlobalKey<ScaffoldState> scaffoldKey;
+  final VoidCallback? onKeyboardBack;
   @override
   State<AppShell> createState() => _AppShellState();
 }
@@ -109,6 +112,10 @@ final class _AppShellState extends State<AppShell> {
   Widget _appFrame({required bool full, required bool wide}) {
     return CallbackShortcuts(
       bindings: {
+        if (widget.onKeyboardBack case final back?) ...{
+          const SingleActivator(LogicalKeyboardKey.escape): back,
+          const SingleActivator(LogicalKeyboardKey.arrowLeft, alt: true): back,
+        },
         const SingleActivator(LogicalKeyboardKey.keyM, control: true): _open,
         const SingleActivator(LogicalKeyboardKey.contextMenu): _open,
         const SingleActivator(LogicalKeyboardKey.keyK, control: true): () {
@@ -169,6 +176,7 @@ final class _AppShellState extends State<AppShell> {
     if (wide || MediaQuery.viewInsetsOf(context).bottom > 0) return null;
     return MobileBottomNavigation(
       location: widget.location,
+      showPublications: !widget.services.platform.television,
       onNavigate: (route) => context.go(route),
       onMore: _open,
     );
@@ -289,6 +297,19 @@ final class _AppShellState extends State<AppShell> {
     ),
     actions: [
       if (wide) AppFullscreenButton(platform: widget.services.platform),
+      if (widget.location == publicationReadingPath &&
+          !widget.services.platform.television) ...[
+        IconButton(
+          tooltip: '下载任务',
+          icon: const Icon(Icons.download_outlined),
+          onPressed: () => context.go('$publicationReadingPath?tab=tasks'),
+        ),
+        IconButton(
+          tooltip: '渠道管理',
+          icon: const Icon(Icons.dns_outlined),
+          onPressed: () => context.go('$publicationReadingPath?tab=sources'),
+        ),
+      ],
       if (isReadingDestination(widget.location) &&
           widget.location != publicationReadingPath)
         IconButton(
@@ -361,12 +382,7 @@ final class _AppShellState extends State<AppShell> {
       key: const PageStorageKey('reading-navigation'),
       initiallyExpanded: isReadingDestination(widget.location),
       leading: const Icon(readingIcon),
-      title: television
-          ? const Text('阅读')
-          : InkWell(
-              onTap: () => _navigate(readingDestinations.first.$1),
-              child: const Text('阅读'),
-            ),
+      title: const Text('阅读'),
       expandedAlignment: Alignment.centerLeft,
       childrenPadding: const EdgeInsets.only(left: 24),
       children: [

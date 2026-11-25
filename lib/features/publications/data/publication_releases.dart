@@ -131,7 +131,13 @@ final class PublicationReleases {
   };
 
   File _original(String folder, String name) {
-    if (!RegExp(r'^[a-f0-9]{64}\.(pdf|epub)$').hasMatch(name)) {
+    final format = PublicationFormat.fromName(name);
+    final digest = p.basenameWithoutExtension(name);
+    if (format == null ||
+        format == PublicationFormat.zip ||
+        (folder == 'legacy' && format.isKindle) ||
+        !isPublicationDigest(digest) ||
+        name != '$digest.${format.name}') {
       throw const PublicationFailure(PublicationProblem.storage);
     }
     return File(p.join(_root(folder), name));

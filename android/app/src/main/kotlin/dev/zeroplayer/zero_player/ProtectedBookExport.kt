@@ -60,6 +60,8 @@ class ProtectedBookExport(private val activity: MainActivity) {
         val extension = when (mime) {
             "application/pdf" -> "pdf"
             "application/epub+zip" -> "epub"
+            "application/x-mobipocket-ebook" -> "mobi"
+            "application/vnd.amazon.mobi8-ebook" -> "azw3"
             else -> throw IllegalArgumentException("Unsupported publication MIME type")
         }
         val directory = if (legacy) "book_documents" else "publications/files"

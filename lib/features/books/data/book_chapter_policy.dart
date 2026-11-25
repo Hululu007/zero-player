@@ -6,6 +6,7 @@ import '../../supervision/application/content_policy.dart';
 import '../../supervision/domain/content_classification.dart';
 import '../../supervision/domain/supervision_rules.dart';
 import '../domain/book.dart';
+import 'book_detected_replacement.dart';
 import 'book_store.dart';
 
 final class ChapterContentBlocked extends ContentBlocked {
@@ -15,9 +16,7 @@ final class ChapterContentBlocked extends ContentBlocked {
     required this.digest,
     required this.matches,
     required this.supervised,
-  }) : super(
-         '章节正文触发${supervised ? '监管关键词' : '成人内容'}过滤；内容未保存。可验证监管密码复核，或跳过本章继续。',
-       );
+  }) : super('章节正文触发${supervised ? '监管关键词' : '成人内容'}过滤。可替换命中内容后继续阅读。');
   final String bookId, chapterId, digest;
   final List<String> matches;
   final bool supervised;
@@ -71,10 +70,11 @@ final class BookChapterPolicy {
   final ContentPolicy policy;
   List<BookTextReplacement> _rules = [];
   Set<String> _exceptions = {};
+  BookDetectedReplacement? _detected;
   Future<void>? _loading;
   static const _key = 'books_chapter_policy:v1';
-  bool get hasRules => _rules.isNotEmpty;
-  bool get hasOverrides => _rules.isNotEmpty || _exceptions.isNotEmpty;
+  bool get hasRules => _rules.isNotEmpty || _detected != null;
+  bool get hasOverrides => hasRules || _exceptions.isNotEmpty;
 
   Future<void> load() => _loading ??= _load().catchError((Object error) {
     _loading = null;
@@ -98,6 +98,13 @@ final class BookChapterPolicy {
     if ((raw['exceptions'] as List).any((value) => value is! String)) {
       throw const FormatException('章节复核记录损坏，请重新保存规则');
     }
+    final detected = raw['detected'];
+    if (detected != null && detected is! Map) {
+      throw const FormatException('自动替换配置损坏');
+    }
+    _detected = detected is Map
+        ? BookDetectedReplacement.fromJson(detected)
+        : null;
     _rules = rules;
     _exceptions = (raw['exceptions'] as List).cast<String>().toSet();
   }
@@ -121,6 +128,21 @@ final class BookChapterPolicy {
     var body = original;
     for (final rule in _rules) {
       body = rule.apply(body);
+      if (body.length > 8 * 1024 * 1024) {
+        throw const FormatException('替换后正文超过大小限制');
+      }
+    }
+    if (_detected case final replacement?) {
+      body = replacement.apply(
+        body,
+        sensitiveContentSpans(
+          body,
+          keywords: policy.supervision.enabled
+              ? policy.supervision.rules.keywords
+              : const [],
+          filterAdult: policy.filterAdult,
+        ),
+      );
       if (body.length > 8 * 1024 * 1024) {
         throw const FormatException('替换后正文超过大小限制');
       }
@@ -175,12 +197,32 @@ final class BookChapterPolicy {
       // Explicit, password-authorized replacement repairs corrupt records.
       // Never skip a broken filtering rule during ordinary reads.
       _exceptions = {};
+      _detected = null;
     }
     if (rules.length > 100) throw const FormatException('最多 100 条替换规则');
     final checked = [
       for (final rule in rules) BookTextReplacement.fromJson(rule.toJson()),
     ];
-    await _save(checked, _exceptions);
+    await _save(checked, _exceptions, _detected);
+  }
+
+  BookDetectedReplacement? detectedForReview() {
+    policy.supervision.require(SensitiveOperation.supervision);
+    return _detected;
+  }
+
+  Future<void> saveDetected(BookDetectedReplacement? replacement) async {
+    await load();
+    void requireAccess() =>
+        policy.supervision.require(SensitiveOperation.supervision);
+    requireAccess();
+    final checked = replacement == null
+        ? null
+        : BookDetectedReplacement.fromJson(replacement.toJson());
+    if (checked != null && !policy.textAllowed(checked.text)) {
+      throw const FormatException('替换文字触发当前内容策略');
+    }
+    await _save(_rules, _exceptions, checked, authorization: requireAccess);
   }
 
   Future<void> approve(ChapterContentBlocked block) async {
@@ -194,23 +236,28 @@ final class BookChapterPolicy {
       '${block.bookId}:${block.chapterId}:${block.digest}',
     };
     if (next.length > 1000) throw const FormatException('章节复核记录已达上限');
-    await _save(_rules, next);
+    await _save(_rules, next, _detected);
   }
 
   Future<void> _save(
     List<BookTextReplacement> rules,
     Set<String> exceptions,
-  ) async {
+    BookDetectedReplacement? detected, {
+    void Function()? authorization,
+  }) async {
+    final requireAccess = authorization ?? requireReview;
     await store.db.atomic(() async {
-      requireReview();
+      requireAccess();
       await store.write(_key, {
         'rules': rules.map((rule) => rule.toJson()).toList(),
         'exceptions': exceptions.toList(),
+        if (detected != null) 'detected': detected.toJson(),
       });
-      requireReview();
+      requireAccess();
     }, tables: {'app_meta'});
     _rules = List.of(rules);
     _exceptions = Set.of(exceptions);
+    _detected = detected;
     _loading = Future<void>.value();
     policy.refresh();
   }

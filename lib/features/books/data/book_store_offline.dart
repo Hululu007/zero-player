@@ -31,12 +31,7 @@ extension BookStoreOffline on BookStore {
       return;
     }
     await db.atomic(() async {
-      final used =
-          (await db.rows(
-                "SELECT COALESCE(SUM(length(CAST(value AS BLOB))),0) AS bytes FROM app_meta "
-                "WHERE key GLOB 'books_text:*' OR key GLOB 'books_proven_text_record:*'",
-              )).single['bytes']
-              as int;
+      final used = await _offlineTextBytes();
       final current = await db.rows(
         'SELECT key,length(CAST(value AS BLOB)) AS bytes FROM app_meta WHERE key GLOB ?',
         ['books_text:${book.id}:*'],
@@ -48,7 +43,7 @@ extension BookStoreOffline on BookStore {
         0,
         (sum, value) => sum + utf8.encode(value).length,
       );
-      if (used - replaced + bytes > 96 * 1024 * 1024) {
+      if (used - replaced + bytes > BookResourceLimits.offlineTextBytes) {
         throw const FormatException('离线正文空间已满');
       }
       for (final entry in data.entries) {
@@ -144,24 +139,22 @@ extension BookStoreOffline on BookStore {
   }
 
   Future<void> deleteText(Book book, BookChapter chapter) async {
-    if (await isPrivateBook(book.id)) {
-      await vault.delete(_textKey(book, chapter));
-      await vault.delete(_provenPointer('text', book, chapter));
-      await vault.deletePrefix(
-        'books_proven_text_record:${book.id}:${chapter.id}:',
-      );
-      return;
-    }
+    await vault.ensureLoaded();
     await db.atomic(() async {
-      await db.write('DELETE FROM app_meta WHERE key=?', [
-        _textKey(book, chapter),
-      ]);
-      await db.write('DELETE FROM app_meta WHERE key=?', [
-        _provenPointer('text', book, chapter),
-      ]);
-      await db.write('DELETE FROM app_meta WHERE key GLOB ?', [
-        'books_proven_text_record:${book.id}:${chapter.id}:*',
-      ]);
+      await _clearRebuiltCatalog(book);
+      final text = _textKey(book, chapter);
+      final pointer = _provenPointer('text', book, chapter);
+      final records = 'books_proven_text_record:${book.id}:${chapter.id}:';
+      if (vault.isPrivate(book.id)) {
+        await vault.delete(text);
+        await vault.delete(pointer);
+        await vault.deletePrefix(records);
+      } else {
+        await db.write(
+          'DELETE FROM app_meta WHERE key=? OR key=? OR key GLOB ?',
+          [text, pointer, '$records*'],
+        );
+      }
     }, tables: {'app_meta'});
   }
 
@@ -169,6 +162,7 @@ extension BookStoreOffline on BookStore {
     await vault.ensureLoaded();
     await db.atomic(() async {
       final private = vault.isPrivate(book.id);
+      await _clearRebuiltCatalog(book);
       for (final prefix in [
         'books_text:${book.id}:',
         'books_proven_text_current:${book.id}:',

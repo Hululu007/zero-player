@@ -33,7 +33,7 @@ extension _ComicDownload on BooksRepository {
         var complete = true;
         for (final image in addresses) {
           check();
-          await _authorizeOfflineImage(book, image, token, chapter);
+          await _authorizeOfflineImages(book, [image], token, chapter);
           final bytes = await store.offlineImageBytes(book, chapter, image);
           check();
           if (bytes == null ||
@@ -49,7 +49,7 @@ extension _ComicDownload on BooksRepository {
           }
           await validateReadableBookImage(image, bytes);
           check();
-          await _authorizeOfflineImage(book, image, token, chapter);
+          await _authorizeOfflineImages(book, [image], token, chapter);
         }
         check();
         if (complete) result.add(chapter.id);
@@ -71,29 +71,56 @@ extension _ComicDownload on BooksRepository {
     requireBook(book, chapter);
     final source = await _active(book);
     await _withBookRequestGuard(source, book, token, (active, guard) async {
-      final images = await chapterImages(book, chapter, active);
+      if ((await _reusableComicDownloads(book, [
+        chapter,
+      ], active)).contains(chapter.id)) {
+        return;
+      }
+      final imageResponses = <Uri, Document>{};
+      final images = await _fetchChapterImages(
+        source,
+        book,
+        chapter,
+        active,
+        requestGuard: guard,
+        onImageResponse: (uri, document) => imageResponses[uri] = document,
+      );
       if (images.isEmpty) throw const FormatException('章节没有可保存的图片');
       if (images.length > BookResourceLimits.chapterImages) {
         throw const FormatException('章节图片数量无效');
       }
       final content = <Uri, List<int>>{};
       var used = 0;
-      for (final image in images) {
+      for (var index = 0; index < images.length; index += 2) {
         active.check();
-        guard?.call(image, null);
         final remaining = BookResourceLimits.chapterImageBytes - used;
         if (remaining <= 0) {
           throw const FormatException('单章图片超过离线空间限制');
         }
-        final bytes = await chapterImageBytes(
-          book,
-          image,
-          active,
-          chapter: chapter,
-          maxBytes: remaining.clamp(1, BookResourceLimits.imageBytes),
-        );
-        used += bytes.length;
-        content[image] = bytes;
+        final batch = images.skip(index).take(2);
+        final parts = await Future.wait([
+          for (final image in batch)
+            () async {
+              guard?.call(image, null);
+              final bytes = await _guardedChapterImageBytes(
+                book,
+                image,
+                active,
+                chapter: chapter,
+                fresh: true,
+                imageResponse: imageResponses[image],
+                maxBytes: remaining.clamp(1, BookResourceLimits.imageBytes),
+              );
+              return (image, bytes);
+            }(),
+        ]);
+        for (final (image, bytes) in parts) {
+          used += bytes.length;
+          if (used > BookResourceLimits.chapterImageBytes) {
+            throw const FormatException('单章图片超过离线空间限制');
+          }
+          content[image] = bytes;
+        }
       }
       await store.saveOfflineImages(book, chapter, content, () async {
         active.check();

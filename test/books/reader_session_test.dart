@@ -105,6 +105,13 @@ void main() {
       expect(find.byTooltip('停止自动阅读'), findsNothing);
       tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
       await tester.pump();
+      expect(find.byTooltip('停止自动阅读'), findsOneWidget);
+      await tester.tap(find.byTooltip('停止自动阅读'));
+      await tester.pumpAndSettle();
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+      await tester.pump();
+      expect(find.byTooltip('停止自动阅读'), findsNothing);
       await tester.tap(find.byTooltip('阅读菜单'));
       await tester.pumpAndSettle();
       await tester.tap(find.byTooltip('下一章'));
@@ -195,6 +202,9 @@ Future<void> _checkMode(WidgetTester tester, ReaderTurnMode mode) async {
     chapters.first: List.filled(48, '这是一段用于验证自动阅读的文字。').join('\n'),
     chapters.last: '抵达以后就结束。',
   });
+  if (mode == ReaderTurnMode.slide) {
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+  }
   await tester.pumpWidget(
     MaterialApp(
       home: BookReaderPage(
@@ -208,6 +218,19 @@ Future<void> _checkMode(WidgetTester tester, ReaderTurnMode mode) async {
   await tester.pump();
   await tester.pump();
   await tester.pump(const Duration(milliseconds: 100));
+  if (mode == ReaderTurnMode.slide) {
+    final before = await repo.store.entry(book);
+    await tester.pump(const Duration(seconds: 5));
+    expect(find.byTooltip('停止自动阅读'), findsNothing);
+    final after = await repo.store.entry(book);
+    expect(after?.last, before?.last);
+    expect(after?.position, before?.position);
+    expect(after?.textOffset, before?.textOffset);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+    for (var i = 0; i < 5; i++) {
+      await tester.pump(const Duration(milliseconds: 25));
+    }
+  }
   expect(find.byTooltip('停止自动阅读'), findsOneWidget);
   if (mode == ReaderTurnMode.scroll) {
     final scroll = tester.widget<ListView>(find.byType(ListView)).controller!;

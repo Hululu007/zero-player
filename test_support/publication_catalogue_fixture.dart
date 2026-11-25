@@ -3,11 +3,18 @@ import 'dart:convert';
 import 'dart:io';
 
 Future<T> withPublicationCatalogue<T>(
-  Future<T> Function(PublicationCatalogueFixture) run,
-) async {
+  Future<T> Function(PublicationCatalogueFixture) run, {
+  String host = 'catalogue.fixture.example',
+  Set<String> extraHosts = const {},
+  Future<void> Function(HttpRequest)? respond,
+}) async {
   final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
-  final fixture = PublicationCatalogueFixture._(server.port);
-  server.listen((request) => unawaited(fixture._serve(request)));
+  final fixture = PublicationCatalogueFixture._(server.port, {
+    host,
+    ...extraHosts,
+  });
+  final serve = respond ?? fixture._serve;
+  server.listen((request) => unawaited(serve(request)));
   try {
     return await HttpOverrides.runZoned(
       () => run(fixture),
@@ -21,9 +28,10 @@ Future<T> withPublicationCatalogue<T>(
 }
 
 final class PublicationCatalogueFixture implements HttpClient {
-  PublicationCatalogueFixture._(this._port);
+  PublicationCatalogueFixture._(this._port, this._targetHosts);
   static const _host = 'catalogue.fixture.example';
   final int _port;
+  final Set<String> _targetHosts;
   final _client = HttpClient()..findProxy = (_) => 'DIRECT';
   final requests = <Uri>[];
   final pending = Completer<void>();
@@ -75,7 +83,9 @@ final class PublicationCatalogueFixture implements HttpClient {
 
   @override
   Future<HttpClientRequest> openUrl(String method, Uri uri) {
-    if (uri.host != _host || uri.scheme != 'https' || uri.port != 443) {
+    if (!_targetHosts.contains(uri.host) ||
+        uri.scheme != 'https' ||
+        uri.port != 443) {
       throw const SocketException('Unexpected catalogue fixture target');
     }
     requests.add(uri);

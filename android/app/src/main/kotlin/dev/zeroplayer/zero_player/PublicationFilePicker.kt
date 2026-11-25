@@ -53,7 +53,9 @@ internal class PublicationFilePicker(private val activity: Activity) {
                     arrayOf("application/json", "text/plain", "application/octet-stream")
                 } else {
                     arrayOf("application/pdf", "application/epub+zip", "application/zip",
-                        "application/x-zip-compressed", "application/octet-stream")
+                        "application/x-zip-compressed", "application/octet-stream",
+                        "application/x-mobipocket-ebook", "application/vnd.amazon.ebook",
+                        "application/vnd.amazon.mobi8-ebook")
                 }
                 putExtra(Intent.EXTRA_MIME_TYPES, mime)
                 addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)

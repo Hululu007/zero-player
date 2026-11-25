@@ -6,10 +6,12 @@ import 'package:flutter/services.dart';
 import 'package:path/path.dart' as p;
 
 import '../../../core/network/cancellation_token.dart';
+import '../data/publication_catalogue.dart';
 import '../data/publication_share.dart';
 import '../data/publication_space.dart';
 import '../data/publication_store.dart';
 import '../data/publication_transfer.dart';
+import '../data/publication_website_target.dart';
 import '../data/publication_zip.dart';
 import '../domain/acquisition_task.dart';
 import '../domain/publication.dart';
@@ -17,6 +19,8 @@ import 'publication_acquisitions.dart';
 import 'publication_backup.dart';
 import 'publication_discovery.dart';
 import 'publication_library.dart';
+import 'publication_output.dart';
+import 'publication_website_access.dart';
 
 typedef PublicationFileSelection = ({PublicationSharedFile file, String? code});
 
@@ -56,11 +60,91 @@ final class PublicationWorkflow {
   static const _filePicker = MethodChannel('zero_player/publications_files');
   late final StreamSubscription<void> _sourceSubscription;
   final _imports = <String, CancellationToken>{};
+  final _userCancelledImports = <String>{};
   final _archivesInUse = <String>{};
   final _importSources = <String, String>{};
   final _importFinished = <String, Completer<void>>{};
   Future<void>? _initialization;
   bool _disposed = false;
+  final _autoImportPasswords = <String, String>{};
+  final _autoAttempts = <(String, int)>{};
+  StreamSubscription<void>? _autoSubscription;
+  PublicationOutput? _autoOutput;
+  Timer? _autoQueueTimer, _androidImportPoll;
+  Future<void>? _autoRun;
+
+  void enableAutomaticImport(PublicationOutput output) {
+    if (_autoOutput != null || _disposed) return;
+    _autoOutput = output;
+    _autoSubscription = store.db
+        .changesFor({'publication_tasks'})
+        .listen((_) => _queueAutomaticImport());
+    _queueAutomaticImport();
+    _pollAndroidImports();
+  }
+
+  void _queueAutomaticImport() {
+    if (_disposed || _autoOutput == null) return;
+    _autoQueueTimer ??= Timer(const Duration(milliseconds: 250), () {
+      _autoQueueTimer = null;
+      if (_autoRun != null) {
+        _queueAutomaticImport();
+        return;
+      }
+      _autoRun = _importPending().whenComplete(() => _autoRun = null);
+    });
+  }
+
+  Future<void> _importPending() async {
+    try {
+      if (_disposed || !discovery.allowed('')) return;
+      final pending = await store.pendingImports();
+      if (pending.isNotEmpty) await initialize();
+      final eligible = {for (final task in pending) (task.id, task.generation)};
+      _autoAttempts.removeWhere((task) => !eligible.contains(task));
+      for (final task in pending) {
+        if (_disposed || !discovery.allowed('')) return;
+        if (task.state != AcquisitionState.downloaded ||
+            task.candidate.format == PublicationFormat.zip ||
+            !_autoAttempts.add((task.id, task.generation))) {
+          continue;
+        }
+        final password =
+            _autoImportPasswords.remove(task.id) ??
+            task.candidate.publishedAccess?.pdfPassword;
+        try {
+          await finish(task, pdfPassword: password);
+          if (_disposed) return;
+          if ((await store.task(task.id))?.result case final digest?) {
+            await _autoOutput!.autoSave(digest, password: password);
+          }
+        } catch (_) {
+          // finish records problems that need user input on the task.
+        }
+      }
+    } catch (_) {
+      // An initialization or database error can be retried on the next change.
+    }
+  }
+
+  void _pollAndroidImports() {
+    if (!android || _autoOutput == null || _disposed) return;
+    _androidImportPoll ??= Timer(const Duration(seconds: 2), () async {
+      _androidImportPoll = null;
+      if (_disposed) return;
+      _queueAutomaticImport();
+      try {
+        await store.initialize();
+        final active = await store.db.rows(
+          "SELECT 1 FROM publication_tasks WHERE state IN ('resolving','downloading') "
+          "OR (state='waiting' AND problem IS NULL) LIMIT 1",
+        );
+        if (active.isNotEmpty) _pollAndroidImports();
+      } on Exception {
+        // A subsequent start can restart worker polling.
+      }
+    });
+  }
 
   Future<void> initialize() => _initialization ??= _recover();
 
@@ -96,10 +180,85 @@ final class PublicationWorkflow {
     PublicationEdition edition,
     PublicationFormat format, {
     String? shareCode,
+    String? baiduAccessToken,
     List<PublicationEdition> alternatives = const [],
   }) async {
     final candidates = await _candidates(edition, format, alternatives);
-    return _enqueue(edition, candidates, code: shareCode);
+    return _enqueue(
+      edition,
+      candidates,
+      code: shareCode,
+      baiduAccessToken: baiduAccessToken,
+    );
+  }
+
+  Future<String> addSharedFile(
+    Uri link,
+    PublicationSharedFile file, {
+    String? code,
+    String? baiduAccessToken,
+    String? pdfPassword,
+  }) {
+    library.requireImport('$link ${file.name}');
+    final edition = PublicationEdition(
+      id: publicationId('share:$link:${file.id}'),
+      title: p.basenameWithoutExtension(file.name),
+      page: link,
+      candidates: [
+        AcquisitionCandidate(
+          source: 'manual',
+          link: link,
+          format: file.format,
+          bytes: file.bytes,
+          fileId: file.id,
+          sharedFileName: file.name,
+          page: link,
+        ),
+      ],
+    );
+    return _enqueue(
+      edition,
+      edition.candidates,
+      code: code,
+      baiduAccessToken: baiduAccessToken,
+      pdfPassword: pdfPassword,
+    );
+  }
+
+  Future<void> replaceTaskCandidate(
+    AcquisitionTask task,
+    AcquisitionCandidate candidate, {
+    String? code,
+    String? baiduAccessToken,
+    String? pdfPassword,
+  }) async {
+    await initialize();
+    void validate() => library.requireImport(
+      '${task.edition.title} ${task.edition.author} '
+      '${candidate.link.host} ${candidate.sharedFileName ?? ''}',
+    );
+    validate();
+    if (candidate.format != task.candidate.format) {
+      throw const PublicationFailure(PublicationProblem.invalid);
+    }
+    await runner.checkDownload?.call();
+    await _confirmCandidate(candidate);
+    validate();
+    await store.replaceCandidate(task, candidate, () async {
+      validate();
+      await space.removeTemporaries(task.id);
+      await store.db.write('DELETE FROM publication_transfer WHERE task=?', [
+        task.id,
+      ]);
+    });
+    _autoImportPasswords.remove(task.id);
+    if (pdfPassword != null) _autoImportPasswords[task.id] = pdfPassword;
+    await start(
+      task.id,
+      code: code,
+      codeFor: candidate.id,
+      baiduAccessToken: baiduAccessToken,
+    );
   }
 
   Future<String?> acquireFromCatalog(
@@ -150,8 +309,11 @@ final class PublicationWorkflow {
         }
       }
     }
-    if (candidates.isEmpty || candidates.length > 32) {
+    if (candidates.isEmpty) {
       throw const PublicationFailure(PublicationProblem.unsupported);
+    }
+    if (candidates.length > 32) {
+      throw const PublicationFailure(PublicationProblem.tooManyCandidates);
     }
     return candidates.values.toList();
   }
@@ -160,16 +322,28 @@ final class PublicationWorkflow {
     PublicationEdition edition,
     List<AcquisitionCandidate> candidates, {
     String? code,
+    String? baiduAccessToken,
+    String? pdfPassword,
     PublicationFailure? preflightFailure,
   }) async {
+    await initialize();
     library.requireImport('${edition.title} ${edition.author}');
+    if (preflightFailure == null || candidates.length > 1) {
+      await runner.checkDownload?.call();
+    }
     final id = await store.addTask(
       edition,
       candidates,
       preflightFailure: preflightFailure,
     );
+    if (pdfPassword != null) _autoImportPasswords[id] = pdfPassword;
     if (preflightFailure == null || candidates.length > 1) {
-      await start(id, code: code, codeFor: candidates.first.id);
+      await start(
+        id,
+        code: code,
+        codeFor: candidates.first.id,
+        baiduAccessToken: baiduAccessToken,
+      );
     }
     return id;
   }
@@ -187,7 +361,66 @@ final class PublicationWorkflow {
     return files;
   }
 
-  Future<void> start(String id, {String? code, String? codeFor}) async {
+  Future<List<PublicationSharedFile>> inspectCatalogueResource(
+    PublicationEdition edition,
+    PublicationResource resource,
+    String? code,
+    CancellationToken token,
+  ) async {
+    Future<void> verify() async {
+      token.check();
+      library.requireImport(
+        '${edition.title} ${edition.author} ${resource.link.host}',
+      );
+      final source = await discovery.enabledSource(resource.source);
+      final adapter = source?.catalogue?.call(discovery.http);
+      if (adapter is! SharedPublicationCatalogue || !resource.canListFiles) {
+        throw const PublicationFailure(PublicationProblem.blocked);
+      }
+      adapter.restrictShare(edition.page, resource.link);
+    }
+
+    await verify();
+    final files = await runner.resolver.inspect(resource.link, code, token);
+    await verify();
+    return files;
+  }
+
+  Future<List<PublicationResource>> loadCatalogueResources(
+    PublicationEdition book,
+    PublicationResource entry,
+    CancellationToken token,
+  ) async {
+    final text = '${book.title} ${book.author} ${entry.link.host}';
+    library.requireImport(text);
+    if (book.page != entry.link) {
+      throw const PublicationFailure(PublicationProblem.unsupported);
+    }
+    final resources = await discovery.loadCatalogueResources(entry, token);
+    library.requireImport(text);
+    if (resources.isEmpty) {
+      throw const PublicationFailure(PublicationProblem.noPublishedResources);
+    }
+    final allowed = resources
+        .where(
+          (item) =>
+              item.source == entry.source &&
+              !item.lookupRequired &&
+              library.policy.textAllowed(item.link.host),
+        )
+        .toList();
+    if (allowed.isEmpty) {
+      throw const PublicationFailure(PublicationProblem.blocked);
+    }
+    return allowed;
+  }
+
+  Future<void> start(
+    String id, {
+    String? code,
+    String? codeFor,
+    String? baiduAccessToken,
+  }) async {
     await initialize();
     library.requireImport('');
     final task = await store.task(id);
@@ -202,9 +435,17 @@ final class PublicationWorkflow {
         retryAt: task.retryAt,
       );
     }
-    final bound = code == null ? null : codeFor ?? task.candidate.id;
+    await runner.checkDownload?.call();
+    final bound = code == null && baiduAccessToken == null
+        ? null
+        : codeFor ?? task.candidate.id;
     if (!android) {
-      runner.start(id, code: code, codeFor: bound);
+      runner.start(
+        id,
+        code: code,
+        codeFor: bound,
+        baiduAccessToken: baiduAccessToken,
+      );
       return;
     }
     try {
@@ -212,8 +453,10 @@ final class PublicationWorkflow {
         'id': id,
         'code': ?code,
         'codeFor': ?bound,
+        'baiduAccessToken': ?baiduAccessToken,
         'root': space.directory.parent.path,
       });
+      _pollAndroidImports();
     } on PlatformException catch (error) {
       final problem = error.code == 'system_wait'
           ? PublicationProblem.systemWait
@@ -227,12 +470,69 @@ final class PublicationWorkflow {
     }
   }
 
+  Future<String> downloadFromWebsite(PublicationWebsiteSession session) async {
+    await initialize();
+    await session.check();
+    final target = session.target;
+    final expected = target.task.candidate;
+    final id = target.task.id;
+    final current = await store.task(id);
+    if (current == null ||
+        current.candidate.id != expected.id ||
+        current.candidate.page != expected.page) {
+      throw const PublicationFailure(PublicationProblem.missing);
+    }
+    if (current.state == AcquisitionState.complete ||
+        current.state == AcquisitionState.downloaded) {
+      return id;
+    }
+    if (current.generation != target.task.generation ||
+        current.selected != target.task.selected ||
+        PublicationWebsiteTarget.forTask(target.source, current) == null) {
+      throw const PublicationFailure(PublicationProblem.inUse);
+    }
+    await runner.resumeWebsite(current, session.lifetime, (
+      candidate,
+      source,
+      token,
+    ) async {
+      await session.check();
+      token.check();
+      if (candidate.id != expected.id ||
+          source == null ||
+          !target.source.sameConfiguration(source)) {
+        throw const PublicationFailure(PublicationProblem.blocked);
+      }
+      return session.bind(
+        await runner.resolver.resolve(candidate, source, null, token),
+      );
+    });
+    final finished = await store.task(id);
+    if (finished?.state != AcquisitionState.downloaded) {
+      throw PublicationFailure(finished?.problem ?? PublicationProblem.network);
+    }
+    return id;
+  }
+
   Future<void> pause(AcquisitionTask task) async {
     if (android) {
-      await channel.invokeMethod<void>('pause', {
-        'id': task.id,
-        'generation': task.generation,
-      });
+      try {
+        await channel.invokeMethod<void>('pause', {
+          'id': task.id,
+          'generation': task.generation,
+        });
+      } on PlatformException catch (error) {
+        if (error.code == 'worker_starting') {
+          throw const FormatException('后台下载服务尚未就绪，请稍后暂停');
+        }
+        if (error.code != 'worker_unavailable') rethrow;
+        await store.db.write(
+          "UPDATE publication_tasks SET owner=NULL,state='paused',problem=? "
+          "WHERE id=? AND generation=? AND state IN ('waiting','resolving','downloading')",
+          [PublicationProblem.systemWait.name, task.id, task.generation],
+        );
+        throw const FormatException('后台下载服务已停止，可继续下载');
+      }
     } else {
       await runner.pause(task.id, generation: task.generation);
     }
@@ -242,7 +542,13 @@ final class PublicationWorkflow {
     if (_imports.containsKey(task.id) || _archivesInUse.contains(task.id)) {
       throw const PublicationFailure(PublicationProblem.inUse);
     }
-    await pause(task);
+    if (const {
+      AcquisitionState.waiting,
+      AcquisitionState.resolving,
+      AcquisitionState.downloading,
+    }.contains(task.state)) {
+      await pause(task);
+    }
     await store.db.atomic(
       () async {
         final owner = (await store.db.rows(
@@ -270,6 +576,7 @@ final class PublicationWorkflow {
         'publication_space',
       },
     );
+    _autoImportPasswords.remove(task.id);
   }
 
   Future<List<PublicationZipEntry>> downloadedEntries(
@@ -336,6 +643,10 @@ final class PublicationWorkflow {
       throw const PublicationFailure(PublicationProblem.blocked);
     }
     if (source.configurable) source.restrict(candidate.link);
+    if (source.catalogue?.call(discovery.http)
+        case final SharedPublicationCatalogue adapter) {
+      adapter.restrictShare(candidate.page, candidate.link);
+    }
   }
 
   Future<void> finish(
@@ -403,12 +714,16 @@ final class PublicationWorkflow {
       ]);
     } catch (error) {
       final current = await store.task(task.id);
+      final cancelled =
+          error is RequestCancelled && _userCancelledImports.contains(task.id);
       if (current?.state != AcquisitionState.complete) {
         await _releaseExtracted(task.id, entry);
         await store.updateTask(
           task,
           AcquisitionState.downloaded,
-          failure: error is PublicationFailure
+          failure: cancelled
+              ? null
+              : error is PublicationFailure
               ? error
               : PublicationFailure(
                   error is RequestCancelled
@@ -420,9 +735,19 @@ final class PublicationWorkflow {
       rethrow;
     } finally {
       _imports.remove(task.id);
+      _userCancelledImports.remove(task.id);
       _importSources.remove(task.id);
       _importFinished.remove(task.id)?.complete();
     }
+  }
+
+  bool cancelImport(AcquisitionTask task) {
+    final token = _imports[task.id];
+    if (token == null || token.isCancelled) return false;
+    _autoAttempts.add((task.id, task.generation));
+    _userCancelledImports.add(task.id);
+    token.cancel();
+    return true;
   }
 
   Future<String> importLocal(
@@ -750,25 +1075,30 @@ final class PublicationWorkflow {
 
   void revoke() {
     if (_disposed) return;
+    _autoImportPasswords.clear();
     for (final token in _imports.values) {
       token.cancel();
     }
+    runner.cancelRunning();
     if (android) {
       unawaited(
         channel.invokeMethod<void>('recheck').catchError((Object _) {}),
       );
-    } else {
-      runner.cancelRunning();
     }
   }
 
   Future<void> close() async {
     _disposed = true;
+    _autoQueueTimer?.cancel();
+    _androidImportPoll?.cancel();
+    await _autoSubscription?.cancel();
+    _autoImportPasswords.clear();
     await _sourceSubscription.cancel();
     for (final token in _imports.values) {
       token.cancel();
     }
     await runner.close();
     await Future.wait(_importFinished.values.map((pending) => pending.future));
+    await _autoRun;
   }
 }

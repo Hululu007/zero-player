@@ -8,12 +8,36 @@ import '../../../core/network/media_http_client.dart';
 import '../../../core/network/network_target_policy.dart';
 import '../../../core/network/request_scheduler.dart';
 import '../domain/publication.dart';
+import 'publication_archive_hosts.dart';
 
 bool hostIn(Uri uri, String domain) =>
     uri.host == domain || uri.host.endsWith('.$domain');
 
-void validatePublicationAddress(Uri uri, {bool allowLoopback = false}) {
-  NetworkTargetPolicy.validateUri(uri);
+Uri? publicationCoverUrl(Uri base, Object? raw, bool Function(Uri) belongs) {
+  if (raw is! String || raw.trim().isEmpty || raw.length > 2048) return null;
+  final reference = Uri.tryParse(raw);
+  if (reference == null) return null;
+  final uri = base.resolveUri(reference);
+  return uri.scheme == 'https' &&
+          uri.port == 443 &&
+          uri.userInfo.isEmpty &&
+          !uri.hasFragment &&
+          uri.path.isNotEmpty &&
+          InternetAddress.tryParse(uri.host) == null &&
+          belongs(uri)
+      ? uri
+      : null;
+}
+
+void validatePublicationAddress(
+  Uri uri, {
+  bool allowLoopback = false,
+  bool legacyQueryEncoding = false,
+}) {
+  NetworkTargetPolicy.validateUri(
+    uri,
+    legacyQueryEncoding: legacyQueryEncoding,
+  );
   if (uri.toString().length > 8192 ||
       (!allowLoopback &&
           (uri.host == 'localhost' ||
@@ -25,11 +49,32 @@ void validatePublicationAddress(Uri uri, {bool allowLoopback = false}) {
 typedef PublicationRequestGuard = void Function(Uri target);
 
 final class PublicationDownload {
-  const PublicationDownload(this.uri, {this.scope, this.guest, this.referer});
+  const PublicationDownload(
+    this.uri, {
+    this.scope,
+    this.guest,
+    this.referer,
+    this.detectGuestQuota = false,
+    this.allowRanges = true,
+    this.rangeChunkBytes,
+    this.preferWhole = false,
+    this.rangeTarget,
+    this.mapRedirect,
+    this.takeResponse,
+  });
   final Uri uri;
   final PublicationRequestGuard? scope;
   final GuestShareSession? guest;
   final Uri? referer;
+  final bool detectGuestQuota;
+  final bool allowRanges;
+  final int? rangeChunkBytes;
+
+  /// Start with the publisher's whole-file response when no range checkpoint exists.
+  final bool preferWhole;
+  final bool Function(Uri target)? rangeTarget;
+  final Uri Function(Uri target)? mapRedirect;
+  final HttpPayload Function(CancellationToken)? takeResponse;
 }
 
 PublicationDownload bindPublicationGuest(
@@ -63,6 +108,39 @@ PublicationDownload bindPublicationGuest(
   );
 }
 
+const publicationCatalogueDeadline = Duration(seconds: 22);
+
+bool isPublicationNetworkFailure(Object error) =>
+    error is TimeoutException ||
+    error is IOException ||
+    (error is PublicationFailure &&
+        const {
+          PublicationProblem.network,
+          PublicationProblem.timeout,
+        }.contains(error.problem));
+
+Future<T> withPublicationRequestDeadline<T>(
+  CancellationToken parent,
+  Duration deadline,
+  Future<T> Function(CancellationToken) request,
+) async {
+  parent.check();
+  final token = CancellationToken();
+  final detach = parent.listen(token.cancel);
+  try {
+    return await request(token).timeout(
+      deadline,
+      onTimeout: () {
+        token.cancel();
+        parent.check();
+        throw const PublicationFailure(PublicationProblem.timeout);
+      },
+    );
+  } finally {
+    detach();
+  }
+}
+
 final class PublicationHttp {
   PublicationHttp(
     this.transport, {
@@ -80,12 +158,28 @@ final class PublicationHttp {
     GuestShareSession? guest,
     Uri? referer,
     Map<String, String>? form,
+    bool plainForm = false,
     Map<String, Object?>? json,
     String? range,
     String? ifRange,
+    bool Function(Uri target)? rangeTarget,
     bool redirect = true,
+    Uri Function(Uri target)? mapRedirect,
     bool interactive = false,
+    String? accept,
+    String? bearer,
+    Map<String, String> originHeaders = const {},
+    bool acceptGzip = false,
+    bool legacyQueryEncoding = false,
   }) async {
+    if ((bearer != null || originHeaders.isNotEmpty) &&
+        (redirect || address.scheme != 'https' || scope == null)) {
+      throw const PublicationFailure(PublicationProblem.unsupported);
+    }
+    if (legacyQueryEncoding &&
+        (scope == null || redirect || form != null || json != null)) {
+      throw const PublicationFailure(PublicationProblem.unsupported);
+    }
     assert(form == null || json == null);
     final body = switch ((form, json)) {
       (final fields?, _) => utf8.encode(Uri(queryParameters: fields).query),
@@ -96,39 +190,62 @@ final class PublicationHttp {
     var target = address.removeFragment();
     for (var i = 0; i <= 5; i++) {
       token.check();
-      validatePublicationAddress(target, allowLoopback: allowLoopback);
+      validatePublicationAddress(
+        target,
+        allowLoopback: allowLoopback,
+        legacyQueryEncoding: legacyQueryEncoding,
+      );
       authorize(target);
       scope?.call(target);
       final sameOrigin = HeaderPolicy.origin(target) == origin;
+      final useRange = range != null && (rangeTarget?.call(target) ?? true);
       final cookie = guest?.forAddress(target);
       final response = await transport.open(
         target,
         policy: HeaderPolicy({
           target: {
+            if (sameOrigin) ...originHeaders,
+            if (accept != null && sameOrigin) 'Accept': accept,
+            if (bearer != null && sameOrigin) 'Authorization': 'Bearer $bearer',
+            if (acceptGzip && sameOrigin) 'Accept-Encoding': 'gzip',
+            if (target.host == 'd.pcs.baidu.com' &&
+                target.queryParameters.containsKey('access_token'))
+              'User-Agent': 'pan.baidu.com',
+            if (archivePublicationHost(target.host) ||
+                const {
+                  'ws-export.wmcloud.org',
+                  'en.wikisource.org',
+                  'standardebooks.org',
+                  'export.thoth.pub',
+                }.contains(target.host))
+              'User-Agent':
+                  'ZeroPlayer/0.8.0 (+https://github.com/yixunfei/zero-player)',
             if (referer != null) ...HeaderPolicy.publicReferer(referer, target),
             'Cookie': ?cookie,
             if (form != null)
               'Content-Type': 'application/x-www-form-urlencoded',
             if (json != null) 'Content-Type': 'application/json',
             if (body != null && referer != null) 'Origin': referer.origin,
-            if (form != null) 'X-Requested-With': 'XMLHttpRequest',
+            if (form != null && !plainForm)
+              'X-Requested-With': 'XMLHttpRequest',
           },
         }),
         method: body == null ? 'GET' : 'POST',
         body: body,
-        range: range,
-        ifRange: sameOrigin ? ifRange : null,
+        range: useRange ? range : null,
+        ifRange: useRange && sameOrigin ? ifRange : null,
         followRedirects: false,
         priority: interactive
             ? RequestPriority.interactive
             : RequestPriority.background,
         cancellation: token,
+        legacyQueryEncoding: legacyQueryEncoding,
       );
       try {
         token.check();
         authorize(target);
         scope?.call(target);
-        guest?.receive(target, response.response.cookies);
+        guest?.receiveHeaders(target, response.response.headers);
         if (!redirect ||
             body != null ||
             !const {
@@ -148,7 +265,7 @@ final class PublicationHttp {
         if (target.scheme == 'https' && next.scheme != 'https') {
           throw const PublicationFailure(PublicationProblem.unsupported);
         }
-        target = next;
+        target = mapRedirect?.call(next) ?? next;
       } catch (_) {
         await discardPublicationResponse(response);
         rethrow;
@@ -166,17 +283,39 @@ final class PublicationHttp {
     GuestShareSession? guest,
     Uri? referer,
     Map<String, String>? form,
-  }) async {
-    final response = await open(
-      address,
-      token,
-      scope: scope,
-      guest: guest,
-      referer: referer,
-      form: form,
-      interactive: true,
-    );
-    return readText(response, token, maxBytes: maxBytes, scope: scope);
+    Map<String, Object?>? json,
+    Duration? deadline,
+    bool allowGzip = false,
+    Encoding encoding = utf8,
+    bool legacyQueryEncoding = false,
+  }) {
+    Future<String> read(CancellationToken request) async {
+      final response = await open(
+        address,
+        request,
+        scope: scope,
+        guest: guest,
+        referer: referer,
+        form: form,
+        json: json,
+        interactive: currentRequestPriority != RequestPriority.background,
+        acceptGzip: allowGzip,
+        legacyQueryEncoding: legacyQueryEncoding,
+        redirect: !legacyQueryEncoding,
+      );
+      return readText(
+        response,
+        request,
+        maxBytes: maxBytes,
+        scope: scope,
+        allowGzip: allowGzip,
+        encoding: encoding,
+      );
+    }
+
+    return deadline == null
+        ? read(token)
+        : withPublicationRequestDeadline(token, deadline, read);
   }
 
   Future<String> readText(
@@ -185,19 +324,29 @@ final class PublicationHttp {
     required int maxBytes,
     PublicationRequestGuard? scope,
     Set<int> acceptedStatuses = const {HttpStatus.ok},
+    bool allowGzip = false,
+    Encoding encoding = utf8,
   }) async {
     final accepted = acceptedStatuses.contains(response.response.statusCode);
+    final compressed =
+        allowGzip &&
+        response.response.headers
+                .value('content-encoding')
+                ?.trim()
+                .toLowerCase() ==
+            'gzip';
     if (!accepted ||
         response.response.contentLength > maxBytes ||
-        !identityPublicationEncoding(response)) {
+        (!compressed && !identityPublicationEncoding(response))) {
       await discardPublicationResponse(response);
       if (!accepted) throw publicationHttpFailure(response);
       throw const PublicationFailure(PublicationProblem.invalid);
     }
+    final body = compressed ? gzip.decoder.bind(response.body) : response.body;
     var length = 0;
-    return utf8.decoder
+    return encoding.decoder
         .bind(
-          response.body.map((chunk) {
+          body.map((chunk) {
             token.check();
             authorize(response.uri);
             scope?.call(response.uri);
@@ -224,10 +373,11 @@ bool identityPublicationEncoding(HttpPayload payload) {
 
 PublicationFailure publicationHttpFailure(HttpPayload payload) {
   final code = payload.response.statusCode;
-  if (code == 429 || code == 503) {
+  final retryAfter = payload.response.headers.value('retry-after');
+  if (code == 429 || (code == 503 && retryAfter != null)) {
     return PublicationFailure(
       PublicationProblem.rateLimit,
-      retryAt: _retryAt(payload.response.headers.value('retry-after')),
+      retryAt: _retryAt(retryAfter),
     );
   }
   return PublicationFailure(switch (code) {
@@ -264,9 +414,30 @@ final class GuestShareSession {
   final _values = <(String, String, String), (Cookie, DateTime?)>{};
   bool _sealed = false;
 
+  bool get hasCookies =>
+      _values.values.any((value) => value.$2?.isAfter(DateTime.now()) ?? true);
+
   GuestShareSession freeze() => GuestShareSession(permittedHost)
     .._values.addAll(_values)
     .._sealed = true;
+
+  void receiveHeaders(Uri origin, HttpHeaders headers) {
+    if (_sealed || !permittedHost(origin)) return;
+    final cookies = <Cookie>[];
+    for (final value
+        in (headers[HttpHeaders.setCookieHeader] ?? const <String>[]).take(
+          32,
+        )) {
+      try {
+        cookies.add(Cookie.fromSetCookieValue(value));
+      } on HttpException {
+        // Some publishers use legacy expiry dates for expired cookies.
+      } on FormatException {
+        // Other cookies from this response are still usable.
+      }
+    }
+    receive(origin, cookies);
+  }
 
   void receive(Uri origin, List<Cookie> cookies) {
     if (_sealed || !permittedHost(origin)) return;

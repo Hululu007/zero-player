@@ -10,11 +10,14 @@ import 'package:flutter/services.dart';
 import '../../../core/network/cancellation_token.dart';
 import '../../../core/network/request_scheduler.dart';
 import '../../../core/network/document_client.dart';
+import '../../../core/network/source_certificate.dart';
+import 'book_certificate_dialog.dart';
 import '../../../core/platform/platform_services.dart';
 import '../../../core/platform/foreground_workload.dart';
 import '../application/reader_preloader.dart';
 import 'reader_cleanup_sheet.dart';
 import '../data/books_repository.dart';
+import '../data/book_catalog_rebuild.dart';
 import '../data/reading_marks_store.dart';
 import '../data/book_chapter_policy.dart';
 import '../../supervision/domain/supervision_rules.dart';
@@ -42,12 +45,14 @@ final class BookReaderPage extends StatefulWidget {
     required this.chapters,
     required this.initial,
     this.platform,
+    this.temporaryCertificate,
   });
   final BooksRepository repository;
   final Book book;
   final List<BookChapter> chapters;
   final BookChapter initial;
   final PlatformServices? platform;
+  final SourceCertificateFailure? temporaryCertificate;
 
   @override
   State<BookReaderPage> createState() => _BookReaderPageState();
@@ -57,6 +62,7 @@ final class _BookReaderPageState extends State<BookReaderPage>
     with WidgetsBindingObserver, SingleTickerProviderStateMixin {
   late BookChapter _chapter = widget.initial;
   late List<BookChapter> _chapters = widget.chapters;
+  List<BookChapter>? _storedCatalog;
   late final _systemUi = ReaderSystemUi(widget.platform);
   GlobalKey<ReaderViewportState> _viewport = GlobalKey();
   GlobalKey<BookImageChapterState> _imageViewport = GlobalKey();
@@ -64,6 +70,9 @@ final class _BookReaderPageState extends State<BookReaderPage>
   final _contentsFocus = FocusNode(debugLabel: '章节目录');
   final _progress = ValueNotifier<ReaderProgress>(readerProgress(0));
   CancellationToken? _token;
+  late SourceCertificateFailure? _temporaryCertificate =
+      widget.temporaryCertificate;
+  SourceCertificateFailure? _certificateError;
   CancellationToken? _endToken;
   Timer? _saveTimer, _clock;
   final _minute = ValueNotifier<DateTime>(DateTime.now());
@@ -75,6 +84,7 @@ final class _BookReaderPageState extends State<BookReaderPage>
     );
   });
   bool _foreground = true;
+  bool _resumeAutomation = false;
   String? _lastSavedChapter;
   ReaderProgress? _lastSavedProgress;
   late final _automation = ReaderAutomation(this, _advanceAutomatically);
@@ -83,6 +93,7 @@ final class _BookReaderPageState extends State<BookReaderPage>
   bool _configuring = false;
   ReaderPreferences _style = const ReaderPreferences();
   ReaderProgress? _retryPosition;
+  bool _retryLastImage = false;
   TextRange? _highlight;
   String _sourceStatus = '', _selection = '', _text = '';
   List<ReadingMark> _textMarks = const [];
@@ -93,6 +104,7 @@ final class _BookReaderPageState extends State<BookReaderPage>
     _marksAllowed,
   );
   List<Uri> _images = const [];
+  Map<Uri, Document> _imageResponses = const {};
   List<BookChapterSegment>? _mixedSegments;
   Book? _imageBook;
   BookChapter? _imageSourceChapter;
@@ -120,6 +132,9 @@ final class _BookReaderPageState extends State<BookReaderPage>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    _foreground =
+        (WidgetsBinding.instance.lifecycleState ?? AppLifecycleState.resumed) ==
+        AppLifecycleState.resumed;
     _releaseReading;
     _books.readingCleanup.addListener(_policyChanged);
     _books.policy.addListener(_policyChanged);
@@ -130,16 +145,20 @@ final class _BookReaderPageState extends State<BookReaderPage>
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    _foreground = state == AppLifecycleState.resumed;
+    final foreground = state == AppLifecycleState.resumed;
+    if (_foreground == foreground) return;
+    _foreground = foreground;
     _syncClock();
     if (_foreground) {
       _schedulePreload();
       if (_preferencesLoaded && ModalRoute.of(context)?.isCurrent == true) {
         _systemUi.apply(_style.immersive);
       }
+      _restoreAutomation();
     } else {
       _preloader.cancel();
-      _stopAutomation();
+      _resumeAutomation = _autoRunning;
+      _stopAutomation(preserveResume: true);
       _saveTimer?.cancel();
       _saveTimer = null;
       _savePosition();
@@ -167,12 +186,17 @@ final class _BookReaderPageState extends State<BookReaderPage>
     }
     if (mounted && _token == null) {
       await _open(widget.initial, resume: true);
-      if (mounted && _style.autoEnabled) _startAutomation();
+      if (mounted && _style.autoEnabled && _ready && _images.isEmpty) {
+        _resumeAutomation = true;
+        _restoreAutomation();
+      }
     }
   }
 
   void _policyChanged() {
+    _imageViewport.currentState?.closePreview();
     _stopAutomation();
+    _preloader.cancel();
     _token?.cancel();
     _endToken?.cancel();
     if (mounted) {
@@ -181,6 +205,7 @@ final class _BookReaderPageState extends State<BookReaderPage>
           _chapter,
           resume: true,
           location: _ready ? _progress.value : _retryPosition,
+          lastImage: !_ready && _retryLastImage,
         ),
       );
     }
@@ -226,24 +251,28 @@ final class _BookReaderPageState extends State<BookReaderPage>
     BookChapter chapter, {
     bool resume = false,
     ReaderProgress? location,
+    bool lastImage = false,
   }) async {
+    _imageViewport.currentState?.closePreview();
     _saveTimer?.cancel();
     _saveTimer = null;
     _savePosition();
-    _preloader.cancel();
     _token?.cancel();
     final token = _token = CancellationToken();
     _retryPosition = location;
+    _retryLastImage = lastImage;
     setState(() {
       _chapter = chapter;
       _viewport = GlobalKey();
       _imageViewport = GlobalKey();
       _loading = true;
       _error = null;
+      _certificateError = null;
       _blockedChapter = null;
       _text = _selection = _sourceStatus = '';
       _markDigest = null;
       _images = const [];
+      _imageResponses = const {};
       _mixedSegments = null;
       _imageBook = null;
       _imageSourceChapter = null;
@@ -253,6 +282,7 @@ final class _BookReaderPageState extends State<BookReaderPage>
     });
     _progress.value = readerProgress(0);
     try {
+      await _preloader.enter(chapter, token);
       final saved = resume && location == null
           ? await _books.store.entry(widget.book)
           : null;
@@ -272,7 +302,7 @@ final class _BookReaderPageState extends State<BookReaderPage>
         }
         return;
       }
-      await _loadTextChapter(chapter, token, restored);
+      await _loadTextChapter(chapter, token);
     } on ChapterContentBlocked catch (error) {
       if (mounted && identical(_token, token) && !token.isCancelled) {
         _blockedChapter = error;
@@ -290,6 +320,12 @@ final class _BookReaderPageState extends State<BookReaderPage>
           _fail(token, error.message);
         }
       } on Exception {
+        _fail(token, error.message);
+      }
+    } on SourceCertificateFailure catch (error) {
+      if (mounted && identical(_token, token) && !token.isCancelled) {
+        _certificateError = error;
+        _temporaryCertificate = null;
         _fail(token, error.message);
       }
     } on RemoteFailure catch (error) {
@@ -314,13 +350,16 @@ final class _BookReaderPageState extends State<BookReaderPage>
   Future<void> _loadTextChapter(
     BookChapter chapter,
     CancellationToken token,
-    ReaderProgress restored,
   ) async {
-    final result = await _books.readWithFallback(
-      widget.book,
-      chapter,
-      token,
-      automatic: _style.automatic,
+    final result = await _books.withTemporarySourceCertificate(
+      widget.book.sourceId,
+      _temporaryCertificate,
+      () => _books.readWithFallback(
+        widget.book,
+        chapter,
+        token,
+        automatic: _style.automatic,
+      ),
     );
     if (!mounted || token.isCancelled) return;
     final images = result.text.trimLeft().startsWith('[')
@@ -382,18 +421,34 @@ final class _BookReaderPageState extends State<BookReaderPage>
           : '已换源 · ${result.sourceBook.uri.host}';
       _loading = false;
     });
+    _applyLastImagePosition();
     _schedulePreload();
+    _restoreAutomation();
+    _rememberChapterCatalog(chapter, _progress.value);
+  }
+
+  void _rememberChapterCatalog(BookChapter chapter, ReaderProgress progress) {
+    final catalog = _chapters;
+    final persistCatalog =
+        widget.book.sourceId != 'local' &&
+        !isRebuiltBookChapter(chapter) &&
+        !identical(_storedCatalog, catalog);
+    if (persistCatalog) _storedCatalog = catalog;
     unawaited(
       _books.store
           .saveBook(
             widget.book,
-            chapters: widget.book.sourceId == 'local' ? null : _chapters,
+            chapters: persistCatalog ? catalog : null,
             preserveCatalog: true,
             last: chapter,
-            position: restored.fraction,
-            textOffset: restored.offset,
+            position: progress.fraction,
+            textOffset: progress.offset,
           )
-          .onError((_, _) {}),
+          .onError((_, _) {
+            if (persistCatalog && identical(_storedCatalog, catalog)) {
+              _storedCatalog = null;
+            }
+          }),
     );
   }
 
@@ -401,27 +456,42 @@ final class _BookReaderPageState extends State<BookReaderPage>
     BookChapter chapter,
     CancellationToken token,
   ) async {
-    final images = await _books.chapterImages(widget.book, chapter, token);
+    final imageResponses = <Uri, Document>{};
+    final images = await _books.withTemporarySourceCertificate(
+      widget.book.sourceId,
+      _temporaryCertificate,
+      () => _books.chapterImages(
+        widget.book,
+        chapter,
+        token,
+        onImageResponse: (uri, document) => imageResponses[uri] = document,
+      ),
+    );
     if (!mounted || token.isCancelled) return true;
     if (images.isEmpty) return false;
     setState(() {
       _images = images;
+      _imageResponses = imageResponses;
       _imageBook = widget.book;
       _imageSourceChapter = chapter;
       _loading = false;
     });
-    unawaited(
-      _books.store
-          .saveBook(
-            widget.book,
-            chapters: _chapters,
-            preserveCatalog: true,
-            last: chapter,
-            position: _progress.value.fraction,
-          )
-          .onError((_, _) {}),
-    );
+    _applyLastImagePosition();
+    _rememberChapterCatalog(chapter, _progress.value);
     return true;
+  }
+
+  void _applyLastImagePosition() {
+    if (!_retryLastImage ||
+        _images.isEmpty ||
+        _style.mode == ReaderTurnMode.scroll) {
+      return;
+    }
+    final count = _mixedSegments?.length ?? _images.length;
+    final last =
+        _mixedSegments?.lastIndexWhere((part) => part is BookImageSegment) ??
+        count - 1;
+    _progress.value = readerProgress(last / count);
   }
 
   void _fail(CancellationToken token, String message) {
@@ -448,11 +518,13 @@ final class _BookReaderPageState extends State<BookReaderPage>
         _open(
           _chapters[_index + direction],
           location: readerProgress(direction < 0 && lastPage ? 1 : 0),
+          lastImage: direction < 0 && lastPage,
         ),
       );
     } else if (direction > 0 &&
         _ready &&
         !_checkingEnd &&
+        !isRebuiltBookChapter(_chapter) &&
         _index == _chapters.length - 1 &&
         widget.book.sourceId != 'local') {
       unawaited(_checkEnd());
@@ -639,13 +711,13 @@ final class _BookReaderPageState extends State<BookReaderPage>
   }
 
   void _schedulePreload() {
-    _preloader.cancel();
     if (!_ready ||
         !_foreground ||
         _style.preloadChapters == 0 ||
         widget.book.sourceId == 'local' ||
         _images.isNotEmpty ||
         _index < 0) {
+      _preloader.cancel();
       return;
     }
     final next = _chapters
@@ -654,6 +726,7 @@ final class _BookReaderPageState extends State<BookReaderPage>
         .toList();
     _preloader.schedule(
       next,
+      refillAt: _style.preloadRefillAt.clamp(0, _style.preloadChapters - 1),
       allowed: () async =>
           !_style.preloadUnmeteredOnly ||
           !(await (widget.platform?.isMetered() ??
@@ -683,7 +756,9 @@ final class _BookReaderPageState extends State<BookReaderPage>
     setState(() => _style = settings);
     if (previous.status != settings.status) _syncClock();
     if (previous.preloadChapters != settings.preloadChapters ||
+        previous.preloadRefillAt != settings.preloadRefillAt ||
         previous.preloadUnmeteredOnly != settings.preloadUnmeteredOnly) {
+      _preloader.cancel();
       _schedulePreload();
     }
     if (!settings.autoEnabled) {
@@ -847,10 +922,39 @@ final class _BookReaderPageState extends State<BookReaderPage>
               style: TextStyle(color: palette.ink),
             ),
             TextButton(
-              onPressed: () =>
-                  _open(_chapter, resume: true, location: _retryPosition),
+              onPressed: () => _open(
+                _chapter,
+                resume: true,
+                location: _retryPosition,
+                lastImage: _retryLastImage,
+              ),
               child: const Text('重试正文'),
             ),
+            if (_certificateError case final failure?
+                when _books.canConfirmCertificate(
+                  widget.book.sourceId,
+                  failure,
+                ))
+              TextButton(
+                onPressed: () async {
+                  if (await confirmBookCertificate(context, failure) &&
+                      mounted &&
+                      identical(_certificateError, failure) &&
+                      _books.canConfirmCertificate(
+                        widget.book.sourceId,
+                        failure,
+                      )) {
+                    _temporaryCertificate = failure;
+                    await _open(
+                      _chapter,
+                      resume: true,
+                      location: _retryPosition,
+                      lastImage: _retryLastImage,
+                    );
+                  }
+                },
+                child: const Text('临时加载'),
+              ),
             if (_blockedChapter case final block?) ...[
               TextButton(
                 onPressed: () async {
@@ -860,14 +964,15 @@ final class _BookReaderPageState extends State<BookReaderPage>
                       _chapter,
                       resume: true,
                       location: _retryPosition,
+                      lastImage: _retryLastImage,
                     );
                   }
                 },
                 child: const Text('验证并查看命中原因 / 复核'),
               ),
               TextButton(
-                onPressed: () => showBookTextReplacements(context, _books),
-                child: const Text('验证并设置文本替换'),
+                onPressed: () => editDetectedReplacement(context, _books),
+                child: const Text('设置替换并继续阅读'),
               ),
               if (_index < _chapters.length - 1)
                 TextButton(
@@ -898,6 +1003,7 @@ final class _BookReaderPageState extends State<BookReaderPage>
             address,
             token,
             chapter: _imageSourceChapter,
+            imageResponse: _imageResponses[address],
           ),
           images: _images,
           segments: _mixedSegments,
@@ -1152,11 +1258,12 @@ final class _BookReaderPageState extends State<BookReaderPage>
                   icon: const Icon(Icons.list_alt_outlined),
                   onPressed: _showChapters,
                 ),
-                IconButton(
-                  tooltip: '章内查找',
-                  icon: const Icon(Icons.search),
-                  onPressed: _showFind,
-                ),
+                if (_ready && _images.isEmpty && _text.isNotEmpty)
+                  IconButton(
+                    tooltip: '章内查找',
+                    icon: const Icon(Icons.search),
+                    onPressed: _showFind,
+                  ),
                 IconButton(
                   tooltip: '阅读样式',
                   icon: const Icon(Icons.format_size_outlined),
@@ -1169,6 +1276,7 @@ final class _BookReaderPageState extends State<BookReaderPage>
                       _canCross(1) ||
                           (_ready &&
                               !_checkingEnd &&
+                              !isRebuiltBookChapter(_chapter) &&
                               _index == _chapters.length - 1 &&
                               widget.book.sourceId != 'local')
                       ? () => _cross(1, lastPage: false)

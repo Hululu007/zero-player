@@ -23,6 +23,7 @@ import 'package:zero_player/features/books/domain/legado_source.dart';
 import '../../test_support/verified_temp_directory.dart';
 
 const _asset = 'assets/catalogs/books/verified.json';
+const _websiteAsset = 'assets/catalogs/books/website-sources.json';
 const _domainUpdatesAsset =
     'assets/catalogs/books/reviewed-domain-updates.json';
 const _observed = 'books_site_observed_fingerprint:';
@@ -83,13 +84,16 @@ Map<String, Object> _observedValue(BookSource source) => {
 
 void _assets(List<Map<String, Object>> sources) {
   rootBundle.evict(_asset);
+  rootBundle.evict(_websiteAsset);
   rootBundle.evict(_domainUpdatesAsset);
   final data = Uint8List.fromList(utf8.encode(jsonEncode(sources)));
+  final websites = Uint8List.fromList(utf8.encode('[]'));
   final updates = Uint8List.fromList(utf8.encode('{"updates":[]}'));
   TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
       .setMockMessageHandler('flutter/assets', (message) async {
         final key = utf8.decode(Uint8List.sublistView(message!));
         if (key == _domainUpdatesAsset) return ByteData.sublistView(updates);
+        if (key == _websiteAsset) return ByteData.sublistView(websites);
         return key == _asset ? ByteData.sublistView(data) : null;
       });
 }

@@ -26,6 +26,7 @@ const _adultBookHosts = {
 };
 
 const _adultExactBookHosts = {
+  'm.bixiazw.net', // Homepage identifies the service as adult novels
   'www.favcomic.xyz', // Homepage explicitly labels itself adult comics
   'sesebooks.com', // Homepage identifies the site as adult novels
   'm.po18wen.xyz', // Homepage describes the site as 18+ only

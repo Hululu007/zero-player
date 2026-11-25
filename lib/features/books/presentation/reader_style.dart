@@ -88,6 +88,7 @@ final class ReaderPreferences {
     this.protectCutout = true,
     this.topInset = 0,
     this.preloadChapters = 2,
+    this.preloadRefillAt = 1,
     this.preloadUnmeteredOnly = true,
     this.autoEnabled = false,
     this.autoSeconds = 10,
@@ -122,6 +123,7 @@ final class ReaderPreferences {
     protectCutout: data['protectCutout'] != false,
     topInset: _number(data['topInset'], 0, 0, 80),
     preloadChapters: _number(data['preloadChapters'], 2, 0, 5).round(),
+    preloadRefillAt: _number(data['preloadRefillAt'], 1, 0, 4).round(),
     preloadUnmeteredOnly: data['preloadUnmeteredOnly'] != false,
     autoEnabled: data['autoEnabled'] == true,
     autoSeconds: _number(data['autoSeconds'], 10, 2, 120),
@@ -135,7 +137,7 @@ final class ReaderPreferences {
   final bool texture, animate, automatic, status, immersive, autoEnabled;
   final bool bold, justify, protectCutout, preloadUnmeteredOnly;
   final double topInset;
-  final int preloadChapters;
+  final int preloadChapters, preloadRefillAt;
   final double autoSeconds, scrollSpeed;
 
   /// Body text style for this preference set. Headings add their own weight in
@@ -167,6 +169,7 @@ final class ReaderPreferences {
     bool? protectCutout,
     double? topInset,
     int? preloadChapters,
+    int? preloadRefillAt,
     bool? preloadUnmeteredOnly,
     bool? autoEnabled,
     double? autoSeconds,
@@ -189,6 +192,7 @@ final class ReaderPreferences {
     protectCutout: protectCutout ?? this.protectCutout,
     topInset: topInset ?? this.topInset,
     preloadChapters: preloadChapters ?? this.preloadChapters,
+    preloadRefillAt: preloadRefillAt ?? this.preloadRefillAt,
     preloadUnmeteredOnly: preloadUnmeteredOnly ?? this.preloadUnmeteredOnly,
     autoEnabled: autoEnabled ?? this.autoEnabled,
     autoSeconds: autoSeconds ?? this.autoSeconds,
@@ -213,6 +217,7 @@ final class ReaderPreferences {
     'protectCutout': protectCutout,
     'topInset': topInset,
     'preloadChapters': preloadChapters,
+    'preloadRefillAt': preloadRefillAt,
     'preloadUnmeteredOnly': preloadUnmeteredOnly,
     'autoEnabled': autoEnabled,
     'autoSeconds': autoSeconds,
@@ -781,13 +786,24 @@ List<Widget> _loadingSettings(
     divisions: 5,
     onChanged: (v) => change(settings.copyWith(preloadChapters: v.round())),
   ),
+  if (settings.preloadChapters > 1)
+    _StyleSlider(
+      label: '剩余预加载章节数达到此值时补充',
+      value: settings.preloadRefillAt
+          .clamp(0, settings.preloadChapters - 1)
+          .toDouble(),
+      min: 0,
+      max: (settings.preloadChapters - 1).toDouble(),
+      divisions: settings.preloadChapters - 1,
+      onChanged: (v) => change(settings.copyWith(preloadRefillAt: v.round())),
+    ),
   SwitchListTile(
     contentPadding: EdgeInsets.zero,
     title: const Text('仅在非计费网络预加载'),
     value: settings.preloadUnmeteredOnly,
     onChanged: (v) => change(settings.copyWith(preloadUnmeteredOnly: v)),
   ),
-  const Text('离线下载优先，其次阅读缓存，最后联网获取。阅读缓存最多 24 MiB，超限自动淘汰；预加载串行进行，切章或退到后台时取消。'),
+  const Text('优先读取离线正文和阅读缓存。预加载会在阅读时补充后续章节，退到后台时暂停。阅读缓存最多 24 MiB。'),
 ];
 
 List<Widget> _insetSettings(

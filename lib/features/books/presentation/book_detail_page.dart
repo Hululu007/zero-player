@@ -7,9 +7,13 @@ import '../../supervision/presentation/sensitive_action.dart';
 import '../../../app/app_services.dart';
 import '../../../core/network/cancellation_token.dart';
 import '../../../core/network/document_client.dart';
+import '../../../core/network/source_certificate.dart';
+import 'book_certificate_dialog.dart';
 import '../../../core/platform/protected_book_export.dart';
 import '../../supervision/domain/supervision_rules.dart';
-import '../data/book_comic_export.dart';
+import '../data/book_offline_export.dart';
+import '../data/book_catalog_rebuild.dart';
+import 'book_rebuild_dialog.dart';
 import '../data/books_repository.dart';
 import '../data/book_download_coordinator.dart';
 import '../data/book_shelf_lists.dart';
@@ -83,8 +87,13 @@ final class _BookDetailContent extends StatefulWidget {
 final class _BookDetailPageState extends State<_BookDetailContent> {
   late Book _book = widget.initial;
   List<BookChapter> _chapters = [];
+  List<BookChapter> _rebuilt = [];
+  bool _showOriginalCatalog = false;
+  List<BookChapter> get _readerCatalog =>
+      !_showOriginalCatalog && _rebuilt.isNotEmpty ? _rebuilt : _chapters;
   Set<String> _saved = {};
   String? _last, _error;
+  SourceCertificateFailure? _certificateError, _temporaryCertificate;
   String _chapterQuery = '';
   bool _favorite = false, _busy = false, _offline = false;
   bool _openingReader = false, _choosingDownload = false;
@@ -248,6 +257,7 @@ final class _BookDetailPageState extends State<_BookDetailContent> {
       case BookDownloadStatus.partial:
         _toast(
           '已保存 ${task.total - task.failures} 章，过滤跳过 ${task.blockedChapters.length} 章，其他失败 ${task.failures - task.blockedChapters.length} 章${task.failures > 0 ? '；可继续下载重试' : ''}'
+          '${task.missingChapterIds.isEmpty ? '' : '。目录缺少 ${task.missingChapterIds.length} 个目标章节，计划已保留'}'
           '${task.aggregationNotice == null ? '' : '。${task.aggregationNotice}'}',
         );
         if (task.blockedChapters.isNotEmpty && mounted) {
@@ -286,9 +296,12 @@ final class _BookDetailPageState extends State<_BookDetailContent> {
     setState(() {
       _busy = true;
       _error = null;
+      _certificateError = null;
     });
     try {
       await action(token);
+    } on BookExportCancelled {
+      return;
     } on BookExportCleanupFailure catch (error) {
       if (mounted) setState(() => _error = error.message);
     } on BookExportInterrupted catch (error) {
@@ -297,6 +310,14 @@ final class _BookDetailPageState extends State<_BookDetailContent> {
       if (mounted && !token.isCancelled) setState(() => _error = error.message);
     } on RemoteFailure catch (error) {
       if (mounted && !token.isCancelled) setState(() => _error = error.message);
+    } on SourceCertificateFailure catch (error) {
+      if (mounted && !token.isCancelled) {
+        setState(() {
+          _certificateError = error;
+          _temporaryCertificate = null;
+          _error = error.message;
+        });
+      }
     } catch (_) {
       if (mounted && !token.isCancelled) {
         setState(() => _error = '操作未完成，请检查来源或内容权限');
@@ -324,22 +345,28 @@ final class _BookDetailPageState extends State<_BookDetailContent> {
       _books.store.readBookValue(book, 'books_download:${book.id}'),
     ).wait;
     if (!allowed || !mounted || token.isCancelled) return;
+    final rebuilt = await BookCatalogRebuild(_books).catalog(book);
+    if (!mounted || token.isCancelled) return;
     Object? catalogError;
     final (channel, chapters) = await (
       _local
           ? Future<BookSourceEntry?>.value()
           : _books.sourceEntry(book.kind, book.sourceId),
-      _books.chapters(_book, token, refresh: refresh).onError((
-        Exception error,
-        _,
-      ) {
-        catalogError = error;
-        return <BookChapter>[];
-      }),
+      _books
+          .withTemporarySourceCertificate(
+            _book.sourceId,
+            _temporaryCertificate,
+            () => _books.chapters(_book, token, refresh: refresh),
+          )
+          .onError((Exception error, _) {
+            catalogError = error;
+            return <BookChapter>[];
+          }),
     ).wait;
     if (!mounted || token.isCancelled || !_pageBookAllowed) return;
     setState(() {
       _channel = channel;
+      _rebuilt = rebuilt;
       _chapters = chapters.isEmpty ? existing?.chapters ?? [] : chapters;
       _last = existing?.last;
       _favorite = existing?.favorite ?? false;
@@ -384,7 +411,11 @@ final class _BookDetailPageState extends State<_BookDetailContent> {
     if (_local) return true;
     if (mounted) setState(() => _checkingDetails = true);
     try {
-      final details = await _books.details(_book, token);
+      final details = await _books.withTemporarySourceCertificate(
+        _book.sourceId,
+        _temporaryCertificate,
+        () => _books.details(_book, token),
+      );
       token.check();
       if (!mounted) return false;
       setState(() {
@@ -400,11 +431,17 @@ final class _BookDetailPageState extends State<_BookDetailContent> {
         _checkingDetails = false;
         _detailsBlocked = true;
         _chapters = [];
+        _rebuilt = [];
         _saved = {};
         _last = null;
         _plan = null;
       });
       return false;
+    } on SourceCertificateFailure {
+      if (mounted && !token.isCancelled) {
+        setState(() => _checkingDetails = false);
+      }
+      rethrow;
     } on Exception {
       token.check();
       if (!mounted) return false;
@@ -418,6 +455,20 @@ final class _BookDetailPageState extends State<_BookDetailContent> {
       }
       rethrow;
     }
+  }
+
+  Future<void> _loadAfterCertificateConfirmation(
+    SourceCertificateFailure failure,
+  ) async {
+    final book = _book;
+    if (!await confirmBookCertificate(context, failure) ||
+        !mounted ||
+        _book.id != book.id ||
+        !_books.canConfirmCertificate(book.sourceId, failure)) {
+      return;
+    }
+    _temporaryCertificate = failure;
+    await _run((token) => _load(token, refresh: true));
   }
 
   void _requirePageBook(Book book, [BookChapter? chapter]) {
@@ -438,7 +489,7 @@ final class _BookDetailPageState extends State<_BookDetailContent> {
       _requirePageBook(book, chapter);
       if (_following) await _books.store.saveBook(book, clearUpdates: true);
       if (!mounted) return;
-      final chapters = _chapters
+      final chapters = _readerCatalog
           .where((c) => _books.policy.textAllowed(c.title))
           .toList();
       Widget? reader;
@@ -475,6 +526,7 @@ final class _BookDetailPageState extends State<_BookDetailContent> {
               book: book,
               chapters: chapters,
               initial: chapter,
+              temporaryCertificate: _temporaryCertificate,
               platform: widget.services.platform,
             );
       final route = BookPageRoute<void>(
@@ -535,122 +587,56 @@ final class _BookDetailPageState extends State<_BookDetailContent> {
     });
   }
 
-  Future<void> _exportOfflineText() => _run((token) async {
-    final buffer = StringBuffer('${_book.title}\n${_book.author}\n\n');
-    final included = <(BookChapter, String)>[];
-    final validateOrigins = <void Function()>[];
-    var exported = 0;
-    for (final chapter in _chapters) {
-      token.check();
-      if (!_saved.contains(chapter.id)) continue;
-      _requirePageBook(_book, chapter);
-      final saved = await _books.offlineText(_book, chapter, token);
-      final original = saved.body;
-      if (original == null) continue;
-      final body = _books.chapterPolicy.prepare(_book, chapter, original);
-      buffer.write('${chapter.title}\n\n$body\n\n');
-      included.add((chapter, original));
-      validateOrigins.add(() => _books.requireDownloadEvidence(saved.evidence));
-      exported++;
-    }
-    if (exported == 0) throw const FormatException('没有可导出的离线章节');
-    final name = _book.title.replaceAll(RegExp(r'[\\/:*?"<>|\x00-\x1f]'), '_');
-    void validate() {
-      token.check();
-      if (!_pageBookAllowed) throw const ContentBlocked();
-      for (final (chapter, original) in included) {
-        _requirePageBook(_book, chapter);
-        _books.chapterPolicy.prepare(_book, chapter, original);
-      }
-      for (final validateOrigin in validateOrigins) {
-        validateOrigin();
-      }
-    }
-
-    final validation = _exportValidation(token, validate);
-    await ProtectedBookExport().saveText(
-      '$name.txt',
-      buffer.toString(),
-      cancellation: token,
-      validate: validation.check,
-    );
-    if (mounted) _toast('已导出 $exported 章');
-  });
-
-  Future<void> _exportOfflineImages() => _run((token) async {
-    final files = <ComicExportImage>[];
-    final contents = <String>['${_book.title} · ${_book.author}'];
-    var chapters = 0;
-    for (final chapter in _chapters) {
-      token.check();
-      if (!_saved.contains(chapter.id)) continue;
-      _requirePageBook(_book, chapter);
-      final images = await _books.store.offlineImages(_book, chapter);
-      if (images == null || images.isEmpty) continue;
-      chapters++;
-      final folder = chapters.toString().padLeft(4, '0');
-      contents.add('$folder  ${chapter.title}');
-      var index = 0;
-      for (final image in images.entries) {
-        token.check();
-        final extension =
-            image.key.pathSegments.lastOrNull
-                ?.toLowerCase()
-                .split('.')
-                .lastOrNull ??
-            '';
-        final suffix =
-            const {'png', 'jpg', 'jpeg', 'webp', 'gif'}.contains(extension)
-            ? extension
-            : 'img';
-        files.add((
-          path: '$folder/${(++index).toString().padLeft(4, '0')}.$suffix',
-          bytes: image.value,
-        ));
-      }
-    }
-    if (chapters == 0) throw const FormatException('没有可导出的离线漫画');
-    void validate() {
-      token.check();
-      if (!_pageBookAllowed) throw const ContentBlocked();
-      for (final chapter in _chapters.where((c) => _saved.contains(c.id))) {
-        _requirePageBook(_book, chapter);
-      }
-    }
-
-    final validation = _exportValidation(token, validate);
-    final indexText = contents.join('\n');
-    final zipBytes = await encodeComicArchive(files, indexText);
-    validation.check();
-    final name = _book.title.replaceAll(RegExp(r'[\\/:*?"<>|\x00-\x1f]'), '_');
-    await ProtectedBookExport().saveBytes(
-      '$name.zip',
-      zipBytes,
-      'application/zip',
-      cancellation: token,
-      validate: validation.check,
-    );
-    if (mounted) _toast('已导出 $chapters 章');
-  });
-
-  BookExportValidation _exportValidation(
-    CancellationToken token,
-    void Function() validateContent,
-  ) {
+  Future<void> _exportOffline() => _run((token) async {
     final book = _book;
-    final lease = _books.downloadGuard.lease();
-    return BookExportValidation(
-      cancellation: token,
-      validateContent: validateContent,
-      validateState: () {
-        if (!identical(_book, book) ||
-            !_pageBookAllowed ||
-            (book.sourceId != 'local' && !_books.sourceRisksReady) ||
-            _books.downloadGuard.lease() != lease) {
-          throw const ContentBlocked();
-        }
-      },
+    final count = await BookOfflineExport(_books).save(
+      book,
+      _readerCatalog,
+      token,
+      visible: () => mounted && identical(_book, book) && _pageBookAllowed,
     );
+    if (mounted) _toast('已导出 $count 章');
+  });
+
+  Future<void> _rebuildOffline() async {
+    final book = _book;
+    final rebuild = BookCatalogRebuild(_books);
+    List<String> rules = [defaultChapterRule];
+    await _run((token) async {
+      rules = await rebuild.rules(book);
+      token.check();
+    });
+    if (!mounted ||
+        _book.id != book.id ||
+        !_pageBookAllowed ||
+        _busy ||
+        _error != null) {
+      return;
+    }
+    final selected = await showChapterRebuildRules(context, rules);
+    if (!mounted || selected == null || _book.id != book.id) return;
+    await _run((token) async {
+      final entry = await _books.store.entry(book);
+      if (entry == null) throw const FormatException('没有已下载的书架记录');
+      final catalog = await rebuild.rebuild(
+        entry,
+        selected,
+        token,
+        available: () =>
+            mounted &&
+            _book.id == book.id &&
+            _pageBookAllowed &&
+            widget.services.bookDownloads.active(book) == null,
+      );
+      if (mounted) {
+        setState(() {
+          _rebuilt = catalog;
+          _showOriginalCatalog = false;
+          _catalogPage = 0;
+        });
+        _toast('已重建 ${catalog.length} 章');
+      }
+    });
   }
 
   Future<void> _changeSource() async {
@@ -763,6 +749,8 @@ final class _BookDetailPageState extends State<_BookDetailContent> {
       _initialPositionApplied = false;
       _catalogPage = 0;
       _chapters = [];
+      _rebuilt = [];
+      _showOriginalCatalog = false;
       _plan = null;
       _chapterQuery = '';
       _filter.clear();
@@ -826,6 +814,21 @@ final class _BookDetailPageState extends State<_BookDetailContent> {
     _choosingDownload = true;
     try {
       final book = _book;
+      if (_catalogOmitted > 0 && !_local && !_sourceUnavailable) {
+        await _run((token) async {
+          final fresh = await _books.chapters(book, token, refresh: true);
+          if (mounted &&
+              !token.isCancelled &&
+              identical(_book, book) &&
+              fresh.isNotEmpty) {
+            setState(() {
+              _chapters = fresh;
+              _catalogOmitted = 0;
+            });
+          }
+        });
+        if (!mounted || !identical(_book, book) || _catalogOmitted > 0) return;
+      }
       final privateBook = await _books.store.isPrivateBook(book.id);
       final publicLists = await BookShelfLists(_books.store, book.kind).load();
       final privateLists = _books.store.vault.unlocked
@@ -836,6 +839,7 @@ final class _BookDetailPageState extends State<_BookDetailContent> {
         context,
         _chapters.length,
         allowAggregateLatest: !_audio && !_comic,
+        allowFallback: !_comic,
         publicLists: publicLists,
         privateLists: privateLists,
         loadPrivateLists: () async {
@@ -1010,7 +1014,15 @@ final class _BookDetailPageState extends State<_BookDetailContent> {
 
   @override
   Widget build(BuildContext context) {
-    final last = _chapters.where((chapter) => chapter.id == _last).firstOrNull;
+    final last = _readerCatalog
+        .where(
+          (chapter) =>
+              chapter.id == _last && _books.policy.textAllowed(chapter.title),
+        )
+        .firstOrNull;
+    final first = _readerCatalog
+        .where((chapter) => _books.policy.textAllowed(chapter.title))
+        .firstOrNull;
     final visible = _visibleChapters;
     final page = _currentCatalogPage(visible.length);
     final pageChapters = visible
@@ -1041,7 +1053,7 @@ final class _BookDetailPageState extends State<_BookDetailContent> {
                     key: _catalogHeader,
                     children: [
                       ..._downloadIndicators(),
-                      _summary(last),
+                      _summary(last, first),
                       if (!_local && !_audio && !_comic)
                         BookEditionPanel(
                           repository: _books,
@@ -1065,6 +1077,19 @@ final class _BookDetailPageState extends State<_BookDetailContent> {
                                 icon: const Icon(Icons.refresh),
                                 label: const Text('重试加载'),
                               ),
+                              if (_certificateError case final failure?
+                                  when _books.canConfirmCertificate(
+                                    _book.sourceId,
+                                    failure,
+                                  ))
+                                TextButton(
+                                  onPressed: _busy
+                                      ? null
+                                      : () => _loadAfterCertificateConfirmation(
+                                          failure,
+                                        ),
+                                  child: const Text('临时加载'),
+                                ),
                             ],
                           ),
                         ),
@@ -1176,7 +1201,7 @@ final class _BookDetailPageState extends State<_BookDetailContent> {
       children: [
         Row(
           children: [
-            Expanded(child: Text('目录 · ${_chapters.length} 章')),
+            Expanded(child: Text('目录 · ${_readerCatalog.length} 章')),
             TextButton.icon(
               icon: const Icon(Icons.sort),
               onPressed: () => setState(() {
@@ -1187,9 +1212,21 @@ final class _BookDetailPageState extends State<_BookDetailContent> {
             ),
           ],
         ),
-        if (_catalogOmitted > 0)
+        if (_rebuilt.isNotEmpty)
+          SegmentedButton<bool>(
+            segments: const [
+              ButtonSegment(value: false, label: Text('重建目录')),
+              ButtonSegment(value: true, label: Text('原目录')),
+            ],
+            selected: {_showOriginalCatalog},
+            onSelectionChanged: (selected) => setState(() {
+              _showOriginalCatalog = selected.single;
+              _catalogPage = 0;
+            }),
+          ),
+        if (_catalogOmitted > 0 && identical(_readerCatalog, _chapters))
           const Text('本地仅保留部分目录。可刷新目录重新加载；离线下载覆盖当前目录中的章节。'),
-        if (_chapters.length > 10)
+        if (_readerCatalog.length > 10)
           TextField(
             controller: _filter,
             decoration: const InputDecoration(
@@ -1206,7 +1243,7 @@ final class _BookDetailPageState extends State<_BookDetailContent> {
     ),
   );
 
-  Widget _summary(BookChapter? last) => Padding(
+  Widget _summary(BookChapter? last, BookChapter? first) => Padding(
     padding: const EdgeInsets.fromLTRB(18, 12, 18, 8),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1244,9 +1281,9 @@ final class _BookDetailPageState extends State<_BookDetailContent> {
           runSpacing: 6,
           crossAxisAlignment: WrapCrossAlignment.center,
           children: [
-            if (_chapters.isNotEmpty)
+            if (first != null)
               FilledButton.icon(
-                onPressed: _busy ? null : () => _open(last ?? _chapters.first),
+                onPressed: _busy ? null : () => _open(last ?? first),
                 icon: Icon(_audio ? Icons.play_arrow : Icons.menu_book),
                 label: Text(
                   last == null
@@ -1297,15 +1334,22 @@ final class _BookDetailPageState extends State<_BookDetailContent> {
   );
 
   List<Widget> _storageActions() => [
-    if (!_local && !_audio && _saved.isNotEmpty)
+    if (!_audio &&
+        _saved.isNotEmpty &&
+        (!_local || _book.documentFormat == 'txt'))
       OutlinedButton.icon(
-        onPressed: _busy
-            ? null
-            : _comic
-            ? _exportOfflineImages
-            : _exportOfflineText,
+        onPressed: _busy ? null : _exportOffline,
         icon: const Icon(Icons.file_download_outlined),
         label: Text(_comic ? '导出离线漫画' : '导出离线章节'),
+      ),
+    if (!_audio &&
+        !_comic &&
+        _saved.isNotEmpty &&
+        (!_local || _book.documentFormat == 'txt'))
+      OutlinedButton.icon(
+        onPressed: _busy || _downloadTask != null ? null : _rebuildOffline,
+        icon: const Icon(Icons.format_list_numbered),
+        label: const Text('重建离线目录'),
       ),
     if (!_local && !_audio)
       TextButton.icon(
@@ -1362,7 +1406,7 @@ final class _BookDetailPageState extends State<_BookDetailContent> {
       title: Text(chapter.title, maxLines: 1, overflow: TextOverflow.ellipsis),
       selected: chapter.id == _last,
       onTap: _busy ? null : () => _open(chapter),
-      trailing: _local
+      trailing: _local || isRebuiltBookChapter(chapter)
           ? null
           : IconButton(
               tooltip: saved ? '删除离线章节' : '下载章节',
@@ -1380,7 +1424,12 @@ final class _BookDetailPageState extends State<_BookDetailContent> {
                       } else {
                         await _books.store.deleteText(_book, chapter);
                       }
-                      if (mounted) setState(() => _saved.remove(chapter.id));
+                      if (mounted) {
+                        setState(() {
+                          _saved.remove(chapter.id);
+                          _rebuilt = [];
+                        });
+                      }
                     })
                   : () {
                       final index = _chapters.indexOf(chapter) + 1;

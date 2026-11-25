@@ -5,6 +5,13 @@ const _rateLimited = '书源限制请求频率（HTTP 429）';
 const _unmatched = '可用书源中没有可核对的对应章节';
 const _unknown = '下载失败，请检查来源或网络';
 
+bool retryableBookThrottle(RemoteFailure failure) {
+  final delay = failure.retryAfter;
+  return failure.status == 429 &&
+      delay != null &&
+      delay <= const Duration(seconds: 3);
+}
+
 String bookDownloadFailureReason(Object? value) => switch (value) {
   RemoteFailure(status: 403) || _forbidden => _forbidden,
   RemoteFailure(status: 429) || _rateLimited => _rateLimited,
@@ -22,6 +29,11 @@ final class BookDownloadChapterUnmatched implements Exception {
 /// individual missing chapter. The same plan can be resumed later.
 final class BookDownloadSourceUnavailable implements Exception {
   const BookDownloadSourceUnavailable(this.status, this.retryAfter);
+
+  static BookDownloadSourceUnavailable? fromThrottle(Object failure) =>
+      failure is RemoteFailure && failure.status == 429
+      ? BookDownloadSourceUnavailable(429, failure.retryAfter)
+      : null;
 
   final int status;
   final Duration? retryAfter;
@@ -49,6 +61,10 @@ final class BookDownloadSourceHealth {
   BookDownloadSourceUnavailable? failed(String sourceId, Object error) {
     if (_unavailable[sourceId] case final existing?) return existing;
     if (error is! RemoteFailure || error.status != 403 && error.status != 429) {
+      _refusals.remove(sourceId);
+      return null;
+    }
+    if (retryableBookThrottle(error)) {
       _refusals.remove(sourceId);
       return null;
     }

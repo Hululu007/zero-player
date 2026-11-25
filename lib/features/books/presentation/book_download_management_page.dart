@@ -8,12 +8,16 @@ import '../data/book_download_source_health.dart';
 import '../data/book_store.dart';
 import '../domain/book.dart';
 import '../domain/book_download_plan.dart';
+import 'book_batch_actions.dart';
 import 'book_detail_page.dart';
+import 'book_vault_dialogs.dart';
 import 'book_page_route.dart';
 import 'book_text_policy_dialog.dart';
 import 'book_blocked_chapters_dialog.dart';
 import '../data/book_chapter_policy.dart';
 import '../../../core/network/cancellation_token.dart';
+
+part 'book_download_batch.dart';
 
 typedef _DownloadItem = ({
   BookShelfEntry entry,
@@ -47,6 +51,9 @@ final class _BookDownloadManagementPageState
   List<_DownloadItem> _items = [];
   Set<String> _activeIds = {};
   final Set<String> _busyIds = {};
+  final _selection = <String>{};
+  bool _selecting = false, _batchBusy = false;
+  void _changeSelection(VoidCallback change) => setState(change);
   late BookKind? _kind = widget.initialKind;
   _DownloadFilter _filter = _DownloadFilter.all;
   int _sequence = 0;
@@ -79,6 +86,7 @@ final class _BookDownloadManagementPageState
     _sequence++;
     setState(() {
       _items = [];
+      _selection.clear();
       _activeIds = {};
     });
     unawaited(_reload());
@@ -168,6 +176,7 @@ final class _BookDownloadManagementPageState
       if (!mounted || sequence != _sequence) return;
       setState(() {
         _items = items;
+        _selection.retainAll(items.map((item) => item.entry.book.id));
         _activeIds = _manager.activeTasks.map((task) => task.book.id).toSet();
         _loading = false;
         _error = null;
@@ -302,6 +311,7 @@ final class _BookDownloadManagementPageState
         item.entry.chapters.length,
         book.kind != BookKind.comic,
         chapterIds: retryIds,
+        retryCount: item.plan?.retryCount ?? BookDownloadPlan.defaultRetryCount,
       ),
       keepPlan: false,
     );
@@ -417,14 +427,17 @@ final class _BookDownloadManagementPageState
 
   Future<void> _deleteOffline(Book book) async {
     if (!await _confirm('删除离线内容？', '将删除这本书已下载的章节，保留书架记录和阅读进度。')) return;
-    await _action(book, () async {
-      await _manager.removePlan(book);
-      if (book.kind == BookKind.audio) {
-        await widget.services.books.removeSavedAudio(book);
-      } else {
-        await widget.services.books.store.clearOffline(book);
-      }
-    });
+    await _action(book, () => _clearDownload(book));
+  }
+
+  Future<void> _clearDownload(Book book) async {
+    await _manager.removePlan(book);
+    if (!_bookVisible(book)) return;
+    if (book.kind == BookKind.audio) {
+      await widget.services.books.removeSavedAudio(book);
+    } else {
+      await widget.services.books.store.clearOffline(book);
+    }
   }
 
   Future<void> _open(Book book) async {
@@ -477,6 +490,7 @@ final class _BookDownloadManagementPageState
       body: Column(
         children: [
           _filters(),
+          _batchBar(visible),
           if (_loading) const LinearProgressIndicator(minHeight: 2),
           Expanded(
             child: _error != null
@@ -576,6 +590,13 @@ final class _BookDownloadManagementPageState
                   .map((chapter) => chapter.id)
                   .toSet();
     final savedInPlan = item.saved.intersection(planned).length;
+    final missing =
+        task?.missingChapterIds.length ??
+        (plan?.chapterIds == null
+            ? 0
+            : planned.difference({
+                for (final chapter in item.entry.chapters) chapter.id,
+              }).length);
     final status = task != null
         ? task.preparation ??
               '下载中 ${task.finished}/${task.total} · 已离线 $count 章'
@@ -585,11 +606,17 @@ final class _BookDownloadManagementPageState
         ? '已离线 $count 章'
         : '待重试';
     return ListTile(
-      leading: Icon(switch (book.kind) {
-        BookKind.text => Icons.menu_book_outlined,
-        BookKind.comic => Icons.auto_stories_outlined,
-        BookKind.audio => Icons.headphones_outlined,
-      }),
+      selected: _selecting && _selection.contains(book.id),
+      leading: _selecting
+          ? Checkbox(
+              value: _selection.contains(book.id),
+              onChanged: _batchBusy ? null : (_) => _toggleBook(book),
+            )
+          : Icon(switch (book.kind) {
+              BookKind.text => Icons.menu_book_outlined,
+              BookKind.comic => Icons.auto_stories_outlined,
+              BookKind.audio => Icons.headphones_outlined,
+            }),
       title: Text(book.title, maxLines: 1, overflow: TextOverflow.ellipsis),
       subtitle: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -597,6 +624,7 @@ final class _BookDownloadManagementPageState
           Text(status, maxLines: 2, overflow: TextOverflow.ellipsis),
           if (task?.aggregationProgress case final progress?) Text(progress),
           if (task?.aggregationNotice case final notice?) Text(notice),
+          if (missing > 0) Text('目录缺少 $missing 个目标章节，计划已保留'),
           if (item.blocked.isNotEmpty)
             Text('过滤跳过 ${item.blocked.length} 章，可在管理菜单复核'),
           if ((task?.failedChapters.length ?? item.failed.length) > 0)
@@ -607,52 +635,69 @@ final class _BookDownloadManagementPageState
             LinearProgressIndicator(value: task.finished / task.total),
         ],
       ),
-      onTap: () => _open(book),
-      trailing: PopupMenuButton<String>(
-        tooltip: '管理下载',
-        enabled: !busy,
-        onSelected: (action) {
-          switch (action) {
-            case 'failures':
-              unawaited(_failureReport(item));
-            case 'blocked':
-              unawaited(_blockedReport(item));
-            case 'pause':
-              task?.pause();
-            case 'resume' || 'resume_fallback':
-              if (item.plan case final plan?) {
-                _manager.start(
-                  book,
-                  item.entry.chapters,
-                  action == 'resume_fallback' ? plan.withFallback() : plan,
-                );
-              }
-            case 'remove':
-              unawaited(_removePlan(book));
-            case 'delete':
-              unawaited(_deleteOffline(book));
-          }
-        },
-        itemBuilder: (_) => [
-          if (item.failed.isNotEmpty)
-            const PopupMenuItem(value: 'failures', child: Text('失败章节与重试')),
-          if (item.blocked.isNotEmpty)
-            const PopupMenuItem(value: 'blocked', child: Text('过滤原因与章节复核')),
-          if (task != null)
-            const PopupMenuItem(value: 'pause', child: Text('暂停')),
-          if (canResume)
-            const PopupMenuItem(value: 'resume', child: Text('继续下载')),
-          if (canResume &&
-              !plan.fallback &&
-              book.kind == BookKind.text &&
-              book.sourceId != 'local')
-            const PopupMenuItem(value: 'resume_fallback', child: Text('换源续传')),
-          if (item.plan != null)
-            const PopupMenuItem(value: 'remove', child: Text('移除下载计划')),
-          if (count > 0)
-            const PopupMenuItem(value: 'delete', child: Text('删除离线内容')),
-        ],
-      ),
+      onTap: _batchBusy
+          ? null
+          : _selecting
+          ? () => _toggleBook(book)
+          : () => _open(book),
+      trailing: _selecting
+          ? null
+          : PopupMenuButton<String>(
+              tooltip: '管理下载',
+              enabled: !busy,
+              onSelected: (action) {
+                switch (action) {
+                  case 'failures':
+                    unawaited(_failureReport(item));
+                  case 'blocked':
+                    unawaited(_blockedReport(item));
+                  case 'pause':
+                    task?.pause();
+                  case 'resume' || 'resume_fallback':
+                    if (item.plan case final plan?) {
+                      _manager.start(
+                        book,
+                        item.entry.chapters,
+                        action == 'resume_fallback'
+                            ? plan.withFallback()
+                            : plan,
+                      );
+                    }
+                  case 'remove':
+                    unawaited(_removePlan(book));
+                  case 'delete':
+                    unawaited(_deleteOffline(book));
+                }
+              },
+              itemBuilder: (_) => [
+                if (item.failed.isNotEmpty)
+                  const PopupMenuItem(
+                    value: 'failures',
+                    child: Text('失败章节与重试'),
+                  ),
+                if (item.blocked.isNotEmpty)
+                  const PopupMenuItem(
+                    value: 'blocked',
+                    child: Text('过滤原因与章节复核'),
+                  ),
+                if (task != null)
+                  const PopupMenuItem(value: 'pause', child: Text('暂停')),
+                if (canResume)
+                  const PopupMenuItem(value: 'resume', child: Text('继续下载')),
+                if (canResume &&
+                    !plan.fallback &&
+                    book.kind == BookKind.text &&
+                    book.sourceId != 'local')
+                  const PopupMenuItem(
+                    value: 'resume_fallback',
+                    child: Text('换源续传'),
+                  ),
+                if (item.plan != null)
+                  const PopupMenuItem(value: 'remove', child: Text('移除下载计划')),
+                if (count > 0)
+                  const PopupMenuItem(value: 'delete', child: Text('删除离线内容')),
+              ],
+            ),
     );
   }
 }

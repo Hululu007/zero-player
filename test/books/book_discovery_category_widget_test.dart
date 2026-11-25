@@ -7,10 +7,12 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:zero_player/app/app_services.dart';
 import 'package:zero_player/core/persistence/app_database.dart';
 import 'package:zero_player/core/persistence/installation_metadata.dart';
+import 'package:zero_player/features/books/data/book_store.dart';
 import 'package:zero_player/features/books/domain/book.dart';
 import 'package:zero_player/features/books/presentation/book_discovery_view.dart';
 
 void main() {
+  _duplicatePageTest();
   testWidgets(
     'tightened filter removes an open adult category and stale result',
     (tester) async {
@@ -156,6 +158,93 @@ void main() {
   );
 }
 
+void _duplicatePageTest() {
+  testWidgets(
+    'duplicate pages pause automatic loading and keep the next cursor',
+    (tester) async {
+      tester.view.physicalSize = const Size(1200, 1200);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      final fakeHttp = _FakeHttpClient()..paginate = true;
+      late Directory root;
+      late AppServices services;
+      late List<BookSourceEntry> entries;
+      await _io(tester, 'prepare duplicate discovery pages', () async {
+        root = await Directory.systemTemp.createTemp('duplicate-book-pages-');
+        await HttpOverrides.runZoned(() async {
+          final db = AppDatabase.memory();
+          services = AppServices.scoped(root, db);
+          await db.write(
+            'INSERT OR REPLACE INTO app_meta(key,value) VALUES(?,?)',
+            [installationAccessKey, upgradedInstallationAccess],
+          );
+          await services.settings.load();
+          await services.supervision.load();
+          final repo = services.books;
+          final template = _mixedSource().toJson();
+          template['legado'] = {
+            'explore': [
+              {'title': '玄幻分类', 'url': '/normal?page={{page}}'},
+            ],
+            'rules': {
+              ..._mixedSource().legado!.rules,
+              'nextExplore': 'a.next@href',
+            },
+          };
+          final source = BookSource.fromJson(template);
+          await repo.importSources([source]);
+          await repo.saveSource(source, {'enabled': true});
+          entries = (await repo.sources(
+            BookKind.text,
+            enabledOnly: true,
+          )).where((entry) => entry.source.id == source.id).toList();
+        }, createHttpClient: (_) => fakeHttp);
+      });
+      addTearDown(() async {
+        await tester.pumpWidget(const SizedBox.shrink());
+        await _io(tester, 'close duplicate discovery pages', () async {
+          await services.close();
+          await root.delete(recursive: true);
+        });
+      });
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: BookDiscoveryView(
+              repository: services.books,
+              kind: BookKind.text,
+              sources: entries,
+              initialSourceId: entries.single.source.id,
+              active: true,
+              onOpen: (_, {bool direct = false}) {},
+              onSearch: (_, _, _) {},
+              onSourceFavorite: (_, _) {},
+              onManage: () {},
+            ),
+          ),
+        ),
+      );
+      await _waitFor(
+        tester,
+        'manual continuation',
+        () => find.text('继续加载下一页').evaluate().isNotEmpty,
+      );
+      expect(
+        fakeHttp.requests
+            .where((uri) => uri.path == '/normal')
+            .map((uri) => uri.queryParameters['page']),
+        ['1', '2', '3'],
+      );
+      await tester.tap(find.text('继续加载下一页'));
+      await _waitFor(
+        tester,
+        'new book on fourth page',
+        () => find.text('第四页新书').evaluate().isNotEmpty,
+      );
+    },
+  );
+}
+
 BookSource _mixedSource() => BookSource.fromJson({
   'name': '混合测试源',
   'url': 'https://mixed.example/',
@@ -207,7 +296,7 @@ Future<void> _waitFor(
 /// This fixture fabricates all responses in memory and cannot open a socket.
 final class _FakeHttpClient implements HttpClient {
   final requests = <Uri>[];
-  bool holdAdult = false, waiting = false;
+  bool holdAdult = false, waiting = false, paginate = false;
   final _release = Completer<void>();
 
   void release() {
@@ -244,10 +333,17 @@ final class _FakeRequest implements HttpClientRequest {
       client.waiting = true;
       await client._release.future;
     }
-    final title = uri.path == '/adult' ? '旧分类作品' : '普通分类作品';
+    final page = int.tryParse(uri.queryParameters['page'] ?? '') ?? 1;
+    final isNew = client.paginate && page == 4;
+    final title = isNew
+        ? '第四页新书'
+        : uri.path == '/adult'
+        ? '旧分类作品'
+        : '普通分类作品';
     return _FakeResponse('''
       <div class="bookbox"><div class="bookname">
-        <a href="/book/1">$title</a></div><span class="kind">玄幻</span></div>
+        <a href="/book/${isNew ? 2 : 1}">$title</a></div><span class="kind">玄幻</span></div>
+      ${client.paginate && page < 4 ? '<a class="next" href="/normal?page=${page + 1}">下一页</a>' : ''}
     ''');
   }
 

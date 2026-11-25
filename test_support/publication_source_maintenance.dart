@@ -44,8 +44,10 @@ Future<void> verifyPublicationSourceMaintenance(
       ),
     );
     final search = find.byTooltip('搜索图书');
+    final input = find.widgetWithText(TextField, '书名、作者或 ISBN');
     final book = find.text('Reference health');
     await _waitForControl(tester, search);
+    await tester.enterText(input, 'health');
     await tester.tap(search);
     await _waitForControl(tester, book);
 
@@ -61,25 +63,35 @@ Future<void> verifyPublicationSourceMaintenance(
     expect(fixture.requests, hasLength(requests));
 
     visible.value = true;
-    final reason = find.text('Catalogue已暂停检索 · 书源入口已失效');
-    await _waitForControl(tester, reason);
-    expect(fixture.requests, hasLength(requests + 1));
-    expect(book, findsNothing);
+    await _waitForControl(tester, book);
+    expect(fixture.requests, hasLength(requests));
 
     await tester.tap(find.text('书源'));
     await tester.pumpAndSettle();
-    final check = find.text('检查或更新');
-    final status = find.text('已暂停检索 · 书源入口已失效');
-    expect(status, findsOneWidget);
+    final filter = find.widgetWithText(TextField, '筛选书源名称或域名');
+    await tester.enterText(filter, source.endpoint.host);
+    await tester.pumpAndSettle();
+    final row = find.byKey(ValueKey(source.id));
+    final check = find.descendant(of: row, matching: find.text('检查可用性'));
+    final status = find.descendant(
+      of: row,
+      matching: find.textContaining('已暂停检索 · 书源入口已失效'),
+    );
+    await _waitForControl(tester, status);
+    expect(fixture.requests, hasLength(requests + 1));
     fixture.status = HttpStatus.ok;
     await tester.ensureVisible(check);
     await tester.pumpAndSettle();
     await tester.tap(check.hitTestable());
-    await tester.pumpAndSettle();
+    await _waitForControl(
+      tester,
+      find.descendant(of: row, matching: find.textContaining('可用 · 检查于')),
+    );
     expect(status, findsNothing);
 
     await tester.tap(find.text('发现'));
     await tester.pumpAndSettle();
+    await tester.enterText(input, 'health');
     await tester.tap(search);
     await _waitForControl(tester, book);
   } finally {

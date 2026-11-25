@@ -11,6 +11,7 @@ import 'package:xml/xml.dart';
 
 import '../domain/book.dart';
 import 'epub_styles.dart';
+import 'kindle_book.dart';
 import 'local_book.dart';
 
 Future<LocalBook> parsePdfBook(String filename, Uint8List bytes) async {
@@ -39,6 +40,10 @@ Future<LocalBook> parsePdfBook(String filename, Uint8List bytes) async {
 }
 
 typedef RichSection = ({String title, String html, String text, bool vertical});
+typedef RichBook = ({String title, String author, List<RichSection> sections});
+
+Future<RichBook> readKindleBookOffThread(Uint8List bytes) =>
+    Isolate.run(() => _readEpub(kindleReadingEpub(bytes), internalLinks: true));
 
 Future<List<RichSection>> readRichEpubOffThread(
   List<int> bytes, {
@@ -106,9 +111,6 @@ bool _unsafeEpubPath(String path) =>
     if (total > _maxEpubBytes) throw const FormatException('EPUB 解包内容过大');
     files[name] = f;
   }
-  if (files.containsKey('META-INF/encryption.xml')) {
-    throw const FormatException('不支持加密 EPUB');
-  }
   var remaining = _maxEpubBytes;
   List<int> read(String name) {
     final f = files[name];
@@ -157,13 +159,88 @@ bool _unsafeEpubPath(String path) =>
   if (opf == null) throw const FormatException('EPUB 缺少书籍清单');
   final path = resolve('', opf);
   final package = xml(path);
-  return _readEpubSpine(
-    package,
-    p.posix.dirname(path),
-    read,
-    resolve,
-    internalLinks,
-  );
+  final folder = p.posix.dirname(path);
+  const encryption = 'META-INF/encryption.xml';
+  if (files[encryption] case final descriptor?) {
+    if (descriptor.uncompressedSize > 128 << 10 ||
+        files.containsKey('META-INF/rights.xml')) {
+      throw const FormatException('不支持加密 EPUB');
+    }
+    final fonts = _obfuscatedFonts(xml(encryption), package, folder, resolve);
+    if (!fonts.every(files.containsKey)) {
+      throw const FormatException('不支持加密 EPUB');
+    }
+    // Preserve the original file. The renderer uses reader fonts and never
+    // reads or decodes these resources.
+    for (final font in fonts) {
+      files.remove(font);
+    }
+  }
+  return _readEpubSpine(package, folder, read, resolve, internalLinks);
+}
+
+Set<String> _obfuscatedFonts(
+  XmlElement descriptor,
+  XmlElement package,
+  String folder,
+  String Function(String, String) resolve,
+) {
+  const ocf = 'urn:oasis:names:tc:opendocument:xmlns:container';
+  const enc = 'http://www.w3.org/2001/04/xmlenc#';
+  const unsupported = FormatException('不支持加密 EPUB');
+  final records = descriptor.childElements.toList();
+  if (descriptor.namespaceUri != ocf ||
+      descriptor.localName != 'encryption' ||
+      records.isEmpty) {
+    throw unsupported;
+  }
+  const types = {
+    'font/ttf',
+    'font/otf',
+    'font/woff',
+    'font/woff2',
+    'application/font-sfnt',
+    'application/font-woff',
+    'application/vnd.ms-opentype',
+  };
+  const extensions = {'.ttf', '.otf', '.woff', '.woff2'};
+  final manifest = package.childElements
+      .where((element) => element.localName == 'manifest')
+      .firstOrNull;
+  final declared = {
+    for (final item in manifest?.childElements ?? const <XmlElement>[])
+      if (item.localName == 'item' &&
+          types.contains(item.getAttribute('media-type')))
+        if (item.getAttribute('href') case final href?) resolve(folder, href),
+  };
+  final fonts = <String>{};
+  for (final record in records) {
+    final method = record.getElement('EncryptionMethod', namespaceUri: enc);
+    final cipher = record.getElement('CipherData', namespaceUri: enc);
+    final reference = cipher?.getElement('CipherReference', namespaceUri: enc);
+    final uri = Uri.tryParse(reference?.getAttribute('URI') ?? '');
+    if (record.namespaceUri != enc ||
+        record.localName != 'EncryptedData' ||
+        record.childElements.length != 2 ||
+        method == null ||
+        method.getAttribute('Algorithm') !=
+            'http://www.idpf.org/2008/embedding' ||
+        method.childElements.isNotEmpty ||
+        cipher?.childElements.length != 1 ||
+        reference == null ||
+        reference.childElements.isNotEmpty ||
+        uri == null ||
+        uri.hasFragment) {
+      throw unsupported;
+    }
+    final path = resolve('', uri.toString());
+    if (!extensions.contains(p.posix.extension(path).toLowerCase()) ||
+        !declared.contains(path) ||
+        !fonts.add(path)) {
+      throw unsupported;
+    }
+  }
+  return fonts;
 }
 
 ({String title, String author, List<RichSection> sections}) _readEpubSpine(

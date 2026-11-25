@@ -1,9 +1,11 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
 import 'package:crypto/crypto.dart';
 import 'package:flutter/foundation.dart';
 
+import '../../../core/network/cancellation_token.dart';
 import '../../../core/network/poster_repository.dart';
 
 typedef BookCoverCacheUsage = ({int entries, int bytes, int limitBytes});
@@ -15,6 +17,7 @@ final class BookCoverCache extends ChangeNotifier {
   final Directory directory;
   final Map<String, _CoverEntry> _entries = {};
   final Map<String, Uint8List> _memory = {};
+  final _requests = <(String, Object, int), _CoverRequest>{};
   Future<void>? _queue;
   int _maxBytes;
   int _memoryBytes = 0;
@@ -27,6 +30,65 @@ final class BookCoverCache extends ChangeNotifier {
 
   String key(String title, String author, Uri cover) =>
       sha256.convert(utf8.encode('$title\u0000$author\u0000$cover')).toString();
+
+  Future<List<int>> obtain(
+    String key, {
+    required Object scope,
+    required CancellationToken token,
+    required Future<List<int>> Function(CancellationToken) fetch,
+  }) async {
+    token.check();
+    final generation = _generation;
+    final identity = (key, scope, generation);
+    final request = _requests.putIfAbsent(identity, () {
+      final pending = _CoverRequest();
+      pending.result = _obtain(key, generation, pending.token, fetch)
+          .whenComplete(() {
+            if (identical(_requests[identity], pending)) {
+              _requests.remove(identity);
+            }
+          });
+      return pending;
+    });
+    request.users++;
+    final cancelled = Completer<List<int>>();
+    final unlink = token.listen(
+      () => cancelled.completeError(const RequestCancelled()),
+    );
+    try {
+      final bytes = await Future.any([request.result, cancelled.future]);
+      token.check();
+      return bytes;
+    } finally {
+      unlink();
+      if (--request.users == 0 && identical(_requests[identity], request)) {
+        _requests.remove(identity);
+        request.token.cancel();
+      }
+    }
+  }
+
+  Future<List<int>> _obtain(
+    String key,
+    int generation,
+    CancellationToken token,
+    Future<List<int>> Function(CancellationToken) fetch,
+  ) async {
+    List<int>? cached;
+    try {
+      cached = await read(key);
+    } on FileSystemException {
+      // Cache failure may fall back to the source.
+    }
+    token.check();
+    if (cached != null) return cached;
+    final bytes = await fetch(token);
+    token.check();
+    if (isPosterPayload(bytes)) {
+      unawaited(write(key, bytes, generation).onError((_, _) {}));
+    }
+    return bytes;
+  }
 
   Future<T> _serial<T>(Future<T> Function() action) {
     final previous = _queue;
@@ -178,6 +240,12 @@ final class BookCoverCache extends ChangeNotifier {
       _memoryBytes -= _memory.remove(_memory.keys.first)!.length;
     }
   }
+}
+
+final class _CoverRequest {
+  final token = CancellationToken();
+  late final Future<List<int>> result;
+  int users = 0;
 }
 
 final class _CoverEntry {

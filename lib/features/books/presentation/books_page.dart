@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 import '../../../app/app_services.dart';
 import '../../../core/network/cancellation_token.dart';
 import '../data/book_store.dart';
+import '../data/book_source_groups.dart';
 import '../domain/book.dart';
 import '../domain/book_search.dart';
 import 'book_shelf_view.dart';
@@ -45,6 +46,7 @@ final class BooksPage extends StatefulWidget {
 
 final class _BooksPageState extends State<BooksPage> {
   List<BookSourceEntry>? _sources;
+  List<BookSourceGroup> _sourceGroups = const [];
   List<BookShelfEntry> _shelf = [];
   late int _tab = widget.initialTab;
   int _reloadSequence = 0;
@@ -140,6 +142,10 @@ final class _BooksPageState extends State<BooksPage> {
         widget.kind,
         enabledOnly: true,
       );
+      final groups = await BookSourceGroups(
+        _services.books.store,
+        widget.kind,
+      ).load();
       final shelf = await _readShelf();
       if (!mounted || sequence != _reloadSequence) return;
       setState(() {
@@ -152,6 +158,7 @@ final class _BooksPageState extends State<BooksPage> {
           _sources = sources;
         }
         _shelf = _visibleShelf(shelf);
+        _sourceGroups = groups;
         _error = null;
       });
       unawaited(_checkFollowing());
@@ -301,6 +308,7 @@ final class _BooksPageState extends State<BooksPage> {
     Book? preferred,
     BookSearchField field = BookSearchField.all,
     String? sourceId,
+    String? sourceGroupId,
     bool favorites = false,
     String? excludedSource,
     bool skipQidian = false,
@@ -314,6 +322,7 @@ final class _BooksPageState extends State<BooksPage> {
           preferred: preferred,
           field: field,
           sourceId: sourceId,
+          sourceGroupId: sourceGroupId,
           favoritesOnly: favorites,
           excludedSource: excludedSource,
           skipQidian: skipQidian,
@@ -435,6 +444,7 @@ final class _BooksPageState extends State<BooksPage> {
                           repository: _services.books,
                           kind: widget.kind,
                           sources: _sources,
+                          sourceGroups: _sourceGroups,
                           initialSourceId: widget.discoverySourceId,
                           active: _tab == 0,
                           onOpen: _searchBook,
@@ -443,6 +453,17 @@ final class _BooksPageState extends State<BooksPage> {
                             sourceId: sourceId,
                             favorites: favorites,
                           ),
+                          onGroupSearch:
+                              (query, groupId, favorites, {preferred}) =>
+                                  _search(
+                                    query,
+                                    sourceGroupId: groupId,
+                                    favorites: favorites,
+                                    preferred: preferred,
+                                    field: preferred == null
+                                        ? BookSearchField.all
+                                        : BookSearchField.title,
+                                  ),
                           onSourceFavorite: _sourceFavoriteChanged,
                           onManage: _manageSources,
                         ),
@@ -457,6 +478,7 @@ final class _BooksPageState extends State<BooksPage> {
                           onCheckUpdates: _checkShelfUpdates,
                           onFollowChanged: _followChanged,
                           onOpenPrivate: _openPrivateShelf,
+                          downloads: _services.bookDownloads,
                           pauseDownload: _services.bookDownloads.pause,
                           cancelDownload: (book) =>
                               _services.bookDownloads.removePlan(book),

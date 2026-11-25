@@ -73,6 +73,13 @@ class _RuleEditorState extends State<_RuleEditor> {
     }
   }
 
+  void _loadExample(Map<String, Object?> example) {
+    _rule.text = const JsonEncoder.withIndent('  ').convert(example);
+    _sample.clear();
+    _detail.clear();
+    _inspect();
+  }
+
   Future<void> _import() async {
     setState(() => _importing = true);
     try {
@@ -126,6 +133,23 @@ class _RuleEditorState extends State<_RuleEditor> {
           Wrap(
             spacing: 5,
             children: [
+              if (widget.initial == null)
+                PopupMenuButton<Map<String, Object?>>(
+                  enabled: !_importing,
+                  tooltip: '规则示例',
+                  onSelected: _loadExample,
+                  itemBuilder: (_) => [
+                    for (final example in publicationRuleExamples)
+                      PopupMenuItem(
+                        value: example,
+                        child: Text(example['name'] as String),
+                      ),
+                  ],
+                  child: const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                    child: Text('规则示例'),
+                  ),
+                ),
               TextButton(
                 onPressed: _importing ? null : _import,
                 child: const Text('导入 JSON 文件'),

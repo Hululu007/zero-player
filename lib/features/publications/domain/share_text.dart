@@ -1,3 +1,5 @@
+import 'cloud_share_address.dart';
+
 typedef PublicationShareInput = ({
   Uri link,
   String? code,
@@ -7,12 +9,12 @@ typedef PublicationShareInput = ({
 });
 
 final _shareUrls = RegExp(
-  r'(?:https?://|(?<![a-z0-9_./\\:@%+-])(?<bare>pan\.quark\.cn/s/|drive\.uc\.cn/s/))'
+  r'(?:https?://|(?<![a-z0-9_./\\:@%+-])(?<bare>pan\.(?:quark\.cn|baidu\.com)/s/|drive\.uc\.cn/s/))'
   r'[^\s<>「」《》“”\[\]，；。]+',
   caseSensitive: false,
 );
 
-const _shareCodeKeys = {'pwd', 'password', 'passcode', 'code'};
+const _shareCodeKeys = {'pwd', 'password', 'passcode', 'code', 'accessCode'};
 
 bool containsPublicationShareLink(String text) => _shareUrls.hasMatch(text);
 
@@ -28,7 +30,8 @@ PublicationShareInput? publicationSourceShareInput(
       matches,
       accepts: (uri) =>
           accepts(uri) &&
-          uri.queryParametersAll.keys.every(_shareCodeKeys.contains),
+          (canonicalCloudShare(uri) != null ||
+              uri.queryParametersAll.keys.every(_shareCodeKeys.contains)),
     ).firstOrNull;
   } on FormatException {
     return null;
@@ -50,7 +53,7 @@ List<PublicationShareInput> publicationShareInputs(String text) {
 }
 
 final _shareCodes = RegExp(
-  r'(?:提取码|访问密码|分享密码|口令|(?<!ZIP |PDF )(?<!ZIP|PDF)密码)\s*[:：=]?\s*([A-Za-z0-9]{2,16})(?![A-Za-z0-9])',
+  r'(?:提取码|访问码|访问密码|分享密码|口令|(?<!ZIP |PDF )(?<!ZIP|PDF)密码)\s*[:：=]?\s*([A-Za-z0-9]{2,16})(?![A-Za-z0-9])',
   caseSensitive: false,
 );
 final _documentPasswords = _typedPasswordPattern('ZIP|PDF');
@@ -85,8 +88,7 @@ Iterable<PublicationShareInput> _shareBlock(
     final zipPasswords = _typedPasswords(block, 'ZIP');
     final pdfPasswords = _typedPasswords(block, 'PDF');
     final explicit = <String>{
-      for (final key in _shareCodeKeys)
-        ...uri.queryParametersAll[key] ?? const <String>[],
+      for (final key in _shareCodeKeys) ...cloudShareCodes(uri, key),
       ..._shareCodes
           .allMatches(block.replaceAll(_documentPasswords, ''))
           .map((value) => value[1]!),
@@ -95,7 +97,9 @@ Iterable<PublicationShareInput> _shareBlock(
         explicit.length > 1 ||
         (sharedPrefix &&
             _shareCodes.hasMatch(prefix.replaceAll(_documentPasswords, '')));
-    final stableLink = Uri.parse(uri.toString().split(RegExp(r'[?#]')).first);
+    final stableLink =
+        canonicalCloudShare(uri) ??
+        Uri.parse(uri.toString().split(RegExp(r'[?#]')).first);
     yield (
       link: stableLink,
       code: !ambiguous && explicit.length == 1 ? explicit.single : null,

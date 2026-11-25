@@ -10,12 +10,16 @@ final class PublicationHolding {
     required this.resident,
     required this.kept,
     required this.added,
+    this.lastRead = 0,
+    this.groupId,
+    this.finished = false,
     this.legacyId,
   });
   final String id, digest;
   final PublicationEdition edition;
   final PublicationFormat format;
-  final int bytes, added;
-  final bool resident, kept;
+  final int bytes, added, lastRead;
+  final bool resident, kept, finished;
+  final String? groupId;
   final String? legacyId;
 }

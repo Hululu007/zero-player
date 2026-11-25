@@ -26,6 +26,7 @@ Future<BookDownloadSelection?> showBookDownloadDialog(
   BuildContext context,
   int total, {
   bool allowAggregateLatest = true,
+  bool allowFallback = true,
   List<ShelfList> publicLists = const [],
   List<ShelfList> privateLists = const [],
   BookShelfSpace initialSpace = BookShelfSpace.public,
@@ -35,6 +36,7 @@ Future<BookDownloadSelection?> showBookDownloadDialog(
   builder: (_) => _BookDownloadDialog(
     total: total,
     allowAggregateLatest: allowAggregateLatest,
+    allowFallback: allowFallback,
     publicLists: publicLists,
     privateLists: privateLists,
     initialSpace: initialSpace,
@@ -46,13 +48,14 @@ final class _BookDownloadDialog extends StatefulWidget {
   const _BookDownloadDialog({
     required this.total,
     required this.allowAggregateLatest,
+    required this.allowFallback,
     required this.publicLists,
     required this.privateLists,
     required this.initialSpace,
     required this.loadPrivateLists,
   });
   final int total;
-  final bool allowAggregateLatest;
+  final bool allowAggregateLatest, allowFallback;
   final List<ShelfList> publicLists, privateLists;
   final BookShelfSpace initialSpace;
   final Future<List<ShelfList>?> Function()? loadPrivateLists;
@@ -63,6 +66,7 @@ final class _BookDownloadDialog extends StatefulWidget {
 final class _BookDownloadDialogState extends State<_BookDownloadDialog> {
   int _first = 1;
   late int _last = widget.total;
+  int _retryCount = BookDownloadPlan.defaultRetryCount;
   bool _all = true,
       _fallback = false,
       _aggregateLatest = false,
@@ -106,7 +110,8 @@ final class _BookDownloadDialogState extends State<_BookDownloadDialog> {
       BookDownloadPlan(
         _all ? 1 : _first,
         _all ? widget.total : _last,
-        _fallback,
+        widget.allowFallback && _fallback,
+        retryCount: _retryCount,
         fullBook: _all,
         aggregateLatest:
             _all && widget.allowAggregateLatest && _aggregateLatest,
@@ -141,15 +146,36 @@ final class _BookDownloadDialogState extends State<_BookDownloadDialog> {
               value: _aggregateLatest,
               onChanged: (value) => setState(() => _aggregateLatest = value),
             ),
-          SwitchListTile(
-            contentPadding: EdgeInsets.zero,
-            title: const Text('失败时尝试其他书源'),
-            subtitle: const Text('只下载同名同作者且章节唯一对应的版本'),
-            value: _fallback,
-            onChanged: (value) => setState(() => _fallback = value),
-          ),
+          if (widget.allowFallback)
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: const Text('失败时尝试其他书源'),
+              subtitle: const Text('只下载同名同作者且章节唯一对应的版本'),
+              value: _fallback,
+              onChanged: (value) => setState(() => _fallback = value),
+            ),
           const Divider(),
           _destination(),
+          Row(
+            children: [
+              const Expanded(child: Text('单章自动重试次数')),
+              DropdownButton<int>(
+                value: _retryCount,
+                items: [
+                  for (
+                    var count = 0;
+                    count <= BookDownloadPlan.maxRetryCount;
+                    count++
+                  )
+                    DropdownMenuItem(
+                      value: count,
+                      child: Text(count == 0 ? '关闭' : '$count 次'),
+                    ),
+                ],
+                onChanged: (value) => setState(() => _retryCount = value!),
+              ),
+            ],
+          ),
           if (_error != null) Text(_error!),
         ],
       ),

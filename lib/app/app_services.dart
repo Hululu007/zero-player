@@ -22,6 +22,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../core/network/document_client.dart';
 import '../core/network/cancellation_token.dart';
 import '../core/network/media_http_client.dart';
+import '../core/network/windows_public_https_route.dart';
 import '../core/network/poster_repository.dart';
 import '../core/persistence/app_database.dart';
 import '../core/persistence/application_ownership.dart';
@@ -57,6 +58,7 @@ import '../features/playback/application/local_video.dart';
 import '../features/playback/data/local_video_repository.dart';
 import '../features/books/data/books_repository.dart';
 import '../features/publications/application/publication_module.dart';
+import '../features/publications/domain/publication.dart';
 import '../features/books/data/book_download_coordinator.dart';
 import '../media/engine/media_kit_engine.dart';
 import '../features/live/data/live_health_repository.dart';
@@ -194,6 +196,11 @@ final class AppServices {
     books.bookAllowed,
     http,
     allowLoopback: allowPrivateNetworks,
+    checkDownload: () async {
+      if (!settings.value.allowMetered && await platform.isMetered()) {
+        throw const PublicationFailure(PublicationProblem.metered);
+      }
+    },
   );
   BookSiteChecks? _bookSiteChecks;
   BookSiteChecks get bookSiteChecks =>
@@ -231,6 +238,10 @@ final class AppServices {
   late final MediaHttpClient http = MediaHttpClient(
     allowPrivateNetworks: allowPrivateNetworks,
     allowLanOrigin: lanAccess.allows,
+    publicHttpsRoute: WindowsPublicHttpsRoute(const {
+      'kgbook.com',
+      'www.kgbook.com',
+    }).connect,
   );
   late final lanAccess = LanAccessStore(
     db,

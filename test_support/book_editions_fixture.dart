@@ -22,6 +22,7 @@ final class BookEditionsFixture {
     bool serveTargetChapters = false,
     int? denyTargetFrom,
     int denyTargetStatus = 403,
+    Map<int, List<int>> targetTransientFailures = const {},
     int fastChapterCount = 5,
   }) async {
     final f = BookEditionsFixture();
@@ -31,6 +32,9 @@ final class BookEditionsFixture {
     f.http.serveTargetChapters = serveTargetChapters;
     f.http.denyTargetFrom = denyTargetFrom;
     f.http.denyTargetStatus = denyTargetStatus;
+    f.http.targetTransientFailures.addAll(
+      targetTransientFailures.map((key, value) => MapEntry(key, [...value])),
+    );
     f.http.fastChapterCount = fastChapterCount;
     f.root = await Directory.systemTemp.createTemp('book-editions-');
     await HttpOverrides.runZoned(() async {
@@ -84,6 +88,7 @@ final class BookEditionsFixture {
 
   bool get slowWaiting => http.slowWaiting;
   int get targetChapterRequests => http.targetChapterRequests;
+  Map<int, int> get targetAttempts => Map.unmodifiable(http.targetAttempts);
   set targetChapterCount(int count) => http.targetChapterCount = count;
   bool get slowReleased => http.gate.isCompleted;
   void releaseSlow() {
@@ -110,6 +115,8 @@ final class _Client implements HttpClient {
   int denyTargetStatus = 403;
   int fastChapterCount = 5;
   int targetChapterRequests = 0;
+  final targetAttempts = <int, int>{};
+  final targetTransientFailures = <int, List<int>>{};
   int targetChapterCount = 3;
   int targetCatalogPages = 1;
   @override
@@ -181,6 +188,20 @@ final class _Request implements HttpClientRequest {
       client.targetChapterRequests++;
       final deniedAt = client.denyTargetFrom;
       final index = int.tryParse(uri.pathSegments.last);
+      if (index != null) {
+        client.targetAttempts.update(
+          index,
+          (value) => value + 1,
+          ifAbsent: () => 1,
+        );
+        final failures = client.targetTransientFailures[index];
+        if (failures != null && failures.isNotEmpty) {
+          final status = failures.removeAt(0);
+          final response = _Response('', status);
+          if (status == 429) response.headers.set('retry-after', '0');
+          return response;
+        }
+      }
       if (deniedAt != null && index != null && index >= deniedAt) {
         final response = _Response('', client.denyTargetStatus);
         if (client.denyTargetStatus == 429) {

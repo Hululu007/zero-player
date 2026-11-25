@@ -46,8 +46,15 @@ final class NetworkTargetPolicy {
     }
   }
 
-  void validateAccess(Uri uri, {required bool originalOrigin}) {
-    validateUri(uri, legacyQueryEncoding: allowLegacyQueryEncoding);
+  void validateAccess(
+    Uri uri, {
+    required bool originalOrigin,
+    bool legacyQueryEncoding = false,
+  }) {
+    validateUri(
+      uri,
+      legacyQueryEncoding: allowLegacyQueryEncoding || legacyQueryEncoding,
+    );
     if (allowPrivateNetworks) return;
     final address = InternetAddress.tryParse(uri.host);
     if (address == null || !isPrivate(address)) return;
@@ -66,7 +73,9 @@ final class NetworkTargetPolicy {
           (bytes[0] == 100 && bytes[1] >= 64 && bytes[1] <= 127) ||
           (bytes[0] == 169 && bytes[1] == 254) ||
           (bytes[0] == 172 && bytes[1] >= 16 && bytes[1] <= 31) ||
-          (bytes[0] == 192 && (bytes[1] == 168 || bytes[1] == 0)) ||
+          (bytes[0] == 192 &&
+              (bytes[1] == 168 ||
+                  (bytes[1] == 0 && (bytes[2] == 0 || bytes[2] == 2)))) ||
           (bytes[0] == 198 && (bytes[1] == 18 || bytes[1] == 19)) ||
           bytes[0] >= 224;
     }
@@ -91,8 +100,12 @@ final class NetworkTargetPolicy {
     int? proxyPort, {
     SourceCertificate? certificate,
     Duration timeout = const Duration(seconds: 15),
+    bool legacyQueryEncoding = false,
   }) async {
-    validateUri(uri, legacyQueryEncoding: allowLegacyQueryEncoding);
+    validateUri(
+      uri,
+      legacyQueryEncoding: allowLegacyQueryEncoding || legacyQueryEncoding,
+    );
     if (proxyHost != null) throw const FormatException('不支持未校验的代理目标');
     final addresses = await InternetAddress.lookup(
       uri.host,
@@ -113,8 +126,9 @@ final class NetworkTargetPolicy {
     ].take(4).toList(growable: false);
     final attempt = _VerifiedConnection(uri, ordered, timeout);
     final socket = attempt.open().then<Socket>(
-      (socket) =>
-          uri.scheme == 'https' ? _secure(socket, uri, certificate) : socket,
+      (socket) => uri.scheme == 'https'
+          ? secureSocket(socket, uri, certificate)
+          : socket,
     );
     socket.ignore();
     return ConnectionTask.fromSocket(
@@ -123,7 +137,7 @@ final class NetworkTargetPolicy {
     );
   }
 
-  Future<Socket> _secure(
+  Future<Socket> secureSocket(
     Socket socket,
     Uri uri,
     SourceCertificate? certificate,

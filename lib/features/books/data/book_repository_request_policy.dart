@@ -166,7 +166,9 @@ extension _BookRepositoryRequestPolicy on BooksRepository {
     bool allowDisabled = false,
     bool invalidationIsBlocked = false,
   }) async {
-    if (source.format != BookFormat.html) return action(cancellation, null);
+    if (source.format != BookFormat.html && source.kind != BookKind.comic) {
+      return action(cancellation, null);
+    }
     final lease = _DiscoveryLease(
       this,
       source,

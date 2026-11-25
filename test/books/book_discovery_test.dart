@@ -8,6 +8,7 @@ import 'package:zero_player/app/app_services.dart';
 import 'package:zero_player/core/network/cancellation_token.dart';
 import 'package:zero_player/core/persistence/app_database.dart';
 import 'package:zero_player/features/books/data/aoaostar_book_catalog.dart';
+import 'package:zero_player/features/books/data/book_builtin_domain_updates.dart';
 import 'package:zero_player/features/books/data/book_import.dart';
 import 'package:zero_player/features/books/data/book_shelf_lists.dart';
 import 'package:zero_player/features/books/data/legado/legado_request.dart';
@@ -116,7 +117,14 @@ void _defaultImport() {
       ]);
       final sources = await repository.sources(BookKind.text);
       final imported = sources.where((entry) => entry.fromCatalog).toList();
-      expect(imported.length, greaterThan(1800));
+      final installed = (await repository.store.sources(const []))
+          .where(
+            (entry) => entry.fromCatalog && entry.source.kind == BookKind.text,
+          )
+          .toList();
+      expect(installed, hasLength(1801));
+      expect(installed.where(supersededBundledBookSource), hasLength(4));
+      expect(imported, hasLength(installed.length - 4));
       expect(imported.every((entry) => !entry.enabled), isTrue);
       final first = imported[0].source, second = imported[1].source;
       final selected = {first.id, second.id};
@@ -233,13 +241,18 @@ void _bundledPacks() {
     final result = await repository.importCatalog(catalog, CancellationToken());
     final parsed = result.parsed;
     expect(parsed.sources.length + parsed.duplicates + parsed.rejected, 8753);
-    expect(result.changes.added, greaterThan(1800));
+    expect(result.changes.added, 1839);
     final entries = [
       ...await repository.sources(BookKind.text),
       ...await repository.sources(BookKind.audio),
       ...await repository.sources(BookKind.comic),
     ].where((entry) => entry.fromCatalog).toList();
-    expect(entries.length, result.changes.added);
+    final installed = (await repository.store.sources(
+      const [],
+    )).where((entry) => entry.fromCatalog);
+    expect(installed, hasLength(result.changes.added));
+    expect(installed.where(supersededBundledBookSource), hasLength(4));
+    expect(entries.length, result.changes.added - 4);
     expect(
       entries.where((entry) => entry.source.kind == BookKind.comic),
       isEmpty,

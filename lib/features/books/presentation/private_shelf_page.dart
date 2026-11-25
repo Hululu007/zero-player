@@ -378,6 +378,7 @@ final class _PrivateShelfPageState extends State<PrivateShelfPage>
             onRefresh: () => _checkUpdates(_entries),
             onCheckUpdates: _checkUpdates,
             onFollowChanged: () => unawaited(_reload()),
+            downloads: _services.bookDownloads,
             pauseDownload: _services.bookDownloads.pause,
             cancelDownload: (book) async {
               await _services.bookDownloads.removePlan(book);

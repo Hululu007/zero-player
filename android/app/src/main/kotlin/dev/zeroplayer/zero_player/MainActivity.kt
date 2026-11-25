@@ -115,6 +115,9 @@ class MainActivity : FlutterActivity() {
                     "cancelLocalVideo" -> { videoPicker.cancel(); result.success(null) }
                     "clearLocalVideoCopies" -> videoPicker.clear(call, result)
                     "chooseVideoDirectory" -> videoDirectories.choose(result)
+                    "cloudResourceCapacity" -> videoDirectories.cloudCapacity(call, result)
+                    "saveCloudResource" -> videoDirectories.saveCloudResource(call, result)
+                    "openCloudResource" -> videoDirectories.openCloudResource(call, result)
                     "verifyVideoInDirectory" -> videoDirectories.verify(call, result)
                     "verifyPublicationInDirectory" -> videoDirectories.verify(call, result, publication = true)
                     "saveVideoToDirectory" -> videoDirectories.save(call, result)

@@ -1,8 +1,13 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
+import '../../../core/network/document_client.dart';
+import '../../../core/network/source_certificate.dart';
+import 'book_certificate_dialog.dart';
 
 import '../../../core/network/cancellation_token.dart';
+import '../data/book_source_groups.dart';
 import '../data/book_store.dart';
 import '../data/books_repository.dart';
 import '../domain/book.dart';
@@ -10,6 +15,7 @@ import '../domain/book_search.dart';
 import 'book_cover.dart';
 import 'book_links.dart';
 import 'book_source_favorite.dart';
+import 'book_source_group_picker.dart';
 
 final _bookUpdateDate = RegExp(
   r'(20\d{2})[-/年.](\d{1,2})[-/月.](\d{1,2})(?:日)?(?:\s+(\d{1,2}):(\d{2}))?',
@@ -47,6 +53,7 @@ class BookSearchPage extends StatefulWidget {
     this.preferred,
     this.field = BookSearchField.all,
     this.sourceId,
+    this.sourceGroupId,
     this.favoritesOnly = false,
     this.excludedSource,
     this.skipQidian = false,
@@ -61,6 +68,7 @@ class BookSearchPage extends StatefulWidget {
   final Book? preferred;
   final BookSearchField field;
   final String? sourceId;
+  final String? sourceGroupId;
   final bool favoritesOnly;
   final String? excludedSource;
   final bool skipQidian;
@@ -82,10 +90,17 @@ class _BookSearchPageState extends State<BookSearchPage> {
   final _latencies = <String, int>{};
   final _failedSources = <String>{};
   final _certificateFailures = <String>{};
+  final _certificatePrompts = <String, SourceCertificateFailure>{};
+  Uri? _limitedSearchSite;
   late final _input = TextEditingController(text: widget.query);
   late String _query = widget.query;
   late BookSearchField _field = widget.field;
   late bool _scoped = widget.sourceId != null || widget.favoritesOnly;
+  late String? _sourceGroupId = widget.sourceGroupId;
+  static const _coverPreferenceKey = 'books_search_without_covers';
+  bool _coverPreferenceReady = false;
+  bool _withoutCovers = false;
+  List<BookSourceGroup> _sourceGroups = const [];
   CancellationToken? _token;
   bool _busy = false;
   int _done = 0, _total = 0;
@@ -107,6 +122,57 @@ class _BookSearchPageState extends State<BookSearchPage> {
     widget.repository.policy.addListener(_policyChanged);
     widget.repository.sourceRiskChanges.addListener(_policyChanged);
     if (!widget.repository.policy.textAllowed(_input.text)) _input.clear();
+    unawaited(_loadCoverPreference());
+    unawaited(_load());
+  }
+
+  Future<void> _loadCoverPreference() async {
+    try {
+      final value = await widget.repository.store.read(_coverPreferenceKey);
+      if (!mounted) return;
+      _withoutCovers = value == true;
+    } on Exception {
+      // A missing or invalid display preference uses the default.
+    } finally {
+      if (mounted) setState(() => _coverPreferenceReady = true);
+    }
+  }
+
+  void _toggleCovers(bool withoutCovers) {
+    setState(() => _withoutCovers = withoutCovers);
+    unawaited(
+      widget.repository.store
+          .write(_coverPreferenceKey, withoutCovers)
+          .onError((_, _) {}),
+    );
+  }
+
+  BookSourceGroup? get _sourceGroup => _sourceGroups
+      .where(
+        (group) =>
+            group.id == _sourceGroupId &&
+            widget.repository.policy.textAllowed(group.name),
+      )
+      .firstOrNull;
+
+  List<BookSourceEntry> _groupSources(List<BookSourceEntry> sources) {
+    if (_sourceGroupId == null) return sources;
+    final ids = _sourceGroup?.sourceIds ?? const <String>{};
+    return sources.where((entry) => ids.contains(entry.source.id)).toList();
+  }
+
+  Future<void> _pickSourceGroup() async {
+    final choice = await pickBookSourceGroup(
+      context,
+      widget.repository,
+      _sourceGroups,
+      _sourceGroupId,
+    );
+    if (!mounted || choice == null || choice.id == _sourceGroupId) return;
+    setState(() {
+      _sourceGroupId = choice.id;
+      _scoped = _scoped && widget.favoritesOnly;
+    });
     unawaited(_load());
   }
 
@@ -143,7 +209,7 @@ class _BookSearchPageState extends State<BookSearchPage> {
         return;
       }
       final allowed = <String, BookSourceEntry>{};
-      for (final entry in current) {
+      for (final entry in _groupSources(current)) {
         final old = previous[entry.source.id];
         if (old != null && sameBookDiscoverySources([old], [entry])) {
           allowed[entry.source.id] = entry;
@@ -187,7 +253,10 @@ class _BookSearchPageState extends State<BookSearchPage> {
     unawaited(_load());
   }
 
-  Future<void> _load({Set<String>? retry}) async {
+  Future<void> _load({
+    Set<String>? retry,
+    Map<String, SourceCertificateFailure> temporaryCertificates = const {},
+  }) async {
     _policyRevision++;
     _token?.cancel();
     final token = _token = CancellationToken();
@@ -200,6 +269,8 @@ class _BookSearchPageState extends State<BookSearchPage> {
         _latencies.clear();
         _failedSources.clear();
         _certificateFailures.clear();
+        _certificatePrompts.clear();
+        _limitedSearchSite = null;
         _done = _total = 0;
       }
       _busy = true;
@@ -235,6 +306,25 @@ class _BookSearchPageState extends State<BookSearchPage> {
         excludedSource: widget.excludedSource,
         skipQidian: widget.skipQidian,
         availableSources: availableSources,
+        temporaryCertificates: temporaryCertificates,
+        onSourceFailure: (id, error) {
+          if (error is SourceCertificateFailure) {
+            _certificatePrompts[id] = error;
+          }
+          if (error is RemoteFailure &&
+              error.status == 403 &&
+              availableSources.any(
+                (entry) =>
+                    entry.source.id == id &&
+                    entry.source.endpoint.host == 'czbooks.net',
+              )) {
+            _limitedSearchSite = Uri(
+              scheme: 'https',
+              host: 'czbooks.net',
+              pathSegments: ['s', _query],
+            );
+          }
+        },
         onProgress: (update) {
           if (update.sourceId case final String id) retried.add(id);
           _update(update, token, retrying: retry != null);
@@ -270,9 +360,13 @@ class _BookSearchPageState extends State<BookSearchPage> {
   }) async {
     final repository = widget.repository;
     widget.beforeSourceSnapshotForTesting?.call();
-    final sources = await repository.sources(widget.kind, enabledOnly: true);
+    final entries = await repository.sources(widget.kind, enabledOnly: true);
     token.check();
-    if (!mounted) return sources;
+    final groups = await BookSourceGroups(repository.store, widget.kind).load();
+    token.check();
+    if (!mounted) return const [];
+    _sourceGroups = groups;
+    final sources = _groupSources(entries);
     setState(() {
       if (retry == null) {
         _sources
@@ -339,6 +433,7 @@ class _BookSearchPageState extends State<BookSearchPage> {
       _certificateFailures.add(id);
     } else {
       _certificateFailures.remove(id);
+      _certificatePrompts.remove(id);
     }
     final latency = update.latencyMs;
     if (latency != null) _latencies[id] = latency;
@@ -356,6 +451,43 @@ class _BookSearchPageState extends State<BookSearchPage> {
   void _retryFailed() {
     if (_busy || _failedSources.isEmpty) return;
     unawaited(_load(retry: Set.of(_failedSources)));
+  }
+
+  Future<void> _confirmCertificateRetry() async {
+    final repository = widget.repository;
+    final query = _query;
+    final selected = await showDialog<String>(
+      context: context,
+      builder: (dialog) => SimpleDialog(
+        title: const Text('选择要临时加载的渠道'),
+        children: [
+          for (final entry in _certificatePrompts.entries)
+            if (repository.canConfirmCertificate(entry.key, entry.value))
+              SimpleDialogOption(
+                onPressed: () => Navigator.pop(dialog, entry.key),
+                child: Text(
+                  _sources[entry.key]?.source.name ?? entry.value.origin,
+                ),
+              ),
+          SimpleDialogOption(
+            onPressed: () => Navigator.pop(dialog),
+            child: const Text('取消'),
+          ),
+        ],
+      ),
+    );
+    final failure = _certificatePrompts[selected];
+    if (!mounted ||
+        selected == null ||
+        failure == null ||
+        !await confirmBookCertificate(context, failure) ||
+        !mounted ||
+        _busy ||
+        query != _query ||
+        !repository.canConfirmCertificate(selected, failure)) {
+      return;
+    }
+    await _load(retry: {selected}, temporaryCertificates: {selected: failure});
   }
 
   void _cancelSearch() {
@@ -533,6 +665,29 @@ class _BookSearchPageState extends State<BookSearchPage> {
           _toolbar(),
           if (_busy) const LinearProgressIndicator(minHeight: 2),
           _searchStatus(groups.length),
+          if (!_busy &&
+              _certificatePrompts.entries.any(
+                (entry) => widget.repository.canConfirmCertificate(
+                  entry.key,
+                  entry.value,
+                ),
+              ))
+            TextButton(
+              onPressed: _confirmCertificateRetry,
+              child: const Text('确认风险后临时加载'),
+            ),
+          if (!_busy &&
+              _limitedSearchSite != null &&
+              widget.repository.policy.textAllowed(_query) &&
+              !widget.repository.policy.supervision.enabled &&
+              !widget.repository.policy.supervision.corrupted)
+            TextButton(
+              onPressed: () => launchUrl(
+                _limitedSearchSite!,
+                mode: LaunchMode.externalApplication,
+              ),
+              child: const Text('小说狂人拒绝应用请求 · 在浏览器搜索'),
+            ),
           Expanded(
             child: groups.isEmpty
                 ? Center(child: Text(_emptyMessage()))
@@ -569,7 +724,9 @@ class _BookSearchPageState extends State<BookSearchPage> {
     if (_busy) return '正在搜索…';
     if (_cancelled) return '搜索已取消';
     if (_error != null) return '搜索未完成';
-    if (_total == 0) return '没有可用于此次搜索的启用渠道';
+    if (_total == 0) {
+      return _sourceGroupId == null ? '没有可用于此次搜索的启用渠道' : '当前分组没有可用于此次搜索的启用渠道';
+    }
     if (_failedSources.length == _total) return '本次搜索的渠道均请求失败';
     return '没有符合条件的作品';
   }
@@ -589,11 +746,13 @@ class _BookSearchPageState extends State<BookSearchPage> {
         .toSet();
     return ListTile(
       key: ValueKey(book.title.trim()),
-      leading: SizedBox(
-        width: 38,
-        height: 52,
-        child: BookCover(book: book, repository: widget.repository),
-      ),
+      leading: !_coverPreferenceReady || _withoutCovers
+          ? null
+          : SizedBox(
+              width: 38,
+              height: 52,
+              child: BookCover(book: book, repository: widget.repository),
+            ),
       title: Text(book.title),
       subtitle: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -627,6 +786,21 @@ class _BookSearchPageState extends State<BookSearchPage> {
       builder: (context, constraints) {
         final compact = constraints.maxWidth < 620;
         final chips = <Widget>[
+          FilterChip(
+            label: const Text('快速搜索'),
+            tooltip: '开启后不加载结果封面',
+            selected: _withoutCovers,
+            onSelected: _coverPreferenceReady ? _toggleCovers : null,
+          ),
+          if (_sourceGroups.isNotEmpty || _sourceGroupId != null)
+            ActionChip(
+              avatar: const Icon(Icons.folder_outlined),
+              label: Text(
+                _sourceGroup?.name ??
+                    (_sourceGroupId == null ? '渠道分组' : '当前分组'),
+              ),
+              onPressed: _pickSourceGroup,
+            ),
           for (final (field, label) in const [
             (BookSearchField.all, '全部'),
             (BookSearchField.title, '书名'),

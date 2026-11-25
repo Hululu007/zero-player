@@ -133,7 +133,7 @@ Future<void> _allowedDownloadRefresh(
   final task = services.bookDownloads.start(
     book,
     chapters,
-    const BookDownloadPlan(1, 1, false),
+    const BookDownloadPlan(1, 1, false, retryCount: 0),
   );
   await waitFor(tester, () => http.chapterWaiting);
   await tester.pumpWidget(const SizedBox.shrink());

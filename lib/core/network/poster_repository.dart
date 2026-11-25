@@ -24,11 +24,17 @@ final class PosterRepository {
     this.network, {
     this.maxBytes = 16 * 1024 * 1024,
     this.maxEntries = 80,
+    this.validateTarget,
+    this.networkTimeout = const Duration(seconds: 25),
+    this.headers = posterHeaders,
     int concurrency = 4,
   }) : _scheduler = RequestScheduler(globalLimit: concurrency);
   final DocumentClient network;
   final int maxBytes;
   final int maxEntries;
+  final void Function(Uri)? validateTarget;
+  final Duration networkTimeout;
+  final Map<String, String> Function(Uri) headers;
   final RequestScheduler _scheduler;
   final _cache = <String, _CachedPoster>{};
   final _failures = <String, DateTime>{};
@@ -41,6 +47,11 @@ final class PosterRepository {
   PosterLease acquire(String address) {
     if (_closed) throw StateError('Poster repository closed');
     final url = address.trim();
+    try {
+      validateTarget?.call(Uri.parse(url));
+    } on Exception catch (error) {
+      return PosterLease(Future.error(error), () {});
+    }
     final cached = _cache.remove(url);
     if (cached != null) {
       _cachedBytes -= cached.bytes.length;
@@ -86,12 +97,15 @@ final class PosterRepository {
       permit = await _scheduler.acquire(uri, cancellation: job.token);
       final doc = await network.get(
         uri,
-        headers: posterHeaders(uri),
+        headers: headers(uri),
+        validateTarget: validateTarget,
         maxBytes: 3 * 1024 * 1024,
         priority: RequestPriority.background,
         cancellation: job.token,
+        networkTimeout: networkTimeout,
       );
       job.token.check();
+      validateTarget?.call(doc.uri);
       if (!isPosterPayload(doc.bytes)) {
         throw const FormatException('图片渠道返回了非图片内容');
       }
@@ -127,6 +141,10 @@ final class PosterRepository {
 
   void retry(String url) => _failures.remove(url.trim());
   void clear() {
+    for (final job in _pending.values) {
+      job.token.cancel();
+    }
+    _pending.clear();
     _cache.clear();
     _failures.clear();
     _cachedBytes = 0;
@@ -134,10 +152,6 @@ final class PosterRepository {
 
   void close() {
     _closed = true;
-    for (final job in _pending.values) {
-      job.token.cancel();
-    }
-    _pending.clear();
     _scheduler.close();
     clear();
   }

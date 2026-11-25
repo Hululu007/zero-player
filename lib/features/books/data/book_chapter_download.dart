@@ -13,7 +13,19 @@ extension _BookChapterDownload on BooksRepository {
     await ensureSourceRiskLoaded();
     await chapterPolicy.load();
     if (book.kind == BookKind.comic) {
-      return _downloadComic(book, chapter, token);
+      if (sourceHealth?.unavailable(book.sourceId) case final unavailable?) {
+        throw unavailable;
+      }
+      try {
+        await _downloadComic(book, chapter, token);
+        sourceHealth?.succeeded(book.sourceId);
+        return;
+      } on ContentBlocked {
+        rethrow;
+      } on Exception catch (error) {
+        token.check();
+        throw sourceHealth?.failed(book.sourceId, error) ?? error;
+      }
     }
     requireBook(book, chapter);
     if (await _blocked(book.sourceId)) throw const ContentBlocked();

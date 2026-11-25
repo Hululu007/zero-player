@@ -1,7 +1,39 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:zero_player/features/publications/data/publication_share_provider.dart';
 import 'package:zero_player/features/publications/domain/share_text.dart';
 
 void main() {
+  test('Baidu share handoff keeps only the selected extraction code', () {
+    final input = publicationShareInputs(
+      'pan.baidu.com/s/fixture-1?pwd=ab12&from=sample\n提取码：cd34',
+    ).single;
+    expect(input.needsConfirmation, isTrue);
+    expect(input.link, Uri.https('pan.baidu.com', '/s/fixture-1'));
+    expect(
+      baiduPublicationSharePage(input.link, 'cd34'),
+      Uri.https('pan.baidu.com', '/s/fixture-1', {'pwd': 'cd34'}),
+    );
+    expect(
+      baiduPublicationSharePage(
+        Uri.parse('http://pan.baidu.com/s/fixture-1?pwd=ab12#ignored'),
+        null,
+      ),
+      input.link,
+    );
+    for (final address in [
+      'https://pan.baidu.com.example/s/fixture-1',
+      'https://pan.baidu.com:8443/s/fixture-1',
+      'https://other.pan.baidu.com/s/fixture-1',
+      'https://pan.baidu.com/s/fixture-1/more',
+    ]) {
+      expect(isBaiduPublicationShare(Uri.parse(address)), isFalse);
+    }
+    expect(
+      () => baiduPublicationSharePage(input.link, 'a c!'),
+      throwsFormatException,
+    );
+  });
+
   test('known cloud share domains may be pasted without the scheme', () {
     final inputs = publicationShareInputs(
       '链接：\npan.quark.cn/s/first?pwd=ab12\n提取码：ab12\n\n'

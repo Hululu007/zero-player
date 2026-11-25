@@ -18,6 +18,38 @@ final class VideoFiles {
       ? channel.invokeMethod<String>('chooseVideoDirectory')
       : getDirectoryPath(confirmButtonText: '保存到此目录');
 
+  static Future<void> openCloudResource(String directory, String path) =>
+      channel.invokeMethod<void>('openCloudResource', {
+        'directory': directory,
+        'path': path,
+      });
+
+  static Future<String> saveCloudResource(
+    File source,
+    String destination,
+    String name,
+    CancellationToken token, {
+    List<String> folders = const [],
+  }) async {
+    token.check();
+    final saving = channel.invokeMethod<String>('saveCloudResource', {
+      'path': source.path,
+      'directory': destination,
+      'name': name,
+      if (folders.isNotEmpty) 'folders': folders,
+    });
+    final remove = token.listen(() {
+      unawaited(
+        channel.invokeMethod<void>('cancelVideoSave', {'path': source.path}),
+      );
+    });
+    try {
+      return (await saving)!;
+    } finally {
+      remove();
+    }
+  }
+
   static Future<XFile?> chooseVideo({
     int? maxBytes,
     void Function(String identity)? onIdentity,

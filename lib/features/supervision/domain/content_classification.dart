@@ -28,9 +28,10 @@ String normalizeContent(String input) {
       .split('')
       .map((c) => traditional[c] ?? c)
       .join()
-      .replaceAll(RegExp(r'[^a-z0-9㐀-鿿]'), '');
+      .replaceAll(_ignoredContentCharacters, '');
 }
 
+final _ignoredContentCharacters = RegExp(r'[^a-z0-9㐀-鿿]');
 final _adultLabels = <String>{
   '成人',
   'adult',
@@ -112,6 +113,9 @@ final _adultWords = RegExp(
   r'(^|[^a-z0-9])(av|xxx|r[ -]?18g?|porn(?:ography)?|hentai|nsfw)(?=$|[^a-z0-9])|18\s*\+|18\s*禁',
   caseSensitive: false,
 );
+final _invisibleContentCharacters = RegExp(
+  r'[\u200B-\u200F\u202A-\u202E\u2060-\u206F\uFEFF]',
+);
 final _regionalAdultLabel = RegExp(
   r'^(?:日本|韩国|日韩|欧美|港台|香港|台湾|国产|中国|西方)?(?:伦理|理论|三级)(?:片|剧|电影)?$',
 );
@@ -120,7 +124,7 @@ bool adultContent(String text, {bool category = false}) {
   final normalized = _adultSearchText(text);
   final folded = String.fromCharCodes(
     text.runes.map((r) => r >= 0xff01 && r <= 0xff5e ? r - 0xfee0 : r),
-  ).replaceAll(RegExp(r'[\u200B-\u200F\u202A-\u202E\u2060-\u206F\uFEFF]'), '');
+  ).replaceAll(_invisibleContentCharacters, '');
   if (_adultMarkers.any(normalized.contains) || _adultWords.hasMatch(folded)) {
     return true;
   }
@@ -154,3 +158,73 @@ String _adultSearchText(String text) =>
     // at a boundary that happens to form a restricted two-character token.
     // Only this complete phrase is exempt; other occurrences still match.
     .replaceAll('灰色情绪', '灰色心绪');
+
+/// Return the original UTF-16 ranges recognized by the active detectors.
+List<(int start, int end)> sensitiveContentSpans(
+  String text, {
+  required Iterable<String> keywords,
+  required bool filterAdult,
+}) {
+  final terms = keywords.map(normalizeContent).where((word) => word.isNotEmpty);
+  if (!terms.any(normalizeContent(text).contains) &&
+      !(filterAdult && adultContent(text))) {
+    return const [];
+  }
+  final matches = <(int, int)>[];
+  final normalized = _ContentOffsets(text, normalizeContent);
+  void findWords(String searchable, Iterable<String> words) {
+    for (final word in words) {
+      var offset = searchable.indexOf(word);
+      while (offset >= 0) {
+        matches.add(normalized.span(offset, offset + word.length));
+        offset = searchable.indexOf(word, offset + 1);
+      }
+    }
+  }
+
+  findWords(normalized.text, terms);
+  if (filterAdult) {
+    final searchable = _adultSearchText(text);
+    if (searchable.length == normalized.text.length) {
+      findWords(searchable, _adultMarkers);
+      if (_adultLabels.contains(searchable)) {
+        matches.add(normalized.span(0, searchable.length));
+      }
+    }
+    final folded = _ContentOffsets(text, (character) {
+      final value = character.runes.single;
+      return (value >= 0xff01 && value <= 0xff5e
+              ? String.fromCharCode(value - 0xfee0)
+              : character)
+          .replaceAll(_invisibleContentCharacters, '');
+    });
+    for (final match in _adultWords.allMatches(folded.text)) {
+      matches.add(
+        folded.span(match.start + (match[1]?.length ?? 0), match.end),
+      );
+    }
+  }
+  return matches;
+}
+
+final class _ContentOffsets {
+  _ContentOffsets(String original, String Function(String) transform) {
+    final result = StringBuffer();
+    var start = 0;
+    for (final value in original.runes) {
+      final character = String.fromCharCode(value);
+      final end = start + character.length;
+      final converted = transform(character);
+      result.write(converted);
+      for (var i = 0; i < converted.length; i++) {
+        ranges.add((start, end));
+      }
+      start = end;
+    }
+    text = result.toString();
+  }
+
+  final ranges = <(int, int)>[];
+  late final String text;
+  (int, int) span(int start, int end) => (ranges[start].$1, ranges[end - 1].$2);
+}

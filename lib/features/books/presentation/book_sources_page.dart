@@ -17,6 +17,7 @@ import '../data/book_import.dart';
 import '../data/book_policy_evidence.dart';
 import '../data/book_site_inspection.dart';
 import '../data/book_site_script_clues.dart';
+import '../data/book_source_groups.dart';
 import '../data/book_source_risk_store.dart';
 import '../data/book_store.dart';
 import '../data/books_repository.dart';
@@ -24,6 +25,8 @@ import '../domain/book.dart';
 import '../domain/book_rule_clues.dart';
 import '../domain/book_site_audit_clues.dart';
 import 'book_links.dart';
+
+part 'book_source_group_management.dart';
 
 enum _SourceAction { catalog, file, link, feed, exportRules }
 
@@ -49,6 +52,10 @@ final class BookSourcesPage extends StatefulWidget {
 
 final class _BookSourcesPageState extends State<BookSourcesPage> {
   List<BookSourceEntry> _entries = [];
+  List<BookSourceGroup> _groups = [];
+  String? _groupId;
+  BookSourceGroups get _groupStore =>
+      BookSourceGroups(_services.books.store, widget.kind);
   bool _busy = false, _favorites = false, _dynamicRules = false;
   bool _historicalAmsi = false, _pageScriptClues = false;
   bool? _enabled;
@@ -186,6 +193,7 @@ final class _BookSourcesPageState extends State<BookSourcesPage> {
         siteResults = null;
       }
       final latest = await _services.books.sources(widget.kind);
+      final groups = await _groupStore.load();
       if (!mounted) return;
       if (revision != _sourceRevision ||
           policy != bookSitePolicySnapshot(_services.contentPolicy) ||
@@ -196,6 +204,7 @@ final class _BookSourcesPageState extends State<BookSourcesPage> {
       final allowed = latest.where(_services.books.sourceEntryAllowed).toList();
       setState(() {
         _entries = allowed;
+        _groups = groups;
         _siteResults = siteResults ?? {};
         _siteResultsUnavailable = siteResults == null;
       });
@@ -885,6 +894,12 @@ final class _BookSourcesPageState extends State<BookSourcesPage> {
           onPressed: _busy || _selected.isEmpty ? null : () => _batch(false),
           child: const Text('一键停用'),
         ),
+        TextButton(
+          onPressed: _busy || _selected.isEmpty
+              ? null
+              : () => _addToGroup(Set.of(_selected)),
+          child: const Text('添加到分组'),
+        ),
       ],
     ),
   );
@@ -986,10 +1001,14 @@ final class _BookSourcesPageState extends State<BookSourcesPage> {
 
   List<BookSourceEntry> _visibleEntries() {
     final query = _query.trim().toLowerCase();
+    final members = _groupId == null
+        ? null
+        : _group?.sourceIds ?? const <String>{};
     final list =
         _entries
             .where(
               (entry) =>
+                  (members?.contains(entry.source.id) ?? true) &&
                   (!_favorites || entry.favorite) &&
                   (!_dynamicRules || bookSourceHasDynamicCode(entry.source)) &&
                   (!_pageScriptClues ||
@@ -1172,6 +1191,11 @@ final class _BookSourcesPageState extends State<BookSourcesPage> {
               icon: const Icon(Icons.star_outline),
               selectedIcon: const Icon(Icons.star),
             ),
+            ActionChip(
+              avatar: const Icon(Icons.folder_outlined),
+              label: Text(_group?.name ?? '渠道分组'),
+              onPressed: _busy ? null : _manageGroups,
+            ),
             FilterChip(
               avatar: _selecting ? null : const Icon(Icons.checklist),
               label: Text(_selecting ? '退出批量选择' : '批量选择'),
@@ -1232,9 +1256,11 @@ final class _BookSourcesPageState extends State<BookSourcesPage> {
             await copyBookLink(context, source.endpoint);
           case 'probe':
             await _probe(source);
+          case 'membership':
+            await _addToGroup({source.id});
           case 'group':
             final group = await _prompt(
-              '分组名称',
+              '来源标签',
               initial: entry.group,
               limit: 60,
             );
@@ -1259,7 +1285,8 @@ final class _BookSourcesPageState extends State<BookSourcesPage> {
       itemBuilder: (_) => [
         const PopupMenuItem(value: 'copy', child: Text('复制渠道链接')),
         const PopupMenuItem(value: 'probe', child: Text('解析检测（执行来源规则）')),
-        const PopupMenuItem(value: 'group', child: Text('修改分组')),
+        const PopupMenuItem(value: 'group', child: Text('修改来源标签')),
+        const PopupMenuItem(value: 'membership', child: Text('添加到分组')),
         const PopupMenuItem(value: 'remove', child: Text('删除书源')),
         const PopupMenuItem(value: 'block', child: Text('屏蔽并加入黑名单')),
       ],
